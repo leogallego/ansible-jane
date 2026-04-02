@@ -26,15 +26,17 @@ fun SearchBar(
     placeholder: String = "Search templates..."
 ) {
     var query by remember { mutableStateOf("") }
+    var hasUserTyped by remember { mutableStateOf(false) }
 
     LaunchedEffect(query) {
+        if (!hasUserTyped) return@LaunchedEffect
         delay(300)
         onSearch(query)
     }
 
     OutlinedTextField(
         value = query,
-        onValueChange = { query = it },
+        onValueChange = { hasUserTyped = true; query = it },
         placeholder = { Text(placeholder) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
         trailingIcon = {

@@ -11,7 +11,7 @@ import com.example.aapremote.network.ApiVersion
 import com.google.crypto.tink.Aead
 import com.google.crypto.tink.KeysetHandle
 import com.google.crypto.tink.aead.AeadConfig
-import com.google.crypto.tink.aead.PredefinedAeadParameters
+import com.google.crypto.tink.aead.AeadKeyTemplates
 import com.google.crypto.tink.integration.android.AndroidKeysetManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -39,7 +39,7 @@ class TokenManager(private val context: Context) {
         AeadConfig.register()
         val keysetHandle = AndroidKeysetManager.Builder()
             .withSharedPref(context, "aap_keyset", "aap_keyset_prefs")
-            .withKeyTemplate(PredefinedAeadParameters.AES256_GCM)
+            .withKeyTemplate(AeadKeyTemplates.AES256_GCM)
             .withMasterKeyUri("android-keystore://aap_master_key")
             .build()
             .keysetHandle

@@ -26,6 +26,12 @@ interface AapApiService {
     @GET("jobs/{id}/")
     suspend fun getJob(@Path("id") id: Int): Job
 
+    @GET("jobs/{id}/stdout/")
+    suspend fun getJobStdout(
+        @Path("id") id: Int,
+        @Query("format") format: String = "txt"
+    ): okhttp3.ResponseBody
+
     @GET("jobs/")
     suspend fun getJobs(
         @Query("order_by") orderBy: String = "-created",

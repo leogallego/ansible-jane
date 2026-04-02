@@ -151,16 +151,17 @@ fun TemplateListScreen(
                         val listState = rememberLazyListState()
 
                         // Load more when reaching the end
-                        val shouldLoadMore by remember {
-                            derivedStateOf {
-                                val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                                lastVisibleItem >= state.templates.size - 3
+                        if (state.hasMore) {
+                            val shouldLoadMore by remember {
+                                derivedStateOf {
+                                    val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                                    state.templates.size > 3 && lastVisibleItem >= state.templates.size - 3
+                                }
                             }
-                        }
 
-                        LaunchedEffect(shouldLoadMore) {
-                            snapshotFlow { shouldLoadMore }
-                                .collect { if (it) viewModel.loadMore() }
+                            LaunchedEffect(shouldLoadMore) {
+                                if (shouldLoadMore) viewModel.loadMore()
+                            }
                         }
 
                         LazyColumn(

@@ -29,6 +29,15 @@ class JobRepository(private val apiService: AapApiService) {
         }
     }
 
+    suspend fun getJobStdout(jobId: Int): Result<String> {
+        return try {
+            val response = apiService.getJobStdout(jobId)
+            Result.success(response.string())
+        } catch (e: Exception) {
+            Result.failure(Exception("Failed to get job output: ${e.message}"))
+        }
+    }
+
     suspend fun getRecentJobs(page: Int = 1, pageSize: Int = 20): Result<RecentJobsResult> {
         return try {
             val response = apiService.getJobs(

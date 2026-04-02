@@ -4,8 +4,8 @@ import com.example.aapremote.model.Job
 
 sealed interface JobStatusUiState {
     data object Loading : JobStatusUiState
-    data class Active(val job: Job) : JobStatusUiState
-    data class Completed(val job: Job) : JobStatusUiState
+    data class Active(val job: Job, val stdout: String? = null) : JobStatusUiState
+    data class Completed(val job: Job, val stdout: String? = null) : JobStatusUiState
     data class Error(val message: String) : JobStatusUiState
 }
 

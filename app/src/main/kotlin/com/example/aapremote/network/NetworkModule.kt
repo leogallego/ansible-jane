@@ -1,50 +1,37 @@
 package com.example.aapremote.network
 
-import com.example.aapremote.data.TokenManager
 import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
-import retrofit2.Retrofit
-import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 val networkJson = Json {
     ignoreUnknownKeys = true
     isLenient = true
     encodeDefaults = true
+    explicitNulls = false
 }
 
 val networkModule = module {
 
     single {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
+        AapApiProvider(
+            tokenManager = get(),
+            json = networkJson
+        )
+    }
 
-        val tokenManager = get<TokenManager>()
+    factory<AapApiService> {
+        get<AapApiProvider>().getApiService()
+    }
 
+    factory {
         OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor { tokenManager.cachedToken })
-            .addInterceptor(loggingInterceptor)
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            })
             .build()
     }
 
-    single {
-        val tokenManager = get<TokenManager>()
-        val baseUrl = tokenManager.cachedBaseUrl ?: "https://placeholder.example.com"
-        val apiVersion = tokenManager.cachedApiVersion
-
-        Retrofit.Builder()
-            .baseUrl("${baseUrl.trimEnd('/')}${apiVersion.prefix}")
-            .client(get())
-            .addConverterFactory(networkJson.asConverterFactory("application/json".toMediaType()))
-            .build()
-    }
-
-    single<AapApiService> {
-        get<Retrofit>().create(AapApiService::class.java)
-    }
-
-    single { ApiVersionDetector(get()) }
+    factory { ApiVersionDetector(get()) }
 }

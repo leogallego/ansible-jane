@@ -1,6 +1,5 @@
 package com.example.aapremote.network
 
-import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
@@ -16,8 +15,8 @@ object CertTrustManager {
     }
 
     fun createSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
-        val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(null, arrayOf<TrustManager>(trustManager), SecureRandom())
+        val sslContext = SSLContext.getInstance("TLSv1.3")
+        sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
         return sslContext.socketFactory
     }
 }

@@ -1,5 +1,6 @@
 package com.example.aapremote.ui.jobs
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
@@ -18,9 +21,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +46,11 @@ fun JobStatusScreen(
     viewModel: JobStatusViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    DisposableEffect(Unit) {
+        viewModel.startPolling()
+        onDispose { viewModel.stopPolling() }
+    }
 
     Scaffold(
         topBar = {
@@ -70,10 +81,10 @@ fun JobStatusScreen(
                     )
                 }
                 is JobStatusUiState.Active -> {
-                    JobDetailContent(job = state.job, isActive = true)
+                    JobDetailContent(job = state.job, isActive = true, stdout = state.stdout)
                 }
                 is JobStatusUiState.Completed -> {
-                    JobDetailContent(job = state.job, isActive = false)
+                    JobDetailContent(job = state.job, isActive = false, stdout = state.stdout)
                 }
             }
         }
@@ -81,11 +92,12 @@ fun JobStatusScreen(
 }
 
 @Composable
-private fun JobDetailContent(job: Job, isActive: Boolean) {
+private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         Card(
             modifier = Modifier.fillMaxWidth()
@@ -135,6 +147,32 @@ private fun JobDetailContent(job: Job, isActive: Boolean) {
                     DetailRow("Elapsed", String.format("%.1f seconds", elapsed))
                 }
                 DetailRow("Job ID", "#${job.id}")
+            }
+        }
+
+        if (!stdout.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Output", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stdout,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontFamily = FontFamily.Monospace
+                            ),
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .horizontalScroll(rememberScrollState())
+                        )
+                    }
+                }
             }
         }
     }

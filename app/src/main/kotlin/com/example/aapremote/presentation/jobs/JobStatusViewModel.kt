@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.JobRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,28 +21,39 @@ class JobStatusViewModel(
     private val _uiState = MutableStateFlow<JobStatusUiState>(JobStatusUiState.Loading)
     val uiState: StateFlow<JobStatusUiState> = _uiState.asStateFlow()
 
-    init {
-        if (jobId > 0) startPolling()
-    }
+    private var pollingJob: Job? = null
 
-    private fun startPolling() {
-        viewModelScope.launch {
+    fun startPolling() {
+        if (jobId <= 0 || pollingJob?.isActive == true) return
+
+        pollingJob = viewModelScope.launch {
             jobRepository.pollJobStatus(jobId)
                 .catch { e ->
                     _uiState.value = JobStatusUiState.Error(e.message ?: "Unknown error")
                 }
                 .collect { job ->
+                    val stdout = jobRepository.getJobStdout(jobId).getOrNull()
                     _uiState.value = if (job.status.isTerminal) {
-                        JobStatusUiState.Completed(job)
+                        JobStatusUiState.Completed(job, stdout)
                     } else {
-                        JobStatusUiState.Active(job)
+                        JobStatusUiState.Active(job, stdout)
                     }
                 }
         }
     }
 
+    fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
+    }
+
     fun retry() {
         _uiState.value = JobStatusUiState.Loading
         startPolling()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopPolling()
     }
 }
