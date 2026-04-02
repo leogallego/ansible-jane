@@ -11,6 +11,7 @@
 # IDE
 .idea/
 .vscode/
+*.iml
 
 # Claude Code local/sandbox config
 .claude/settings.json
@@ -18,3 +19,19 @@
 .claude/agents
 .claude/skills
 .mcp.json
+
+# Android / Gradle
+build/
+.gradle/
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.jar
+*.log
+.cxx/
+captures/
+.externalNativeBuild/
+.env*
