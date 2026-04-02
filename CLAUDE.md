@@ -15,7 +15,7 @@ Full specification is in `idea.md`.
 - **Architecture:** MVVM with Unidirectional Data Flow. ViewModels expose UI state via `StateFlow`.
 - **Networking:** Retrofit + Kotlin Serialization + Coroutines.
 - **DI:** Koin (not Hilt).
-- **Security:** `EncryptedSharedPreferences` for token/URL storage. HTTPS only via `network_security_config.xml`.
+- **Security:** Jetpack DataStore + Tink (Android Keystore-backed) for token/URL storage. HTTPS only via `network_security_config.xml`. `EncryptedSharedPreferences` is deprecated — do not use.
 
 ## AAP API Endpoints
 
@@ -32,12 +32,19 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 ## Architecture Layers
 
 - **Network Layer:** Retrofit interface `AapApiService`, OkHttpClient with auth interceptor, Koin `networkModule`
-- **Data Layer:** `TokenManager` (EncryptedSharedPreferences), repositories
+- **Data Layer:** `TokenManager` (DataStore + Tink encryption), repositories
 - **Presentation:** ViewModels with `StateFlow<UiState>` (Idle, Loading, Success, Error pattern)
 - **UI:** Compose screens reacting to ViewModel state
 
 ## Security Rules
 
 - Never hardcode URLs or tokens
-- Only use `EncryptedSharedPreferences` for credentials — never plain `SharedPreferences` or SQLite
+- Only use DataStore + Tink for credentials — never `EncryptedSharedPreferences` (deprecated), plain `SharedPreferences`, or SQLite
 - Enforce HTTPS-only via network security config
+
+## Active Technologies
+- Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit, (001-aap-remote-control)
+- Jetpack DataStore + Tink (encrypted, local only) (001-aap-remote-control)
+
+## Recent Changes
+- 001-aap-remote-control: Added Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit,

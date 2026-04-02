@@ -1,50 +1,161 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+==================
+Version change: 1.0.0 → 1.1.0
+Modified principles:
+  - IV. Security-First: replaced EncryptedSharedPreferences with
+    DataStore + Tink/Android Keystore (ESP deprecated in
+    androidx.security:security-crypto:1.1.0-alpha07)
+  - V. Lean Dependencies: updated security dependency reference
+Modified sections:
+  - Technology Constraints: updated Security row
+Templates requiring updates:
+  - .specify/templates/plan-template.md ✅ no changes needed
+  - .specify/templates/spec-template.md ✅ no changes needed
+  - .specify/templates/tasks-template.md ✅ no changes needed
+  - No command files found — N/A
+Follow-up TODOs:
+  - Update CLAUDE.md to reflect DataStore + Tink replacement
+-->
+
+# AAP Remote Control Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Kotlin-Only
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All application code MUST be written in Kotlin. Java code MUST NOT
+be introduced under any circumstance — not for utilities, not for
+compatibility shims, not for generated code wrappers. The entire
+codebase MUST remain 100% Kotlin to ensure consistency and to
+maximize AI-assisted code generation quality.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Compose-First UI
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+All UI MUST be built with Jetpack Compose using Material 3
+(Material You) components. The following are strictly prohibited:
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+- XML layouts
+- Fragments
+- Multiple Activities
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+The app MUST use a single `ComponentActivity` as its entry point.
+No legacy Android UI patterns are permitted. This ensures a
+declarative, composable UI layer with minimal boilerplate.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. MVVM with Unidirectional Data Flow
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+The architecture MUST follow Model-View-ViewModel with
+Unidirectional Data Flow (UDF):
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- ViewModels MUST expose UI state via `StateFlow`
+- UI state MUST follow the `Idle | Loading | Success | Error`
+  sealed pattern
+- Compose screens MUST react to ViewModel state — no imperative
+  UI updates
+- Business logic MUST NOT reside in Composables or Activities
+
+This principle ensures predictable state management and testable
+presentation logic.
+
+### IV. Security-First
+
+Credential and token storage MUST use Jetpack DataStore with
+Tink encryption (backed by Android Keystore). The following are
+non-negotiable:
+
+- NEVER hardcode AAP URLs or tokens
+- NEVER use plain `SharedPreferences`, `EncryptedSharedPreferences`
+  (deprecated), or SQLite for credentials
+- MUST enforce HTTPS-only via `network_security_config.xml`
+- All authenticated API calls MUST include
+  `Authorization: Bearer <TOKEN>` header via an OkHttp interceptor
+
+Security is foundational — no convenience shortcut may bypass
+these rules.
+
+### V. Lean Dependencies
+
+The dependency footprint MUST remain minimal to reduce APK size
+and build complexity:
+
+- **DI:** Koin only. Hilt/Dagger MUST NOT be used (too much
+  boilerplate for AI-assisted development)
+- **Networking:** Retrofit + Kotlin Serialization + Coroutines
+- **Security:** Jetpack DataStore + Google Tink (Android
+  Keystore-backed encryption)
+
+New dependencies MUST be justified by a clear need that cannot be
+met by the existing stack. Prefer stdlib and existing libraries
+over adding new ones.
+
+### VI. API-Driven Design
+
+The app is a thin client for the AAP REST API. All features MUST
+be driven by API endpoints:
+
+- `/api/v2/me/` — credential validation
+- `/api/v2/job_templates/` — template listing
+- `/api/v2/job_templates/{id}/launch/` — job execution
+- `/api/v2/jobs/{id}/` — job status monitoring
+- `/api/v2/tokens/` — token acquisition
+
+The network layer MUST be defined as a Retrofit interface
+(`AapApiService`) with a Koin-provided `networkModule`. No
+business logic should assume offline capability unless explicitly
+scoped.
+
+## Technology Constraints
+
+The following technology choices are strictly enforced and MUST NOT
+be deviated from without a constitution amendment:
+
+| Layer | Technology | Prohibited Alternatives |
+|-------|-----------|------------------------|
+| Language | Kotlin | Java |
+| UI Framework | Jetpack Compose (Material 3) | XML, Fragments |
+| Architecture | MVVM + UDF | MVI, MVP |
+| DI | Koin | Hilt, Dagger, Manual |
+| Networking | Retrofit + KotlinX Serialization | Volley, Ktor Client |
+| Async | Coroutines + Flow | RxJava, Callbacks |
+| Security | DataStore + Tink/Keystore | EncryptedSharedPreferences (deprecated), SharedPreferences, SQLite |
+| Activity | Single ComponentActivity | Multiple Activities |
+
+## Development Workflow
+
+- **Architecture layers** MUST be respected: Network → Data →
+  Presentation → UI. No layer may bypass an intermediate layer.
+- **Koin modules** MUST be organized by layer: `networkModule`,
+  `dataModule`, `presentationModule`.
+- **State modeling** MUST use sealed classes/interfaces for UI
+  state with explicit `Idle`, `Loading`, `Success`, and `Error`
+  variants.
+- **API validation** MUST use the `/api/v2/me/` endpoint to
+  verify credentials before granting access to the app.
+- **Code organization** MUST follow feature-based packaging
+  within each layer.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution is the supreme authority for all development
+decisions in the AAP Remote Control project. It supersedes any
+conflicting guidance except explicit user overrides.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Amendment procedure:**
+
+1. Propose the change with rationale
+2. Document the change with a version bump
+3. Update all dependent artifacts (templates, CLAUDE.md)
+4. Commit with message referencing the new version
+
+**Versioning policy:** Semantic versioning (MAJOR.MINOR.PATCH):
+
+- MAJOR: Principle removed or fundamentally redefined
+- MINOR: New principle or section added, material expansion
+- PATCH: Clarifications, wording fixes, non-semantic refinements
+
+**Compliance review:** All code changes MUST be verified against
+these principles. Any deviation MUST be flagged and justified
+before merge.
+
+**Version**: 1.1.0 | **Ratified**: 2026-04-02 | **Last Amended**: 2026-04-02
