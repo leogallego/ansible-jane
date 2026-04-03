@@ -9,4 +9,5 @@ val dataModule = module {
     single { AuthRepository(get()) }
     single { TemplateRepository(get()) }
     single { JobRepository(get()) }
+    single { WorkflowRepository(get()) }
 }

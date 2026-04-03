@@ -1,21 +1,16 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.0.0 → 1.1.0
+Version change: 1.1.0 → 1.2.0
 Modified principles:
-  - IV. Security-First: replaced EncryptedSharedPreferences with
-    DataStore + Tink/Android Keystore (ESP deprecated in
-    androidx.security:security-crypto:1.1.0-alpha07)
-  - V. Lean Dependencies: updated security dependency reference
+  - VI. API-Driven Design: added workflow template endpoints
+    (/api/v2/workflow_job_templates/, workflow_jobs, workflow_nodes)
 Modified sections:
-  - Technology Constraints: updated Security row
+  - None beyond Principle VI endpoint list
 Templates requiring updates:
-  - .specify/templates/plan-template.md ✅ no changes needed
-  - .specify/templates/spec-template.md ✅ no changes needed
-  - .specify/templates/tasks-template.md ✅ no changes needed
-  - No command files found — N/A
+  - None — endpoint list is informational, not template-referenced
 Follow-up TODOs:
-  - Update CLAUDE.md to reflect DataStore + Tink replacement
+  - None
 -->
 
 # AAP Remote Control Constitution
@@ -99,6 +94,10 @@ be driven by API endpoints:
 - `/api/v2/job_templates/{id}/launch/` — job execution
 - `/api/v2/jobs/{id}/` — job status monitoring
 - `/api/v2/tokens/` — token acquisition
+- `/api/v2/workflow_job_templates/` — workflow template listing
+- `/api/v2/workflow_job_templates/{id}/launch/` — workflow execution
+- `/api/v2/workflow_jobs/{id}/` — workflow job status
+- `/api/v2/workflow_jobs/{id}/workflow_nodes/` — workflow sub-job listing
 
 The network layer MUST be defined as a Retrofit interface
 (`AapApiService`) with a Koin-provided `networkModule`. No
@@ -158,4 +157,4 @@ conflicting guidance except explicit user overrides.
 these principles. Any deviation MUST be flagged and justified
 before merge.
 
-**Version**: 1.1.0 | **Ratified**: 2026-04-02 | **Last Amended**: 2026-04-02
+**Version**: 1.2.0 | **Ratified**: 2026-04-02 | **Last Amended**: 2026-04-03

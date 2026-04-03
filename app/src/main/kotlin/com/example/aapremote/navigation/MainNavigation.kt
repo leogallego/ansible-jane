@@ -6,12 +6,14 @@ import com.example.aapremote.ui.jobs.RecentJobsScreen
 import com.example.aapremote.ui.main.Segment
 import com.example.aapremote.ui.main.TopLevelTab
 import com.example.aapremote.ui.templates.TemplateListScreen
+import com.example.aapremote.ui.workflows.WorkflowTemplateListScreen
 
 @Composable
 fun TabContent(
     tab: TopLevelTab,
     segment: Segment,
-    onNavigateToJobStatus: (Int) -> Unit
+    onNavigateToJobStatus: (Int) -> Unit,
+    onNavigateToWorkflowJobStatus: (Int) -> Unit = {}
 ) {
     if (!segment.isImplemented) {
         PlaceholderScreen(title = segment.label)
@@ -23,6 +25,9 @@ fun TabContent(
             when (segment.label) {
                 "Job Templates" -> TemplateListScreen(
                     onNavigateToJobStatus = onNavigateToJobStatus
+                )
+                "Workflow Templates" -> WorkflowTemplateListScreen(
+                    onNavigateToWorkflowJobStatus = onNavigateToWorkflowJobStatus
                 )
                 else -> PlaceholderScreen(title = segment.label)
             }
