@@ -52,8 +52,8 @@ sealed class TopLevelTab(
         selectedIcon = Icons.Filled.History,
         segments = listOf(
             Segment(label = "Jobs", isDefault = true, isImplemented = true),
-            Segment(label = "Schedules"),
-            Segment(label = "EDA Audit")
+            Segment(label = "Schedules", isImplemented = true),
+            Segment(label = "EDA Audit", isImplemented = true)
         )
     )
 

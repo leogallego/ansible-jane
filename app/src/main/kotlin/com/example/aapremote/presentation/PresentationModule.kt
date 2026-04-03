@@ -3,6 +3,8 @@ package com.example.aapremote.presentation
 import com.example.aapremote.presentation.auth.AuthViewModel
 import com.example.aapremote.presentation.jobs.JobStatusViewModel
 import com.example.aapremote.presentation.jobs.RecentJobsViewModel
+import com.example.aapremote.presentation.eda.EdaAuditViewModel
+import com.example.aapremote.presentation.schedules.SchedulesViewModel
 import com.example.aapremote.presentation.templates.TemplatesViewModel
 import com.example.aapremote.presentation.workflows.WorkflowJobStatusViewModel
 import com.example.aapremote.presentation.workflows.WorkflowTemplatesViewModel
@@ -16,4 +18,6 @@ val presentationModule = module {
     viewModelOf(::RecentJobsViewModel)
     viewModelOf(::WorkflowTemplatesViewModel)
     viewModelOf(::WorkflowJobStatusViewModel)
+    viewModelOf(::SchedulesViewModel)
+    viewModelOf(::EdaAuditViewModel)
 }

@@ -1,6 +1,7 @@
 package com.example.aapremote.data
 
 import com.example.aapremote.model.Job
+import com.example.aapremote.model.JobStatus
 import com.example.aapremote.network.AapApiService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -38,12 +39,28 @@ class JobRepository(private val apiService: AapApiService) {
         }
     }
 
-    suspend fun getRecentJobs(page: Int = 1, pageSize: Int = 20): Result<RecentJobsResult> {
+    suspend fun getRecentJobs(
+        page: Int = 1,
+        pageSize: Int = 20,
+        statusFilters: Set<JobStatus> = emptySet()
+    ): Result<RecentJobsResult> {
         return try {
+            val orStatus = if (statusFilters.size > 1) {
+                statusFilters.map { it.apiValue }
+            } else {
+                null
+            }
+            val singleStatus = if (statusFilters.size == 1) {
+                statusFilters.first().apiValue
+            } else {
+                null
+            }
             val response = apiService.getJobs(
                 orderBy = "-created",
                 pageSize = pageSize,
-                page = page
+                page = page,
+                status = singleStatus,
+                orStatus = orStatus
             )
             Result.success(
                 RecentJobsResult(

@@ -10,4 +10,6 @@ val dataModule = module {
     single { TemplateRepository(get()) }
     single { JobRepository(get()) }
     single { WorkflowRepository(get()) }
+    single { ScheduleRepository(get()) }
+    single { EdaAuditRepository(get()) }
 }

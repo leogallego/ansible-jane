@@ -19,4 +19,10 @@ enum class JobStatus {
 
     val isTerminal: Boolean
         get() = !isActive
+
+    val apiValue: String
+        get() = name.lowercase()
+
+    val displayName: String
+        get() = name.lowercase().replaceFirstChar { it.uppercase() }
 }
