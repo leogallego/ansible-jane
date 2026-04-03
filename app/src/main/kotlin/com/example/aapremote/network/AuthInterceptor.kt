@@ -21,7 +21,6 @@ class AuthInterceptor(
         val finalRequest = if (token != null) {
             request.newBuilder()
                 .header("Authorization", "Bearer $token")
-                .header("Content-Type", "application/json")
                 .build()
         } else {
             request

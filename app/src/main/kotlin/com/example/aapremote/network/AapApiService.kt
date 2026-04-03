@@ -1,7 +1,12 @@
 package com.example.aapremote.network
 
 import com.example.aapremote.model.*
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface AapApiService {
 
@@ -36,8 +41,23 @@ interface AapApiService {
     suspend fun getJobs(
         @Query("order_by") orderBy: String = "-created",
         @Query("page_size") pageSize: Int = 20,
-        @Query("page") page: Int = 1
+        @Query("page") page: Int = 1,
+        @Query("status") status: String? = null,
+        @Query("or__status") orStatus: List<String>? = null
     ): PaginatedResponse<Job>
+
+    @GET("schedules/")
+    suspend fun getSchedules(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 20,
+        @Query("order_by") orderBy: String = "-next_run"
+    ): PaginatedResponse<Schedule>
+
+    @PATCH("schedules/{id}/")
+    suspend fun toggleSchedule(
+        @Path("id") id: Int,
+        @Body body: Map<String, Boolean>
+    ): Schedule
 
     @GET("workflow_job_templates/")
     suspend fun getWorkflowJobTemplates(

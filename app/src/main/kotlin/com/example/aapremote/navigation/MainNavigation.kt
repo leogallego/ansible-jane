@@ -5,6 +5,8 @@ import com.example.aapremote.ui.components.PlaceholderScreen
 import com.example.aapremote.ui.jobs.RecentJobsScreen
 import com.example.aapremote.ui.main.Segment
 import com.example.aapremote.ui.main.TopLevelTab
+import com.example.aapremote.ui.eda.EdaAuditScreen
+import com.example.aapremote.ui.schedules.SchedulesScreen
 import com.example.aapremote.ui.templates.TemplateListScreen
 import com.example.aapremote.ui.workflows.WorkflowTemplateListScreen
 
@@ -37,6 +39,8 @@ fun TabContent(
                 "Jobs" -> RecentJobsScreen(
                     onNavigateToJobStatus = onNavigateToJobStatus
                 )
+                "Schedules" -> SchedulesScreen()
+                "EDA Audit" -> EdaAuditScreen()
                 else -> PlaceholderScreen(title = segment.label)
             }
         }

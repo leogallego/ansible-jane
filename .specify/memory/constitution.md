@@ -1,12 +1,14 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.1.0 → 1.2.0
+Version change: 1.2.0 → 1.3.0
 Modified principles:
-  - VI. API-Driven Design: added workflow template endpoints
-    (/api/v2/workflow_job_templates/, workflow_jobs, workflow_nodes)
+  - VI. API-Driven Design: added schedule and EDA audit endpoints
+    (/api/v2/schedules/, /api/eda/v1/audit-rules/)
+  - VI. API-Driven Design: generalized Retrofit interface statement
+    to acknowledge multiple service interfaces (AapApiService, EdaApiService)
 Modified sections:
-  - None beyond Principle VI endpoint list
+  - None beyond Principle VI endpoint list and wording
 Templates requiring updates:
   - None — endpoint list is informational, not template-referenced
 Follow-up TODOs:
@@ -98,11 +100,16 @@ be driven by API endpoints:
 - `/api/v2/workflow_job_templates/{id}/launch/` — workflow execution
 - `/api/v2/workflow_jobs/{id}/` — workflow job status
 - `/api/v2/workflow_jobs/{id}/workflow_nodes/` — workflow sub-job listing
+- `/api/v2/schedules/` — schedule listing
+- `/api/v2/schedules/{id}/` — schedule toggle (PATCH)
+- `/api/eda/v1/audit-rules/` — EDA rule audit events (via Gateway)
 
-The network layer MUST be defined as a Retrofit interface
-(`AapApiService`) with a Koin-provided `networkModule`. No
-business logic should assume offline capability unless explicitly
-scoped.
+The network layer MUST be defined as Retrofit service interfaces
+(`AapApiService` for Controller, `EdaApiService` for EDA) with a
+Koin-provided `networkModule`. EDA endpoints use a separate base
+path (`/api/eda/v1/`) and a separate Retrofit interface, sharing
+the same OkHttpClient and auth interceptor. No business logic
+should assume offline capability unless explicitly scoped.
 
 ## Technology Constraints
 
@@ -157,4 +164,4 @@ conflicting guidance except explicit user overrides.
 these principles. Any deviation MUST be flagged and justified
 before merge.
 
-**Version**: 1.2.0 | **Ratified**: 2026-04-02 | **Last Amended**: 2026-04-03
+**Version**: 1.3.0 | **Ratified**: 2026-04-02 | **Last Amended**: 2026-04-03

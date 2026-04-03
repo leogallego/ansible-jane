@@ -15,6 +15,7 @@ class AapApiProvider(
     private var currentBaseUrl: String? = null
     private var currentTrustSelfSigned: Boolean = false
     private var cachedApiService: AapApiService? = null
+    private var cachedEdaApiService: EdaApiService? = null
 
     @Synchronized
     fun getApiService(): AapApiService {
@@ -28,12 +29,37 @@ class AapApiProvider(
             currentBaseUrl = baseUrl
             currentTrustSelfSigned = trustSelfSigned
 
+            val baseUrlValue = baseUrl
+                ?: throw IllegalStateException("No AAP server URL configured. Please log in first.")
             val client = buildClient(trustSelfSigned)
-            val retrofit = buildRetrofit(client, baseUrl ?: "https://placeholder.example.com")
+            val retrofit = buildRetrofit(client, baseUrlValue)
             cachedApiService = retrofit.create(AapApiService::class.java)
+            cachedEdaApiService = null
         }
 
         return cachedApiService!!
+    }
+
+    @Synchronized
+    fun getEdaApiService(): EdaApiService {
+        val baseUrl = tokenManager.cachedBaseUrl
+        val trustSelfSigned = tokenManager.cachedTrustSelfSigned
+
+        if (cachedEdaApiService == null ||
+            currentBaseUrl != baseUrl ||
+            currentTrustSelfSigned != trustSelfSigned
+        ) {
+            currentBaseUrl = baseUrl
+            currentTrustSelfSigned = trustSelfSigned
+
+            val baseUrlValue = baseUrl
+                ?: throw IllegalStateException("No AAP server URL configured. Please log in first.")
+            val client = buildClient(trustSelfSigned)
+            val retrofit = buildEdaRetrofit(client, baseUrlValue)
+            cachedEdaApiService = retrofit.create(EdaApiService::class.java)
+        }
+
+        return cachedEdaApiService!!
     }
 
     private fun buildClient(trustSelfSigned: Boolean): OkHttpClient {
@@ -59,6 +85,14 @@ class AapApiProvider(
         val apiVersion = tokenManager.cachedApiVersion
         return Retrofit.Builder()
             .baseUrl("${baseUrl.trimEnd('/')}${apiVersion.prefix}")
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+    }
+
+    private fun buildEdaRetrofit(client: OkHttpClient, baseUrl: String): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("${baseUrl.trimEnd('/')}/api/eda/v1/")
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()

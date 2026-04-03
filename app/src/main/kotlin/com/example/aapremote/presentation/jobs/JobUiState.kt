@@ -1,6 +1,7 @@
 package com.example.aapremote.presentation.jobs
 
 import com.example.aapremote.model.Job
+import com.example.aapremote.model.JobStatus
 
 sealed interface JobStatusUiState {
     data object Loading : JobStatusUiState
@@ -14,7 +15,8 @@ sealed interface RecentJobsUiState {
     data class Success(
         val jobs: List<Job>,
         val hasMore: Boolean,
-        val isLoadingMore: Boolean = false
+        val isLoadingMore: Boolean = false,
+        val activeFilters: Set<JobStatus> = emptySet()
     ) : RecentJobsUiState
     data class Error(val message: String) : RecentJobsUiState
 }

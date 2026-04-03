@@ -19,6 +19,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.example.aapremote.ui.components.StatusFilterChips
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -80,53 +81,68 @@ fun RecentJobsScreen(
                     },
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    if (state.jobs.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No recent jobs",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        val listState = rememberLazyListState()
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        StatusFilterChips(
+                            activeFilters = state.activeFilters,
+                            onToggleFilter = { viewModel.toggleFilter(it) }
+                        )
 
-                        val shouldLoadMore by remember {
-                            derivedStateOf {
-                                val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                                lastVisibleItem >= state.jobs.size - 3
-                            }
-                        }
-
-                        LaunchedEffect(shouldLoadMore) {
-                            snapshotFlow { shouldLoadMore }
-                                .collect { if (it) viewModel.loadMore() }
-                        }
-
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(
-                                items = state.jobs,
-                                key = { it.id }
-                            ) { job ->
-                                RecentJobItem(
-                                    job = job,
-                                    onClick = { onNavigateToJobStatus(job.id) }
+                        if (state.jobs.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (state.activeFilters.isNotEmpty()) {
+                                        "No jobs match the selected filters"
+                                    } else {
+                                        "No recent jobs"
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        } else {
+                            val listState = rememberLazyListState()
 
-                            if (state.isLoadingMore) {
-                                item {
-                                    LinearProgressIndicator(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
+                            val shouldLoadMore by remember {
+                                derivedStateOf {
+                                    val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                                    lastVisibleItem >= state.jobs.size - 3
+                                }
+                            }
+
+                            LaunchedEffect(shouldLoadMore) {
+                                snapshotFlow { shouldLoadMore }
+                                    .collect { if (it) viewModel.loadMore() }
+                            }
+
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .weight(1f)
+                            ) {
+                                items(
+                                    items = state.jobs,
+                                    key = { it.id }
+                                ) { job ->
+                                    RecentJobItem(
+                                        job = job,
+                                        onClick = { onNavigateToJobStatus(job.id) }
                                     )
+                                }
+
+                                if (state.isLoadingMore) {
+                                    item {
+                                        LinearProgressIndicator(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

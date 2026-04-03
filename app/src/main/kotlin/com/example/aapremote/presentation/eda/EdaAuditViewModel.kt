@@ -1,0 +1,88 @@
+package com.example.aapremote.presentation.eda
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.aapremote.data.EdaAuditRepository
+import com.example.aapremote.model.EdaRuleAudit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
+
+class EdaAuditViewModel(
+    private val edaAuditRepository: EdaAuditRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<EdaAuditUiState>(EdaAuditUiState.Loading)
+    val uiState: StateFlow<EdaAuditUiState> = _uiState.asStateFlow()
+
+    private var currentPage = 1
+    private val allAuditRules = mutableListOf<EdaRuleAudit>()
+
+    init {
+        loadAuditRules()
+    }
+
+    fun loadAuditRules() {
+        currentPage = 1
+        allAuditRules.clear()
+        _uiState.value = EdaAuditUiState.Loading
+        viewModelScope.launch {
+            fetchAuditRules()
+        }
+    }
+
+    fun refresh() {
+        currentPage = 1
+        allAuditRules.clear()
+        viewModelScope.launch {
+            fetchAuditRules()
+        }
+    }
+
+    fun loadMore() {
+        val current = _uiState.value
+        if (current is EdaAuditUiState.Success && current.hasMore && !current.isLoadingMore) {
+            currentPage++
+            _uiState.value = current.copy(isLoadingMore = true)
+            viewModelScope.launch {
+                fetchAuditRules(append = true)
+            }
+        }
+    }
+
+    private suspend fun fetchAuditRules(append: Boolean = false) {
+        val result = edaAuditRepository.getAuditRules(page = currentPage)
+        result.fold(
+            onSuccess = { auditResult ->
+                if (append) {
+                    allAuditRules.addAll(auditResult.auditRules)
+                } else {
+                    allAuditRules.clear()
+                    allAuditRules.addAll(auditResult.auditRules)
+                }
+                if (allAuditRules.isEmpty()) {
+                    _uiState.value = EdaAuditUiState.Empty("No EDA audit events")
+                } else {
+                    _uiState.value = EdaAuditUiState.Success(
+                        auditRules = allAuditRules.toList(),
+                        hasMore = auditResult.hasMore
+                    )
+                }
+            },
+            onFailure = { error ->
+                val cause = error.cause ?: error
+                if (cause is HttpException && cause.code() in listOf(404, 502, 503)) {
+                    _uiState.value = EdaAuditUiState.Empty(
+                        "EDA is not configured on this AAP instance"
+                    )
+                } else {
+                    _uiState.value = EdaAuditUiState.Error(
+                        error.message ?: "Failed to load EDA audit events"
+                    )
+                }
+            }
+        )
+    }
+}
