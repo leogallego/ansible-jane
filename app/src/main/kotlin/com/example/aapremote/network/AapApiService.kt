@@ -38,4 +38,28 @@ interface AapApiService {
         @Query("page_size") pageSize: Int = 20,
         @Query("page") page: Int = 1
     ): PaginatedResponse<Job>
+
+    @GET("workflow_job_templates/")
+    suspend fun getWorkflowJobTemplates(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("labels__name__icontains") labelsFilter: String? = null,
+        @Query("order_by") orderBy: String = "-modified"
+    ): PaginatedResponse<WorkflowJobTemplate>
+
+    @POST("workflow_job_templates/{id}/launch/")
+    suspend fun launchWorkflowJob(
+        @Path("id") id: Int,
+        @Body request: LaunchRequest = LaunchRequest()
+    ): WorkflowLaunchResponse
+
+    @GET("workflow_jobs/{id}/")
+    suspend fun getWorkflowJob(@Path("id") id: Int): WorkflowJob
+
+    @GET("workflow_jobs/{id}/workflow_nodes/")
+    suspend fun getWorkflowNodes(
+        @Path("id") id: Int,
+        @Query("page_size") pageSize: Int = 200
+    ): PaginatedResponse<WorkflowNode>
 }

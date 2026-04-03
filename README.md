@@ -9,9 +9,10 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 - **Connect** to any AAP instance using a Personal Access Token (PAT)
 - **Self-signed certificate** support for lab/dev environments
 - **Auto-detect** AAP API version (2.4 controller vs 2.5+ gateway)
-- **Browse** job templates with search and label filtering
-- **Launch** jobs with optional extra variables (JSON)
+- **Browse** job templates and workflow templates with search and label filtering
+- **Launch** jobs and workflows with optional extra variables (JSON)
 - **Monitor** job status with live polling and stdout output
+- **Monitor** workflow job status with sub-job tracking
 - **Recent jobs** history
 
 ## Screenshots
@@ -45,6 +46,50 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 ```bash
 ./gradlew assembleDebug
 ```
+
+## Usage
+
+### Connecting to AAP
+
+1. Enter your AAP instance URL (e.g., `https://aap.example.com`)
+2. Enter your Personal Access Token (PAT) — generate one from your AAP user settings under **Tokens**
+3. For lab/dev environments with self-signed certificates, toggle **Allow self-signed certificates**
+4. Tap **Login**
+
+### Browsing Templates
+
+The **Templates** tab has two segments accessible via the segmented buttons at the top:
+
+- **Job Templates** — standard playbook-based templates
+- **Workflow Templates** — multi-step workflow templates
+
+Both segments support:
+
+- **Search** — type in the search bar to filter by name
+- **Label filtering** — tap a label chip to filter by label; tap again to clear
+- **Pagination** — scroll to the bottom to load more templates automatically
+- **Pull-to-refresh** — pull down on the list to reload data from the server (useful when templates are added or modified on the AAP side while the app is open)
+
+### Launching Jobs
+
+1. Tap the play button on a template card (only visible if your user has launch permission)
+2. If the template accepts extra variables, an input dialog appears first — enter valid JSON
+3. Confirm the launch in the confirmation dialog
+4. The app navigates to the job status screen automatically
+
+### Monitoring Jobs
+
+- **Job status** — shows job name, status badge, template name, start/finish/elapsed times, and stdout output
+- **Workflow job status** — same details plus a **Sub-Jobs** section listing each workflow node with its status; tap any sub-job to expand it and view its stdout output inline
+- Status auto-updates every 5 seconds while the job is running; polling stops when the job completes
+
+### Activity Tab
+
+The **Activity** tab shows recent jobs (both regular and workflow) sorted by creation time. Tap any job to view its status.
+
+### Settings
+
+Access settings via the gear icon in the top bar. Shows the connected server URL and a logout button.
 
 ## Security
 

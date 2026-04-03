@@ -19,6 +19,7 @@ import com.example.aapremote.ui.auth.AuthScreen
 import com.example.aapremote.ui.jobs.JobStatusScreen
 import com.example.aapremote.ui.main.MainScreen
 import com.example.aapremote.ui.settings.SettingsScreen
+import com.example.aapremote.ui.workflows.WorkflowJobStatusScreen
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.compose.koinInject
 
@@ -26,9 +27,11 @@ object Routes {
     const val AUTH = "auth"
     const val MAIN = "main"
     const val JOB_STATUS = "job_status/{jobId}"
+    const val WORKFLOW_JOB_STATUS = "workflow_job_status/{workflowJobId}"
     const val SETTINGS = "settings"
 
     fun jobStatus(jobId: Int) = "job_status/$jobId"
+    fun workflowJobStatus(workflowJobId: Int) = "workflow_job_status/$workflowJobId"
 }
 
 @Composable
@@ -76,6 +79,9 @@ fun AppNavigation(
                     segment = segment,
                     onNavigateToJobStatus = { jobId ->
                         navController.navigate(Routes.jobStatus(jobId))
+                    },
+                    onNavigateToWorkflowJobStatus = { workflowJobId ->
+                        navController.navigate(Routes.workflowJobStatus(workflowJobId))
                     }
                 )
             }
@@ -90,6 +96,19 @@ fun AppNavigation(
             popExitTransition = { slideOutHorizontally { it } }
         ) {
             JobStatusScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.WORKFLOW_JOB_STATUS,
+            arguments = listOf(navArgument("workflowJobId") { type = NavType.IntType }),
+            enterTransition = { slideInHorizontally { it } },
+            exitTransition = { slideOutHorizontally { -it } },
+            popEnterTransition = { slideInHorizontally { -it } },
+            popExitTransition = { slideOutHorizontally { it } }
+        ) {
+            WorkflowJobStatusScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
