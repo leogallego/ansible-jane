@@ -17,6 +17,13 @@ Full specification is in `idea.md`.
 - **DI:** Koin (not Hilt).
 - **Security:** Jetpack DataStore + Tink (Android Keystore-backed) for token/URL storage. HTTPS only via `network_security_config.xml`. `EncryptedSharedPreferences` is deprecated — do not use.
 
+## AAP Requirements
+
+- **Minimum version:** AAP 2.5+ with Gateway
+- All API access goes through the AAP Gateway, which proxies to Controller and EDA Controller
+- Controller endpoints use `/api/v2/` base path
+- EDA endpoints use `/api/eda/v1/` base path
+
 ## AAP API Endpoints
 
 All authenticated requests use header: `Authorization: Bearer <TOKEN>`

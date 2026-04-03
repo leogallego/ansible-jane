@@ -33,7 +33,7 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 ## Requirements
 
 - Android 12+ (API 31)
-- AAP instance with API access
+- AAP 2.5+ with Gateway (all API access goes through the gateway)
 - Personal Access Token with appropriate permissions (write access required for launching jobs)
 
 ## Building
