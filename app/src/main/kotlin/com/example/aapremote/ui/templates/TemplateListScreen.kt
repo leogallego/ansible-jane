@@ -8,20 +8,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -29,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -43,20 +36,26 @@ import com.example.aapremote.ui.components.ExtraVarsDialog
 import com.example.aapremote.ui.components.LabelChips
 import com.example.aapremote.ui.components.LaunchConfirmDialog
 import com.example.aapremote.ui.components.SearchBar
+import com.example.aapremote.ui.components.SkeletonCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TemplateListScreen(
     onNavigateToJobStatus: (Int) -> Unit,
-    onNavigateToRecentJobs: () -> Unit,
-    onLogout: () -> Unit,
     viewModel: TemplatesViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val launchState by viewModel.launchState.collectAsStateWithLifecycle()
     var selectedLabel by remember { mutableStateOf<Label?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState) {
+        if (uiState is TemplatesUiState.Success || uiState is TemplatesUiState.Error) {
+            isRefreshing = false
+        }
+    }
 
     LaunchedEffect(launchState) {
         when (val state = launchState) {
@@ -91,30 +90,12 @@ fun TemplateListScreen(
         else -> {}
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Job Templates") },
-                actions = {
-                    IconButton(onClick = onNavigateToRecentJobs) {
-                        Icon(Icons.Default.History, contentDescription = "Recent Jobs")
-                    }
-                    IconButton(onClick = onLogout) {
-                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout")
-                    }
-                }
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             when (val state = uiState) {
                 is TemplatesUiState.Idle, is TemplatesUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(5) { SkeletonCard() }
                     }
                 }
                 is TemplatesUiState.Error -> {
@@ -136,55 +117,64 @@ fun TemplateListScreen(
                         }
                     )
 
-                    if (state.templates.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No templates available",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        val listState = rememberLazyListState()
+                    PullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            isRefreshing = true
+                            viewModel.refresh()
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (state.templates.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No templates available",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            val listState = rememberLazyListState()
 
-                        // Load more when reaching the end
-                        if (state.hasMore) {
-                            val shouldLoadMore by remember {
-                                derivedStateOf {
-                                    val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                                    state.templates.size > 3 && lastVisibleItem >= state.templates.size - 3
+                            // Load more when reaching the end
+                            if (state.hasMore) {
+                                val shouldLoadMore by remember {
+                                    derivedStateOf {
+                                        val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                                        state.templates.size > 3 && lastVisibleItem >= state.templates.size - 3
+                                    }
+                                }
+
+                                LaunchedEffect(shouldLoadMore) {
+                                    if (shouldLoadMore) viewModel.loadMore()
                                 }
                             }
 
-                            LaunchedEffect(shouldLoadMore) {
-                                if (shouldLoadMore) viewModel.loadMore()
-                            }
-                        }
-
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(
-                                items = state.templates,
-                                key = { it.id }
-                            ) { template ->
-                                TemplateListItem(
-                                    template = template,
-                                    onLaunch = { viewModel.requestLaunch(template) }
-                                )
-                            }
-
-                            if (state.isLoadingMore) {
-                                item {
-                                    LinearProgressIndicator(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(
+                                    items = state.templates,
+                                    key = { it.id }
+                                ) { template ->
+                                    TemplateListItem(
+                                        template = template,
+                                        onLaunch = { viewModel.requestLaunch(template) }
                                     )
+                                }
+
+                                if (state.isLoadingMore) {
+                                    item {
+                                        LinearProgressIndicator(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -202,5 +192,10 @@ fun TemplateListScreen(
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }

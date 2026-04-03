@@ -13,23 +13,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,53 +37,60 @@ import com.example.aapremote.presentation.jobs.RecentJobsUiState
 import com.example.aapremote.presentation.jobs.RecentJobsViewModel
 import com.example.aapremote.ui.components.ErrorMessage
 import com.example.aapremote.ui.components.JobStatusBadge
+import com.example.aapremote.ui.components.SkeletonCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecentJobsScreen(
-    onNavigateBack: () -> Unit,
     onNavigateToJobStatus: (Int) -> Unit,
     viewModel: RecentJobsViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var isRefreshing by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Recent Jobs") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+    LaunchedEffect(uiState) {
+        if (uiState is RecentJobsUiState.Success || uiState is RecentJobsUiState.Error) {
+            isRefreshing = false
         }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            when (val state = uiState) {
-                is RecentJobsUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        when (val state = uiState) {
+            is RecentJobsUiState.Loading -> {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(5) { SkeletonCard() }
                 }
-                is RecentJobsUiState.Error -> {
-                    ErrorMessage(
-                        message = state.message,
-                        onRetry = { viewModel.loadRecentJobs() },
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                is RecentJobsUiState.Success -> {
+            }
+            is RecentJobsUiState.Error -> {
+                ErrorMessage(
+                    message = state.message,
+                    onRetry = { viewModel.loadRecentJobs() },
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            is RecentJobsUiState.Success -> {
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        isRefreshing = true
+                        viewModel.refresh()
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     if (state.jobs.isEmpty()) {
-                        Text(
-                            text = "No recent jobs",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No recent jobs",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     } else {
                         val listState = rememberLazyListState()
 

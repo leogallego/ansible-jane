@@ -41,6 +41,14 @@ class TemplatesViewModel(
         }
     }
 
+    fun refresh() {
+        currentPage = 1
+        allTemplates.clear()
+        viewModelScope.launch {
+            fetchTemplates()
+        }
+    }
+
     fun loadMore() {
         val current = _uiState.value
         if (current is TemplatesUiState.Success && current.hasMore && !current.isLoadingMore) {

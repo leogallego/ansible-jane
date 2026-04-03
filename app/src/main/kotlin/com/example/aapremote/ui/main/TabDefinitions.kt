@@ -1,0 +1,63 @@
+package com.example.aapremote.ui.main
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.ui.graphics.vector.ImageVector
+
+data class Segment(
+    val label: String,
+    val isDefault: Boolean = false,
+    val isImplemented: Boolean = false
+)
+
+sealed class TopLevelTab(
+    val route: String,
+    val label: String,
+    val icon: ImageVector,
+    val selectedIcon: ImageVector,
+    val segments: List<Segment>
+) {
+    data object Templates : TopLevelTab(
+        route = "main/templates",
+        label = "Templates",
+        icon = Icons.Outlined.Description,
+        selectedIcon = Icons.Filled.Description,
+        segments = listOf(
+            Segment(label = "Job Templates", isDefault = true, isImplemented = true),
+            Segment(label = "Workflow Templates")
+        )
+    )
+
+    data object Infrastructure : TopLevelTab(
+        route = "main/infrastructure",
+        label = "Infrastructure",
+        icon = Icons.Outlined.Dns,
+        selectedIcon = Icons.Filled.Dns,
+        segments = listOf(
+            Segment(label = "Inventories", isDefault = true),
+            Segment(label = "Hosts"),
+            Segment(label = "Projects")
+        )
+    )
+
+    data object Activity : TopLevelTab(
+        route = "main/activity",
+        label = "Activity",
+        icon = Icons.Outlined.History,
+        selectedIcon = Icons.Filled.History,
+        segments = listOf(
+            Segment(label = "Jobs", isDefault = true, isImplemented = true),
+            Segment(label = "Schedules"),
+            Segment(label = "EDA Audit")
+        )
+    )
+
+    companion object {
+        val entries: List<TopLevelTab> = listOf(Templates, Infrastructure, Activity)
+    }
+}

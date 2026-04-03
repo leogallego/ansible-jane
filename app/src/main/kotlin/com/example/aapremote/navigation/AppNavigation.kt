@@ -1,5 +1,9 @@
 package com.example.aapremote.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
@@ -8,19 +12,21 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.aapremote.data.TokenManager
 import com.example.aapremote.network.AuthInterceptor
 import com.example.aapremote.presentation.auth.AuthViewModel
 import com.example.aapremote.ui.auth.AuthScreen
 import com.example.aapremote.ui.jobs.JobStatusScreen
-import com.example.aapremote.ui.jobs.RecentJobsScreen
-import com.example.aapremote.ui.templates.TemplateListScreen
+import com.example.aapremote.ui.main.MainScreen
+import com.example.aapremote.ui.settings.SettingsScreen
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 
 object Routes {
     const val AUTH = "auth"
-    const val TEMPLATES = "templates"
+    const val MAIN = "main"
     const val JOB_STATUS = "job_status/{jobId}"
-    const val RECENT_JOBS = "recent_jobs"
+    const val SETTINGS = "settings"
 
     fun jobStatus(jobId: Int) = "job_status/$jobId"
 }
@@ -41,49 +47,71 @@ fun AppNavigation(
         navController = navController,
         startDestination = Routes.AUTH
     ) {
-        composable(Routes.AUTH) {
+        composable(
+            Routes.AUTH,
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
             AuthScreen(
                 onNavigateToDashboard = {
-                    navController.navigate(Routes.TEMPLATES) {
+                    navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.AUTH) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable(Routes.TEMPLATES) {
-            val authViewModel: AuthViewModel = koinViewModel()
-            TemplateListScreen(
-                onNavigateToJobStatus = { jobId ->
-                    navController.navigate(Routes.jobStatus(jobId))
-                },
-                onNavigateToRecentJobs = {
-                    navController.navigate(Routes.RECENT_JOBS)
-                },
-                onLogout = {
-                    authViewModel.logout()
-                    navController.navigate(Routes.AUTH) {
-                        popUpTo(0) { inclusive = true }
-                    }
+        composable(
+            Routes.MAIN,
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            MainScreen(
+                onNavigateToSettings = {
+                    navController.navigate(Routes.SETTINGS)
                 }
-            )
+            ) { tab, segment ->
+                TabContent(
+                    tab = tab,
+                    segment = segment,
+                    onNavigateToJobStatus = { jobId ->
+                        navController.navigate(Routes.jobStatus(jobId))
+                    }
+                )
+            }
         }
 
         composable(
             route = Routes.JOB_STATUS,
-            arguments = listOf(navArgument("jobId") { type = NavType.IntType })
+            arguments = listOf(navArgument("jobId") { type = NavType.IntType }),
+            enterTransition = { slideInHorizontally { it } },
+            exitTransition = { slideOutHorizontally { -it } },
+            popEnterTransition = { slideInHorizontally { -it } },
+            popExitTransition = { slideOutHorizontally { it } }
         ) {
             JobStatusScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        composable(Routes.RECENT_JOBS) {
-            RecentJobsScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToJobStatus = { jobId ->
-                    navController.navigate(Routes.jobStatus(jobId))
-                }
+        composable(
+            Routes.SETTINGS,
+            enterTransition = { slideInHorizontally { it } },
+            exitTransition = { slideOutHorizontally { -it } },
+            popEnterTransition = { slideInHorizontally { -it } },
+            popExitTransition = { slideOutHorizontally { it } }
+        ) {
+            val authViewModel: AuthViewModel = koinViewModel()
+            val tokenManager: TokenManager = koinInject()
+            SettingsScreen(
+                serverUrl = tokenManager.cachedBaseUrl ?: "Unknown",
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(Routes.AUTH) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
