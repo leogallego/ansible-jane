@@ -78,7 +78,7 @@ fun WorkflowJobStatusScreen(
                 }
                 is WorkflowJobStatusUiState.Error -> {
                     ErrorMessage(
-                        message = state.message,
+                        error = state.error,
                         onRetry = { viewModel.retry() },
                         modifier = Modifier.align(Alignment.Center)
                     )

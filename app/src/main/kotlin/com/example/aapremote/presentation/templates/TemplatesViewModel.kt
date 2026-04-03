@@ -3,6 +3,7 @@ package com.example.aapremote.presentation.templates
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.TemplateRepository
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.JobTemplate
 import com.example.aapremote.model.Label
 import kotlinx.coroutines.Job
@@ -113,7 +114,7 @@ class TemplatesViewModel(
             val result = templateRepository.launchJob(template.id, extraVars)
             _launchState.value = result.fold(
                 onSuccess = { jobId -> LaunchState.Launched(jobId) },
-                onFailure = { error -> LaunchState.LaunchError(error.message ?: "Launch failed") }
+                onFailure = { error -> LaunchState.LaunchError(AppError.from(error)) }
             )
         }
     }
@@ -153,7 +154,7 @@ class TemplatesViewModel(
                 )
             },
             onFailure = { error ->
-                _uiState.value = TemplatesUiState.Error(error.message ?: "Failed to load templates")
+                _uiState.value = TemplatesUiState.Error(AppError.from(error))
             }
         )
     }

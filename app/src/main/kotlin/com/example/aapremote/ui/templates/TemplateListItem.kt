@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,11 +21,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.aapremote.model.JobTemplate
+import com.example.aapremote.ui.components.pressScale
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -33,11 +36,14 @@ fun TemplateListItem(
     onLaunch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     ElevatedCard(
         onClick = onLaunch,
+        interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
+            .pressScale(interactionSource)
     ) {
         Row(
             modifier = Modifier

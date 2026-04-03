@@ -1,5 +1,6 @@
 package com.example.aapremote.presentation.workflows
 
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.WorkflowJob
 import com.example.aapremote.model.WorkflowNode
 
@@ -13,5 +14,5 @@ sealed interface WorkflowJobStatusUiState {
         val workflowJob: WorkflowJob,
         val nodes: List<WorkflowNode> = emptyList()
     ) : WorkflowJobStatusUiState
-    data class Error(val message: String) : WorkflowJobStatusUiState
+    data class Error(val error: AppError) : WorkflowJobStatusUiState
 }

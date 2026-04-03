@@ -1,6 +1,6 @@
 package com.example.aapremote.ui.jobs
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import com.example.aapremote.ui.components.pressScale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,7 +68,7 @@ fun RecentJobsScreen(
             }
             is RecentJobsUiState.Error -> {
                 ErrorMessage(
-                    message = state.message,
+                    error = state.error,
                     onRetry = { viewModel.loadRecentJobs() },
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -159,11 +160,14 @@ private fun RecentJobItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Card(
+        onClick = onClick,
+        interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable(onClick = onClick)
+            .pressScale(interactionSource)
     ) {
         Row(
             modifier = Modifier

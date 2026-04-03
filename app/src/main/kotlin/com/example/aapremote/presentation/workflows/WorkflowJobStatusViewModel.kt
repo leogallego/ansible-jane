@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.JobRepository
 import com.example.aapremote.data.WorkflowRepository
+import com.example.aapremote.model.AppError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +44,7 @@ class WorkflowJobStatusViewModel(
         pollingJob = viewModelScope.launch {
             workflowRepository.pollWorkflowJobStatus(workflowJobId)
                 .catch { e ->
-                    _uiState.value = WorkflowJobStatusUiState.Error(e.message ?: "Unknown error")
+                    _uiState.value = WorkflowJobStatusUiState.Error(AppError.from(e))
                 }
                 .collect { workflowJob ->
                     val nodes = workflowRepository.getWorkflowNodes(workflowJobId).getOrDefault(emptyList())

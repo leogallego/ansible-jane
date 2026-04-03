@@ -3,6 +3,7 @@ package com.example.aapremote.presentation.workflows
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.WorkflowRepository
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Label
 import com.example.aapremote.model.WorkflowJobTemplate
 import kotlinx.coroutines.Job
@@ -102,7 +103,7 @@ class WorkflowTemplatesViewModel(
             val result = workflowRepository.launchWorkflow(template.id, extraVars)
             _launchState.value = result.fold(
                 onSuccess = { workflowJobId -> WorkflowLaunchState.Launched(workflowJobId) },
-                onFailure = { error -> WorkflowLaunchState.LaunchError(error.message ?: "Launch failed") }
+                onFailure = { error -> WorkflowLaunchState.LaunchError(AppError.from(error)) }
             )
         }
     }
@@ -142,7 +143,7 @@ class WorkflowTemplatesViewModel(
                 )
             },
             onFailure = { error ->
-                _uiState.value = WorkflowTemplatesUiState.Error(error.message ?: "Failed to load workflow templates")
+                _uiState.value = WorkflowTemplatesUiState.Error(AppError.from(error))
             }
         )
     }

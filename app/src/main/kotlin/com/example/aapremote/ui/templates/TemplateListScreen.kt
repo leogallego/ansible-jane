@@ -64,7 +64,7 @@ fun TemplateListScreen(
                 onNavigateToJobStatus(state.jobId)
             }
             is LaunchState.LaunchError -> {
-                snackbarHostState.showSnackbar(state.message)
+                snackbarHostState.showSnackbar(state.error.message)
                 viewModel.resetLaunchState()
             }
             else -> {}
@@ -100,7 +100,7 @@ fun TemplateListScreen(
                 }
                 is TemplatesUiState.Error -> {
                     ErrorMessage(
-                        message = state.message,
+                        error = state.error,
                         onRetry = { viewModel.loadTemplates() },
                         modifier = Modifier.fillMaxSize()
                     )

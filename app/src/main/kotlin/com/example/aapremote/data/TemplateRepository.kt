@@ -34,15 +34,8 @@ class TemplateRepository(private val apiService: AapApiService) {
             val request = LaunchRequest(extraVars = extraVars)
             val response = apiService.launchJob(templateId, request)
             Result.success(response.job)
-        } catch (e: retrofit2.HttpException) {
-            val message = when (e.code()) {
-                400 -> "Invalid request. Check your extra variables."
-                403 -> "You don't have permission to launch this template."
-                else -> "Launch failed (${e.code()}): ${e.message()}"
-            }
-            Result.failure(Exception(message))
         } catch (e: Exception) {
-            Result.failure(Exception("Launch failed: ${e.message}"))
+            Result.failure(e)
         }
     }
 }

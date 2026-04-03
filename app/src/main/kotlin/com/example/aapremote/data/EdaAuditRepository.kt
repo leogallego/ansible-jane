@@ -19,7 +19,7 @@ class EdaAuditRepository(private val edaApiService: EdaApiService) {
                 )
             )
         } catch (e: Exception) {
-            Result.failure(Exception("Failed to load EDA audit events: ${e.message}", e))
+            Result.failure(e)
         }
     }
 }

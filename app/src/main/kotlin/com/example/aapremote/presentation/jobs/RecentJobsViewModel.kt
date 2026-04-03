@@ -3,6 +3,7 @@ package com.example.aapremote.presentation.jobs
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.JobRepository
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Job
 import com.example.aapremote.model.JobStatus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,7 +100,7 @@ class RecentJobsViewModel(
                 )
             },
             onFailure = { error ->
-                _uiState.value = RecentJobsUiState.Error(error.message ?: "Failed to load jobs")
+                _uiState.value = RecentJobsUiState.Error(AppError.from(error))
             }
         )
     }

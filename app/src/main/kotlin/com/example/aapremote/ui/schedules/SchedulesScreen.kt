@@ -71,7 +71,7 @@ fun SchedulesScreen(
             }
             is SchedulesUiState.Error -> {
                 ErrorMessage(
-                    message = state.message,
+                    error = state.error,
                     onRetry = { viewModel.loadSchedules() },
                     modifier = Modifier.align(Alignment.Center)
                 )

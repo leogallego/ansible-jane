@@ -3,6 +3,7 @@ package com.example.aapremote.presentation.eda
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.EdaAuditRepository
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.EdaRuleAudit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,15 +73,12 @@ class EdaAuditViewModel(
                 }
             },
             onFailure = { error ->
-                val cause = error.cause ?: error
-                if (cause is HttpException && cause.code() in listOf(404, 502, 503)) {
+                if (error is HttpException && error.code() in listOf(404, 502, 503)) {
                     _uiState.value = EdaAuditUiState.Empty(
                         "EDA is not configured on this AAP instance"
                     )
                 } else {
-                    _uiState.value = EdaAuditUiState.Error(
-                        error.message ?: "Failed to load EDA audit events"
-                    )
+                    _uiState.value = EdaAuditUiState.Error(AppError.from(error))
                 }
             }
         )

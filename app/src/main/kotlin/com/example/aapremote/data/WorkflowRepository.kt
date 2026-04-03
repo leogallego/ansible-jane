@@ -39,15 +39,8 @@ class WorkflowRepository(private val apiService: AapApiService) {
             val request = LaunchRequest(extraVars = extraVars)
             val response = apiService.launchWorkflowJob(templateId, request)
             Result.success(response.workflowJob)
-        } catch (e: retrofit2.HttpException) {
-            val message = when (e.code()) {
-                400 -> "Invalid request. Check your extra variables."
-                403 -> "You don't have permission to launch this workflow template."
-                else -> "Launch failed (${e.code()}): ${e.message()}"
-            }
-            Result.failure(Exception(message))
         } catch (e: Exception) {
-            Result.failure(Exception("Launch failed: ${e.message}"))
+            Result.failure(e)
         }
     }
 
@@ -55,7 +48,7 @@ class WorkflowRepository(private val apiService: AapApiService) {
         return try {
             Result.success(apiService.getWorkflowJob(workflowJobId))
         } catch (e: Exception) {
-            Result.failure(Exception("Failed to get workflow job status: ${e.message}"))
+            Result.failure(e)
         }
     }
 
@@ -67,7 +60,7 @@ class WorkflowRepository(private val apiService: AapApiService) {
                 if (job.status.isTerminal) break
                 delay(5000)
             } catch (e: Exception) {
-                throw Exception("Failed to poll workflow job status: ${e.message}")
+                throw e
             }
         }
     }
@@ -77,7 +70,7 @@ class WorkflowRepository(private val apiService: AapApiService) {
             val response = apiService.getWorkflowNodes(workflowJobId)
             Result.success(response.results)
         } catch (e: Exception) {
-            Result.failure(Exception("Failed to get workflow nodes: ${e.message}"))
+            Result.failure(e)
         }
     }
 }
