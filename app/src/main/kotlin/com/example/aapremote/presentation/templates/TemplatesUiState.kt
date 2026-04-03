@@ -1,5 +1,6 @@
 package com.example.aapremote.presentation.templates
 
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.JobTemplate
 import com.example.aapremote.model.Label
 
@@ -12,7 +13,7 @@ sealed interface TemplatesUiState {
         val hasMore: Boolean,
         val isLoadingMore: Boolean = false
     ) : TemplatesUiState
-    data class Error(val message: String) : TemplatesUiState
+    data class Error(val error: AppError) : TemplatesUiState
 }
 
 sealed interface LaunchState {
@@ -21,5 +22,5 @@ sealed interface LaunchState {
     data class EnteringVars(val template: JobTemplate) : LaunchState
     data object Launching : LaunchState
     data class Launched(val jobId: Int) : LaunchState
-    data class LaunchError(val message: String) : LaunchState
+    data class LaunchError(val error: AppError) : LaunchState
 }

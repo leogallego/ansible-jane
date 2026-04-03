@@ -3,6 +3,7 @@ package com.example.aapremote.presentation.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.AuthRepository
+import com.example.aapremote.model.AppError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +22,9 @@ class AuthViewModel(
 
     fun connect(baseUrl: String, token: String, trustSelfSigned: Boolean) {
         if (baseUrl.isBlank() || token.isBlank()) {
-            _uiState.value = AuthUiState.Error("URL and token are required")
+            _uiState.value = AuthUiState.Error(
+                AppError.Unknown(message = "URL and token are required")
+            )
             return
         }
 
@@ -30,7 +33,7 @@ class AuthViewModel(
             val result = authRepository.validateCredentials(baseUrl, token, trustSelfSigned)
             _uiState.value = result.fold(
                 onSuccess = { user -> AuthUiState.Success(user.username) },
-                onFailure = { error -> AuthUiState.Error(error.message ?: "Unknown error") }
+                onFailure = { error -> AuthUiState.Error(AppError.from(error)) }
             )
         }
     }

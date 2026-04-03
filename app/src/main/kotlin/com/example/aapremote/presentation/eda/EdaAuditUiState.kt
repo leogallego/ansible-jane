@@ -1,5 +1,6 @@
 package com.example.aapremote.presentation.eda
 
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.EdaRuleAudit
 
 sealed interface EdaAuditUiState {
@@ -10,5 +11,5 @@ sealed interface EdaAuditUiState {
         val isLoadingMore: Boolean = false
     ) : EdaAuditUiState
     data class Empty(val message: String) : EdaAuditUiState
-    data class Error(val message: String) : EdaAuditUiState
+    data class Error(val error: AppError) : EdaAuditUiState
 }

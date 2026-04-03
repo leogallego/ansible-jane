@@ -19,7 +19,7 @@ class ScheduleRepository(private val apiService: AapApiService) {
                 )
             )
         } catch (e: Exception) {
-            Result.failure(Exception("Failed to load schedules: ${e.message}"))
+            Result.failure(e)
         }
     }
 
@@ -28,7 +28,7 @@ class ScheduleRepository(private val apiService: AapApiService) {
             val updated = apiService.toggleSchedule(id, mapOf("enabled" to enabled))
             Result.success(updated)
         } catch (e: Exception) {
-            Result.failure(Exception("Failed to toggle schedule: ${e.message}"))
+            Result.failure(e)
         }
     }
 }

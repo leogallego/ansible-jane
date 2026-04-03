@@ -109,7 +109,7 @@ fun AuthScreen(
             }
             is AuthUiState.Error -> {
                 ErrorMessage(
-                    message = state.message,
+                    error = state.error,
                     onRetry = { viewModel.connect(baseUrl, token, trustSelfSigned) }
                 )
                 Spacer(modifier = Modifier.height(16.dp))

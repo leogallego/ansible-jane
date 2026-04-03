@@ -1,5 +1,6 @@
 package com.example.aapremote.presentation.workflows
 
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Label
 import com.example.aapremote.model.WorkflowJobTemplate
 
@@ -12,7 +13,7 @@ sealed interface WorkflowTemplatesUiState {
         val hasMore: Boolean,
         val isLoadingMore: Boolean = false
     ) : WorkflowTemplatesUiState
-    data class Error(val message: String) : WorkflowTemplatesUiState
+    data class Error(val error: AppError) : WorkflowTemplatesUiState
 }
 
 sealed interface WorkflowLaunchState {
@@ -21,5 +22,5 @@ sealed interface WorkflowLaunchState {
     data class EnteringVars(val template: WorkflowJobTemplate) : WorkflowLaunchState
     data object Launching : WorkflowLaunchState
     data class Launched(val workflowJobId: Int) : WorkflowLaunchState
-    data class LaunchError(val message: String) : WorkflowLaunchState
+    data class LaunchError(val error: AppError) : WorkflowLaunchState
 }

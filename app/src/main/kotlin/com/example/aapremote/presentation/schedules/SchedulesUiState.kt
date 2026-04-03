@@ -1,5 +1,6 @@
 package com.example.aapremote.presentation.schedules
 
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Schedule
 
 sealed interface SchedulesUiState {
@@ -9,5 +10,5 @@ sealed interface SchedulesUiState {
         val hasMore: Boolean,
         val isLoadingMore: Boolean = false
     ) : SchedulesUiState
-    data class Error(val message: String) : SchedulesUiState
+    data class Error(val error: AppError) : SchedulesUiState
 }

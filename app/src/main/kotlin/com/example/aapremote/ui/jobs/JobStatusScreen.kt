@@ -75,7 +75,7 @@ fun JobStatusScreen(
                 }
                 is JobStatusUiState.Error -> {
                     ErrorMessage(
-                        message = state.message,
+                        error = state.error,
                         onRetry = { viewModel.retry() },
                         modifier = Modifier.align(Alignment.Center)
                     )

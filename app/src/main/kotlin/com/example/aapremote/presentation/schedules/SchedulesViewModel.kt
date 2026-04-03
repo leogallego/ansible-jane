@@ -3,6 +3,7 @@ package com.example.aapremote.presentation.schedules
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.ScheduleRepository
+import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Schedule
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -104,7 +105,7 @@ class SchedulesViewModel(
                 )
             },
             onFailure = { error ->
-                _uiState.value = SchedulesUiState.Error(error.message ?: "Failed to load schedules")
+                _uiState.value = SchedulesUiState.Error(AppError.from(error))
             }
         )
     }

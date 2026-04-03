@@ -32,13 +32,3 @@ val md_theme_dark_background = Color(0xFF1C1B1F)
 val md_theme_dark_onBackground = Color(0xFFE6E1E5)
 val md_theme_dark_error = Color(0xFFF2B8B5)
 val md_theme_dark_onError = Color(0xFF601410)
-
-// Job status colors
-val StatusSuccessful = Color(0xFF4CAF50)
-val StatusFailed = Color(0xFFF44336)
-val StatusError = Color(0xFFD32F2F)
-val StatusRunning = Color(0xFFFF9800)
-val StatusPending = Color(0xFF9E9E9E)
-val StatusWaiting = Color(0xFF9E9E9E)
-val StatusNew = Color(0xFF9E9E9E)
-val StatusCanceled = Color(0xFF2196F3)

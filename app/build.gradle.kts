@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.aapremote"
         minSdk = 31
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2604010
+        versionName = "26.4.1"
     }
 
     compileOptions {

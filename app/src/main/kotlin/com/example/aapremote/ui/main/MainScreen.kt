@@ -1,6 +1,10 @@
 package com.example.aapremote.ui.main
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,7 +60,15 @@ fun MainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AAPdroid") },
+                title = {
+                    AnimatedContent(
+                        targetState = selectedTab.label,
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        label = "titleCrossfade"
+                    ) { label ->
+                        Text(label)
+                    }
+                },
                 actions = {
                     IconButton(onClick = {
                         scope.launch {

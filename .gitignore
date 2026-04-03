@@ -20,6 +20,9 @@
 .claude/skills
 .mcp.json
 
+# Documentation scraps
+aap-docs/
+
 # Android / Gradle
 build/
 .gradle/

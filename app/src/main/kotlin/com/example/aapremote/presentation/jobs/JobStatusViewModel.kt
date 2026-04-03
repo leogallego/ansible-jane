@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.JobRepository
+import com.example.aapremote.model.AppError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +30,7 @@ class JobStatusViewModel(
         pollingJob = viewModelScope.launch {
             jobRepository.pollJobStatus(jobId)
                 .catch { e ->
-                    _uiState.value = JobStatusUiState.Error(e.message ?: "Unknown error")
+                    _uiState.value = JobStatusUiState.Error(AppError.from(e))
                 }
                 .collect { job ->
                     val stdout = jobRepository.getJobStdout(jobId).getOrNull()

@@ -13,7 +13,7 @@ class JobRepository(private val apiService: AapApiService) {
         return try {
             Result.success(apiService.getJob(jobId))
         } catch (e: Exception) {
-            Result.failure(Exception("Failed to get job status: ${e.message}"))
+            Result.failure(e)
         }
     }
 
@@ -25,7 +25,7 @@ class JobRepository(private val apiService: AapApiService) {
                 if (job.status.isTerminal) break
                 delay(5000)
             } catch (e: Exception) {
-                throw Exception("Failed to poll job status: ${e.message}")
+                throw e
             }
         }
     }
@@ -35,7 +35,7 @@ class JobRepository(private val apiService: AapApiService) {
             val response = apiService.getJobStdout(jobId)
             Result.success(response.string())
         } catch (e: Exception) {
-            Result.failure(Exception("Failed to get job output: ${e.message}"))
+            Result.failure(e)
         }
     }
 
@@ -70,7 +70,7 @@ class JobRepository(private val apiService: AapApiService) {
                 )
             )
         } catch (e: Exception) {
-            Result.failure(Exception("Failed to load recent jobs: ${e.message}"))
+            Result.failure(e)
         }
     }
 }

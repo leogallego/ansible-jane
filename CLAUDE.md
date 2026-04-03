@@ -45,7 +45,7 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 
 ## Development Rules
 
-- Create temporary files in the project directory (e.g., `.tmp/`), not in the system `/tmp`. Only use `/tmp` if absolutely necessary. Clean up temp files when done.
+- **MUST** create all temporary files and directories inside the project directory (e.g., `.tmp/`). NEVER use `/tmp`, `$TMPDIR`, or any system temp directory. Clean up temp files when done.
 
 ## Security Rules
 
@@ -60,6 +60,8 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 - DataStore + Tink (unchanged) (002-nav-ui-modernize)
 - Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3 BOM), Navigation Compose, Retrofit + Kotlin Serialization, Koin (004-workflow-templates)
 - DataStore + Tink (unchanged — no new storage needs) (004-workflow-templates)
+- Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Compose Animation, Retrofit, Koin (007-ui-polish-animations)
+- N/A (no new storage for this feature) (007-ui-polish-animations)
 
 ## Recent Changes
 - 001-aap-remote-control: Added Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit,

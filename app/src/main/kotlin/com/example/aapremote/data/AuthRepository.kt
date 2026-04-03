@@ -41,21 +41,8 @@ class AuthRepository(
             )
 
             Result.success(user)
-        } catch (e: retrofit2.HttpException) {
-            val message = when (e.code()) {
-                401 -> "Invalid token. Please check your Personal Access Token."
-                403 -> "Access denied. Your token lacks required permissions."
-                else -> "Server error (${e.code()}): ${e.message()}"
-            }
-            Result.failure(Exception(message))
-        } catch (e: java.net.UnknownHostException) {
-            Result.failure(Exception("Cannot reach server. Check the URL and your network connection."))
-        } catch (e: java.net.ConnectException) {
-            Result.failure(Exception("Connection refused. Verify the AAP server is running."))
-        } catch (e: javax.net.ssl.SSLException) {
-            Result.failure(Exception("SSL error. If using a self-signed certificate, enable the toggle."))
         } catch (e: Exception) {
-            Result.failure(Exception("Connection failed: ${e.message}"))
+            Result.failure(e)
         }
     }
 
