@@ -32,6 +32,14 @@ class RecentJobsViewModel(
         }
     }
 
+    fun refresh() {
+        currentPage = 1
+        allJobs.clear()
+        viewModelScope.launch {
+            fetchJobs()
+        }
+    }
+
     fun loadMore() {
         val current = _uiState.value
         if (current is RecentJobsUiState.Success && current.hasMore && !current.isLoadingMore) {

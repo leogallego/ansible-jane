@@ -36,6 +36,10 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 - **Presentation:** ViewModels with `StateFlow<UiState>` (Idle, Loading, Success, Error pattern)
 - **UI:** Compose screens reacting to ViewModel state
 
+## Development Rules
+
+- Create temporary files in the project directory (e.g., `.tmp/`), not in the system `/tmp`. Only use `/tmp` if absolutely necessary. Clean up temp files when done.
+
 ## Security Rules
 
 - Never hardcode URLs or tokens
@@ -45,6 +49,8 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 ## Active Technologies
 - Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit, (001-aap-remote-control)
 - Jetpack DataStore + Tink (encrypted, local only) (001-aap-remote-control)
+- Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Navigation Compose, Retrofit, Koin (002-nav-ui-modernize)
+- DataStore + Tink (unchanged) (002-nav-ui-modernize)
 
 ## Recent Changes
 - 001-aap-remote-control: Added Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit,

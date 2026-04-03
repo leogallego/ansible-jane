@@ -12,7 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Card
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +33,8 @@ fun TemplateListItem(
     onLaunch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    ElevatedCard(
+        onClick = onLaunch,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
@@ -77,7 +79,8 @@ fun TemplateListItem(
                                         text = label.name,
                                         style = MaterialTheme.typography.labelSmall
                                     )
-                                }
+                                },
+                                border = AssistChipDefaults.assistChipBorder(enabled = true)
                             )
                         }
                     }
