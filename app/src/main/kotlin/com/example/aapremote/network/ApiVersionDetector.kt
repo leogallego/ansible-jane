@@ -6,8 +6,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 enum class ApiVersion(val prefix: String) {
-    V2("/api/v2/"),
-    CONTROLLER_V2("/api/controller/v2/")
+    CONTROLLER_V2("/api/controller/v2/"),
+    V2("/api/v2/")
 }
 
 class ApiVersionDetector(private val httpClient: OkHttpClient) {

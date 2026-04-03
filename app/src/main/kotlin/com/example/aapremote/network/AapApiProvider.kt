@@ -28,8 +28,10 @@ class AapApiProvider(
             currentBaseUrl = baseUrl
             currentTrustSelfSigned = trustSelfSigned
 
+            val baseUrlValue = baseUrl
+                ?: throw IllegalStateException("No AAP server URL configured. Please log in first.")
             val client = buildClient(trustSelfSigned)
-            val retrofit = buildRetrofit(client, baseUrl ?: "https://placeholder.example.com")
+            val retrofit = buildRetrofit(client, baseUrlValue)
             cachedApiService = retrofit.create(AapApiService::class.java)
         }
 

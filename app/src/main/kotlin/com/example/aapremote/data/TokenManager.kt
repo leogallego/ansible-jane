@@ -30,7 +30,7 @@ class TokenManager(private val context: Context) {
         private set
     var cachedBaseUrl: String? = null
         private set
-    var cachedApiVersion: ApiVersion = ApiVersion.V2
+    var cachedApiVersion: ApiVersion = ApiVersion.CONTROLLER_V2
         private set
     var cachedTrustSelfSigned: Boolean = false
         private set
@@ -99,8 +99,8 @@ class TokenManager(private val context: Context) {
             cachedBaseUrl = decrypt(encryptedUrl)
             cachedToken = decrypt(encryptedToken)
             cachedApiVersion = prefs[KEY_API_VERSION]?.let {
-                try { ApiVersion.valueOf(it) } catch (_: Exception) { ApiVersion.V2 }
-            } ?: ApiVersion.V2
+                try { ApiVersion.valueOf(it) } catch (_: Exception) { ApiVersion.CONTROLLER_V2 }
+            } ?: ApiVersion.CONTROLLER_V2
             cachedTrustSelfSigned = prefs[KEY_TRUST_SELF_SIGNED] ?: false
             true
         } catch (_: Exception) {
@@ -113,7 +113,7 @@ class TokenManager(private val context: Context) {
         context.credentialsDataStore.edit { it.clear() }
         cachedToken = null
         cachedBaseUrl = null
-        cachedApiVersion = ApiVersion.V2
+        cachedApiVersion = ApiVersion.CONTROLLER_V2
         cachedTrustSelfSigned = false
     }
 
