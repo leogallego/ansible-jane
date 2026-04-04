@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -35,7 +36,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.aapremote.data.TokenManager
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +47,9 @@ fun MainScreen(
     onNavigateToSettings: () -> Unit = {},
     content: @Composable (TopLevelTab, Segment) -> Unit
 ) {
+    val tokenManager: TokenManager = koinInject()
+    val activeInstance by tokenManager.activeInstance.collectAsStateWithLifecycle()
+
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     val tabs = TopLevelTab.entries
     val selectedTab = tabs[selectedTabIndex]
@@ -66,7 +73,16 @@ fun MainScreen(
                         transitionSpec = { fadeIn() togetherWith fadeOut() },
                         label = "titleCrossfade"
                     ) { label ->
-                        Text(label)
+                        Column {
+                            Text(label)
+                            activeInstance?.let { instance ->
+                                Text(
+                                    text = instance.displayLabel,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 },
                 actions = {

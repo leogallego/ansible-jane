@@ -12,59 +12,65 @@ class AapApiProvider(
     private val tokenManager: TokenManager,
     private val json: Json
 ) {
-    private var currentBaseUrl: String? = null
-    private var currentTrustSelfSigned: Boolean = false
-    private var cachedApiService: AapApiService? = null
-    private var cachedEdaApiService: EdaApiService? = null
+    // Per-instance service cache: instanceId -> (AapApiService, EdaApiService)
+    private val serviceCache = mutableMapOf<String, Pair<AapApiService, EdaApiService?>>()
 
     @Synchronized
     fun getApiService(): AapApiService {
-        val baseUrl = tokenManager.cachedBaseUrl
-        val trustSelfSigned = tokenManager.cachedTrustSelfSigned
+        val instance = tokenManager.activeInstance.value
+            ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
-        if (cachedApiService == null ||
-            currentBaseUrl != baseUrl ||
-            currentTrustSelfSigned != trustSelfSigned
-        ) {
-            currentBaseUrl = baseUrl
-            currentTrustSelfSigned = trustSelfSigned
+        val cached = serviceCache[instance.id]
+        if (cached != null) return cached.first
 
-            val baseUrlValue = baseUrl
-                ?: throw IllegalStateException("No AAP server URL configured. Please log in first.")
-            val client = buildClient(trustSelfSigned)
-            val retrofit = buildRetrofit(client, baseUrlValue)
-            cachedApiService = retrofit.create(AapApiService::class.java)
-            cachedEdaApiService = null
+        val client = buildClient(instance.token, instance.trustSelfSigned)
+        val apiVersion = try {
+            ApiVersion.valueOf(instance.apiVersion)
+        } catch (_: Exception) {
+            ApiVersion.CONTROLLER_V2
         }
-
-        return cachedApiService!!
+        val retrofit = buildRetrofit(client, instance.baseUrl, apiVersion)
+        val apiService = retrofit.create(AapApiService::class.java)
+        serviceCache[instance.id] = Pair(apiService, null)
+        return apiService
     }
 
     @Synchronized
     fun getEdaApiService(): EdaApiService {
-        val baseUrl = tokenManager.cachedBaseUrl
-        val trustSelfSigned = tokenManager.cachedTrustSelfSigned
+        val instance = tokenManager.activeInstance.value
+            ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
-        if (cachedEdaApiService == null ||
-            currentBaseUrl != baseUrl ||
-            currentTrustSelfSigned != trustSelfSigned
-        ) {
-            currentBaseUrl = baseUrl
-            currentTrustSelfSigned = trustSelfSigned
+        val cached = serviceCache[instance.id]
+        if (cached?.second != null) return cached.second!!
 
-            val baseUrlValue = baseUrl
-                ?: throw IllegalStateException("No AAP server URL configured. Please log in first.")
-            val client = buildClient(trustSelfSigned)
-            val retrofit = buildEdaRetrofit(client, baseUrlValue)
-            cachedEdaApiService = retrofit.create(EdaApiService::class.java)
+        val client = buildClient(instance.token, instance.trustSelfSigned)
+        val retrofit = buildEdaRetrofit(client, instance.baseUrl)
+        val edaService = retrofit.create(EdaApiService::class.java)
+
+        val existingApi = cached?.first ?: run {
+            val apiVersion = try {
+                ApiVersion.valueOf(instance.apiVersion)
+            } catch (_: Exception) {
+                ApiVersion.CONTROLLER_V2
+            }
+            buildRetrofit(client, instance.baseUrl, apiVersion)
+                .create(AapApiService::class.java)
         }
-
-        return cachedEdaApiService!!
+        serviceCache[instance.id] = Pair(existingApi, edaService)
+        return edaService
     }
 
-    private fun buildClient(trustSelfSigned: Boolean): OkHttpClient {
+    @Synchronized
+    fun evictInstance(instanceId: String) {
+        serviceCache.remove(instanceId)
+    }
+
+    private fun buildClient(token: String, trustSelfSigned: Boolean): OkHttpClient {
         val builder = OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor { tokenManager.cachedToken })
+            .addInterceptor(AuthInterceptor(
+                tokenProvider = { tokenManager.cachedToken },
+                instanceIdProvider = { tokenManager.activeInstance.value?.id }
+            ))
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
             })
@@ -81,8 +87,7 @@ class AapApiProvider(
         return builder.build()
     }
 
-    private fun buildRetrofit(client: OkHttpClient, baseUrl: String): Retrofit {
-        val apiVersion = tokenManager.cachedApiVersion
+    private fun buildRetrofit(client: OkHttpClient, baseUrl: String, apiVersion: ApiVersion): Retrofit {
         return Retrofit.Builder()
             .baseUrl("${baseUrl.trimEnd('/')}${apiVersion.prefix}")
             .client(client)

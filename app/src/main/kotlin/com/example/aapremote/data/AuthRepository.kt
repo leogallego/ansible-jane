@@ -22,7 +22,9 @@ class AuthRepository(
     suspend fun validateCredentials(
         baseUrl: String,
         token: String,
-        trustSelfSigned: Boolean
+        trustSelfSigned: Boolean,
+        alias: String? = null,
+        existingInstanceId: String? = null
     ): Result<User> = withContext(Dispatchers.IO) {
         try {
             val client = buildClient(token, trustSelfSigned)
@@ -37,7 +39,9 @@ class AuthRepository(
                 baseUrl = baseUrl,
                 token = token,
                 apiVersion = apiVersion,
-                trustSelfSigned = trustSelfSigned
+                trustSelfSigned = trustSelfSigned,
+                alias = alias,
+                existingId = existingInstanceId
             )
 
             Result.success(user)
@@ -46,15 +50,51 @@ class AuthRepository(
         }
     }
 
+    suspend fun reAuthenticate(instanceId: String, newToken: String): Result<User> =
+        withContext(Dispatchers.IO) {
+            try {
+                val instance = tokenManager.getInstanceById(instanceId)
+                    ?: return@withContext Result.failure(Exception("Instance not found"))
+
+                val trustSelfSigned = instance.trustSelfSigned
+                val client = buildClient(newToken, trustSelfSigned)
+                val apiVersion = try {
+                    ApiVersion.valueOf(instance.apiVersion)
+                } catch (_: Exception) {
+                    ApiVersion.CONTROLLER_V2
+                }
+                val api = buildApi(client, instance.baseUrl, apiVersion)
+                val response = api.getMe()
+                val user = response.results.firstOrNull()
+                    ?: return@withContext Result.failure(Exception("No user data returned"))
+
+                tokenManager.saveCredentials(
+                    baseUrl = instance.baseUrl,
+                    token = newToken,
+                    apiVersion = apiVersion,
+                    trustSelfSigned = trustSelfSigned,
+                    alias = instance.alias,
+                    existingId = instanceId
+                )
+
+                Result.success(user)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     suspend fun checkExistingCredentials(): Result<User>? = withContext(Dispatchers.IO) {
         if (!tokenManager.loadCredentials()) return@withContext null
-        val baseUrl = tokenManager.cachedBaseUrl ?: return@withContext null
-        val token = tokenManager.cachedToken ?: return@withContext null
-        val trustSelfSigned = tokenManager.cachedTrustSelfSigned
+        val activeInstance = tokenManager.activeInstance.value ?: return@withContext null
 
         try {
-            val client = buildClient(token, trustSelfSigned)
-            val api = buildApi(client, baseUrl, tokenManager.cachedApiVersion)
+            val client = buildClient(activeInstance.token, activeInstance.trustSelfSigned)
+            val apiVersion = try {
+                ApiVersion.valueOf(activeInstance.apiVersion)
+            } catch (_: Exception) {
+                ApiVersion.CONTROLLER_V2
+            }
+            val api = buildApi(client, activeInstance.baseUrl, apiVersion)
             val response = api.getMe()
             val user = response.results.firstOrNull()
                 ?: return@withContext Result.failure(Exception("No user data returned"))
@@ -62,6 +102,10 @@ class AuthRepository(
         } catch (_: Exception) {
             null
         }
+    }
+
+    suspend fun logoutInstance(instanceId: String) {
+        tokenManager.removeInstance(instanceId)
     }
 
     suspend fun logout() {

@@ -3,15 +3,19 @@ package com.example.aapremote.presentation.inventory
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.InventoryRepository
+import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Inventory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class InventoriesViewModel(
-    private val inventoryRepository: InventoryRepository
+    private val inventoryRepository: InventoryRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<InventoriesUiState>(InventoriesUiState.Loading)
@@ -19,16 +23,25 @@ class InventoriesViewModel(
 
     private var currentPage = 1
     private val allInventories = mutableListOf<Inventory>()
+    private var fetchJob: Job? = null
 
     init {
-        loadInventories()
+        viewModelScope.launch {
+            tokenManager.activeInstance
+                .distinctUntilChangedBy { it?.id }
+                .collect {
+                    fetchJob?.cancel()
+                    loadInventories()
+                }
+        }
     }
 
     fun loadInventories() {
         currentPage = 1
         allInventories.clear()
         _uiState.value = InventoriesUiState.Loading
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchInventories()
         }
     }
@@ -36,7 +49,8 @@ class InventoriesViewModel(
     fun refresh() {
         currentPage = 1
         allInventories.clear()
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchInventories()
         }
     }
@@ -46,7 +60,7 @@ class InventoriesViewModel(
         if (current is InventoriesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
             _uiState.value = current.copy(isLoadingMore = true)
-            viewModelScope.launch {
+            fetchJob = viewModelScope.launch {
                 fetchInventories(append = true)
             }
         }

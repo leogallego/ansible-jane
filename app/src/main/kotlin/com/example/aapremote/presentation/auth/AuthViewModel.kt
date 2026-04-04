@@ -20,7 +20,13 @@ class AuthViewModel(
         checkExistingCredentials()
     }
 
-    fun connect(baseUrl: String, token: String, trustSelfSigned: Boolean) {
+    fun connect(
+        baseUrl: String,
+        token: String,
+        trustSelfSigned: Boolean,
+        alias: String? = null,
+        existingInstanceId: String? = null
+    ) {
         if (baseUrl.isBlank() || token.isBlank()) {
             _uiState.value = AuthUiState.Error(
                 AppError.Unknown(message = "URL and token are required")
@@ -30,7 +36,13 @@ class AuthViewModel(
 
         _uiState.value = AuthUiState.Loading
         viewModelScope.launch {
-            val result = authRepository.validateCredentials(baseUrl, token, trustSelfSigned)
+            val result = authRepository.validateCredentials(
+                baseUrl = baseUrl,
+                token = token,
+                trustSelfSigned = trustSelfSigned,
+                alias = alias?.ifBlank { null },
+                existingInstanceId = existingInstanceId
+            )
             _uiState.value = result.fold(
                 onSuccess = { user -> AuthUiState.Success(user.username) },
                 onFailure = { error -> AuthUiState.Error(AppError.from(error)) }

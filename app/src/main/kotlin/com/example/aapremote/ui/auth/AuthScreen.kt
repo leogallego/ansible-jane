@@ -22,12 +22,17 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun AuthScreen(
     onNavigateToDashboard: () -> Unit,
+    preFilledUrl: String? = null,
+    preFilledAlias: String? = null,
+    reAuthInstanceId: String? = null,
     viewModel: AuthViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isReAuth = reAuthInstanceId != null
 
-    var baseUrl by remember { mutableStateOf("") }
+    var baseUrl by remember { mutableStateOf(preFilledUrl ?: "") }
     var token by remember { mutableStateOf("") }
+    var alias by remember { mutableStateOf(preFilledAlias ?: "") }
     var trustSelfSigned by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -45,10 +50,19 @@ fun AuthScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "AAPdroid",
+            text = if (isReAuth) "Re-authenticate" else "AAPdroid",
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
+
+        if (isReAuth) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Token expired. Please enter a new token.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -58,7 +72,20 @@ fun AuthScreen(
             label = { Text("AAP Base URL") },
             placeholder = { Text("https://aap.example.com") },
             singleLine = true,
+            enabled = !isReAuth,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = alias,
+            onValueChange = { alias = it },
+            label = { Text("Alias (optional)") },
+            placeholder = { Text("e.g., Production") },
+            singleLine = true,
+            enabled = !isReAuth,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -84,24 +111,36 @@ fun AuthScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        if (!isReAuth) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Accept self-signed certificate",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Switch(
-                checked = trustSelfSigned,
-                onCheckedChange = { trustSelfSigned = it }
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Accept self-signed certificate",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Switch(
+                    checked = trustSelfSigned,
+                    onCheckedChange = { trustSelfSigned = it }
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        val onConnect = {
+            viewModel.connect(
+                baseUrl = baseUrl,
+                token = token,
+                trustSelfSigned = trustSelfSigned,
+                alias = alias.ifBlank { null },
+                existingInstanceId = reAuthInstanceId
+            )
+        }
 
         when (val state = uiState) {
             is AuthUiState.Loading -> {
@@ -110,24 +149,24 @@ fun AuthScreen(
             is AuthUiState.Error -> {
                 ErrorMessage(
                     error = state.error,
-                    onRetry = { viewModel.connect(baseUrl, token, trustSelfSigned) }
+                    onRetry = { onConnect() }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
-                    onClick = { viewModel.connect(baseUrl, token, trustSelfSigned) },
+                    onClick = { onConnect() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = baseUrl.isNotBlank() && token.isNotBlank()
                 ) {
-                    Text("Connect")
+                    Text(if (isReAuth) "Re-authenticate" else "Connect")
                 }
             }
             else -> {
                 Button(
-                    onClick = { viewModel.connect(baseUrl, token, trustSelfSigned) },
+                    onClick = { onConnect() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = baseUrl.isNotBlank() && token.isNotBlank()
                 ) {
-                    Text("Connect")
+                    Text(if (isReAuth) "Re-authenticate" else "Connect")
                 }
             }
         }

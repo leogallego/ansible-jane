@@ -8,6 +8,7 @@ import com.example.aapremote.presentation.hosts.HostsViewModel
 import com.example.aapremote.presentation.hosts.InventoryHostsViewModel
 import com.example.aapremote.presentation.inventory.InventoriesViewModel
 import com.example.aapremote.presentation.schedules.SchedulesViewModel
+import com.example.aapremote.presentation.settings.SettingsViewModel
 import com.example.aapremote.presentation.templates.TemplatesViewModel
 import com.example.aapremote.presentation.workflows.WorkflowJobStatusViewModel
 import com.example.aapremote.presentation.workflows.WorkflowTemplatesViewModel
@@ -26,4 +27,5 @@ val presentationModule = module {
     viewModelOf(::InventoriesViewModel)
     viewModelOf(::InventoryHostsViewModel)
     viewModelOf(::HostsViewModel)
+    viewModelOf(::SettingsViewModel)
 }
