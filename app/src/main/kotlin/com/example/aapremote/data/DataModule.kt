@@ -12,4 +12,6 @@ val dataModule = module {
     single { WorkflowRepository(get()) }
     single { ScheduleRepository(get()) }
     single { EdaAuditRepository(get()) }
+    single { InventoryRepository(get()) }
+    single { HostRepository(get()) }
 }

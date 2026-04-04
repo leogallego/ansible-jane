@@ -62,6 +62,8 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 - DataStore + Tink (unchanged — no new storage needs) (004-workflow-templates)
 - Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Compose Animation, Retrofit, Koin (007-ui-polish-animations)
 - N/A (no new storage for this feature) (007-ui-polish-animations)
+- Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Navigation Compose, Retrofit + Kotlin Serialization, Koin (008-infrastructure-section)
+- N/A (no new local storage — all data fetched from API) (008-infrastructure-section)
 
 ## Recent Changes
 - 001-aap-remote-control: Added Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit,

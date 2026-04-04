@@ -39,9 +39,8 @@ sealed class TopLevelTab(
         icon = Icons.Outlined.Dns,
         selectedIcon = Icons.Filled.Dns,
         segments = listOf(
-            Segment(label = "Inventories", isDefault = true),
-            Segment(label = "Hosts"),
-            Segment(label = "Projects")
+            Segment(label = "Inventories", isDefault = true, isImplemented = true),
+            Segment(label = "Hosts", isImplemented = true)
         )
     )
 

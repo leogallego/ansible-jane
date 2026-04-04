@@ -2,6 +2,8 @@ package com.example.aapremote.navigation
 
 import androidx.compose.runtime.Composable
 import com.example.aapremote.ui.components.PlaceholderScreen
+import com.example.aapremote.ui.hosts.HostsScreen
+import com.example.aapremote.ui.inventory.InventoriesScreen
 import com.example.aapremote.ui.jobs.RecentJobsScreen
 import com.example.aapremote.ui.main.Segment
 import com.example.aapremote.ui.main.TopLevelTab
@@ -45,7 +47,11 @@ fun TabContent(
             }
         }
         is TopLevelTab.Infrastructure -> {
-            PlaceholderScreen(title = segment.label)
+            when (segment.label) {
+                "Inventories" -> InventoriesScreen()
+                "Hosts" -> HostsScreen()
+                else -> PlaceholderScreen(title = segment.label)
+            }
         }
     }
 }
