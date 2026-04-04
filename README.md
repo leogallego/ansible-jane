@@ -6,6 +6,7 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 
 ## Features
 
+- **Multi-instance support** — connect to multiple AAP instances simultaneously and switch between them
 - **Connect** to any AAP instance using a Personal Access Token (PAT)
 - **Self-signed certificate** support for lab/dev environments
 - **Auto-detect** AAP API version (2.4 controller vs 2.5+ gateway)
@@ -14,6 +15,7 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 - **Monitor** job status with live polling and stdout output
 - **Monitor** workflow job status with sub-job tracking
 - **Recent jobs** history
+- **Infrastructure** — browse inventories and hosts
 
 ## Screenshots
 
@@ -52,9 +54,20 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 ### Connecting to AAP
 
 1. Enter your AAP instance URL (e.g., `https://aap.example.com`)
-2. Enter your Personal Access Token (PAT) — generate one from your AAP user settings under **Tokens**
-3. For lab/dev environments with self-signed certificates, toggle **Allow self-signed certificates**
-4. Tap **Login**
+2. Optionally set an **Alias** (e.g., "Production", "Dev") for easy identification
+3. Enter your Personal Access Token (PAT) — generate one from your AAP user settings under **Tokens**
+4. For lab/dev environments with self-signed certificates, toggle **Allow self-signed certificates**
+5. Tap **Connect**
+
+### Managing Multiple Instances
+
+You can connect to multiple AAP instances simultaneously:
+
+- **Add** — in Settings, tap **Add Instance** to connect to another AAP instance
+- **Switch** — tap an inactive instance pill to switch; all data refreshes automatically
+- **View details** — tap the active instance pill to see URL, alias, API version, and certificate trust status
+- **Remove** — tap the **x** on any instance pill (with confirmation) to disconnect; if the active instance is removed, the next one is auto-promoted
+- The **top bar** shows the active instance label (alias or hostname) as a subtitle
 
 ### Browsing Templates
 
@@ -87,16 +100,21 @@ Both segments support:
 
 The **Activity** tab shows recent jobs (both regular and workflow) sorted by creation time. Tap any job to view its status.
 
+### Infrastructure Tab
+
+The **Infrastructure** tab shows inventories and hosts from the active AAP instance. Tap an inventory to see its hosts and details.
+
 ### Settings
 
-Access settings via the gear icon in the top bar. Shows the connected server URL and a logout button.
+Access settings via the gear icon in the top bar. Manage connected instances (add, switch, remove, view details) and log out.
 
 ## Security
 
-- Credentials are encrypted at rest using Google Tink with Android Keystore
+- Per-instance credentials encrypted at rest using Google Tink AES-256-GCM with Android Keystore
 - HTTPS-only enforced via network security config
 - No hardcoded URLs or tokens
 - Tokens never stored in plain text
+- Per-instance 401 handling — token expiry on one instance does not affect others
 
 ## License
 
