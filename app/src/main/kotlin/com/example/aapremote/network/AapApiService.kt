@@ -82,4 +82,43 @@ interface AapApiService {
         @Path("id") id: Int,
         @Query("page_size") pageSize: Int = 200
     ): PaginatedResponse<WorkflowNode>
+
+    @GET("inventories/")
+    suspend fun getInventories(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "-modified"
+    ): PaginatedResponse<Inventory>
+
+    @GET("inventories/{id}/")
+    suspend fun getInventory(@Path("id") id: Int): Inventory
+
+    @GET("inventories/{id}/hosts/")
+    suspend fun getInventoryHosts(
+        @Path("id") id: Int,
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<Host>
+
+    @GET("hosts/")
+    suspend fun getHosts(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<Host>
+
+    @GET("hosts/{id}/ansible_facts/")
+    suspend fun getHostFacts(@Path("id") id: Int): Map<String, kotlinx.serialization.json.JsonElement>
+
+    @GET("hosts/{id}/job_host_summaries/")
+    suspend fun getHostJobSummaries(
+        @Path("id") id: Int,
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 20,
+        @Query("order_by") orderBy: String = "-created"
+    ): PaginatedResponse<JobHostSummary>
 }
