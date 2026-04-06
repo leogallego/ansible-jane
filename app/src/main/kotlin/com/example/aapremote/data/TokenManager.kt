@@ -239,8 +239,8 @@ class TokenManager(private val context: Context) {
             state.instances.isEmpty() && existingId == null -> instanceId
             // Re-auth or update of existing instance — ensure it's active
             existingId != null -> existingId
-            // Adding a new instance — keep current active
-            else -> state.activeInstanceId
+            // Adding a new instance — switch to it
+            else -> instanceId
         }
 
         writeState(InstancesState(instances = updatedInstances, activeInstanceId = activeId))
