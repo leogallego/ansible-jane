@@ -224,8 +224,7 @@ private fun InstancePill(
                 painter = painterResource(id = R.drawable.ic_ansible_platform),
                 contentDescription = "Ansible Platform",
                 modifier = Modifier.size(20.dp),
-                tint = if (isActive) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant
+                tint = androidx.compose.ui.graphics.Color.Unspecified
             )
         },
         trailingIcon = {

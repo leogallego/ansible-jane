@@ -9,11 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.aapremote.R
 import com.example.aapremote.presentation.auth.AuthUiState
 import com.example.aapremote.presentation.auth.AuthViewModel
 import com.example.aapremote.ui.components.ErrorMessage
@@ -49,6 +51,15 @@ fun AuthScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_ansible_platform),
+            contentDescription = "Ansible Automation Platform",
+            modifier = Modifier.size(96.dp),
+            tint = androidx.compose.ui.graphics.Color.Unspecified
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         Text(
             text = if (isReAuth) "Re-authenticate" else "AAPdroid",
             style = MaterialTheme.typography.headlineMedium,
