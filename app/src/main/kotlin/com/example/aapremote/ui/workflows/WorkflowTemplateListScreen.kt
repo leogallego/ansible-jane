@@ -47,6 +47,7 @@ fun WorkflowTemplateListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val launchState by viewModel.launchState.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     var selectedLabel by remember { mutableStateOf<Label?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     var isRefreshing by remember { mutableStateOf(false) }
@@ -92,6 +93,11 @@ fun WorkflowTemplateListScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
+            SearchBar(
+                onSearch = { viewModel.search(it) },
+                initialQuery = searchQuery
+            )
+
             when (val state = uiState) {
                 is WorkflowTemplatesUiState.Idle, is WorkflowTemplatesUiState.Loading -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -106,8 +112,6 @@ fun WorkflowTemplateListScreen(
                     )
                 }
                 is WorkflowTemplatesUiState.Success -> {
-                    SearchBar(onSearch = { viewModel.search(it) })
-
                     LabelChips(
                         labels = state.availableLabels,
                         selectedLabel = selectedLabel,

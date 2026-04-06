@@ -26,6 +26,9 @@ class WorkflowTemplatesViewModel(
     private val _launchState = MutableStateFlow<WorkflowLaunchState>(WorkflowLaunchState.Idle)
     val launchState: StateFlow<WorkflowLaunchState> = _launchState.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private var currentPage = 1
     private var currentSearch: String? = null
     private var currentLabelFilter: String? = null
@@ -75,6 +78,7 @@ class WorkflowTemplatesViewModel(
     }
 
     fun search(query: String) {
+        _searchQuery.value = query
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(300)

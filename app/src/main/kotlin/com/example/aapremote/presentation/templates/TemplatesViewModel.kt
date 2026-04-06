@@ -26,6 +26,9 @@ class TemplatesViewModel(
     private val _launchState = MutableStateFlow<LaunchState>(LaunchState.Idle)
     val launchState: StateFlow<LaunchState> = _launchState.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private var currentPage = 1
     private var currentSearch: String? = null
     private var currentLabelFilter: String? = null
@@ -75,6 +78,7 @@ class TemplatesViewModel(
     }
 
     fun search(query: String) {
+        _searchQuery.value = query
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(300)
@@ -97,6 +101,7 @@ class TemplatesViewModel(
     }
 
     fun clearFilters() {
+        _searchQuery.value = ""
         currentSearch = null
         currentLabelFilter = null
         currentPage = 1
