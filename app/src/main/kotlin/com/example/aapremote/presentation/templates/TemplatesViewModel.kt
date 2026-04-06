@@ -37,9 +37,9 @@ class TemplatesViewModel(
         viewModelScope.launch {
             tokenManager.activeInstance
                 .distinctUntilChangedBy { it?.id }
-                .collect {
+                .collect { instance ->
                     fetchJob?.cancel()
-                    loadTemplates()
+                    if (instance != null) loadTemplates()
                 }
         }
     }

@@ -82,6 +82,9 @@ class AuthRepository(
                     existingId = instanceId
                 )
 
+                // Evict cached service so it rebuilds with the new token
+                apiProvider.evictInstance(instanceId)
+
                 Result.success(user)
             } catch (e: Exception) {
                 Result.failure(e)

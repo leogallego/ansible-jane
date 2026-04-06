@@ -28,6 +28,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun AuthScreen(
     onNavigateToDashboard: () -> Unit,
+    onCancel: (() -> Unit)? = null,
     preFilledUrl: String? = null,
     preFilledAlias: String? = null,
     reAuthInstanceId: String? = null,
@@ -37,13 +38,6 @@ fun AuthScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isReAuth = reAuthInstanceId != null
-
-    // Only check existing credentials on initial login, not when adding or re-authenticating
-    LaunchedEffect(Unit) {
-        if (!isAddInstance && reAuthInstanceId == null) {
-            viewModel.checkExistingCredentials()
-        }
-    }
 
     var baseUrl by remember { mutableStateOf(preFilledUrl ?: "") }
     var token by remember { mutableStateOf("") }
@@ -82,7 +76,7 @@ fun AuthScreen(
         if (isReAuth) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Token expired. Please enter a new API token.",
+                text = "Token expired for ${preFilledAlias ?: preFilledUrl ?: "this instance"}. Please enter a new API token.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -196,7 +190,7 @@ fun AuthScreen(
             is AuthUiState.Error -> {
                 ErrorMessage(
                     error = state.error,
-                    onRetry = { onConnect() }
+                    onRetry = null
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
@@ -204,7 +198,16 @@ fun AuthScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = baseUrl.isNotBlank() && token.isNotBlank()
                 ) {
-                    Text(if (isReAuth) "Re-authenticate" else "Connect")
+                    Text(if (isReAuth) "Re-authenticate" else "Retry")
+                }
+                if (onCancel != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = onCancel,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Cancel")
+                    }
                 }
             }
             else -> {
@@ -214,6 +217,15 @@ fun AuthScreen(
                     enabled = baseUrl.isNotBlank() && token.isNotBlank()
                 ) {
                     Text(if (isReAuth) "Re-authenticate" else "Connect")
+                }
+                if (onCancel != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = onCancel,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Cancel")
+                    }
                 }
             }
         }

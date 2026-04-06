@@ -30,9 +30,9 @@ class EdaAuditViewModel(
         viewModelScope.launch {
             tokenManager.activeInstance
                 .distinctUntilChangedBy { it?.id }
-                .collect {
+                .collect { instance ->
                     fetchJob?.cancel()
-                    loadAuditRules()
+                    if (instance != null) loadAuditRules()
                 }
         }
     }

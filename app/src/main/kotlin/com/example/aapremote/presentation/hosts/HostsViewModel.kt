@@ -32,9 +32,9 @@ class HostsViewModel(
         viewModelScope.launch {
             tokenManager.activeInstance
                 .distinctUntilChangedBy { it?.id }
-                .collect {
+                .collect { instance ->
                     fetchJob?.cancel()
-                    loadHosts()
+                    if (instance != null) loadHosts()
                 }
         }
     }

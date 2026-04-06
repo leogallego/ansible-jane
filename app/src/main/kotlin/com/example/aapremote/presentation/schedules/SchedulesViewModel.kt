@@ -35,9 +35,9 @@ class SchedulesViewModel(
         viewModelScope.launch {
             tokenManager.activeInstance
                 .distinctUntilChangedBy { it?.id }
-                .collect {
+                .collect { instance ->
                     fetchJob?.cancel()
-                    loadSchedules()
+                    if (instance != null) loadSchedules()
                 }
         }
     }

@@ -23,7 +23,7 @@ class AapApiProvider(
         val cached = serviceCache[instance.id]
         if (cached != null) return cached.first
 
-        val client = buildClient(instance.token, instance.trustSelfSigned)
+        val client = buildClient(instance.token, instance.trustSelfSigned, instance.id)
         val apiVersion = try {
             ApiVersion.valueOf(instance.apiVersion)
         } catch (_: Exception) {
@@ -43,7 +43,7 @@ class AapApiProvider(
         val cached = serviceCache[instance.id]
         if (cached?.second != null) return cached.second!!
 
-        val client = buildClient(instance.token, instance.trustSelfSigned)
+        val client = buildClient(instance.token, instance.trustSelfSigned, instance.id)
         val retrofit = buildEdaRetrofit(client, instance.baseUrl)
         val edaService = retrofit.create(EdaApiService::class.java)
 
@@ -65,11 +65,11 @@ class AapApiProvider(
         serviceCache.remove(instanceId)
     }
 
-    private fun buildClient(token: String, trustSelfSigned: Boolean): OkHttpClient {
+    private fun buildClient(token: String, trustSelfSigned: Boolean, instanceId: String): OkHttpClient {
         val builder = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(
-                tokenProvider = { tokenManager.cachedToken },
-                instanceIdProvider = { tokenManager.activeInstance.value?.id }
+                tokenProvider = { tokenManager.activeInstance.value?.token ?: token },
+                instanceIdProvider = { instanceId }
             ))
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY

@@ -50,16 +50,6 @@ class TokenManager(private val context: Context) {
 
     private val aead: Aead
 
-    // Legacy cached fields for backward compatibility during transition
-    var cachedToken: String? = null
-        private set
-    var cachedBaseUrl: String? = null
-        private set
-    var cachedApiVersion: ApiVersion = ApiVersion.CONTROLLER_V2
-        private set
-    var cachedTrustSelfSigned: Boolean = false
-        private set
-
     // Multi-instance reactive state
     private val _instances = MutableStateFlow<List<AapInstance>>(emptyList())
     val instances: StateFlow<List<AapInstance>> = _instances.asStateFlow()
@@ -77,7 +67,7 @@ class TokenManager(private val context: Context) {
             .withMasterKeyUri("android-keystore://aap_master_key")
             .build()
             .keysetHandle
-        aead = keysetHandle.getPrimitive(Aead::class.java)
+        aead = keysetHandle.getPrimitive(com.google.crypto.tink.RegistryConfiguration.get(), Aead::class.java)
     }
 
     private companion object {
@@ -159,25 +149,6 @@ class TokenManager(private val context: Context) {
         _instances.value = decryptedInstances
 
         val active = decryptedInstances.find { it.id == state.activeInstanceId }
-
-        // Update cached fields BEFORE emitting activeInstance to avoid race conditions
-        // where ViewModels observe the change and make API calls with stale tokens
-        if (active != null) {
-            cachedBaseUrl = active.baseUrl
-            cachedToken = active.token
-            cachedApiVersion = try {
-                ApiVersion.valueOf(active.apiVersion)
-            } catch (_: Exception) {
-                ApiVersion.CONTROLLER_V2
-            }
-            cachedTrustSelfSigned = active.trustSelfSigned
-        } else {
-            cachedBaseUrl = null
-            cachedToken = null
-            cachedApiVersion = ApiVersion.CONTROLLER_V2
-            cachedTrustSelfSigned = false
-        }
-
         _activeInstance.value = active
     }
 
@@ -211,7 +182,20 @@ class TokenManager(private val context: Context) {
             }
         }
         if (duplicate != null) {
-            throw IllegalArgumentException("An instance with this URL already exists")
+            // Instance already exists — update its token and switch to it
+            val updatedInstances = state.instances.map {
+                if (it.id == duplicate.id) {
+                    it.copy(
+                        encryptedToken = encrypt(token),
+                        alias = alias?.ifBlank { null } ?: it.alias,
+                        apiVersion = apiVersion.name,
+                        trustSelfSigned = trustSelfSigned,
+                        certFingerprint = certFingerprint
+                    )
+                } else it
+            }
+            writeState(InstancesState(instances = updatedInstances, activeInstanceId = duplicate.id))
+            return duplicate.id
         }
 
         val instanceId = existingId ?: UUID.randomUUID().toString()
@@ -343,10 +327,6 @@ class TokenManager(private val context: Context) {
         context.credentialsDataStore.edit { it.clear() }
         _instances.value = emptyList()
         _activeInstance.value = null
-        cachedToken = null
-        cachedBaseUrl = null
-        cachedApiVersion = ApiVersion.CONTROLLER_V2
-        cachedTrustSelfSigned = false
     }
 
     val isLoggedIn: Flow<Boolean> = context.credentialsDataStore.data.map { prefs ->

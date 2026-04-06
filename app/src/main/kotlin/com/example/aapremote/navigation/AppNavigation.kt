@@ -4,9 +4,14 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -28,6 +33,7 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 
 object Routes {
+    const val SPLASH = "splash"
     const val AUTH = "auth"
     const val AUTH_ADD_INSTANCE = "auth?mode=add"
     const val AUTH_REAUTH = "auth?mode=reauth&instanceId={instanceId}&url={url}&alias={alias}&trustSelfSigned={trustSelfSigned}"
@@ -52,12 +58,15 @@ fun AppNavigation(
 ) {
     val tokenManager: TokenManager = koinInject()
 
-    // Navigate to auth when last instance is removed
+    // Navigate to auth when last instance is removed (skip during splash)
     val instances by tokenManager.instances.collectAsStateWithLifecycle()
     LaunchedEffect(instances) {
         if (instances.isEmpty()) {
             val currentRoute = navController.currentDestination?.route
-            if (currentRoute != null && !currentRoute.startsWith("auth")) {
+            if (currentRoute != null
+                && !currentRoute.startsWith("auth")
+                && currentRoute != Routes.SPLASH
+            ) {
                 navController.navigate(Routes.AUTH) {
                     popUpTo(0) { inclusive = true }
                 }
@@ -92,8 +101,29 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = Routes.AUTH
+        startDestination = Routes.SPLASH
     ) {
+        composable(
+            Routes.SPLASH,
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+
+            LaunchedEffect(Unit) {
+                val hasInstances = tokenManager.loadCredentials()
+                val destination = if (hasInstances) Routes.MAIN else Routes.AUTH
+                navController.navigate(destination) {
+                    popUpTo(Routes.SPLASH) { inclusive = true }
+                }
+            }
+        }
+
         composable(
             route = "auth?mode={mode}&instanceId={instanceId}&url={url}&alias={alias}&trustSelfSigned={trustSelfSigned}",
             arguments = listOf(
@@ -135,6 +165,9 @@ fun AppNavigation(
                         }
                     }
                 },
+                onCancel = if (isAddMode || reAuthInstanceId != null) {
+                    { navController.popBackStack() }
+                } else null,
                 preFilledUrl = preFilledUrl,
                 preFilledAlias = preFilledAlias,
                 reAuthInstanceId = reAuthInstanceId,

@@ -166,11 +166,17 @@ fun SettingsScreen(
 
     // Confirmation dialog for instance removal
     instanceToRemove?.let { instance ->
+        val isLastInstance = (uiState as? SettingsUiState.Success)?.instances?.size == 1
         AlertDialog(
             onDismissRequest = { instanceToRemove = null },
-            title = { Text("Remove Instance") },
+            title = { Text(if (isLastInstance) "Remove Last Instance" else "Remove Instance") },
             text = {
-                Text("Remove \"${instance.displayLabel}\"? You will need to re-authenticate to use this instance again.")
+                Text(
+                    if (isLastInstance)
+                        "This is your only instance. Removing it will log you out completely."
+                    else
+                        "Remove \"${instance.displayLabel}\"? You will need to re-authenticate to use this instance again."
+                )
             },
             confirmButton = {
                 TextButton(

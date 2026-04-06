@@ -29,9 +29,9 @@ class InventoriesViewModel(
         viewModelScope.launch {
             tokenManager.activeInstance
                 .distinctUntilChangedBy { it?.id }
-                .collect {
+                .collect { instance ->
                     fetchJob?.cancel()
-                    loadInventories()
+                    if (instance != null) loadInventories()
                 }
         }
     }

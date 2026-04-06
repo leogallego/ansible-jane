@@ -30,9 +30,9 @@ class RecentJobsViewModel(
         viewModelScope.launch {
             tokenManager.activeInstance
                 .distinctUntilChangedBy { it?.id }
-                .collect {
+                .collect { instance ->
                     fetchJob?.cancel()
-                    loadRecentJobs()
+                    if (instance != null) loadRecentJobs()
                 }
         }
     }
