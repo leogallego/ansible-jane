@@ -47,6 +47,7 @@ fun TemplateListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val launchState by viewModel.launchState.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     var selectedLabel by remember { mutableStateOf<Label?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     var isRefreshing by remember { mutableStateOf(false) }
@@ -92,6 +93,11 @@ fun TemplateListScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
+            SearchBar(
+                onSearch = { viewModel.search(it) },
+                initialQuery = searchQuery
+            )
+
             when (val state = uiState) {
                 is TemplatesUiState.Idle, is TemplatesUiState.Loading -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -106,8 +112,6 @@ fun TemplateListScreen(
                     )
                 }
                 is TemplatesUiState.Success -> {
-                    SearchBar(onSearch = { viewModel.search(it) })
-
                     LabelChips(
                         labels = state.availableLabels,
                         selectedLabel = selectedLabel,
