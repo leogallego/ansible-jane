@@ -3,6 +3,7 @@ package com.example.aapremote.ui.auth
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -13,6 +14,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.semantics.ContentType
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.R
@@ -27,15 +31,24 @@ fun AuthScreen(
     preFilledUrl: String? = null,
     preFilledAlias: String? = null,
     reAuthInstanceId: String? = null,
+    isAddInstance: Boolean = false,
+    preFilledTrustSelfSigned: Boolean = false,
     viewModel: AuthViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isReAuth = reAuthInstanceId != null
 
+    // Only check existing credentials on initial login, not when adding or re-authenticating
+    LaunchedEffect(Unit) {
+        if (!isAddInstance && reAuthInstanceId == null) {
+            viewModel.checkExistingCredentials()
+        }
+    }
+
     var baseUrl by remember { mutableStateOf(preFilledUrl ?: "") }
     var token by remember { mutableStateOf("") }
     var alias by remember { mutableStateOf(preFilledAlias ?: "") }
-    var trustSelfSigned by remember { mutableStateOf(false) }
+    var trustSelfSigned by remember { mutableStateOf(preFilledTrustSelfSigned) }
     var passwordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState) {
@@ -69,7 +82,7 @@ fun AuthScreen(
         if (isReAuth) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Token expired. Please enter a new token.",
+                text = "Token expired. Please enter a new API token.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -85,7 +98,16 @@ fun AuthScreen(
             singleLine = true,
             enabled = !isReAuth,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-            modifier = Modifier.fillMaxWidth()
+            trailingIcon = {
+                if (baseUrl.isNotEmpty() && !isReAuth) {
+                    IconButton(onClick = { baseUrl = "" }) {
+                        Icon(Icons.Default.Clear, contentDescription = "Clear")
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { contentType = ContentType.Username }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -97,6 +119,13 @@ fun AuthScreen(
             placeholder = { Text("e.g., Production") },
             singleLine = true,
             enabled = !isReAuth,
+            trailingIcon = {
+                if (alias.isNotEmpty() && !isReAuth) {
+                    IconButton(onClick = { alias = "" }) {
+                        Icon(Icons.Default.Clear, contentDescription = "Clear")
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -105,40 +134,47 @@ fun AuthScreen(
         OutlinedTextField(
             value = token,
             onValueChange = { token = it },
-            label = { Text("Personal Access Token") },
+            label = { Text("AAP Personal API Token") },
             singleLine = true,
             visualTransformation = if (passwordVisible) VisualTransformation.None
                 else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Default.Visibility
-                            else Icons.Default.VisibilityOff,
-                        contentDescription = if (passwordVisible) "Hide token" else "Show token"
-                    )
+                Row {
+                    if (token.isNotEmpty()) {
+                        IconButton(onClick = { token = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                        }
+                    }
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.Visibility
+                                else Icons.Default.VisibilityOff,
+                            contentDescription = if (passwordVisible) "Hide token" else "Show token"
+                        )
+                    }
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { contentType = ContentType.Password }
         )
 
-        if (!isReAuth) {
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Accept self-signed certificate",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Switch(
-                    checked = trustSelfSigned,
-                    onCheckedChange = { trustSelfSigned = it }
-                )
-            }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Accept self-signed certificate",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Switch(
+                checked = trustSelfSigned,
+                onCheckedChange = { trustSelfSigned = it }
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))

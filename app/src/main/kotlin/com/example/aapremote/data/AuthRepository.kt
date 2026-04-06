@@ -1,6 +1,7 @@
 package com.example.aapremote.data
 
 import com.example.aapremote.model.User
+import com.example.aapremote.network.AapApiProvider
 import com.example.aapremote.network.AapApiService
 import com.example.aapremote.network.ApiVersion
 import com.example.aapremote.network.ApiVersionDetector
@@ -16,7 +17,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class AuthRepository(
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val apiProvider: AapApiProvider
 ) {
 
     suspend fun validateCredentials(
@@ -35,7 +37,7 @@ class AuthRepository(
             val user = response.results.firstOrNull()
                 ?: return@withContext Result.failure(Exception("No user data returned"))
 
-            tokenManager.saveCredentials(
+            val instanceId = tokenManager.saveCredentials(
                 baseUrl = baseUrl,
                 token = token,
                 apiVersion = apiVersion,
@@ -43,6 +45,9 @@ class AuthRepository(
                 alias = alias,
                 existingId = existingInstanceId
             )
+
+            // Evict cached service so it rebuilds with the new token/settings
+            apiProvider.evictInstance(instanceId)
 
             Result.success(user)
         } catch (e: Exception) {

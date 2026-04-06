@@ -2,16 +2,16 @@ package com.example.aapremote.data
 
 import com.example.aapremote.model.Job
 import com.example.aapremote.model.JobStatus
-import com.example.aapremote.network.AapApiService
+import com.example.aapremote.network.AapApiProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class JobRepository(private val apiService: AapApiService) {
+class JobRepository(private val apiProvider: AapApiProvider) {
 
     suspend fun getJobStatus(jobId: Int): Result<Job> {
         return try {
-            Result.success(apiService.getJob(jobId))
+            Result.success(apiProvider.getApiService().getJob(jobId))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -20,7 +20,7 @@ class JobRepository(private val apiService: AapApiService) {
     fun pollJobStatus(jobId: Int): Flow<Job> = flow {
         while (true) {
             try {
-                val job = apiService.getJob(jobId)
+                val job = apiProvider.getApiService().getJob(jobId)
                 emit(job)
                 if (job.status.isTerminal) break
                 delay(5000)
@@ -32,7 +32,7 @@ class JobRepository(private val apiService: AapApiService) {
 
     suspend fun getJobStdout(jobId: Int): Result<String> {
         return try {
-            val response = apiService.getJobStdout(jobId)
+            val response = apiProvider.getApiService().getJobStdout(jobId)
             Result.success(response.string())
         } catch (e: Exception) {
             Result.failure(e)
@@ -55,7 +55,7 @@ class JobRepository(private val apiService: AapApiService) {
             } else {
                 null
             }
-            val response = apiService.getJobs(
+            val response = apiProvider.getApiService().getJobs(
                 orderBy = "-created",
                 pageSize = pageSize,
                 page = page,

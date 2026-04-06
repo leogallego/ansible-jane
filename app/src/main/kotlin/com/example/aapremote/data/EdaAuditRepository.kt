@@ -1,13 +1,13 @@
 package com.example.aapremote.data
 
 import com.example.aapremote.model.EdaRuleAudit
-import com.example.aapremote.network.EdaApiService
+import com.example.aapremote.network.AapApiProvider
 
-class EdaAuditRepository(private val edaApiService: EdaApiService) {
+class EdaAuditRepository(private val apiProvider: AapApiProvider) {
 
     suspend fun getAuditRules(page: Int = 1, pageSize: Int = 20): Result<EdaAuditResult> {
         return try {
-            val response = edaApiService.getAuditRules(
+            val response = apiProvider.getEdaApiService().getAuditRules(
                 page = page,
                 pageSize = pageSize
             )

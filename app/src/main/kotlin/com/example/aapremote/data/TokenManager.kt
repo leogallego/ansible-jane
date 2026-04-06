@@ -159,9 +159,9 @@ class TokenManager(private val context: Context) {
         _instances.value = decryptedInstances
 
         val active = decryptedInstances.find { it.id == state.activeInstanceId }
-        _activeInstance.value = active
 
-        // Update legacy cached fields for backward compatibility
+        // Update cached fields BEFORE emitting activeInstance to avoid race conditions
+        // where ViewModels observe the change and make API calls with stale tokens
         if (active != null) {
             cachedBaseUrl = active.baseUrl
             cachedToken = active.token
@@ -177,6 +177,8 @@ class TokenManager(private val context: Context) {
             cachedApiVersion = ApiVersion.CONTROLLER_V2
             cachedTrustSelfSigned = false
         }
+
+        _activeInstance.value = active
     }
 
     /**
@@ -232,10 +234,13 @@ class TokenManager(private val context: Context) {
             state.instances + serialized
         }
 
-        val activeId = if (state.instances.isEmpty() && existingId == null) {
-            instanceId
-        } else {
-            state.activeInstanceId
+        val activeId = when {
+            // First instance ever added — make it active
+            state.instances.isEmpty() && existingId == null -> instanceId
+            // Re-auth or update of existing instance — ensure it's active
+            existingId != null -> existingId
+            // Adding a new instance — keep current active
+            else -> state.activeInstanceId
         }
 
         writeState(InstancesState(instances = updatedInstances, activeInstanceId = activeId))

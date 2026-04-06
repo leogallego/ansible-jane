@@ -1,5 +1,7 @@
 package com.example.aapremote.ui.settings
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -23,6 +25,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -41,8 +45,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.aapremote.R
@@ -62,6 +69,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var instanceToRemove by remember { mutableStateOf<AapInstance?>(null) }
+    var showLogoutAllConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -94,14 +102,13 @@ fun SettingsScreen(
 
             when (val state = uiState) {
                 is SettingsUiState.Success -> {
-                    FlowRow(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         state.instances.forEach { instance ->
                             val isActive = instance.id == state.selectedInstance?.id
-                            InstancePill(
+                            InstanceCard(
                                 instance = instance,
                                 isActive = isActive,
                                 onTap = {
@@ -114,18 +121,20 @@ fun SettingsScreen(
                                 onRemove = { instanceToRemove = instance }
                             )
                         }
+                    }
 
-                        AssistChip(
-                            onClick = onAddInstance,
-                            label = { Text("Add Instance") },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    FilledTonalButton(
+                        onClick = onAddInstance,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp)
                         )
+                        Text("Add Instance")
                     }
 
                     // Instance details bottom sheet
@@ -139,10 +148,10 @@ fun SettingsScreen(
                 else -> {}
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
             FilledTonalButton(
-                onClick = onLogout,
+                onClick = { showLogoutAllConfirm = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
@@ -180,66 +189,106 @@ fun SettingsScreen(
             }
         )
     }
+
+    // Confirmation dialog for logout all
+    if (showLogoutAllConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLogoutAllConfirm = false },
+            title = { Text("Logout All") },
+            text = {
+                Text("Remove all instances and log out? You will need to re-authenticate each instance.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutAllConfirm = false
+                        onLogout()
+                    }
+                ) {
+                    Text("Logout All")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutAllConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun InstancePill(
+private fun InstanceCard(
     instance: AapInstance,
     isActive: Boolean,
     onTap: () -> Unit,
     onRemove: () -> Unit
 ) {
-    FilterChip(
-        selected = isActive,
-        onClick = onTap,
-        label = {
-            Row {
-                if (instance.alias != null) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onTap),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        border = if (isActive) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_ansible_platform),
+                contentDescription = "Ansible Platform",
+                modifier = Modifier.size(32.dp),
+                tint = Color.Unspecified
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = instance.alias,
+                        text = instance.alias ?: instance.hostname,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    if (isActive) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Filled.Circle,
+                            contentDescription = "Active",
+                            modifier = Modifier.size(8.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                if (instance.alias != null) {
                     Text(
-                        text = instance.hostname,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    Text(
-                        text = instance.hostname,
+                        text = instance.baseUrl,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
             }
-        },
-        leadingIcon = {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_ansible_platform),
-                contentDescription = "Ansible Platform",
-                modifier = Modifier.size(20.dp),
-                tint = androidx.compose.ui.graphics.Color.Unspecified
-            )
-        },
-        trailingIcon = {
-            IconButton(
-                onClick = onRemove,
-                modifier = Modifier.size(18.dp)
-            ) {
+
+            IconButton(onClick = onRemove) {
                 Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Remove ${instance.displayLabel}",
-                    modifier = Modifier.size(14.dp)
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Logout ${instance.displayLabel}",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
-    )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

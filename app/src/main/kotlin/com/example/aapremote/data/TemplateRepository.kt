@@ -2,9 +2,9 @@ package com.example.aapremote.data
 
 import com.example.aapremote.model.JobTemplate
 import com.example.aapremote.model.LaunchRequest
-import com.example.aapremote.network.AapApiService
+import com.example.aapremote.network.AapApiProvider
 
-class TemplateRepository(private val apiService: AapApiService) {
+class TemplateRepository(private val apiProvider: AapApiProvider) {
 
     suspend fun getTemplates(
         page: Int = 1,
@@ -12,7 +12,7 @@ class TemplateRepository(private val apiService: AapApiService) {
         labelFilter: String? = null
     ): Result<TemplateListResult> {
         return try {
-            val response = apiService.getJobTemplates(
+            val response = apiProvider.getApiService().getJobTemplates(
                 page = page,
                 search = search,
                 labelsFilter = labelFilter
@@ -32,7 +32,7 @@ class TemplateRepository(private val apiService: AapApiService) {
     suspend fun launchJob(templateId: Int, extraVars: String? = null): Result<Int> {
         return try {
             val request = LaunchRequest(extraVars = extraVars)
-            val response = apiService.launchJob(templateId, request)
+            val response = apiProvider.getApiService().launchJob(templateId, request)
             Result.success(response.job)
         } catch (e: Exception) {
             Result.failure(e)

@@ -2,10 +2,10 @@ package com.example.aapremote.data
 
 import com.example.aapremote.model.Host
 import com.example.aapremote.model.JobHostSummary
-import com.example.aapremote.network.AapApiService
+import com.example.aapremote.network.AapApiProvider
 import kotlinx.serialization.json.JsonElement
 
-class HostRepository(private val apiService: AapApiService) {
+class HostRepository(private val apiProvider: AapApiProvider) {
 
     suspend fun getAllHosts(
         page: Int = 1,
@@ -13,7 +13,7 @@ class HostRepository(private val apiService: AapApiService) {
         search: String? = null
     ): Result<HostListResult> {
         return try {
-            val response = apiService.getHosts(
+            val response = apiProvider.getApiService().getHosts(
                 page = page,
                 pageSize = pageSize,
                 search = search
@@ -37,7 +37,7 @@ class HostRepository(private val apiService: AapApiService) {
         search: String? = null
     ): Result<HostListResult> {
         return try {
-            val response = apiService.getInventoryHosts(
+            val response = apiProvider.getApiService().getInventoryHosts(
                 id = inventoryId,
                 page = page,
                 pageSize = pageSize,
@@ -57,7 +57,7 @@ class HostRepository(private val apiService: AapApiService) {
 
     suspend fun getHostFacts(hostId: Int): Result<Map<String, JsonElement>> {
         return try {
-            Result.success(apiService.getHostFacts(hostId))
+            Result.success(apiProvider.getApiService().getHostFacts(hostId))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -69,7 +69,7 @@ class HostRepository(private val apiService: AapApiService) {
         pageSize: Int = 20
     ): Result<JobHostSummaryResult> {
         return try {
-            val response = apiService.getHostJobSummaries(
+            val response = apiProvider.getApiService().getHostJobSummaries(
                 id = hostId,
                 page = page,
                 pageSize = pageSize

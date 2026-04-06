@@ -30,7 +30,7 @@ import java.net.URLEncoder
 object Routes {
     const val AUTH = "auth"
     const val AUTH_ADD_INSTANCE = "auth?mode=add"
-    const val AUTH_REAUTH = "auth?mode=reauth&instanceId={instanceId}&url={url}&alias={alias}"
+    const val AUTH_REAUTH = "auth?mode=reauth&instanceId={instanceId}&url={url}&alias={alias}&trustSelfSigned={trustSelfSigned}"
     const val MAIN = "main"
     const val JOB_STATUS = "job_status/{jobId}"
     const val WORKFLOW_JOB_STATUS = "workflow_job_status/{workflowJobId}"
@@ -39,10 +39,10 @@ object Routes {
     fun jobStatus(jobId: Int) = "job_status/$jobId"
     fun workflowJobStatus(workflowJobId: Int) = "workflow_job_status/$workflowJobId"
 
-    fun reAuth(instanceId: String, url: String, alias: String?): String {
+    fun reAuth(instanceId: String, url: String, alias: String?, trustSelfSigned: Boolean): String {
         val encodedUrl = URLEncoder.encode(url, "UTF-8")
         val encodedAlias = alias?.let { URLEncoder.encode(it, "UTF-8") } ?: ""
-        return "auth?mode=reauth&instanceId=$instanceId&url=$encodedUrl&alias=$encodedAlias"
+        return "auth?mode=reauth&instanceId=$instanceId&url=$encodedUrl&alias=$encodedAlias&trustSelfSigned=$trustSelfSigned"
     }
 }
 
@@ -66,13 +66,19 @@ fun AppNavigation(
     }
 
     // Per-instance 401 re-auth: navigate to auth screen pre-filled with instance details
+    // Only navigate if not already on the auth screen to prevent re-auth loops
     LaunchedEffect(Unit) {
         AuthInterceptor.unauthorizedEvent.collect { instanceId ->
+            val currentRoute = navController.currentDestination?.route
+            if (currentRoute != null && currentRoute.startsWith("auth")) {
+                return@collect // Already on auth screen, skip
+            }
+
             if (instanceId.isNotBlank()) {
                 val instance = tokenManager.getInstanceById(instanceId)
                 if (instance != null) {
                     navController.navigate(
-                        Routes.reAuth(instanceId, instance.baseUrl, instance.alias)
+                        Routes.reAuth(instanceId, instance.baseUrl, instance.alias, instance.trustSelfSigned)
                     )
                     return@collect
                 }
@@ -89,12 +95,13 @@ fun AppNavigation(
         startDestination = Routes.AUTH
     ) {
         composable(
-            route = "auth?mode={mode}&instanceId={instanceId}&url={url}&alias={alias}",
+            route = "auth?mode={mode}&instanceId={instanceId}&url={url}&alias={alias}&trustSelfSigned={trustSelfSigned}",
             arguments = listOf(
                 navArgument("mode") { type = NavType.StringType; defaultValue = "" },
                 navArgument("instanceId") { type = NavType.StringType; defaultValue = "" },
                 navArgument("url") { type = NavType.StringType; defaultValue = "" },
-                navArgument("alias") { type = NavType.StringType; defaultValue = "" }
+                navArgument("alias") { type = NavType.StringType; defaultValue = "" },
+                navArgument("trustSelfSigned") { type = NavType.BoolType; defaultValue = false }
             ),
             enterTransition = { fadeIn() },
             exitTransition = { fadeOut() }
@@ -113,6 +120,7 @@ fun AppNavigation(
             val reAuthInstanceId = if (mode == "reauth" && instanceId.isNotBlank()) {
                 instanceId
             } else null
+            val preFilledTrustSelfSigned = backStackEntry.arguments?.getBoolean("trustSelfSigned") ?: false
 
             val isAddMode = mode == "add"
 
@@ -129,7 +137,9 @@ fun AppNavigation(
                 },
                 preFilledUrl = preFilledUrl,
                 preFilledAlias = preFilledAlias,
-                reAuthInstanceId = reAuthInstanceId
+                reAuthInstanceId = reAuthInstanceId,
+                isAddInstance = isAddMode,
+                preFilledTrustSelfSigned = preFilledTrustSelfSigned
             )
         }
 

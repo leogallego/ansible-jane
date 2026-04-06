@@ -4,12 +4,12 @@ import com.example.aapremote.model.LaunchRequest
 import com.example.aapremote.model.WorkflowJob
 import com.example.aapremote.model.WorkflowJobTemplate
 import com.example.aapremote.model.WorkflowNode
-import com.example.aapremote.network.AapApiService
+import com.example.aapremote.network.AapApiProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class WorkflowRepository(private val apiService: AapApiService) {
+class WorkflowRepository(private val apiProvider: AapApiProvider) {
 
     suspend fun getWorkflowTemplates(
         page: Int = 1,
@@ -17,7 +17,7 @@ class WorkflowRepository(private val apiService: AapApiService) {
         labelFilter: String? = null
     ): Result<WorkflowTemplateListResult> {
         return try {
-            val response = apiService.getWorkflowJobTemplates(
+            val response = apiProvider.getApiService().getWorkflowJobTemplates(
                 page = page,
                 search = search,
                 labelsFilter = labelFilter
@@ -37,7 +37,7 @@ class WorkflowRepository(private val apiService: AapApiService) {
     suspend fun launchWorkflow(templateId: Int, extraVars: String? = null): Result<Int> {
         return try {
             val request = LaunchRequest(extraVars = extraVars)
-            val response = apiService.launchWorkflowJob(templateId, request)
+            val response = apiProvider.getApiService().launchWorkflowJob(templateId, request)
             Result.success(response.workflowJob)
         } catch (e: Exception) {
             Result.failure(e)
@@ -46,7 +46,7 @@ class WorkflowRepository(private val apiService: AapApiService) {
 
     suspend fun getWorkflowJobStatus(workflowJobId: Int): Result<WorkflowJob> {
         return try {
-            Result.success(apiService.getWorkflowJob(workflowJobId))
+            Result.success(apiProvider.getApiService().getWorkflowJob(workflowJobId))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -55,7 +55,7 @@ class WorkflowRepository(private val apiService: AapApiService) {
     fun pollWorkflowJobStatus(workflowJobId: Int): Flow<WorkflowJob> = flow {
         while (true) {
             try {
-                val job = apiService.getWorkflowJob(workflowJobId)
+                val job = apiProvider.getApiService().getWorkflowJob(workflowJobId)
                 emit(job)
                 if (job.status.isTerminal) break
                 delay(5000)
@@ -67,7 +67,7 @@ class WorkflowRepository(private val apiService: AapApiService) {
 
     suspend fun getWorkflowNodes(workflowJobId: Int): Result<List<WorkflowNode>> {
         return try {
-            val response = apiService.getWorkflowNodes(workflowJobId)
+            val response = apiProvider.getApiService().getWorkflowNodes(workflowJobId)
             Result.success(response.results)
         } catch (e: Exception) {
             Result.failure(e)

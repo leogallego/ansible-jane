@@ -16,9 +16,8 @@ class AuthViewModel(
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    init {
-        checkExistingCredentials()
-    }
+    // checkExistingCredentials() is called from the composable, not init,
+    // so add-instance mode can skip it
 
     fun connect(
         baseUrl: String,
