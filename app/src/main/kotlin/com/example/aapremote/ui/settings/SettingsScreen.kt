@@ -42,8 +42,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.aapremote.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.model.AapInstance
 import com.example.aapremote.presentation.settings.SettingsUiState
@@ -219,11 +221,11 @@ private fun InstancePill(
         },
         leadingIcon = {
             Icon(
-                imageVector = if (isActive) Icons.Filled.Circle else Icons.Outlined.Circle,
-                contentDescription = if (isActive) "Active" else "Inactive",
-                modifier = Modifier.size(8.dp),
+                painter = painterResource(id = R.drawable.ic_ansible_platform),
+                contentDescription = "Ansible Platform",
+                modifier = Modifier.size(20.dp),
                 tint = if (isActive) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.outline
+                    else MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         trailingIcon = {
