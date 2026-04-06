@@ -3,6 +3,7 @@ package com.example.aapremote.presentation.templates
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.TemplateRepository
+import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.JobTemplate
 import com.example.aapremote.model.Label
@@ -11,10 +12,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class TemplatesViewModel(
-    private val templateRepository: TemplateRepository
+    private val templateRepository: TemplateRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TemplatesUiState>(TemplatesUiState.Idle)
@@ -28,16 +31,25 @@ class TemplatesViewModel(
     private var currentLabelFilter: String? = null
     private var allTemplates = mutableListOf<JobTemplate>()
     private var searchJob: Job? = null
+    private var fetchJob: Job? = null
 
     init {
-        loadTemplates()
+        viewModelScope.launch {
+            tokenManager.activeInstance
+                .distinctUntilChangedBy { it?.id }
+                .collect { instance ->
+                    fetchJob?.cancel()
+                    if (instance != null) loadTemplates()
+                }
+        }
     }
 
     fun loadTemplates() {
         currentPage = 1
         allTemplates.clear()
         _uiState.value = TemplatesUiState.Loading
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchTemplates()
         }
     }
@@ -45,7 +57,8 @@ class TemplatesViewModel(
     fun refresh() {
         currentPage = 1
         allTemplates.clear()
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchTemplates()
         }
     }
@@ -55,7 +68,7 @@ class TemplatesViewModel(
         if (current is TemplatesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
             _uiState.value = current.copy(isLoadingMore = true)
-            viewModelScope.launch {
+            fetchJob = viewModelScope.launch {
                 fetchTemplates(append = true)
             }
         }

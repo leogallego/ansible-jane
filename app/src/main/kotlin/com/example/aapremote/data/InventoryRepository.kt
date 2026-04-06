@@ -1,9 +1,9 @@
 package com.example.aapremote.data
 
 import com.example.aapremote.model.Inventory
-import com.example.aapremote.network.AapApiService
+import com.example.aapremote.network.AapApiProvider
 
-class InventoryRepository(private val apiService: AapApiService) {
+class InventoryRepository(private val apiProvider: AapApiProvider) {
 
     suspend fun getInventories(
         page: Int = 1,
@@ -11,7 +11,7 @@ class InventoryRepository(private val apiService: AapApiService) {
         search: String? = null
     ): Result<InventoryListResult> {
         return try {
-            val response = apiService.getInventories(
+            val response = apiProvider.getApiService().getInventories(
                 page = page,
                 pageSize = pageSize,
                 search = search
@@ -30,7 +30,7 @@ class InventoryRepository(private val apiService: AapApiService) {
 
     suspend fun getInventory(id: Int): Result<Inventory> {
         return try {
-            Result.success(apiService.getInventory(id))
+            Result.success(apiProvider.getApiService().getInventory(id))
         } catch (e: Exception) {
             Result.failure(e)
         }

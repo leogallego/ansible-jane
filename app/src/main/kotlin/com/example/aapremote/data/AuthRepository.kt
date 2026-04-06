@@ -1,6 +1,7 @@
 package com.example.aapremote.data
 
 import com.example.aapremote.model.User
+import com.example.aapremote.network.AapApiProvider
 import com.example.aapremote.network.AapApiService
 import com.example.aapremote.network.ApiVersion
 import com.example.aapremote.network.ApiVersionDetector
@@ -16,13 +17,16 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class AuthRepository(
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val apiProvider: AapApiProvider
 ) {
 
     suspend fun validateCredentials(
         baseUrl: String,
         token: String,
-        trustSelfSigned: Boolean
+        trustSelfSigned: Boolean,
+        alias: String? = null,
+        existingInstanceId: String? = null
     ): Result<User> = withContext(Dispatchers.IO) {
         try {
             val client = buildClient(token, trustSelfSigned)
@@ -33,12 +37,17 @@ class AuthRepository(
             val user = response.results.firstOrNull()
                 ?: return@withContext Result.failure(Exception("No user data returned"))
 
-            tokenManager.saveCredentials(
+            val instanceId = tokenManager.saveCredentials(
                 baseUrl = baseUrl,
                 token = token,
                 apiVersion = apiVersion,
-                trustSelfSigned = trustSelfSigned
+                trustSelfSigned = trustSelfSigned,
+                alias = alias,
+                existingId = existingInstanceId
             )
+
+            // Evict cached service so it rebuilds with the new token/settings
+            apiProvider.evictInstance(instanceId)
 
             Result.success(user)
         } catch (e: Exception) {
@@ -46,15 +55,54 @@ class AuthRepository(
         }
     }
 
+    suspend fun reAuthenticate(instanceId: String, newToken: String): Result<User> =
+        withContext(Dispatchers.IO) {
+            try {
+                val instance = tokenManager.getInstanceById(instanceId)
+                    ?: return@withContext Result.failure(Exception("Instance not found"))
+
+                val trustSelfSigned = instance.trustSelfSigned
+                val client = buildClient(newToken, trustSelfSigned)
+                val apiVersion = try {
+                    ApiVersion.valueOf(instance.apiVersion)
+                } catch (_: Exception) {
+                    ApiVersion.CONTROLLER_V2
+                }
+                val api = buildApi(client, instance.baseUrl, apiVersion)
+                val response = api.getMe()
+                val user = response.results.firstOrNull()
+                    ?: return@withContext Result.failure(Exception("No user data returned"))
+
+                tokenManager.saveCredentials(
+                    baseUrl = instance.baseUrl,
+                    token = newToken,
+                    apiVersion = apiVersion,
+                    trustSelfSigned = trustSelfSigned,
+                    alias = instance.alias,
+                    existingId = instanceId
+                )
+
+                // Evict cached service so it rebuilds with the new token
+                apiProvider.evictInstance(instanceId)
+
+                Result.success(user)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     suspend fun checkExistingCredentials(): Result<User>? = withContext(Dispatchers.IO) {
         if (!tokenManager.loadCredentials()) return@withContext null
-        val baseUrl = tokenManager.cachedBaseUrl ?: return@withContext null
-        val token = tokenManager.cachedToken ?: return@withContext null
-        val trustSelfSigned = tokenManager.cachedTrustSelfSigned
+        val activeInstance = tokenManager.activeInstance.value ?: return@withContext null
 
         try {
-            val client = buildClient(token, trustSelfSigned)
-            val api = buildApi(client, baseUrl, tokenManager.cachedApiVersion)
+            val client = buildClient(activeInstance.token, activeInstance.trustSelfSigned)
+            val apiVersion = try {
+                ApiVersion.valueOf(activeInstance.apiVersion)
+            } catch (_: Exception) {
+                ApiVersion.CONTROLLER_V2
+            }
+            val api = buildApi(client, activeInstance.baseUrl, apiVersion)
             val response = api.getMe()
             val user = response.results.firstOrNull()
                 ?: return@withContext Result.failure(Exception("No user data returned"))
@@ -62,6 +110,10 @@ class AuthRepository(
         } catch (_: Exception) {
             null
         }
+    }
+
+    suspend fun logoutInstance(instanceId: String) {
+        tokenManager.removeInstance(instanceId)
     }
 
     suspend fun logout() {

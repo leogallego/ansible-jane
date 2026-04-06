@@ -3,6 +3,7 @@ package com.example.aapremote.presentation.hosts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.HostRepository
+import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Host
 import kotlinx.coroutines.Job
@@ -10,10 +11,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class HostsViewModel(
-    private val hostRepository: HostRepository
+    private val hostRepository: HostRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HostsUiState>(HostsUiState.Loading)
@@ -23,16 +26,25 @@ class HostsViewModel(
     private var allHosts = mutableListOf<Host>()
     private var currentSearch: String? = null
     private var searchJob: Job? = null
+    private var fetchJob: Job? = null
 
     init {
-        loadHosts()
+        viewModelScope.launch {
+            tokenManager.activeInstance
+                .distinctUntilChangedBy { it?.id }
+                .collect { instance ->
+                    fetchJob?.cancel()
+                    if (instance != null) loadHosts()
+                }
+        }
     }
 
     fun loadHosts() {
         currentPage = 1
         allHosts.clear()
         _uiState.value = HostsUiState.Loading
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchHosts()
         }
     }
@@ -40,7 +52,8 @@ class HostsViewModel(
     fun refresh() {
         currentPage = 1
         allHosts.clear()
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchHosts()
         }
     }

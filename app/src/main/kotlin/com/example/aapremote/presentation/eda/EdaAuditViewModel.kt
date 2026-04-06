@@ -3,16 +3,20 @@ package com.example.aapremote.presentation.eda
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.EdaAuditRepository
+import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.EdaRuleAudit
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
 class EdaAuditViewModel(
-    private val edaAuditRepository: EdaAuditRepository
+    private val edaAuditRepository: EdaAuditRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EdaAuditUiState>(EdaAuditUiState.Loading)
@@ -20,16 +24,25 @@ class EdaAuditViewModel(
 
     private var currentPage = 1
     private val allAuditRules = mutableListOf<EdaRuleAudit>()
+    private var fetchJob: Job? = null
 
     init {
-        loadAuditRules()
+        viewModelScope.launch {
+            tokenManager.activeInstance
+                .distinctUntilChangedBy { it?.id }
+                .collect { instance ->
+                    fetchJob?.cancel()
+                    if (instance != null) loadAuditRules()
+                }
+        }
     }
 
     fun loadAuditRules() {
         currentPage = 1
         allAuditRules.clear()
         _uiState.value = EdaAuditUiState.Loading
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchAuditRules()
         }
     }
@@ -37,7 +50,8 @@ class EdaAuditViewModel(
     fun refresh() {
         currentPage = 1
         allAuditRules.clear()
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchAuditRules()
         }
     }
@@ -47,7 +61,7 @@ class EdaAuditViewModel(
         if (current is EdaAuditUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
             _uiState.value = current.copy(isLoadingMore = true)
-            viewModelScope.launch {
+            fetchJob = viewModelScope.launch {
                 fetchAuditRules(append = true)
             }
         }

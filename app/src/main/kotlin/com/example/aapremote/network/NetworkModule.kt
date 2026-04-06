@@ -21,14 +21,6 @@ val networkModule = module {
         )
     }
 
-    factory<AapApiService> {
-        get<AapApiProvider>().getApiService()
-    }
-
-    factory<EdaApiService> {
-        get<AapApiProvider>().getEdaApiService()
-    }
-
     factory {
         OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {

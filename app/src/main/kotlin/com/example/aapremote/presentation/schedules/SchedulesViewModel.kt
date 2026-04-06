@@ -3,18 +3,22 @@ package com.example.aapremote.presentation.schedules
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.ScheduleRepository
+import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Schedule
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class SchedulesViewModel(
-    private val scheduleRepository: ScheduleRepository
+    private val scheduleRepository: ScheduleRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SchedulesUiState>(SchedulesUiState.Loading)
@@ -25,16 +29,25 @@ class SchedulesViewModel(
 
     private var currentPage = 1
     private val allSchedules = mutableListOf<Schedule>()
+    private var fetchJob: Job? = null
 
     init {
-        loadSchedules()
+        viewModelScope.launch {
+            tokenManager.activeInstance
+                .distinctUntilChangedBy { it?.id }
+                .collect { instance ->
+                    fetchJob?.cancel()
+                    if (instance != null) loadSchedules()
+                }
+        }
     }
 
     fun loadSchedules() {
         currentPage = 1
         allSchedules.clear()
         _uiState.value = SchedulesUiState.Loading
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchSchedules()
         }
     }
@@ -42,7 +55,8 @@ class SchedulesViewModel(
     fun refresh() {
         currentPage = 1
         allSchedules.clear()
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchSchedules()
         }
     }
@@ -52,7 +66,7 @@ class SchedulesViewModel(
         if (current is SchedulesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
             _uiState.value = current.copy(isLoadingMore = true)
-            viewModelScope.launch {
+            fetchJob = viewModelScope.launch {
                 fetchSchedules(append = true)
             }
         }

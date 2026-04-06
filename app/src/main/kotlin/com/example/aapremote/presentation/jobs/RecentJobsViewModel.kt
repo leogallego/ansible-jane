@@ -3,16 +3,19 @@ package com.example.aapremote.presentation.jobs
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.JobRepository
+import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Job
 import com.example.aapremote.model.JobStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class RecentJobsViewModel(
-    private val jobRepository: JobRepository
+    private val jobRepository: JobRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<RecentJobsUiState>(RecentJobsUiState.Loading)
@@ -21,16 +24,25 @@ class RecentJobsViewModel(
     private var currentPage = 1
     private val allJobs = mutableListOf<Job>()
     private var activeFilters = mutableSetOf<JobStatus>()
+    private var fetchJob: kotlinx.coroutines.Job? = null
 
     init {
-        loadRecentJobs()
+        viewModelScope.launch {
+            tokenManager.activeInstance
+                .distinctUntilChangedBy { it?.id }
+                .collect { instance ->
+                    fetchJob?.cancel()
+                    if (instance != null) loadRecentJobs()
+                }
+        }
     }
 
     fun loadRecentJobs() {
         currentPage = 1
         allJobs.clear()
         _uiState.value = RecentJobsUiState.Loading
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchJobs()
         }
     }
@@ -38,7 +50,8 @@ class RecentJobsViewModel(
     fun refresh() {
         currentPage = 1
         allJobs.clear()
-        viewModelScope.launch {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch {
             fetchJobs()
         }
     }

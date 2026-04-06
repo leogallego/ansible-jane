@@ -1,13 +1,13 @@
 package com.example.aapremote.data
 
 import com.example.aapremote.model.Schedule
-import com.example.aapremote.network.AapApiService
+import com.example.aapremote.network.AapApiProvider
 
-class ScheduleRepository(private val apiService: AapApiService) {
+class ScheduleRepository(private val apiProvider: AapApiProvider) {
 
     suspend fun getSchedules(page: Int = 1, pageSize: Int = 20): Result<SchedulesResult> {
         return try {
-            val response = apiService.getSchedules(
+            val response = apiProvider.getApiService().getSchedules(
                 page = page,
                 pageSize = pageSize
             )
@@ -25,7 +25,7 @@ class ScheduleRepository(private val apiService: AapApiService) {
 
     suspend fun toggleSchedule(id: Int, enabled: Boolean): Result<Schedule> {
         return try {
-            val updated = apiService.toggleSchedule(id, mapOf("enabled" to enabled))
+            val updated = apiProvider.getApiService().toggleSchedule(id, mapOf("enabled" to enabled))
             Result.success(updated)
         } catch (e: Exception) {
             Result.failure(e)
