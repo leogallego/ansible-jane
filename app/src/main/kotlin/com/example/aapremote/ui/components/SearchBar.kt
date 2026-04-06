@@ -23,9 +23,10 @@ import kotlinx.coroutines.delay
 fun SearchBar(
     onSearch: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search templates..."
+    placeholder: String = "Search templates...",
+    initialQuery: String = ""
 ) {
-    var query by remember { mutableStateOf("") }
+    var query by remember(initialQuery) { mutableStateOf(initialQuery) }
     var hasUserTyped by remember { mutableStateOf(false) }
 
     LaunchedEffect(query) {
