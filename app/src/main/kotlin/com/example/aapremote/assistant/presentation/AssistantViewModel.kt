@@ -130,6 +130,23 @@ class AssistantViewModel(
         val allTools = mcpServerManager.getAllTools()
         val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
         val tools = ToolRouter.filterTools(text, allTools, serverConfigs)
+
+        if (tools.isEmpty() && allTools.isNotEmpty()) {
+            val guidanceMsg = ChatMessage(
+                role = Role.ASSISTANT,
+                content = "I can help you query your AAP instance. Try asking about:\n\n" +
+                    "- **Inventory** — hosts, groups, inventories\n" +
+                    "- **Jobs** — job templates, workflows, schedules\n" +
+                    "- **Users** — users, teams, organizations, roles\n" +
+                    "- **Credentials** — credentials, secrets\n" +
+                    "- **Monitoring** — system health, instance status\n" +
+                    "- **Configuration** — projects, settings, notifications"
+            )
+            repository.addMessage(guidanceMsg)
+            updateState { copy(messages = repository.getHistory(), isGenerating = false) }
+            return
+        }
+
         val toolSpecs = tools.map { it.spec }
         val toolExecutor = ToolExecutor(tools)
         val engine = ChatEngine(provider, toolExecutor)
