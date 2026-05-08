@@ -194,4 +194,97 @@ class ToolRouterTest {
         val result = ToolRouter.filterTools("list hosts", tools, emptyList())
         assertEquals(tools.size, result.size)
     }
+
+    @Test
+    fun `SHOULD return no tools WHEN query is a greeting GIVEN all tools available`() {
+        val tools = listOf(
+            tool("controller.hosts_list"),
+            tool("controller.jobs_read"),
+            tool("controller.users_list"),
+            tool("controller.credentials_list"),
+            tool("controller.settings_read")
+        )
+        assertTrue(ToolRouter.filterTools("hi", tools, listOf(readWriteConfig)).isEmpty())
+        assertTrue(ToolRouter.filterTools("hello there", tools, listOf(readWriteConfig)).isEmpty())
+        assertTrue(ToolRouter.filterTools("what can you do?", tools, listOf(readWriteConfig)).isEmpty())
+        assertTrue(ToolRouter.filterTools("thanks", tools, listOf(readWriteConfig)).isEmpty())
+    }
+
+    @Test
+    fun `SHOULD select monitoring tools WHEN query mentions health or status GIVEN mixed tools`() {
+        val tools = listOf(
+            tool("controller.hosts_list"),
+            tool("controller.instances_list"),
+            tool("controller.ping_read"),
+            tool("controller.dashboard_read")
+        )
+        val result = ToolRouter.filterTools("check system health", tools, listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.instances_list" in names)
+        assertTrue("controller.ping_read" in names)
+        assertTrue("controller.dashboard_read" in names)
+        assertTrue("controller.hosts_list" !in names)
+    }
+
+    @Test
+    fun `SHOULD select user tools WHEN query mentions users or teams GIVEN mixed tools`() {
+        val tools = listOf(
+            tool("controller.users_list"),
+            tool("controller.teams_list"),
+            tool("controller.organizations_list"),
+            tool("controller.hosts_list")
+        )
+        val result = ToolRouter.filterTools("list users in my team", tools, listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.users_list" in names)
+        assertTrue("controller.teams_list" in names)
+        assertTrue("controller.organizations_list" in names)
+        assertTrue("controller.hosts_list" !in names)
+    }
+
+    @Test
+    fun `SHOULD select security tools WHEN query mentions credentials GIVEN mixed tools`() {
+        val tools = listOf(
+            tool("controller.credentials_list"),
+            tool("controller.credential_types_list"),
+            tool("controller.hosts_list"),
+            tool("controller.jobs_read")
+        )
+        val result = ToolRouter.filterTools("show my credentials", tools, listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.credentials_list" in names)
+        assertTrue("controller.credential_types_list" in names)
+        assertTrue("controller.hosts_list" !in names)
+        assertTrue("controller.jobs_read" !in names)
+    }
+
+    @Test
+    fun `SHOULD select configuration tools WHEN query mentions settings or projects GIVEN mixed tools`() {
+        val tools = listOf(
+            tool("controller.settings_read"),
+            tool("controller.projects_list"),
+            tool("controller.notification_templates_list"),
+            tool("controller.hosts_list")
+        )
+        val result = ToolRouter.filterTools("show project settings", tools, listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.settings_read" in names)
+        assertTrue("controller.projects_list" in names)
+        assertTrue("controller.notification_templates_list" in names)
+        assertTrue("controller.hosts_list" !in names)
+    }
+
+    @Test
+    fun `SHOULD match each category keyword WHEN single keyword used GIVEN inventory tools`() {
+        val tools = listOf(tool("controller.hosts_list"), tool("controller.jobs_read"))
+
+        assertTrue(ToolRouter.filterTools("show host", tools, listOf(readWriteConfig)).any { it.spec.name.contains("hosts") })
+        assertTrue(ToolRouter.filterTools("list groups", tools, listOf(readWriteConfig)).any { it.spec.name.contains("hosts") })
+        assertTrue(ToolRouter.filterTools("check inventory", tools, listOf(readWriteConfig)).any { it.spec.name.contains("hosts") })
+        assertTrue(ToolRouter.filterTools("show infrastructure", tools, listOf(readWriteConfig)).any { it.spec.name.contains("hosts") })
+    }
 }
