@@ -210,7 +210,7 @@ class AssistantViewModel(
             val servers = if (enabled && instance.mcpServerUrls.isNullOrEmpty()) {
                 val base = "${instance.baseUrl.trimEnd('/')}:8448"
                 listOf(
-                    McpServerConfig(url = "$base/mcp", label = "AAP", isAutoDetected = true)
+                    McpServerConfig(url = "$base/inventory_management/mcp", label = "inventory", isAutoDetected = true)
                 )
             } else {
                 instance.mcpServerUrls
