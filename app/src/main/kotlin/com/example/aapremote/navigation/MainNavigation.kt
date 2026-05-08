@@ -1,6 +1,7 @@
 package com.example.aapremote.navigation
 
 import androidx.compose.runtime.Composable
+import com.example.aapremote.assistant.ui.AssistantScreen
 import com.example.aapremote.ui.components.PlaceholderScreen
 import com.example.aapremote.ui.hosts.HostsScreen
 import com.example.aapremote.ui.inventory.InventoriesScreen
@@ -52,6 +53,9 @@ fun TabContent(
                 "Hosts" -> HostsScreen()
                 else -> PlaceholderScreen(title = segment.label)
             }
+        }
+        is TopLevelTab.Assistant -> {
+            AssistantScreen()
         }
     }
 }

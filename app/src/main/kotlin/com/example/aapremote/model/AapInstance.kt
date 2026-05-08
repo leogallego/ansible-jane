@@ -1,6 +1,14 @@
 package com.example.aapremote.model
 
+import kotlinx.serialization.Serializable
 import java.net.URI
+
+@Serializable
+data class McpServerConfig(
+    val url: String,
+    val label: String,
+    val enabled: Boolean = true
+)
 
 data class AapInstance(
     val id: String,
@@ -9,7 +17,8 @@ data class AapInstance(
     val alias: String? = null,
     val apiVersion: String = "v2",
     val trustSelfSigned: Boolean = false,
-    val certFingerprint: String? = null
+    val certFingerprint: String? = null,
+    val mcpServerUrls: List<McpServerConfig>? = null
 ) {
     val displayLabel: String
         get() = alias ?: URI(baseUrl).host.orEmpty()

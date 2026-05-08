@@ -1,6 +1,7 @@
 package com.example.aapremote
 
 import android.app.Application
+import com.example.aapremote.assistant.assistantModule
 import com.example.aapremote.data.dataModule
 import com.example.aapremote.network.networkModule
 import com.example.aapremote.presentation.presentationModule
@@ -14,7 +15,7 @@ class AapRemoteApp : Application() {
         startKoin {
             androidLogger()
             androidContext(this@AapRemoteApp)
-            modules(networkModule, dataModule, presentationModule)
+            modules(networkModule, dataModule, presentationModule, assistantModule)
         }
     }
 }

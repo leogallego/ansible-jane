@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.aapremote.model.AapInstance
+import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.ApiVersion
 import com.google.crypto.tink.Aead
 import com.google.crypto.tink.aead.AeadConfig
@@ -37,7 +38,8 @@ data class SerializedInstance(
     val alias: String? = null,
     val apiVersion: String = "CONTROLLER_V2",
     val trustSelfSigned: Boolean = false,
-    val certFingerprint: String? = null
+    val certFingerprint: String? = null,
+    val mcpServerUrls: List<McpServerConfig>? = null
 )
 
 @Serializable
@@ -104,7 +106,8 @@ class TokenManager(private val context: Context) {
             alias = serialized.alias,
             apiVersion = serialized.apiVersion,
             trustSelfSigned = serialized.trustSelfSigned,
-            certFingerprint = serialized.certFingerprint
+            certFingerprint = serialized.certFingerprint,
+            mcpServerUrls = serialized.mcpServerUrls
         )
     }
 
@@ -116,7 +119,8 @@ class TokenManager(private val context: Context) {
             alias = instance.alias,
             apiVersion = instance.apiVersion,
             trustSelfSigned = instance.trustSelfSigned,
-            certFingerprint = instance.certFingerprint
+            certFingerprint = instance.certFingerprint,
+            mcpServerUrls = instance.mcpServerUrls
         )
     }
 

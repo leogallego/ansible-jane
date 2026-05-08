@@ -1,0 +1,28 @@
+package com.example.aapremote.assistant.tools
+
+import kotlinx.serialization.json.JsonObject
+
+data class ToolSpec(
+    val name: String,
+    val description: String,
+    val parametersSchema: JsonObject
+)
+
+interface Tool {
+    val spec: ToolSpec
+    suspend fun execute(args: Map<String, Any>): ToolResult
+}
+
+data class ToolResult(
+    val success: Boolean,
+    val data: String? = null,
+    val errorType: ErrorType? = null
+)
+
+enum class ErrorType {
+    CONNECTION_ERROR,
+    AUTH_ERROR,
+    NOT_FOUND,
+    TIMEOUT,
+    SERVER_ERROR
+}
