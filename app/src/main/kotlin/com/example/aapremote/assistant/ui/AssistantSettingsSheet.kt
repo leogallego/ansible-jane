@@ -286,7 +286,7 @@ fun AssistantSettingsSheet(
                                     llmUrl = provider.baseUrl
                                     val restored = providerState[provider]
                                     llmModel = restored?.first ?: ""
-                                    llmApiKey = restored?.second ?: llmApiKey
+                                    llmApiKey = restored?.second ?: ""
                                     onClearFetchedModels()
                                 }
                                 providerExpanded = false
