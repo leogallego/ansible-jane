@@ -45,6 +45,7 @@ class ChatEngine(
             var iterations = 0
             var totalToolCalls = 0
             var streamError: Throwable? = null
+            val toolCallHistory = mutableListOf<List<String>>()
 
             loop@ while (iterations < maxIterations) {
                 iterations++
@@ -52,6 +53,7 @@ class ChatEngine(
                 val textBuilder = StringBuilder()
                 var lastResult: com.example.aapremote.assistant.llm.LlmResult? = null
 
+                trimMessages(messages)
                 provider.generateStream(messages, tools).collect { event ->
                     when (event) {
                         is StreamEvent.TextDelta -> {
@@ -80,6 +82,19 @@ class ChatEngine(
                 val result = lastResult ?: break
 
                 if (result.toolCalls.isNotEmpty() && iterations < maxIterations) {
+                    val currentSignature = result.toolCalls.map {
+                        "${it.name}:${it.arguments.hashCode()}"
+                    }
+                    toolCallHistory.add(currentSignature)
+
+                    if (isRepeatingToolCalls(toolCallHistory)) {
+                        emit(ChatEvent.AssistantMessage(
+                            (result.text ?: "") + "\n\nStopped: the same tools were being called repeatedly.",
+                            totalToolCalls
+                        ))
+                        return@flow
+                    }
+
                     val assistantContent = result.text ?: ""
                     messages.add(ChatMessage(
                         role = Role.ASSISTANT,
@@ -132,6 +147,37 @@ class ChatEngine(
         }
     }
 
+    private fun isRepeatingToolCalls(history: List<List<String>>): Boolean {
+        if (history.size < 3) return false
+        val last = history.last()
+        return history[history.size - 2] == last && history[history.size - 3] == last
+    }
+
+    private fun trimMessages(
+        messages: MutableList<ChatMessage>,
+        maxChars: Int = DEFAULT_CONTEXT_CHARS
+    ) {
+        val totalChars = messages.sumOf { it.content.length }
+        if (totalChars <= maxChars) return
+
+        val systemMessages = messages.takeWhile { it.role == Role.SYSTEM }
+        val systemChars = systemMessages.sumOf { it.content.length }
+        val available = maxChars - systemChars
+
+        var kept = 0
+        var keepFrom = messages.size
+        for (i in messages.indices.reversed()) {
+            if (messages[i].role == Role.SYSTEM) break
+            kept += messages[i].content.length
+            if (kept > available) break
+            keepFrom = i
+        }
+
+        if (keepFrom > systemMessages.size) {
+            messages.subList(systemMessages.size, keepFrom).clear()
+        }
+    }
+
     private suspend fun <T> retryWithBackoff(
         maxAttempts: Int = 3,
         block: suspend () -> T
@@ -157,6 +203,7 @@ class ChatEngine(
     }
 
     companion object {
+        private const val DEFAULT_CONTEXT_CHARS = 100_000
         const val SYSTEM_PROMPT = """You are an AI assistant for Ansible Automation Platform (AAP). You help users query and manage their AAP instance using the available tools. Be concise and specific. When reporting results, use structured formatting."""
     }
 }
