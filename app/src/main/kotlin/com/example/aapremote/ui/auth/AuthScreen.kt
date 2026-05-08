@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,6 +85,15 @@ fun AuthScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        val textFieldColors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface,
+            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
         OutlinedTextField(
             value = baseUrl,
             onValueChange = { baseUrl = it },
@@ -99,6 +109,7 @@ fun AuthScreen(
                     }
                 }
             },
+            colors = textFieldColors,
             modifier = Modifier
                 .fillMaxWidth()
                 .semantics { contentType = ContentType.Username }
@@ -120,6 +131,7 @@ fun AuthScreen(
                     }
                 }
             },
+            colors = textFieldColors,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -149,6 +161,7 @@ fun AuthScreen(
                     }
                 }
             },
+            colors = textFieldColors,
             modifier = Modifier
                 .fillMaxWidth()
                 .semantics { contentType = ContentType.Password }
