@@ -321,6 +321,12 @@ class AssistantViewModel(
         return builder.build()
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        generateJob?.cancel()
+        mcpServerManager.disconnectAll()
+    }
+
     private inline fun updateState(crossinline transform: AssistantUiState.Active.() -> AssistantUiState.Active) {
         _uiState.update { current ->
             if (current is AssistantUiState.Active) current.transform()

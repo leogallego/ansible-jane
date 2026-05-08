@@ -58,7 +58,7 @@ class McpTransport(
         val contentType = response.header("Content-Type") ?: ""
         val responseFlow = when {
             contentType.contains("text/event-stream") -> parseSseFromBody(response)
-            else -> flowOf(parseJsonResponse(response))
+            else -> response.use { flowOf(parseJsonResponse(it)) }
         }
         return McpTransportResult(responseFlow, newSessionId)
     }

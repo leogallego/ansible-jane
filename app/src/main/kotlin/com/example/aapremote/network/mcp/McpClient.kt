@@ -85,7 +85,7 @@ class McpClient(
         }
     }
 
-    suspend fun disconnect() {
+    fun disconnect() {
         session.reset()
     }
 

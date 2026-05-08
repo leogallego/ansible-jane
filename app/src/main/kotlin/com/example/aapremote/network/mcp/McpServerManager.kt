@@ -70,7 +70,7 @@ class McpServerManager(
         }
     }
 
-    suspend fun disconnectAll() {
+    fun disconnectAll() {
         clients.values.forEach { client ->
             try { client.disconnect() } catch (_: Exception) {}
         }
