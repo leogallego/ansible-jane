@@ -35,7 +35,7 @@ class McpTransport(
         url: String,
         request: JsonRpcRequest,
         sessionId: String? = null
-    ): Flow<JsonRpcResponse> {
+    ): McpTransportResult {
         val body = json.encodeToString(JsonRpcRequest.serializer(), request)
             .toRequestBody("application/json".toMediaType())
 
@@ -47,12 +47,14 @@ class McpTransport(
             .build()
 
         val response = executeRequest(httpRequest)
+        val newSessionId = response.header("Mcp-Session-Id")
 
         val contentType = response.header("Content-Type") ?: ""
-        return when {
+        val responseFlow = when {
             contentType.contains("text/event-stream") -> parseSseFromBody(response)
             else -> flowOf(parseJsonResponse(response))
         }
+        return McpTransportResult(responseFlow, newSessionId)
     }
 
     suspend fun postNotification(
@@ -67,11 +69,16 @@ class McpTransport(
             .url(url)
             .post(body)
             .header("Accept", "application/json, text/event-stream")
+            .header("Content-Type", "application/json")
             .apply { sessionId?.let { header("Mcp-Session-Id", it) } }
             .build()
 
-        val response = executeRequest(httpRequest)
-        response.close()
+        try {
+            val response = executeRequest(httpRequest)
+            response.close()
+        } catch (_: IOException) {
+            // Some servers reject notifications — non-fatal
+        }
     }
 
     fun extractSessionId(response: Response): String? =
@@ -146,6 +153,11 @@ class McpTransport(
         }
     }
 }
+
+data class McpTransportResult(
+    val responses: Flow<JsonRpcResponse>,
+    val sessionId: String? = null
+)
 
 data class SseEvent(
     val id: String?,

@@ -43,14 +43,16 @@ class McpClient(
                 params = initParams
             )
 
-            val responseFlow = transport.postJsonRpc(serverUrl, initRequest)
-            val response = responseFlow.first()
+            val transportResult = transport.postJsonRpc(serverUrl, initRequest)
+            val response = transportResult.responses.first()
 
             if (response.error != null) {
                 throw McpConnectionException(
                     "Initialize failed: ${response.error.message} (code ${response.error.code})"
                 )
             }
+
+            transportResult.sessionId?.let { session.updateSessionId(it) }
 
             val initResult = response.result?.let {
                 json.decodeFromString(McpInitializeResult.serializer(), it.toString())
@@ -92,8 +94,8 @@ class McpClient(
             method = "tools/list"
         )
 
-        val responseFlow = transport.postJsonRpc(serverUrl, request, session.sessionId)
-        val response = responseFlow.first()
+        val result = transport.postJsonRpc(serverUrl, request, session.sessionId)
+        val response = result.responses.first()
 
         if (response.error != null) {
             throw McpConnectionException(
@@ -121,8 +123,8 @@ class McpClient(
         )
 
         try {
-            val responseFlow = transport.postJsonRpc(serverUrl, request, session.sessionId)
-            val response = responseFlow.first()
+            val transportResult = transport.postJsonRpc(serverUrl, request, session.sessionId)
+            val response = transportResult.responses.first()
 
             if (response.error != null) {
                 val errorType = mapJsonRpcError(response.error.code)
