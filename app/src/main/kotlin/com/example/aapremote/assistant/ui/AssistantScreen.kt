@@ -21,6 +21,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -211,7 +216,16 @@ private fun ActiveChatContent(
             OutlinedTextField(
                 value = state.inputText,
                 onValueChange = onInputChanged,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .onPreviewKeyEvent {
+                        if (it.type == KeyEventType.KeyUp && it.key == Key.Enter) {
+                            if (state.inputText.isNotBlank() && !state.isGenerating) {
+                                onSendMessage(state.inputText)
+                            }
+                            true
+                        } else false
+                    },
                 placeholder = { Text("Ask a question...") },
                 enabled = !state.isGenerating,
                 maxLines = 3,
