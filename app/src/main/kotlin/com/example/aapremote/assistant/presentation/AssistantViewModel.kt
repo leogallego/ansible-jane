@@ -205,8 +205,11 @@ class AssistantViewModel(
         val instance = tokenManager.activeInstance.value ?: return
         viewModelScope.launch {
             val servers = if (enabled && instance.mcpServerUrls.isNullOrEmpty()) {
-                val autoUrl = "${instance.baseUrl.trimEnd('/')}/mcp"
-                listOf(McpServerConfig(url = autoUrl, label = "AAP", isAutoDetected = true))
+                val base = instance.baseUrl.trimEnd('/')
+                listOf(
+                    McpServerConfig(url = "$base/job_management/mcp", label = "jobs", isAutoDetected = true),
+                    McpServerConfig(url = "$base/inventory_management/mcp", label = "inventory", isAutoDetected = true)
+                )
             } else {
                 instance.mcpServerUrls
             }

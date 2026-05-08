@@ -96,7 +96,7 @@ fun AssistantSettingsSheet(
                 Column {
                     Text("Enable AAP MCP", style = MaterialTheme.typography.bodyMedium)
                     Text(
-                        "Auto-detect at {instance}/mcp",
+                        "Auto-detect at {instance}/{toolset}/mcp",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
