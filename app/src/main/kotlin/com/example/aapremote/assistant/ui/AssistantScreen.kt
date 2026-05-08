@@ -13,16 +13,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,7 +35,6 @@ import com.example.aapremote.assistant.presentation.AssistantViewModel
 import com.example.aapremote.network.mcp.McpConnectionState
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssistantScreen(
     viewModel: AssistantViewModel = koinViewModel()
@@ -46,91 +42,58 @@ fun AssistantScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showSettings by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Assistant")
-                        val state = uiState
-                        if (state is AssistantUiState.Active && state.connections.isNotEmpty()) {
-                            val connected = state.connections.count { it.value is McpConnectionState.Connected }
-                            val total = state.connections.size
-                            Text(
-                                text = "$connected/$total MCP servers connected",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { showSettings = true }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        when (val state = uiState) {
-            is AssistantUiState.Idle -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No active instance. Please log in first.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            is AssistantUiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Text(
-                            text = "Connecting to MCP servers...",
-                            modifier = Modifier.padding(top = 16.dp),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-
-            is AssistantUiState.Active -> {
-                ActiveChatContent(
-                    state = state,
-                    onSendMessage = { viewModel.sendMessage(it) },
-                    onInputChanged = { viewModel.updateInputText(it) },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .imePadding()
+    when (val state = uiState) {
+        is AssistantUiState.Idle -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No active instance. Please log in first.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
 
-            is AssistantUiState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
+        is AssistantUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
                     Text(
-                        text = state.error.message,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
+                        text = "Connecting to MCP servers...",
+                        modifier = Modifier.padding(top = 16.dp),
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
+            }
+        }
+
+        is AssistantUiState.Active -> {
+            ActiveChatContent(
+                state = state,
+                onSendMessage = { viewModel.sendMessage(it) },
+                onInputChanged = { viewModel.updateInputText(it) },
+                onOpenSettings = { showSettings = true },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .imePadding()
+            )
+        }
+
+        is AssistantUiState.Error -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = state.error.message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -151,6 +114,7 @@ private fun ActiveChatContent(
     state: AssistantUiState.Active,
     onSendMessage: (String) -> Unit,
     onInputChanged: (String) -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -162,6 +126,38 @@ private fun ActiveChatContent(
     }
 
     Column(modifier = modifier) {
+        if (state.connections.isNotEmpty()) {
+            val connected = state.connections.count { it.value is McpConnectionState.Connected }
+            val total = state.connections.size
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "$connected/$total MCP servers connected",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                TextButton(onClick = onOpenSettings) {
+                    Text("Configure", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onOpenSettings) {
+                    Text("Configure LLM", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+
         LazyColumn(
             state = listState,
             modifier = Modifier
