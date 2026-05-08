@@ -66,6 +66,8 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 - N/A (no new local storage — all data fetched from API) (008-infrastructure-section)
 - Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Navigation Compose, Retrofit + Kotlin Serialization, Koin, Google Tink (009-multi-instance-support)
 - Jetpack DataStore (Preferences) + Tink AES-256-GCM encryption (009-multi-instance-support)
+- Kotlin 2.2.10, JVM 17, compileSdk 36, minSdk 31 + Jetpack Compose (Material 3 BOM 2026.03.01), Retrofit 2.11.0, OkHttp 4.12.0, kotlinx-serialization-json 1.9.0, Koin 4.1.1, Coroutines 1.10.2 (010-ai-assistant-mcp)
+- Jetpack DataStore (Preferences) 1.2.1 + Tink 1.20.0 (AES-256-GCM encryption for MCP URLs and LLM API keys) (010-ai-assistant-mcp)
 
 ## Recent Changes
 - 001-aap-remote-control: Added Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit,
