@@ -35,7 +35,7 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 --decode > /tmp/release.jks
 
       - name: Run unit tests
-        run: ./gradlew testReleaseUnitTest --no-daemon --stacktrace
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
       - name: Build release APK
         run: ./gradlew assembleRelease --no-daemon --stacktrace
