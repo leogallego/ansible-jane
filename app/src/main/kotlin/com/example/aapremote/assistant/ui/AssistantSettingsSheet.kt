@@ -237,6 +237,7 @@ fun AssistantSettingsSheet(
                         apiKey = llmApiKey.ifBlank { null }
                     )
                     onSaveLlmConfig(config)
+                    onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = llmUrl.isNotBlank() && llmModel.isNotBlank()
