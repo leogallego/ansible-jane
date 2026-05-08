@@ -7,8 +7,10 @@ import com.example.aapremote.assistant.llm.StreamEvent
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlin.coroutines.coroutineContext
 import kotlinx.serialization.json.JsonObject
 import java.io.IOException
 
@@ -42,6 +44,7 @@ class ChatEngine(
 
             loop@ while (iterations < maxIterations) {
                 iterations++
+                coroutineContext.ensureActive()
                 val textBuilder = StringBuilder()
                 var lastResult: com.example.aapremote.assistant.llm.LlmResult? = null
 
@@ -64,7 +67,7 @@ class ChatEngine(
 
                 if (streamError != null) {
                     emit(ChatEvent.Error(
-                        "LLM error: ${streamError!!.message}",
+                        "LLM error: ${streamError.message}",
                         streamError
                     ))
                     return@flow
@@ -90,7 +93,8 @@ class ChatEngine(
 
                         messages.add(ChatMessage(
                             role = Role.TOOL,
-                            content = toolResult.data ?: "",
+                            content = toolResult.data
+                                ?: "Tool execution failed: ${toolResult.errorType ?: "unknown error"}",
                             toolCallId = toolCall.id
                         ))
                     }
