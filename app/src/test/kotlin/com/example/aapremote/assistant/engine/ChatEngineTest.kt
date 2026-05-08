@@ -57,7 +57,7 @@ class ChatEngineTest {
             spec = ToolSpec("list_jobs", "List jobs", JsonObject(emptyMap())),
             result = ToolResult(success = true, data = "[{\"id\":1},{\"id\":2},{\"id\":3}]")
         )
-        val executor = ToolExecutor(listOf(fakeTool))
+        val executor = ToolExecutor(listOf<Tool>(fakeTool))
         val engine = ChatEngine(provider, executor)
 
         engine.processMessage("Show failed jobs", emptyList(), emptyList()).test {
@@ -95,15 +95,15 @@ class ChatEngineTest {
             spec = ToolSpec("loop_tool", "Loops", JsonObject(emptyMap())),
             result = ToolResult(success = true, data = "ok")
         )
-        val executor = ToolExecutor(listOf(fakeTool))
+        val executor = ToolExecutor(listOf<Tool>(fakeTool))
         val engine = ChatEngine(provider, executor, maxIterations = 3)
 
         engine.processMessage("loop", emptyList(), emptyList()).test {
             val events = mutableListOf<ChatEvent>()
-            while (true) {
-                val event = try { awaitItem() } catch (_: Exception) { break }
+            do {
+                val event = awaitItem()
                 events.add(event)
-            }
+            } while (event !is ChatEvent.AssistantMessage)
 
             val lastEvent = events.last()
             assertTrue(lastEvent is ChatEvent.AssistantMessage)
@@ -111,6 +111,8 @@ class ChatEngineTest {
                 (lastEvent as ChatEvent.AssistantMessage).fullText
                     .contains("tool call limit")
             )
+
+            awaitComplete()
         }
     }
 
@@ -123,7 +125,7 @@ class ChatEngineTest {
         engine.processMessage("test", emptyList(), emptyList()).test {
             val error = awaitItem()
             assertTrue(error is ChatEvent.Error)
-            assertTrue((error as ChatEvent.Error).message.contains("Error"))
+            assertTrue((error as ChatEvent.Error).message.contains("Connection refused"))
 
             awaitComplete()
         }

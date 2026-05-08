@@ -41,7 +41,7 @@ class McpTransportTest {
         )
 
         val request = JsonRpcRequest(id = 1, method = "initialize")
-        transport.postJsonRpc(server.url("/mcp").toString(), request).toList()
+        transport.postJsonRpc(server.url("/mcp").toString(), request).responses.toList()
 
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
@@ -58,7 +58,7 @@ class McpTransportTest {
         )
 
         val request = JsonRpcRequest(id = 1, method = "tools/list")
-        val responses = transport.postJsonRpc(server.url("/mcp").toString(), request).toList()
+        val responses = transport.postJsonRpc(server.url("/mcp").toString(), request).responses.toList()
 
         assertEquals(1, responses.size)
         assertNull(responses[0].error)
@@ -74,7 +74,7 @@ class McpTransportTest {
         )
 
         val request = JsonRpcRequest(id = 1, method = "tools/list")
-        transport.postJsonRpc(server.url("/mcp").toString(), request, sessionId = "test-session").toList()
+        transport.postJsonRpc(server.url("/mcp").toString(), request, sessionId = "test-session").responses.toList()
 
         val recorded = server.takeRequest()
         assertEquals("test-session", recorded.getHeader("Mcp-Session-Id"))
@@ -89,7 +89,7 @@ class McpTransportTest {
         )
 
         val request = JsonRpcRequest(id = 1, method = "tools/list")
-        transport.postJsonRpc(server.url("/mcp").toString(), request).toList()
+        transport.postJsonRpc(server.url("/mcp").toString(), request).responses.toList()
 
         val recorded = server.takeRequest()
         val accept = recorded.getHeader("Accept")
@@ -119,7 +119,7 @@ class McpTransportTest {
         )
 
         val request = JsonRpcRequest(id = 1, method = "unknown/method")
-        val responses = transport.postJsonRpc(server.url("/mcp").toString(), request).toList()
+        val responses = transport.postJsonRpc(server.url("/mcp").toString(), request).responses.toList()
 
         assertEquals(1, responses.size)
         assertNotNull(responses[0].error)

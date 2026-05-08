@@ -9,7 +9,8 @@ data class McpServerConfig(
     val label: String,
     val enabled: Boolean = true,
     val isAutoDetected: Boolean = false,
-    val useInstanceAuth: Boolean = true
+    val useInstanceAuth: Boolean = true,
+    val readOnly: Boolean = false
 )
 
 data class AapInstance(

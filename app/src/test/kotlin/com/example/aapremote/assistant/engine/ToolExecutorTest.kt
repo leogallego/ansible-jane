@@ -18,9 +18,9 @@ class ToolExecutorTest {
 
     @Test
     fun `execute dispatches to correct tool by name`() = runTest {
-        val tool1 = FakeTool("tool_a", ToolResult(success = true, data = "result_a"))
-        val tool2 = FakeTool("tool_b", ToolResult(success = true, data = "result_b"))
-        val executor = ToolExecutor(listOf(tool1, tool2))
+        val tool1 = StubTool("tool_a", ToolResult(success = true, data = "result_a"))
+        val tool2 = StubTool("tool_b", ToolResult(success = true, data = "result_b"))
+        val executor = ToolExecutor(listOf<Tool>(tool1, tool2))
 
         val call = ToolCall("1", "tool_b", JsonObject(emptyMap()))
         val result = executor.execute(call)
@@ -44,8 +44,8 @@ class ToolExecutorTest {
     @Test
     fun `execute truncates result exceeding maxResultChars`() = runTest {
         val longData = "x".repeat(30_000)
-        val tool = FakeTool("big_tool", ToolResult(success = true, data = longData))
-        val executor = ToolExecutor(listOf(tool), maxResultChars = 20_000)
+        val tool = StubTool("big_tool", ToolResult(success = true, data = longData))
+        val executor = ToolExecutor(listOf<Tool>(tool), maxResultChars = 20_000)
 
         val call = ToolCall("1", "big_tool", JsonObject(emptyMap()))
         val result = executor.execute(call)
@@ -58,8 +58,8 @@ class ToolExecutorTest {
     @Test
     fun `execute does not truncate result within limit`() = runTest {
         val data = "short result"
-        val tool = FakeTool("small_tool", ToolResult(success = true, data = data))
-        val executor = ToolExecutor(listOf(tool))
+        val tool = StubTool("small_tool", ToolResult(success = true, data = data))
+        val executor = ToolExecutor(listOf<Tool>(tool))
 
         val call = ToolCall("1", "small_tool", JsonObject(emptyMap()))
         val result = executor.execute(call)
@@ -94,7 +94,7 @@ class ToolExecutorTest {
                 return ToolResult(success = true, data = "ok")
             }
         }
-        val executor = ToolExecutor(listOf(tool))
+        val executor = ToolExecutor(listOf<Tool>(tool))
 
         val args = buildJsonObject {
             put("name", "test")
@@ -110,7 +110,7 @@ class ToolExecutorTest {
     }
 }
 
-private class FakeTool(
+private class StubTool(
     name: String,
     private val result: ToolResult
 ) : Tool {

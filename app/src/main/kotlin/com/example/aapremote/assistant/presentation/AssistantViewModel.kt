@@ -9,6 +9,7 @@ import com.example.aapremote.assistant.engine.ChatEvent
 import com.example.aapremote.assistant.engine.ChatMessage
 import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.engine.ToolExecutor
+import com.example.aapremote.assistant.engine.ToolRouter
 import com.example.aapremote.assistant.llm.OpenAiCompatibleProvider
 import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.McpServerConfig
@@ -40,12 +41,12 @@ class AssistantViewModel(
     val activeInstance get() = tokenManager.activeInstance.value
 
     private var generateJob: Job? = null
-    var llmConfig: LlmProviderConfig? = null
-        private set
+    private val _llmConfig = MutableStateFlow<LlmProviderConfig?>(null)
+    val llmConfig: StateFlow<LlmProviderConfig?> = _llmConfig.asStateFlow()
 
     init {
         viewModelScope.launch {
-            llmConfig = repository.loadLlmConfig()
+            _llmConfig.value = repository.loadLlmConfig()
         }
 
         viewModelScope.launch {
@@ -88,7 +89,7 @@ class AssistantViewModel(
     fun sendMessage(text: String) {
         if (text.isBlank()) return
 
-        val config = llmConfig
+        val config = _llmConfig.value
         if (config == null) {
             _uiState.update { current ->
                 if (current is AssistantUiState.Active) {
@@ -118,7 +119,9 @@ class AssistantViewModel(
                 OpenAiCompatibleProvider(config, llmClient, json)
         }
 
-        val tools = mcpServerManager.getAllTools()
+        val allTools = mcpServerManager.getAllTools()
+        val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
+        val tools = ToolRouter.filterTools(text, allTools, serverConfigs)
         val toolSpecs = tools.map { it.spec }
         val toolExecutor = ToolExecutor(tools)
         val engine = ChatEngine(provider, toolExecutor)
@@ -137,10 +140,10 @@ class AssistantViewModel(
                                     role = Role.ASSISTANT,
                                     content = textBuilder.toString()
                                 )
-                                val msgs = messages.dropLast(
-                                    if (messages.lastOrNull()?.role == Role.ASSISTANT &&
-                                        messages.lastOrNull()?.toolCalls == null) 1 else 0
-                                ) + streamingMsg
+                                val lastMsg = messages.lastOrNull()
+                                val replaceLast = lastMsg?.role == Role.ASSISTANT && lastMsg.toolCalls == null
+                                val msgs = if (replaceLast) messages.dropLast(1) + streamingMsg
+                                    else messages + streamingMsg
                                 copy(messages = msgs)
                             }
                         }
@@ -152,11 +155,10 @@ class AssistantViewModel(
                             updateState { copy(messages = messages + indicator) }
                         }
                         is ChatEvent.ToolResult -> {
-                            // Tool results are internal — LLM will summarize
                             updateState {
-                                val msgs = messages.dropLast(
-                                    if (messages.lastOrNull()?.content?.startsWith("Querying tool:") == true) 1 else 0
-                                )
+                                val lastMsg = messages.lastOrNull()
+                                val isToolIndicator = lastMsg?.content?.startsWith("Querying tool:") == true
+                                val msgs = if (isToolIndicator) messages.dropLast(1) else messages
                                 copy(messages = msgs)
                             }
                             textBuilder.clear()
@@ -198,7 +200,7 @@ class AssistantViewModel(
     }
 
     fun updateLlmConfig(config: LlmProviderConfig) {
-        llmConfig = config
+        _llmConfig.value = config
         viewModelScope.launch {
             repository.saveLlmConfig(config)
         }
@@ -210,7 +212,7 @@ class AssistantViewModel(
             val servers = if (enabled && instance.mcpServerUrls.isNullOrEmpty()) {
                 val base = "${instance.baseUrl.trimEnd('/')}:8448"
                 listOf(
-                    McpServerConfig(url = "$base/inventory_management/mcp", label = "inventory", isAutoDetected = true)
+                    McpServerConfig(url = "$base/mcp", label = "aap", isAutoDetected = true, readOnly = true)
                 )
             } else {
                 instance.mcpServerUrls
@@ -243,6 +245,16 @@ class AssistantViewModel(
             val updated = instance.mcpServerUrls?.map {
                 if (it.url == oldUrl) it.copy(url = newUrl.trimEnd('/'), label = label, isAutoDetected = false)
                 else it
+            }
+            tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
+        }
+    }
+
+    fun toggleServerReadOnly(url: String, readOnly: Boolean) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val updated = instance.mcpServerUrls?.map {
+                if (it.url == url) it.copy(readOnly = readOnly) else it
             }
             tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
         }

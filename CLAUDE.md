@@ -43,6 +43,23 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 - **Presentation:** ViewModels with `StateFlow<UiState>` (Idle, Loading, Success, Error pattern)
 - **UI:** Compose screens reacting to ViewModel state
 
+## AI Agent Skills
+
+The `skills/` directory contains SKILL.md files ([agentskills.io](https://agentskills.io) standard) that provide grounding for Android/Kotlin development. Consult the relevant skill when working on:
+
+- **Compose UI**: `skills/compose-skill/compose-skill.md` (comprehensive) or `skills/android-community/compose-editor.md`
+- **Compose performance**: `skills/android-community/compose-performance-auditor.md` or `skills/compose-skill/references/performance.md`
+- **Coroutines/Flow**: `skills/android-community/kotlin-coroutines.md` or `skills/compose-skill/references/coroutines-flow.md`
+- **Koin DI**: `skills/android-community/koin-editor.md` or `skills/compose-skill/references/koin.md`
+- **Kotlin conventions**: `skills/android-community/kotlin-convention.md`
+- **Testing**: `skills/android-community/android-unit-test-editor.md` or `skills/compose-skill/references/testing.md`
+- **Edge-to-edge/insets**: `skills/android-official/edge-to-edge.md`
+- **Navigation 3 migration**: `skills/android-official/navigation-3.md`
+- **Gradle/build config**: `skills/android-community/gradle-configuration.md`
+- **Anti-patterns**: `skills/compose-skill/references/anti-patterns.md`
+
+See `skills/README.md` for sources and licenses.
+
 ## Development Rules
 
 - **MUST** create all temporary files and directories inside the project directory (e.g., `.tmp/`). NEVER use `/tmp`, `$TMPDIR`, or any system temp directory. Clean up temp files when done.

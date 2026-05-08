@@ -86,9 +86,7 @@ fun AssistantScreen(
                 onSendMessage = { viewModel.sendMessage(it) },
                 onInputChanged = { viewModel.updateInputText(it) },
                 onOpenSettings = { showSettings = true },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .imePadding()
+                modifier = Modifier.fillMaxSize()
             )
         }
 
@@ -109,14 +107,16 @@ fun AssistantScreen(
     if (showSettings) {
         val activeInstance = viewModel.activeInstance
         val connections = (uiState as? AssistantUiState.Active)?.connections ?: emptyMap()
+        val currentLlmConfig by viewModel.llmConfig.collectAsStateWithLifecycle()
         AssistantSettingsSheet(
             mcpEnabled = activeInstance?.mcpEnabled ?: false,
             mcpServers = activeInstance?.mcpServerUrls ?: emptyList(),
             connections = connections,
-            currentLlmConfig = viewModel.llmConfig,
+            currentLlmConfig = currentLlmConfig,
             onToggleMcp = { viewModel.toggleMcpEnabled(it) },
             onAddMcpServer = { url, label -> viewModel.addMcpServer(url, label) },
             onRemoveMcpServer = { viewModel.removeMcpServer(it) },
+            onToggleReadOnly = { url, readOnly -> viewModel.toggleServerReadOnly(url, readOnly) },
             onSaveLlmConfig = { viewModel.updateLlmConfig(it) },
             onClearHistory = { viewModel.clearHistory() },
             onDismiss = { showSettings = false }
@@ -140,7 +140,7 @@ private fun ActiveChatContent(
         }
     }
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.imePadding()) {
         if (state.connections.isNotEmpty()) {
             val connected = state.connections.count { it.value is McpConnectionState.Connected }
             val total = state.connections.size
@@ -200,7 +200,8 @@ private fun ActiveChatContent(
 
             items(
                 items = state.messages,
-                key = { it.timestamp }
+                key = { it.id },
+                contentType = { it.role }
             ) { message ->
                 ChatBubble(message = message, modifier = Modifier.padding(vertical = 2.dp))
             }

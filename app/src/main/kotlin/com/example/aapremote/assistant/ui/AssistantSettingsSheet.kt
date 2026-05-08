@@ -54,6 +54,7 @@ fun AssistantSettingsSheet(
     onToggleMcp: (Boolean) -> Unit,
     onAddMcpServer: (url: String, label: String) -> Unit,
     onRemoveMcpServer: (url: String) -> Unit,
+    onToggleReadOnly: (url: String, readOnly: Boolean) -> Unit,
     onSaveLlmConfig: (LlmProviderConfig) -> Unit,
     onClearHistory: () -> Unit,
     onDismiss: () -> Unit
@@ -147,6 +148,24 @@ fun AssistantSettingsSheet(
                                 }
                             }
                         }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Read Only",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Switch(
+                            checked = server.readOnly,
+                            onCheckedChange = { onToggleReadOnly(server.url, it) },
+                            modifier = Modifier.height(32.dp)
+                        )
                     }
                 }
 
