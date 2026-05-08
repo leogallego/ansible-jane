@@ -113,6 +113,21 @@ class McpClient(
     }
 
     suspend fun callTool(name: String, arguments: JsonObject): McpToolResult {
+        val result = callToolInternal(name, arguments)
+
+        if (result.isError && isSessionExpired(result)) {
+            try {
+                connect()
+                return callToolInternal(name, arguments)
+            } catch (_: Exception) {
+                session.updateState(McpConnectionState.Error("Session expired — reconnect failed"))
+            }
+        }
+
+        return result
+    }
+
+    private suspend fun callToolInternal(name: String, arguments: JsonObject): McpToolResult {
         val params = buildJsonObject {
             put("name", name)
             put("arguments", arguments)
@@ -128,7 +143,6 @@ class McpClient(
             val response = withTimeout(60_000L) { transportResult.responses.first() }
 
             if (response.error != null) {
-                val errorType = mapJsonRpcError(response.error.code)
                 return McpToolResult(
                     content = listOf(McpContent("text", response.error.message)),
                     isError = true
@@ -148,11 +162,18 @@ class McpClient(
                 isError = true
             )
         } catch (e: IOException) {
+            session.updateState(McpConnectionState.Error("Connection lost: ${e.message}"))
             return McpToolResult(
                 content = listOf(McpContent("text", "Connection error: ${e.message}")),
                 isError = true
             )
         }
+    }
+
+    private fun isSessionExpired(result: McpToolResult): Boolean {
+        val text = result.content.firstOrNull()?.text ?: return false
+        return text.contains("session", ignoreCase = true) ||
+            text.contains("not found", ignoreCase = true)
     }
 
     companion object {

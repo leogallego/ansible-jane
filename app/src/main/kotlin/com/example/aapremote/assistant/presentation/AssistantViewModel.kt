@@ -126,6 +126,7 @@ class AssistantViewModel(
                 OpenAiCompatibleProvider(config, llmClient, json)
         }
 
+        mcpServerManager.refreshConnections()
         val allTools = mcpServerManager.getAllTools()
         val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
         val tools = ToolRouter.filterTools(text, allTools, serverConfigs)

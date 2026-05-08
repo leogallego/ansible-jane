@@ -80,4 +80,10 @@ class McpServerManager(
     }
 
     fun getAllTools(): List<McpTool> = synchronized(mcpTools) { mcpTools.toList() }
+
+    fun refreshConnections() {
+        clients.forEach { (label, client) ->
+            _connections.update { it + (label to client.connectionState.value) }
+        }
+    }
 }
