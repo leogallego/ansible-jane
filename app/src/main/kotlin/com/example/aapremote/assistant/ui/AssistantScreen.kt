@@ -21,6 +21,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -211,7 +214,13 @@ private fun ActiveChatContent(
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Ask a question...") },
                 enabled = !state.isGenerating,
-                maxLines = 3
+                maxLines = 3,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(
+                    onSend = {
+                        if (state.inputText.isNotBlank()) onSendMessage(state.inputText)
+                    }
+                )
             )
 
             IconButton(
