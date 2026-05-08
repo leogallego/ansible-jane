@@ -12,6 +12,7 @@ import com.example.aapremote.assistant.engine.ToolExecutor
 import com.example.aapremote.assistant.llm.OpenAiCompatibleProvider
 import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.McpServerConfig
+import com.example.aapremote.network.CertTrustManager
 import com.example.aapremote.network.mcp.McpConnectionState
 import com.example.aapremote.network.mcp.McpServerManager
 import com.example.aapremote.network.networkJson
@@ -111,9 +112,10 @@ class AssistantViewModel(
             isGenerating = true
         ) }
 
+        val llmClient = buildLlmClient()
         val provider = when (config) {
             is LlmProviderConfig.OpenAiCompatible ->
-                OpenAiCompatibleProvider(config, httpClient, json)
+                OpenAiCompatibleProvider(config, llmClient, json)
         }
 
         val tools = mcpServerManager.getAllTools()
@@ -244,6 +246,17 @@ class AssistantViewModel(
             }
             tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
         }
+    }
+
+    private fun buildLlmClient(): OkHttpClient {
+        val instance = tokenManager.activeInstance.value
+        val builder = httpClient.newBuilder()
+        if (instance?.trustSelfSigned == true) {
+            val tm = CertTrustManager.createTrustAllManager()
+            builder.sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
+            builder.hostnameVerifier { _, _ -> true }
+        }
+        return builder.build()
     }
 
     private inline fun updateState(crossinline transform: AssistantUiState.Active.() -> AssistantUiState.Active) {
