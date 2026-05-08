@@ -3,6 +3,7 @@ package com.example.aapremote.network.mcp
 import com.example.aapremote.assistant.tools.ErrorType
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -44,7 +45,7 @@ class McpClient(
             )
 
             val transportResult = transport.postJsonRpc(serverUrl, initRequest)
-            val response = transportResult.responses.first()
+            val response = withTimeout(30_000L) { transportResult.responses.first() }
 
             if (response.error != null) {
                 throw McpConnectionException(
@@ -95,7 +96,7 @@ class McpClient(
         )
 
         val result = transport.postJsonRpc(serverUrl, request, session.sessionId)
-        val response = result.responses.first()
+        val response = withTimeout(30_000L) { result.responses.first() }
 
         if (response.error != null) {
             throw McpConnectionException(
@@ -124,7 +125,7 @@ class McpClient(
 
         try {
             val transportResult = transport.postJsonRpc(serverUrl, request, session.sessionId)
-            val response = transportResult.responses.first()
+            val response = withTimeout(60_000L) { transportResult.responses.first() }
 
             if (response.error != null) {
                 val errorType = mapJsonRpcError(response.error.code)
