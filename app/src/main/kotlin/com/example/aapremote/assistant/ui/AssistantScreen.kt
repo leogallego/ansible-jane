@@ -136,8 +136,11 @@ fun AssistantScreen(
     }
 
     if (showSettings) {
+        val connections = (uiState as? AssistantUiState.Active)?.connections ?: emptyMap()
         AssistantSettingsSheet(
-            viewModel = viewModel,
+            connections = connections,
+            onSaveLlmConfig = { viewModel.updateLlmConfig(it) },
+            onClearHistory = { viewModel.clearHistory() },
             onDismiss = { showSettings = false }
         )
     }

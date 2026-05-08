@@ -29,20 +29,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.assistant.data.LlmProviderConfig
-import com.example.aapremote.assistant.presentation.AssistantUiState
-import com.example.aapremote.assistant.presentation.AssistantViewModel
 import com.example.aapremote.network.mcp.McpConnectionState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssistantSettingsSheet(
-    viewModel: AssistantViewModel,
+    connections: Map<String, McpConnectionState>,
+    onSaveLlmConfig: (LlmProviderConfig) -> Unit,
+    onClearHistory: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var llmUrl by remember { mutableStateOf("") }
     var llmModel by remember { mutableStateOf("") }
@@ -102,7 +100,7 @@ fun AssistantSettingsSheet(
                         model = llmModel,
                         apiKey = llmApiKey.ifBlank { null }
                     )
-                    viewModel.updateLlmConfig(config)
+                    onSaveLlmConfig(config)
                     onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -113,14 +111,13 @@ fun AssistantSettingsSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val state = uiState
-            if (state is AssistantUiState.Active && state.connections.isNotEmpty()) {
+            if (connections.isNotEmpty()) {
                 Text(
                     text = "MCP Connections",
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                state.connections.forEach { (label, connState) ->
+                connections.forEach { (label, connState) ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -175,7 +172,7 @@ fun AssistantSettingsSheet(
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedButton(
-                onClick = { viewModel.clearHistory() },
+                onClick = onClearHistory,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Clear Chat History")
