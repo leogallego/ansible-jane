@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.aapremote.assistant.data.AssistantRepository
 import com.example.aapremote.assistant.data.LlmProviderConfig
 import com.example.aapremote.assistant.data.ModelFetcher
+import com.example.aapremote.assistant.data.TokenSavingMode
 import com.example.aapremote.assistant.engine.ChatEngine
 import com.example.aapremote.assistant.engine.ChatEvent
 import com.example.aapremote.assistant.engine.ChatMessage
@@ -130,8 +131,10 @@ class AssistantViewModel(
         val allTools = mcpServerManager.getAllTools()
         val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
         val tools = ToolRouter.filterTools(text, allTools, serverConfigs)
+        val mode = config.tokenSavingMode
+        val noToolMatch = tools.isEmpty() && allTools.isNotEmpty()
 
-        if (tools.isEmpty() && allTools.isNotEmpty()) {
+        if (noToolMatch && mode == TokenSavingMode.MINIMAL) {
             val guidanceMsg = ChatMessage(
                 role = Role.ASSISTANT,
                 content = "I can help you query your AAP instance. Try asking about:\n\n" +
@@ -147,15 +150,16 @@ class AssistantViewModel(
             return
         }
 
-        val toolSpecs = tools.map { it.spec }
+        val toolSpecs = if (noToolMatch) emptyList() else tools.map { it.spec }
         val toolExecutor = ToolExecutor(tools)
         val engine = ChatEngine(provider, toolExecutor)
+        val maxTokens = if (noToolMatch && mode == TokenSavingMode.TOKEN_SAVER) 256 else null
 
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
             val textBuilder = StringBuilder()
 
-            engine.processMessage(text, repository.getHistory(), toolSpecs)
+            engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens)
                 .collect { event ->
                     when (event) {
                         is ChatEvent.TextDelta -> {

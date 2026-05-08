@@ -5,8 +5,8 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import kotlinx.coroutines.flow.Flow
 
 interface LlmProvider {
-    suspend fun generate(messages: List<ChatMessage>, tools: List<ToolSpec>): LlmResult
-    fun generateStream(messages: List<ChatMessage>, tools: List<ToolSpec>): Flow<StreamEvent>
+    suspend fun generate(messages: List<ChatMessage>, tools: List<ToolSpec>, maxTokens: Int? = null): LlmResult
+    fun generateStream(messages: List<ChatMessage>, tools: List<ToolSpec>, maxTokens: Int? = null): Flow<StreamEvent>
     fun isAvailable(): Boolean
     fun modelInfo(): ModelInfo
 }

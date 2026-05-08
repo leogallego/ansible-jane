@@ -34,7 +34,8 @@ class ChatEngine(
     fun processMessage(
         userMessage: String,
         history: List<ChatMessage>,
-        tools: List<ToolSpec>
+        tools: List<ToolSpec>,
+        maxTokens: Int? = null
     ): Flow<ChatEvent> = flow {
         try {
             val messages = mutableListOf<ChatMessage>()
@@ -54,7 +55,7 @@ class ChatEngine(
                 var lastResult: com.example.aapremote.assistant.llm.LlmResult? = null
 
                 trimMessages(messages)
-                provider.generateStream(messages, tools).collect { event ->
+                provider.generateStream(messages, tools, maxTokens).collect { event ->
                     when (event) {
                         is StreamEvent.TextDelta -> {
                             textBuilder.append(event.text)

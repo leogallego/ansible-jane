@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.aapremote.assistant.data.KnownProvider
 import com.example.aapremote.assistant.data.LlmProviderConfig
+import com.example.aapremote.assistant.data.TokenSavingMode
 import com.example.aapremote.assistant.presentation.ModelFetchState
 import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.mcp.McpConnectionState
@@ -84,17 +85,19 @@ fun AssistantSettingsSheet(
     var llmModel by remember { mutableStateOf(savedConfig?.model ?: "") }
     var llmApiKey by remember { mutableStateOf(savedConfig?.apiKey ?: "") }
 
-    val providerState = remember {
-        mutableMapOf<KnownProvider, Pair<String, String>>().also { map ->
-            if (savedConfig != null) {
-                map[initialProvider] = (savedConfig.model ?: "") to (savedConfig.apiKey ?: "")
-            }
-        }
+    var providerState by remember {
+        mutableStateOf<Map<KnownProvider, Pair<String, String>>>(
+            if (savedConfig != null) mapOf(initialProvider to ((savedConfig.model ?: "") to (savedConfig.apiKey ?: "")))
+            else emptyMap()
+        )
     }
+
+    var tokenMode by remember { mutableStateOf(savedConfig?.tokenSavingMode ?: TokenSavingMode.STANDARD) }
 
     var apiKeyVisible by remember { mutableStateOf(false) }
     var providerExpanded by remember { mutableStateOf(false) }
     var modelExpanded by remember { mutableStateOf(false) }
+    var tokenModeExpanded by remember { mutableStateOf(false) }
     var showAddServer by remember { mutableStateOf(false) }
     var newServerUrl by remember { mutableStateOf("") }
     var newServerLabel by remember { mutableStateOf("") }
@@ -278,7 +281,7 @@ fun AssistantSettingsSheet(
                             text = { Text(provider.displayName) },
                             onClick = {
                                 if (selectedProvider != provider) {
-                                    providerState[selectedProvider] = llmModel to llmApiKey
+                                    providerState = providerState + (selectedProvider to (llmModel to llmApiKey))
                                     selectedProvider = provider
                                     llmUrl = provider.baseUrl
                                     val restored = providerState[provider]
@@ -440,6 +443,54 @@ fun AssistantSettingsSheet(
                 )
             }
 
+            HorizontalDivider()
+
+            // --- Token Saving Mode ---
+            Text(
+                text = "Token Usage",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            ExposedDropdownMenuBox(
+                expanded = tokenModeExpanded,
+                onExpandedChange = { tokenModeExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = tokenMode.displayName,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Mode") },
+                    supportingText = { Text(tokenMode.description) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(tokenModeExpanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                )
+                ExposedDropdownMenu(
+                    expanded = tokenModeExpanded,
+                    onDismissRequest = { tokenModeExpanded = false }
+                ) {
+                    TokenSavingMode.entries.forEach { mode ->
+                        DropdownMenuItem(
+                            text = {
+                                Column {
+                                    Text(mode.displayName)
+                                    Text(
+                                        mode.description,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            onClick = {
+                                tokenMode = mode
+                                tokenModeExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
             Button(
                 onClick = {
                     val effectiveUrl = if (selectedProvider.urlEditable) llmUrl
@@ -447,7 +498,8 @@ fun AssistantSettingsSheet(
                     val config = LlmProviderConfig.OpenAiCompatible(
                         url = effectiveUrl.trimEnd('/'),
                         model = llmModel,
-                        apiKey = llmApiKey.ifBlank { null }
+                        apiKey = llmApiKey.ifBlank { null },
+                        tokenSavingMode = tokenMode
                     )
                     onSaveLlmConfig(config)
                     onDismiss()

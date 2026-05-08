@@ -54,9 +54,10 @@ class OpenAiCompatibleProvider(
 
     override suspend fun generate(
         messages: List<ChatMessage>,
-        tools: List<ToolSpec>
+        tools: List<ToolSpec>,
+        maxTokens: Int?
     ): LlmResult {
-        val body = buildRequestBody(messages, tools, stream = false)
+        val body = buildRequestBody(messages, tools, stream = false, maxTokens = maxTokens)
         val request = buildHttpRequest(body)
         val response = executeRequest(request)
 
@@ -70,9 +71,10 @@ class OpenAiCompatibleProvider(
 
     override fun generateStream(
         messages: List<ChatMessage>,
-        tools: List<ToolSpec>
+        tools: List<ToolSpec>,
+        maxTokens: Int?
     ): Flow<StreamEvent> = callbackFlow {
-        val body = buildRequestBody(messages, tools, stream = true)
+        val body = buildRequestBody(messages, tools, stream = true, maxTokens = maxTokens)
         val request = buildHttpRequest(body)
 
         val toolCallAccumulators = mutableMapOf<Int, ToolCallAccumulator>()
@@ -192,7 +194,8 @@ class OpenAiCompatibleProvider(
     private fun buildRequestBody(
         messages: List<ChatMessage>,
         tools: List<ToolSpec>,
-        stream: Boolean
+        stream: Boolean,
+        maxTokens: Int? = null
     ): String {
         val body = buildJsonObject {
             put("model", config.model)
@@ -200,6 +203,9 @@ class OpenAiCompatibleProvider(
             put("messages", buildMessagesArray(messages))
             if (tools.isNotEmpty()) {
                 put("tools", buildToolsArray(tools))
+            }
+            if (maxTokens != null) {
+                put("max_tokens", maxTokens)
             }
         }
         return json.encodeToString(JsonObject.serializer(), body)

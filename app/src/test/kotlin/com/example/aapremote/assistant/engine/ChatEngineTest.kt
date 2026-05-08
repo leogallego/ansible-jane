@@ -140,12 +140,14 @@ private class FakeLlmProvider(
 
     override suspend fun generate(
         messages: List<ChatMessage>,
-        tools: List<ToolSpec>
+        tools: List<ToolSpec>,
+        maxTokens: Int?
     ): LlmResult = results.getOrElse(callIndex++) { LlmResult() }
 
     override fun generateStream(
         messages: List<ChatMessage>,
-        tools: List<ToolSpec>
+        tools: List<ToolSpec>,
+        maxTokens: Int?
     ): Flow<StreamEvent> = flow {
         if (error != null) {
             emit(StreamEvent.Error(error))
