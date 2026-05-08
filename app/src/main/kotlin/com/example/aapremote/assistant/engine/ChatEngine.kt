@@ -2,15 +2,19 @@ package com.example.aapremote.assistant.engine
 
 import com.example.aapremote.assistant.llm.LlmAuthException
 import com.example.aapremote.assistant.llm.LlmProvider
+import com.example.aapremote.assistant.llm.LlmRateLimitException
+import com.example.aapremote.assistant.llm.LlmServerException
 import com.example.aapremote.assistant.llm.LlmTimeoutException
 import com.example.aapremote.assistant.llm.StreamEvent
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.json.JsonObject
 import java.io.IOException
 
@@ -116,7 +120,9 @@ class ChatEngine(
         } catch (e: CancellationException) {
             throw e
         } catch (e: LlmAuthException) {
-            emit(ChatEvent.Error("LLM authentication failed — check API key", e))
+            emit(ChatEvent.Error(e.message ?: "Authentication failed — check API key", e))
+        } catch (e: LlmRateLimitException) {
+            emit(ChatEvent.Error(e.message ?: "Rate limited — try again later", e))
         } catch (e: LlmTimeoutException) {
             emit(ChatEvent.Error("Response timed out", e))
         } catch (e: IOException) {
@@ -124,6 +130,30 @@ class ChatEngine(
         } catch (e: Exception) {
             emit(ChatEvent.Error("Error: ${e.message}", e))
         }
+    }
+
+    private suspend fun <T> retryWithBackoff(
+        maxAttempts: Int = 3,
+        block: suspend () -> T
+    ): T {
+        var lastException: Exception? = null
+        repeat(maxAttempts) { attempt ->
+            try {
+                return block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: LlmAuthException) {
+                throw e
+            } catch (e: LlmRateLimitException) {
+                throw e
+            } catch (e: Exception) {
+                lastException = e
+                if (attempt < maxAttempts - 1) {
+                    delay((attempt + 1).seconds)
+                }
+            }
+        }
+        throw lastException!!
     }
 
     companion object {

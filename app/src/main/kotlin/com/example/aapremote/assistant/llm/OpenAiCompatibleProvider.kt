@@ -264,15 +264,32 @@ class OpenAiCompatibleProvider(
         }
 
     private fun checkHttpErrors(response: Response) {
+        if (response.code in 200..299) return
+
+        val errorDetail = try {
+            val body = response.peekBody(4096).string()
+            val errorObj = json.parseToJsonElement(body).jsonObject["error"]
+            when (errorObj) {
+                is JsonPrimitive -> errorObj.content
+                is JsonObject -> errorObj["message"]?.jsonPrimitive?.contentOrNull
+                else -> null
+            }
+        } catch (_: Exception) { null }
+
         when (response.code) {
-            in 200..299 -> return
-            401, 403 -> throw LlmAuthException("LLM authentication failed — check API key")
+            401, 403 -> throw LlmAuthException(
+                errorDetail ?: "Authentication failed — check API key"
+            )
             429 -> throw LlmRateLimitException(
-                "Rate limited",
+                errorDetail ?: "Rate limited — try again later",
                 response.header("Retry-After")?.toIntOrNull()
             )
-            in 500..599 -> throw LlmServerException("LLM server error: ${response.code}")
-            else -> throw IOException("Unexpected response: ${response.code}")
+            in 500..599 -> throw LlmServerException(
+                errorDetail ?: "Server error (${response.code})"
+            )
+            else -> throw IOException(
+                errorDetail ?: "Unexpected response: ${response.code}"
+            )
         }
     }
 
