@@ -271,7 +271,7 @@ private fun InstanceCard(
                     }
                     if (instance.mcpEnabled) {
                         Spacer(modifier = Modifier.width(4.dp))
-                        StatusPill("MCP", MaterialTheme.colorScheme.tertiary)
+                        StatusPill("MCP", MaterialTheme.colorScheme.primary)
                     }
                 }
                 if (instance.alias != null) {
