@@ -73,8 +73,9 @@ class ChatEngine(
 
                 val result = lastResult ?: break
 
+                Log.d("ChatEngine", "Iteration $iterations: text=${result.text?.take(100)} toolCalls=${result.toolCalls.size}")
+
                 if (result.toolCalls.isNotEmpty() && iterations < maxIterations) {
-                    Log.d("ChatEngine", "Iteration $iterations: ${result.toolCalls.size} tool calls")
                     val assistantContent = result.text ?: ""
                     messages.add(ChatMessage(
                         role = Role.ASSISTANT,

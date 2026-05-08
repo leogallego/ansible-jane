@@ -7,7 +7,7 @@ import com.example.aapremote.assistant.tools.ToolResult
 
 class ToolExecutor(
     private val tools: List<Tool>,
-    private val maxResultChars: Int = 20_000
+    private val maxResultChars: Int = 8_000
 ) {
     suspend fun execute(toolCall: ToolCall): ToolResult {
         val tool = tools.find { it.spec.name == toolCall.name }
