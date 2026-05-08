@@ -20,9 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -47,6 +45,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -266,13 +266,12 @@ private fun InstanceCard(
                         modifier = Modifier.weight(1f, fill = false)
                     )
                     if (isActive) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.Filled.Circle,
-                            contentDescription = "Active",
-                            modifier = Modifier.size(8.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        StatusPill("Active", MaterialTheme.colorScheme.primary)
+                    }
+                    if (instance.mcpEnabled) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        StatusPill("MCP", MaterialTheme.colorScheme.primary)
                     }
                 }
                 if (instance.alias != null) {
@@ -344,5 +343,20 @@ private fun InstanceDetailsBottomSheet(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun StatusPill(label: String, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = color.copy(alpha = 0.15f)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = color
+        )
     }
 }

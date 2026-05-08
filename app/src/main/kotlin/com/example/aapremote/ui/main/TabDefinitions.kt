@@ -1,9 +1,11 @@
 package com.example.aapremote.ui.main
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assistant
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.outlined.Assistant
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.History
@@ -56,7 +58,17 @@ sealed class TopLevelTab(
         )
     )
 
+    data object Assistant : TopLevelTab(
+        route = "main/assistant",
+        label = "Assistant",
+        icon = Icons.Outlined.Assistant,
+        selectedIcon = Icons.Filled.Assistant,
+        segments = listOf(
+            Segment(label = "Chat", isDefault = true, isImplemented = true)
+        )
+    )
+
     companion object {
-        val entries: List<TopLevelTab> = listOf(Templates, Infrastructure, Activity)
+        val entries: List<TopLevelTab> = listOf(Templates, Infrastructure, Activity, Assistant)
     }
 }

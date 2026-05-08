@@ -43,6 +43,23 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 - **Presentation:** ViewModels with `StateFlow<UiState>` (Idle, Loading, Success, Error pattern)
 - **UI:** Compose screens reacting to ViewModel state
 
+## AI Agent Skills
+
+The `skills/` directory contains SKILL.md files ([agentskills.io](https://agentskills.io) standard) that provide grounding for Android/Kotlin development. Consult the relevant skill when working on:
+
+- **Compose UI**: `skills/compose-skill/compose-skill.md` (comprehensive) or `skills/android-community/compose-editor.md`
+- **Compose performance**: `skills/android-community/compose-performance-auditor.md` or `skills/compose-skill/references/performance.md`
+- **Coroutines/Flow**: `skills/android-community/kotlin-coroutines.md` or `skills/compose-skill/references/coroutines-flow.md`
+- **Koin DI**: `skills/android-community/koin-editor.md` or `skills/compose-skill/references/koin.md`
+- **Kotlin conventions**: `skills/android-community/kotlin-convention.md`
+- **Testing**: `skills/android-community/android-unit-test-editor.md` or `skills/compose-skill/references/testing.md`
+- **Edge-to-edge/insets**: `skills/android-official/edge-to-edge.md`
+- **Navigation 3 migration**: `skills/android-official/navigation-3.md`
+- **Gradle/build config**: `skills/android-community/gradle-configuration.md`
+- **Anti-patterns**: `skills/compose-skill/references/anti-patterns.md`
+
+See `skills/README.md` for sources and licenses.
+
 ## Development Rules
 
 - **MUST** create all temporary files and directories inside the project directory (e.g., `.tmp/`). NEVER use `/tmp`, `$TMPDIR`, or any system temp directory. Clean up temp files when done.
@@ -66,6 +83,8 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 - N/A (no new local storage — all data fetched from API) (008-infrastructure-section)
 - Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Navigation Compose, Retrofit + Kotlin Serialization, Koin, Google Tink (009-multi-instance-support)
 - Jetpack DataStore (Preferences) + Tink AES-256-GCM encryption (009-multi-instance-support)
+- Kotlin 2.2.10, JVM 17, compileSdk 36, minSdk 31 + Jetpack Compose (Material 3 BOM 2026.03.01), Retrofit 2.11.0, OkHttp 4.12.0, kotlinx-serialization-json 1.9.0, Koin 4.1.1, Coroutines 1.10.2 (010-ai-assistant-mcp)
+- Jetpack DataStore (Preferences) 1.2.1 + Tink 1.20.0 (AES-256-GCM encryption for MCP URLs and LLM API keys) (010-ai-assistant-mcp)
 
 ## Recent Changes
 - 001-aap-remote-control: Added Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit,

@@ -1,0 +1,1 @@
+/home/lgallego/Claude/remote-aap/docs/superpowers/specs/2026-04-06-ai-assistant-mcp-integration-design.md
