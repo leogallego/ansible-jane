@@ -40,7 +40,8 @@ class ChatEngine(
         try {
             val messages = mutableListOf<ChatMessage>()
             messages.add(ChatMessage(role = Role.SYSTEM, content = SYSTEM_PROMPT))
-            messages.addAll(history)
+            history.filter { it.role == Role.USER || it.role == Role.ASSISTANT }
+                .forEach { messages.add(it) }
             messages.add(ChatMessage(role = Role.USER, content = userMessage))
 
             var iterations = 0
@@ -204,7 +205,7 @@ class ChatEngine(
     }
 
     companion object {
-        private const val DEFAULT_CONTEXT_CHARS = 100_000
+        private const val DEFAULT_CONTEXT_CHARS = 16_000
         const val SYSTEM_PROMPT = """You are an AI assistant for Ansible Automation Platform (AAP). You help users query and manage their AAP instance using the available tools. Be concise and specific. When reporting results, use structured formatting."""
     }
 }
