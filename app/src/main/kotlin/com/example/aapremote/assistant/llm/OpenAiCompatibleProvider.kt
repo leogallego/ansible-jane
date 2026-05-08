@@ -335,8 +335,24 @@ fun ToolSpec.toOpenAiTool(): JsonObject = buildJsonObject {
     put("function", buildJsonObject {
         put("name", name)
         put("description", description)
-        put("parameters", parametersSchema)
+        put("parameters", compactSchema(parametersSchema))
     })
+}
+
+private fun compactSchema(schema: JsonObject): JsonObject = buildJsonObject {
+    schema["type"]?.let { put("type", it) }
+    schema["required"]?.let { put("required", it) }
+    schema["properties"]?.jsonObject?.let { props ->
+        put("properties", buildJsonObject {
+            props.forEach { (key, value) ->
+                put(key, buildJsonObject {
+                    val prop = value.jsonObject
+                    prop["type"]?.let { put("type", it) }
+                    prop["enum"]?.let { put("enum", it) }
+                })
+            }
+        })
+    }
 }
 
 private fun Role.toOpenAiRole(): String = when (this) {

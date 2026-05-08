@@ -68,19 +68,21 @@ class ToolRouterTest {
 
     @Test
     fun `SHOULD only filter matching server label WHEN multiple servers configured GIVEN mixed servers`() {
-        val aapTool = tool("controller.hosts_create", "aap")
-        val otherTool = tool("custom.data_create", "knowledge")
-        val tools = listOf(aapTool, otherTool)
+        val aapWriteTool = tool("controller.hosts_create", "aap")
+        val aapReadTool = tool("controller.hosts_list", "aap")
+        val otherWriteTool = tool("controller.hosts_create", "knowledge")
+        val tools = listOf(aapWriteTool, aapReadTool, otherWriteTool)
 
         val configs = listOf(
             McpServerConfig(url = "https://aap:8448/mcp", label = "aap", readOnly = true),
             McpServerConfig(url = "https://kb:3000/mcp", label = "knowledge", readOnly = false)
         )
-        val result = ToolRouter.filterTools("hello", tools, configs)
-        val names = result.map { it.spec.name }
+        val result = ToolRouter.filterTools("list hosts", tools, configs)
+        val names = result.map { it.spec.name to it.spec.description }
 
-        assertTrue("controller.hosts_create" !in names)
-        assertTrue("custom.data_create" in names)
+        assertTrue(names.any { it.first == "controller.hosts_list" && it.second.contains("[aap]") })
+        assertTrue(names.none { it.first == "controller.hosts_create" && it.second.contains("[aap]") })
+        assertTrue(names.any { it.first == "controller.hosts_create" && it.second.contains("[knowledge]") })
     }
 
     @Test
@@ -134,14 +136,14 @@ class ToolRouterTest {
     }
 
     @Test
-    fun `SHOULD return all tools WHEN no category matches GIVEN generic query`() {
+    fun `SHOULD return no tools WHEN no category matches GIVEN generic query`() {
         val tools = listOf(
             tool("controller.hosts_list"),
             tool("controller.jobs_read"),
             tool("controller.users_list")
         )
         val result = ToolRouter.filterTools("hello how are you", tools, listOf(readWriteConfig))
-        assertEquals(tools.size, result.size)
+        assertTrue(result.isEmpty())
     }
 
     @Test
@@ -184,12 +186,12 @@ class ToolRouterTest {
     }
 
     @Test
-    fun `SHOULD not apply readOnly filtering WHEN serverConfigs is empty GIVEN write tools`() {
+    fun `SHOULD not apply readOnly filtering WHEN serverConfigs is empty GIVEN category-matched write tools`() {
         val tools = listOf(
             tool("controller.hosts_create"),
             tool("controller.hosts_delete")
         )
-        val result = ToolRouter.filterTools("hello", tools, emptyList())
+        val result = ToolRouter.filterTools("list hosts", tools, emptyList())
         assertEquals(tools.size, result.size)
     }
 }

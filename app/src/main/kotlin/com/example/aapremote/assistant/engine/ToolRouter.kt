@@ -71,7 +71,7 @@ object ToolRouter {
             category.keywords.any { it in queryWords }
         }
 
-        if (matchedCategories.isEmpty()) return accessFiltered
+        if (matchedCategories.isEmpty()) return emptyList()
 
         val relevantPrefixes = matchedCategories
             .flatMap { it.resourcePrefixes }
