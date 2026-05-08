@@ -60,11 +60,12 @@ class OpenAiCompatibleProvider(
         val request = buildHttpRequest(body)
         val response = executeRequest(request)
 
-        checkHttpErrors(response)
-
-        val responseBody = response.body?.string()
-            ?: throw IOException("Empty response body")
-        return parseNonStreamingResponse(responseBody)
+        return response.use { resp ->
+            checkHttpErrors(resp)
+            val responseBody = resp.body?.string()
+                ?: throw IOException("Empty response body")
+            parseNonStreamingResponse(responseBody)
+        }
     }
 
     override fun generateStream(

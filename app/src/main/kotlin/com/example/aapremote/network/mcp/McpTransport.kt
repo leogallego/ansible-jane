@@ -133,9 +133,9 @@ class McpTransport(
     }
 
     private fun parseSseFromBody(response: Response): Flow<JsonRpcResponse> = flow {
-        val source = response.body?.source()
-            ?: throw IOException("Empty response body")
-        try {
+        response.use { resp ->
+            val source = resp.body?.source()
+                ?: throw IOException("Empty response body")
             while (!source.exhausted()) {
                 val line = source.readUtf8Line() ?: break
                 if (line.startsWith("data: ")) {
@@ -148,8 +148,6 @@ class McpTransport(
                     }
                 }
             }
-        } finally {
-            response.close()
         }
     }
 }
