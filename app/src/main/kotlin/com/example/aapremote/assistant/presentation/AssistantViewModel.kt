@@ -158,41 +158,40 @@ class AssistantViewModel(
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
             val textBuilder = StringBuilder()
+            var hasPlaceholder = false
+
+            fun replaceOrAddAssistant(content: String) {
+                updateState {
+                    val msg = ChatMessage(role = Role.ASSISTANT, content = content)
+                    val msgs = if (hasPlaceholder) messages.dropLast(1) + msg
+                        else messages + msg
+                    copy(messages = msgs)
+                }
+                hasPlaceholder = true
+            }
+
+            replaceOrAddAssistant("Thinking...")
 
             engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens)
                 .collect { event ->
                     when (event) {
                         is ChatEvent.TextDelta -> {
                             textBuilder.append(event.text)
-                            updateState {
-                                val streamingMsg = ChatMessage(
-                                    role = Role.ASSISTANT,
-                                    content = textBuilder.toString()
-                                )
-                                val lastMsg = messages.lastOrNull()
-                                val replaceLast = lastMsg?.role == Role.ASSISTANT && lastMsg.toolCalls == null
-                                val msgs = if (replaceLast) messages.dropLast(1) + streamingMsg
-                                    else messages + streamingMsg
-                                copy(messages = msgs)
-                            }
+                            replaceOrAddAssistant(textBuilder.toString())
                         }
                         is ChatEvent.ToolExecuting -> {
-                            val indicator = ChatMessage(
-                                role = Role.ASSISTANT,
-                                content = "Querying tool: ${event.toolName}..."
-                            )
-                            updateState { copy(messages = messages + indicator) }
+                            replaceOrAddAssistant("Querying: ${event.toolName}...")
                         }
                         is ChatEvent.ToolResult -> {
-                            updateState {
-                                val lastMsg = messages.lastOrNull()
-                                val isToolIndicator = lastMsg?.content?.startsWith("Querying tool:") == true
-                                val msgs = if (isToolIndicator) messages.dropLast(1) else messages
-                                copy(messages = msgs)
-                            }
+                            replaceOrAddAssistant("Processing results...")
                             textBuilder.clear()
                         }
                         is ChatEvent.AssistantMessage -> {
+                            hasPlaceholder = false
+                            updateState {
+                                val msgs = messages.dropLast(1)
+                                copy(messages = msgs)
+                            }
                             val finalMsg = ChatMessage(
                                 role = Role.ASSISTANT,
                                 content = event.fullText
@@ -206,6 +205,11 @@ class AssistantViewModel(
                             }
                         }
                         is ChatEvent.Error -> {
+                            hasPlaceholder = false
+                            updateState {
+                                val msgs = messages.dropLast(1)
+                                copy(messages = msgs)
+                            }
                             val errorMsg = ChatMessage(
                                 role = Role.ASSISTANT,
                                 content = "Error: ${event.message}"
