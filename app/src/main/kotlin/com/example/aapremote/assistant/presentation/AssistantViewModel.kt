@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.assistant.data.AssistantRepository
 import com.example.aapremote.assistant.data.LlmProviderConfig
+import com.example.aapremote.assistant.data.ModelFetcher
 import com.example.aapremote.assistant.engine.ChatEngine
 import com.example.aapremote.assistant.engine.ChatEvent
 import com.example.aapremote.assistant.engine.ChatMessage
@@ -43,6 +44,12 @@ class AssistantViewModel(
     private var generateJob: Job? = null
     private val _llmConfig = MutableStateFlow<LlmProviderConfig?>(null)
     val llmConfig: StateFlow<LlmProviderConfig?> = _llmConfig.asStateFlow()
+
+    private val _fetchedModels = MutableStateFlow<List<String>>(emptyList())
+    val fetchedModels: StateFlow<List<String>> = _fetchedModels.asStateFlow()
+
+    private val _modelFetchState = MutableStateFlow<ModelFetchState>(ModelFetchState.Idle)
+    val modelFetchState: StateFlow<ModelFetchState> = _modelFetchState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -204,6 +211,27 @@ class AssistantViewModel(
         viewModelScope.launch {
             repository.saveLlmConfig(config)
         }
+    }
+
+    fun fetchAvailableModels(baseUrl: String, apiKey: String?) {
+        viewModelScope.launch {
+            _modelFetchState.value = ModelFetchState.Loading
+            val fetcher = ModelFetcher(buildLlmClient(), json)
+            when (val result = fetcher.fetchModels(baseUrl, apiKey)) {
+                is ModelFetcher.Result.Success -> {
+                    _fetchedModels.value = result.models
+                    _modelFetchState.value = ModelFetchState.Success(result.models.size)
+                }
+                is ModelFetcher.Result.Error -> {
+                    _modelFetchState.value = ModelFetchState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    fun clearFetchedModels() {
+        _fetchedModels.value = emptyList()
+        _modelFetchState.value = ModelFetchState.Idle
     }
 
     fun toggleMcpEnabled(enabled: Boolean) {
