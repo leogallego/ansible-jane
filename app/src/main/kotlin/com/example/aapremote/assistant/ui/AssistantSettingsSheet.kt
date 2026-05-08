@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -36,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.aapremote.assistant.data.LlmProviderConfig
 import com.example.aapremote.model.McpServerConfig
@@ -62,6 +65,7 @@ fun AssistantSettingsSheet(
     var llmModel by remember { mutableStateOf(savedConfig?.model ?: "") }
     var llmApiKey by remember { mutableStateOf(savedConfig?.apiKey ?: "") }
 
+    var apiKeyVisible by remember { mutableStateOf(false) }
     var showAddServer by remember { mutableStateOf(false) }
     var newServerUrl by remember { mutableStateOf("") }
     var newServerLabel by remember { mutableStateOf("") }
@@ -228,7 +232,17 @@ fun AssistantSettingsSheet(
                 label = { Text("API Key (optional)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                visualTransformation = if (apiKeyVisible) VisualTransformation.None
+                    else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
+                        Icon(
+                            if (apiKeyVisible) Icons.Default.VisibilityOff
+                                else Icons.Default.Visibility,
+                            contentDescription = if (apiKeyVisible) "Hide API key" else "Show API key"
+                        )
+                    }
+                }
             )
 
             Button(
