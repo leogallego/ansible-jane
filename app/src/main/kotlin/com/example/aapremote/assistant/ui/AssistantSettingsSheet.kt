@@ -15,14 +15,20 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -39,8 +45,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.aapremote.assistant.data.KnownProvider
 import com.example.aapremote.assistant.data.LlmProviderConfig
+import com.example.aapremote.assistant.presentation.ModelFetchState
 import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.mcp.McpConnectionState
 
@@ -55,6 +64,10 @@ fun AssistantSettingsSheet(
     onAddMcpServer: (url: String, label: String) -> Unit,
     onRemoveMcpServer: (url: String) -> Unit,
     onToggleReadOnly: (url: String, readOnly: Boolean) -> Unit,
+    fetchedModels: List<String>,
+    modelFetchState: ModelFetchState,
+    onFetchModels: (url: String, apiKey: String?) -> Unit,
+    onClearFetchedModels: () -> Unit,
     onSaveLlmConfig: (LlmProviderConfig) -> Unit,
     onClearHistory: () -> Unit,
     onDismiss: () -> Unit
@@ -62,11 +75,18 @@ fun AssistantSettingsSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val savedConfig = currentLlmConfig as? LlmProviderConfig.OpenAiCompatible
-    var llmUrl by remember { mutableStateOf(savedConfig?.url ?: "") }
+    val initialProvider = remember {
+        if (savedConfig != null) KnownProvider.fromUrl(savedConfig.url) else KnownProvider.OPENROUTER
+    }
+
+    var selectedProvider by remember { mutableStateOf(initialProvider) }
+    var llmUrl by remember { mutableStateOf(savedConfig?.url ?: selectedProvider.baseUrl) }
     var llmModel by remember { mutableStateOf(savedConfig?.model ?: "") }
     var llmApiKey by remember { mutableStateOf(savedConfig?.apiKey ?: "") }
 
     var apiKeyVisible by remember { mutableStateOf(false) }
+    var providerExpanded by remember { mutableStateOf(false) }
+    var modelExpanded by remember { mutableStateOf(false) }
     var showAddServer by remember { mutableStateOf(false) }
     var newServerUrl by remember { mutableStateOf("") }
     var newServerLabel by remember { mutableStateOf("") }
@@ -227,47 +247,194 @@ fun AssistantSettingsSheet(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            OutlinedTextField(
-                value = llmUrl,
-                onValueChange = { llmUrl = it },
-                label = { Text("API URL") },
-                placeholder = { Text("http://localhost:11434/v1") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            OutlinedTextField(
-                value = llmModel,
-                onValueChange = { llmModel = it },
-                label = { Text("Model") },
-                placeholder = { Text("llama3.1:8b") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            OutlinedTextField(
-                value = llmApiKey,
-                onValueChange = { llmApiKey = it },
-                label = { Text("API Key (optional)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = if (apiKeyVisible) VisualTransformation.None
-                    else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
-                        Icon(
-                            if (apiKeyVisible) Icons.Default.VisibilityOff
-                                else Icons.Default.Visibility,
-                            contentDescription = if (apiKeyVisible) "Hide API key" else "Show API key"
+            ExposedDropdownMenuBox(
+                expanded = providerExpanded,
+                onExpandedChange = { providerExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = selectedProvider.displayName,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Provider") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(providerExpanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                )
+                ExposedDropdownMenu(
+                    expanded = providerExpanded,
+                    onDismissRequest = { providerExpanded = false }
+                ) {
+                    KnownProvider.entries.forEach { provider ->
+                        DropdownMenuItem(
+                            text = { Text(provider.displayName) },
+                            onClick = {
+                                if (selectedProvider != provider) {
+                                    selectedProvider = provider
+                                    llmUrl = provider.baseUrl
+                                    llmModel = ""
+                                    onClearFetchedModels()
+                                }
+                                providerExpanded = false
+                            }
                         )
                     }
                 }
-            )
+            }
+
+            if (selectedProvider.urlEditable) {
+                OutlinedTextField(
+                    value = llmUrl,
+                    onValueChange = { llmUrl = it },
+                    label = { Text("API URL") },
+                    placeholder = { Text(selectedProvider.baseUrl.ifEmpty { "https://your-api.com/v1" }) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    supportingText = if (selectedProvider == KnownProvider.OLLAMA) {
+                        { Text("Use 10.0.2.2 instead of localhost for emulator") }
+                    } else null
+                )
+            }
+
+            if (selectedProvider != KnownProvider.CUSTOM) {
+                val allModels = remember(selectedProvider, fetchedModels) {
+                    (selectedProvider.defaultModels + fetchedModels).distinct()
+                }
+                val filteredModels = remember(allModels, llmModel) {
+                    if (llmModel.isBlank()) allModels
+                    else allModels.filter { it.contains(llmModel, ignoreCase = true) }
+                }
+
+                ExposedDropdownMenuBox(
+                    expanded = modelExpanded,
+                    onExpandedChange = { modelExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = llmModel,
+                        onValueChange = {
+                            llmModel = it
+                            modelExpanded = true
+                        },
+                        label = { Text("Model") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(modelExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+                        singleLine = true
+                    )
+                    if (filteredModels.isNotEmpty()) {
+                        ExposedDropdownMenu(
+                            expanded = modelExpanded,
+                            onDismissRequest = { modelExpanded = false }
+                        ) {
+                            filteredModels.take(20).forEach { modelId ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(modelId, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    },
+                                    onClick = {
+                                        llmModel = modelId
+                                        modelExpanded = false
+                                    }
+                                )
+                            }
+                            if (filteredModels.size > 20) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            "${filteredModels.size - 20} more — type to filter",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    },
+                                    onClick = {},
+                                    enabled = false
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    when (val state = modelFetchState) {
+                        is ModelFetchState.Loading -> {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(14.dp))
+                                Text("Fetching...", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                        is ModelFetchState.Success -> {
+                            Text(
+                                "${state.count} models available",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        is ModelFetchState.Error -> {
+                            Text(
+                                state.message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        else -> { Spacer(modifier = Modifier.weight(1f)) }
+                    }
+                    TextButton(
+                        onClick = {
+                            val url = if (selectedProvider.urlEditable) llmUrl
+                                else selectedProvider.baseUrl
+                            onFetchModels(url, llmApiKey.ifBlank { null })
+                        },
+                        enabled = modelFetchState !is ModelFetchState.Loading
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Text("Refresh", modifier = Modifier.padding(start = 4.dp))
+                    }
+                }
+            } else {
+                OutlinedTextField(
+                    value = llmModel,
+                    onValueChange = { llmModel = it },
+                    label = { Text("Model") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+
+            if (selectedProvider.requiresApiKey) {
+                OutlinedTextField(
+                    value = llmApiKey,
+                    onValueChange = { llmApiKey = it },
+                    label = { Text("API Key${if (selectedProvider == KnownProvider.CUSTOM) " (optional)" else ""}") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = if (apiKeyVisible) VisualTransformation.None
+                        else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
+                            Icon(
+                                if (apiKeyVisible) Icons.Default.VisibilityOff
+                                    else Icons.Default.Visibility,
+                                contentDescription = if (apiKeyVisible) "Hide API key" else "Show API key"
+                            )
+                        }
+                    }
+                )
+            }
 
             Button(
                 onClick = {
+                    val effectiveUrl = if (selectedProvider.urlEditable) llmUrl
+                        else selectedProvider.baseUrl
                     val config = LlmProviderConfig.OpenAiCompatible(
-                        url = llmUrl.trimEnd('/'),
+                        url = effectiveUrl.trimEnd('/'),
                         model = llmModel,
                         apiKey = llmApiKey.ifBlank { null }
                     )
@@ -275,7 +442,7 @@ fun AssistantSettingsSheet(
                     onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = llmUrl.isNotBlank() && llmModel.isNotBlank()
+                enabled = (llmUrl.isNotBlank() || !selectedProvider.urlEditable) && llmModel.isNotBlank()
             ) {
                 Text("Save LLM Config")
             }

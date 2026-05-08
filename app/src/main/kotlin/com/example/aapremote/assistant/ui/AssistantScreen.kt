@@ -108,6 +108,8 @@ fun AssistantScreen(
         val activeInstance = viewModel.activeInstance
         val connections = (uiState as? AssistantUiState.Active)?.connections ?: emptyMap()
         val currentLlmConfig by viewModel.llmConfig.collectAsStateWithLifecycle()
+        val fetchedModels by viewModel.fetchedModels.collectAsStateWithLifecycle()
+        val modelFetchState by viewModel.modelFetchState.collectAsStateWithLifecycle()
         AssistantSettingsSheet(
             mcpEnabled = activeInstance?.mcpEnabled ?: false,
             mcpServers = activeInstance?.mcpServerUrls ?: emptyList(),
@@ -117,6 +119,10 @@ fun AssistantScreen(
             onAddMcpServer = { url, label -> viewModel.addMcpServer(url, label) },
             onRemoveMcpServer = { viewModel.removeMcpServer(it) },
             onToggleReadOnly = { url, readOnly -> viewModel.toggleServerReadOnly(url, readOnly) },
+            fetchedModels = fetchedModels,
+            modelFetchState = modelFetchState,
+            onFetchModels = { url, key -> viewModel.fetchAvailableModels(url, key) },
+            onClearFetchedModels = { viewModel.clearFetchedModels() },
             onSaveLlmConfig = { viewModel.updateLlmConfig(it) },
             onClearHistory = { viewModel.clearHistory() },
             onDismiss = { showSettings = false }
