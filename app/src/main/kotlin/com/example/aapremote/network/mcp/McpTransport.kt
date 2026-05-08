@@ -47,6 +47,12 @@ class McpTransport(
             .build()
 
         val response = executeRequest(httpRequest)
+
+        if (response.code == 404 && sessionId != null) {
+            response.close()
+            throw McpSessionExpiredException("Session expired (HTTP 404)")
+        }
+
         val newSessionId = response.header("Mcp-Session-Id")
 
         val contentType = response.header("Content-Type") ?: ""
@@ -151,6 +157,8 @@ class McpTransport(
         }
     }
 }
+
+class McpSessionExpiredException(message: String) : IOException(message)
 
 data class McpTransportResult(
     val responses: Flow<JsonRpcResponse>,
