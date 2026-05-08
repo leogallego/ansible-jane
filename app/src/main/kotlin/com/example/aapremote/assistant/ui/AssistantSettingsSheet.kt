@@ -84,6 +84,14 @@ fun AssistantSettingsSheet(
     var llmModel by remember { mutableStateOf(savedConfig?.model ?: "") }
     var llmApiKey by remember { mutableStateOf(savedConfig?.apiKey ?: "") }
 
+    val providerState = remember {
+        mutableMapOf<KnownProvider, Pair<String, String>>().also { map ->
+            if (savedConfig != null) {
+                map[initialProvider] = (savedConfig.model ?: "") to (savedConfig.apiKey ?: "")
+            }
+        }
+    }
+
     var apiKeyVisible by remember { mutableStateOf(false) }
     var providerExpanded by remember { mutableStateOf(false) }
     var modelExpanded by remember { mutableStateOf(false) }
@@ -270,9 +278,12 @@ fun AssistantSettingsSheet(
                             text = { Text(provider.displayName) },
                             onClick = {
                                 if (selectedProvider != provider) {
+                                    providerState[selectedProvider] = llmModel to llmApiKey
                                     selectedProvider = provider
                                     llmUrl = provider.baseUrl
-                                    llmModel = ""
+                                    val restored = providerState[provider]
+                                    llmModel = restored?.first ?: ""
+                                    llmApiKey = restored?.second ?: llmApiKey
                                     onClearFetchedModels()
                                 }
                                 providerExpanded = false
