@@ -31,7 +31,7 @@ sealed class TopLevelTab(
         selectedIcon = Icons.Filled.Description,
         segments = listOf(
             Segment(label = "Job Templates", isDefault = true, isImplemented = true),
-            Segment(label = "Workflow Templates", isImplemented = true)
+            Segment(label = "Workflows", isImplemented = true)
         )
     )
 

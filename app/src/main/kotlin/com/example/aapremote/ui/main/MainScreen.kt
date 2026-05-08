@@ -117,7 +117,13 @@ fun MainScreen(
                                 contentDescription = tab.label
                             )
                         },
-                        label = { Text(tab.label) }
+                        label = {
+                            Text(
+                                tab.label,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
                     )
                 }
             }
