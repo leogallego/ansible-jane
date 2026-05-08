@@ -47,6 +47,7 @@ fun AssistantSettingsSheet(
     mcpEnabled: Boolean,
     mcpServers: List<McpServerConfig>,
     connections: Map<String, McpConnectionState>,
+    currentLlmConfig: LlmProviderConfig?,
     onToggleMcp: (Boolean) -> Unit,
     onAddMcpServer: (url: String, label: String) -> Unit,
     onRemoveMcpServer: (url: String) -> Unit,
@@ -56,9 +57,10 @@ fun AssistantSettingsSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var llmUrl by remember { mutableStateOf("") }
-    var llmModel by remember { mutableStateOf("") }
-    var llmApiKey by remember { mutableStateOf("") }
+    val savedConfig = currentLlmConfig as? LlmProviderConfig.OpenAiCompatible
+    var llmUrl by remember { mutableStateOf(savedConfig?.url ?: "") }
+    var llmModel by remember { mutableStateOf(savedConfig?.model ?: "") }
+    var llmApiKey by remember { mutableStateOf(savedConfig?.apiKey ?: "") }
 
     var showAddServer by remember { mutableStateOf(false) }
     var newServerUrl by remember { mutableStateOf("") }

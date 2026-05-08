@@ -105,6 +105,7 @@ fun AssistantScreen(
             mcpEnabled = activeInstance?.mcpEnabled ?: false,
             mcpServers = activeInstance?.mcpServerUrls ?: emptyList(),
             connections = connections,
+            currentLlmConfig = viewModel.llmConfig,
             onToggleMcp = { viewModel.toggleMcpEnabled(it) },
             onAddMcpServer = { url, label -> viewModel.addMcpServer(url, label) },
             onRemoveMcpServer = { viewModel.removeMcpServer(it) },

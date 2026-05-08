@@ -39,7 +39,8 @@ class AssistantViewModel(
     val activeInstance get() = tokenManager.activeInstance.value
 
     private var generateJob: Job? = null
-    private var llmConfig: LlmProviderConfig? = null
+    var llmConfig: LlmProviderConfig? = null
+        private set
 
     init {
         viewModelScope.launch {
