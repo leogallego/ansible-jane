@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -48,33 +49,35 @@ class AssistantViewModel(
                 .distinctUntilChangedBy { it?.id }
                 .collect { instance ->
                     if (instance != null) {
-                        _uiState.value = AssistantUiState.Loading
+                        _uiState.update { AssistantUiState.Loading }
                         mcpServerManager.connectAll(instance)
-                        _uiState.value = AssistantUiState.Active(
-                            messages = repository.getHistory(),
-                            connections = mcpServerManager.connections.value
-                        )
+                        _uiState.update {
+                            AssistantUiState.Active(
+                                messages = repository.getHistory(),
+                                connections = mcpServerManager.connections.value
+                            )
+                        }
                     } else {
                         mcpServerManager.disconnectAll()
-                        _uiState.value = AssistantUiState.Idle
+                        _uiState.update { AssistantUiState.Idle }
                     }
                 }
         }
 
         viewModelScope.launch {
             mcpServerManager.connections.collect { connections ->
-                val current = _uiState.value
-                if (current is AssistantUiState.Active) {
-                    _uiState.value = current.copy(connections = connections)
+                _uiState.update { current ->
+                    if (current is AssistantUiState.Active) current.copy(connections = connections)
+                    else current
                 }
             }
         }
     }
 
     fun updateInputText(text: String) {
-        val current = _uiState.value
-        if (current is AssistantUiState.Active) {
-            _uiState.value = current.copy(inputText = text)
+        _uiState.update { current ->
+            if (current is AssistantUiState.Active) current.copy(inputText = text)
+            else current
         }
     }
 
@@ -83,14 +86,15 @@ class AssistantViewModel(
 
         val config = llmConfig
         if (config == null) {
-            val current = _uiState.value
-            if (current is AssistantUiState.Active) {
-                _uiState.value = current.copy(
-                    messages = current.messages + ChatMessage(
-                        role = Role.ASSISTANT,
-                        content = "Please configure an LLM provider in settings first."
+            _uiState.update { current ->
+                if (current is AssistantUiState.Active) {
+                    current.copy(
+                        messages = current.messages + ChatMessage(
+                            role = Role.ASSISTANT,
+                            content = "Please configure an LLM provider in settings first."
+                        )
                     )
-                )
+                } else current
             }
             return
         }
@@ -195,10 +199,10 @@ class AssistantViewModel(
         }
     }
 
-    private inline fun updateState(transform: AssistantUiState.Active.() -> AssistantUiState.Active) {
-        val current = _uiState.value
-        if (current is AssistantUiState.Active) {
-            _uiState.value = current.transform()
+    private inline fun updateState(crossinline transform: AssistantUiState.Active.() -> AssistantUiState.Active) {
+        _uiState.update { current ->
+            if (current is AssistantUiState.Active) current.transform()
+            else current
         }
     }
 }

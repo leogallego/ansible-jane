@@ -3,6 +3,7 @@ package com.example.aapremote.network.mcp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 sealed interface McpConnectionState {
     data object Disconnected : McpConnectionState
@@ -28,11 +29,11 @@ class McpSession {
         private set
 
     fun updateState(newState: McpConnectionState) {
-        _state.value = newState
+        _state.update { newState }
     }
 
     fun updateTools(newTools: List<McpToolDefinition>) {
-        _tools.value = newTools
+        _tools.update { newTools }
     }
 
     fun updateSessionId(id: String?) {
@@ -40,8 +41,8 @@ class McpSession {
     }
 
     fun reset() {
-        _state.value = McpConnectionState.Disconnected
-        _tools.value = emptyList()
+        _state.update { McpConnectionState.Disconnected }
+        _tools.update { emptyList() }
         sessionId = null
     }
 }

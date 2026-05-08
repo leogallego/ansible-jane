@@ -1,12 +1,16 @@
 package com.example.aapremote.assistant.engine
 
+import com.example.aapremote.assistant.llm.LlmAuthException
 import com.example.aapremote.assistant.llm.LlmProvider
+import com.example.aapremote.assistant.llm.LlmTimeoutException
 import com.example.aapremote.assistant.llm.StreamEvent
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.JsonObject
+import java.io.IOException
 
 sealed interface ChatEvent {
     data class TextDelta(val text: String) : ChatEvent
@@ -105,14 +109,16 @@ class ChatEngine(
                 "I wasn't able to complete this request within the tool call limit.",
                 totalToolCalls
             ))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: LlmAuthException) {
+            emit(ChatEvent.Error("LLM authentication failed — check API key", e))
+        } catch (e: LlmTimeoutException) {
+            emit(ChatEvent.Error("Response timed out", e))
+        } catch (e: IOException) {
+            emit(ChatEvent.Error("Unable to reach LLM server: ${e.message}", e))
         } catch (e: Exception) {
-            val message = when {
-                e.message?.contains("Unable to reach") == true -> "Unable to reach LLM server"
-                e.message?.contains("auth") == true -> "LLM authentication failed — check API key"
-                e.message?.contains("timed out") == true -> "Response timed out"
-                else -> "Error: ${e.message}"
-            }
-            emit(ChatEvent.Error(message, e))
+            emit(ChatEvent.Error("Error: ${e.message}", e))
         }
     }
 

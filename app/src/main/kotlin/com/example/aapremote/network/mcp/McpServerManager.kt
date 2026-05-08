@@ -8,6 +8,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 
@@ -48,7 +49,7 @@ class McpServerManager(
         val transport = McpTransport(httpClient, json)
         val client = McpClient(config.url, transport, json)
 
-        _connections.value = _connections.value + (config.label to McpConnectionState.Connecting)
+        _connections.update { it + (config.label to McpConnectionState.Connecting) }
 
         try {
             client.connect()
@@ -59,13 +60,13 @@ class McpServerManager(
             }
             synchronized(mcpTools) { mcpTools.addAll(tools) }
 
-            _connections.value = _connections.value + (config.label to client.connectionState.value)
+            _connections.update { it + (config.label to client.connectionState.value) }
         } catch (e: Exception) {
-            _connections.value = _connections.value + (
-                config.label to McpConnectionState.Error(
+            _connections.update {
+                it + (config.label to McpConnectionState.Error(
                     "Failed to connect: ${e.message}", e
-                )
-            )
+                ))
+            }
         }
     }
 
@@ -75,7 +76,7 @@ class McpServerManager(
         }
         clients.clear()
         synchronized(mcpTools) { mcpTools.clear() }
-        _connections.value = emptyMap()
+        _connections.update { emptyMap() }
     }
 
     fun getAllTools(): List<McpTool> = synchronized(mcpTools) { mcpTools.toList() }

@@ -287,18 +287,18 @@ class OpenAiCompatibleProvider(
         val content = message["content"]?.jsonPrimitive?.contentOrNull
         val toolCallsArr = message["tool_calls"]?.jsonArray
 
-        val toolCalls = toolCallsArr?.map { tc ->
+        val toolCalls = toolCallsArr?.mapNotNull { tc ->
             val tcObj = tc.jsonObject
-            val function = tcObj["function"]!!.jsonObject
-            val argsStr = function["arguments"]!!.jsonPrimitive.content
+            val function = tcObj["function"]?.jsonObject ?: return@mapNotNull null
+            val argsStr = function["arguments"]?.jsonPrimitive?.contentOrNull ?: ""
             val argsJson = try {
                 json.parseToJsonElement(argsStr).jsonObject
             } catch (_: Exception) {
                 JsonObject(emptyMap())
             }
             ToolCall(
-                id = tcObj["id"]!!.jsonPrimitive.content,
-                name = function["name"]!!.jsonPrimitive.content,
+                id = tcObj["id"]?.jsonPrimitive?.contentOrNull ?: "call_${tc.hashCode()}",
+                name = function["name"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null,
                 arguments = argsJson
             )
         } ?: emptyList()
@@ -306,11 +306,10 @@ class OpenAiCompatibleProvider(
         return LlmResult(text = content, toolCalls = toolCalls)
     }
 
-    private data class ToolCallAccumulator(
-        val id: String,
-        var name: String? = null,
+    private class ToolCallAccumulator(val id: String) {
+        var name: String? = null
         val argsBuilder: StringBuilder = StringBuilder()
-    )
+    }
 }
 
 fun ToolSpec.toOpenAiTool(): JsonObject = buildJsonObject {

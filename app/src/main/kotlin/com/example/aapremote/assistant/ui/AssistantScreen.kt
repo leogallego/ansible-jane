@@ -184,7 +184,10 @@ private fun ActiveChatContent(
                 }
             }
 
-            items(state.messages) { message ->
+            items(
+                items = state.messages,
+                key = { it.timestamp }
+            ) { message ->
                 ChatBubble(message = message, modifier = Modifier.padding(vertical = 2.dp))
             }
         }
