@@ -1,5 +1,6 @@
 package com.example.aapremote.assistant.engine
 
+import android.util.Log
 import com.example.aapremote.assistant.llm.LlmAuthException
 import com.example.aapremote.assistant.llm.LlmProvider
 import com.example.aapremote.assistant.llm.LlmTimeoutException
@@ -73,6 +74,7 @@ class ChatEngine(
                 val result = lastResult ?: break
 
                 if (result.toolCalls.isNotEmpty() && iterations < maxIterations) {
+                    Log.d("ChatEngine", "Iteration $iterations: ${result.toolCalls.size} tool calls")
                     val assistantContent = result.text ?: ""
                     messages.add(ChatMessage(
                         role = Role.ASSISTANT,
@@ -81,10 +83,12 @@ class ChatEngine(
                     ))
 
                     for (toolCall in result.toolCalls) {
+                        Log.d("ChatEngine", "Calling tool: ${toolCall.name} args=${toolCall.arguments}")
                         emit(ChatEvent.ToolExecuting(toolCall.name, toolCall.arguments))
 
                         val toolResult = toolExecutor.execute(toolCall)
                         totalToolCalls++
+                        Log.d("ChatEngine", "Tool result: success=${toolResult.success} size=${toolResult.data?.length ?: 0}")
 
                         emit(ChatEvent.ToolResult(toolCall.name, toolResult))
 
