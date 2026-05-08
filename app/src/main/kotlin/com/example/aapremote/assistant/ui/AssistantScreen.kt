@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,6 +24,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
@@ -146,7 +146,7 @@ private fun ActiveChatContent(
         }
     }
 
-    Column(modifier = modifier.imePadding()) {
+    Column(modifier = modifier) {
         if (state.connections.isNotEmpty()) {
             val connected = state.connections.count { it.value is McpConnectionState.Connected }
             val total = state.connections.size
@@ -226,8 +226,9 @@ private fun ActiveChatContent(
                 modifier = Modifier
                     .weight(1f)
                     .onPreviewKeyEvent {
-                        if (it.type == KeyEventType.KeyUp && it.key == Key.Enter) {
-                            if (state.inputText.isNotBlank() && !state.isGenerating) {
+                        if (it.key == Key.Enter && !it.isShiftPressed) {
+                            if (it.type == KeyEventType.KeyUp &&
+                                state.inputText.isNotBlank() && !state.isGenerating) {
                                 onSendMessage(state.inputText)
                             }
                             true
