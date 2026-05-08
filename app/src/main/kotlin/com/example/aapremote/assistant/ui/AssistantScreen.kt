@@ -99,9 +99,15 @@ fun AssistantScreen(
     }
 
     if (showSettings) {
+        val activeInstance = viewModel.activeInstance
         val connections = (uiState as? AssistantUiState.Active)?.connections ?: emptyMap()
         AssistantSettingsSheet(
+            mcpEnabled = activeInstance?.mcpEnabled ?: false,
+            mcpServers = activeInstance?.mcpServerUrls ?: emptyList(),
             connections = connections,
+            onToggleMcp = { viewModel.toggleMcpEnabled(it) },
+            onAddMcpServer = { url, label -> viewModel.addMcpServer(url, label) },
+            onRemoveMcpServer = { viewModel.removeMcpServer(it) },
             onSaveLlmConfig = { viewModel.updateLlmConfig(it) },
             onClearHistory = { viewModel.clearHistory() },
             onDismiss = { showSettings = false }

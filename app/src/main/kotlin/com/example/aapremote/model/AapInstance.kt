@@ -7,7 +7,9 @@ import java.net.URI
 data class McpServerConfig(
     val url: String,
     val label: String,
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val isAutoDetected: Boolean = false,
+    val useInstanceAuth: Boolean = true
 )
 
 data class AapInstance(
@@ -18,7 +20,8 @@ data class AapInstance(
     val apiVersion: String = "v2",
     val trustSelfSigned: Boolean = false,
     val certFingerprint: String? = null,
-    val mcpServerUrls: List<McpServerConfig>? = null
+    val mcpServerUrls: List<McpServerConfig>? = null,
+    val mcpEnabled: Boolean = false
 ) {
     val displayLabel: String
         get() = alias ?: URI(baseUrl).host.orEmpty()

@@ -11,7 +11,7 @@ import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.engine.ToolExecutor
 import com.example.aapremote.assistant.llm.OpenAiCompatibleProvider
 import com.example.aapremote.data.TokenManager
-import com.example.aapremote.model.AppError
+import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.mcp.McpConnectionState
 import com.example.aapremote.network.mcp.McpServerManager
 import com.example.aapremote.network.networkJson
@@ -36,6 +36,8 @@ class AssistantViewModel(
     private val _uiState = MutableStateFlow<AssistantUiState>(AssistantUiState.Idle)
     val uiState: StateFlow<AssistantUiState> = _uiState.asStateFlow()
 
+    val activeInstance get() = tokenManager.activeInstance.value
+
     private var generateJob: Job? = null
     private var llmConfig: LlmProviderConfig? = null
 
@@ -46,7 +48,7 @@ class AssistantViewModel(
 
         viewModelScope.launch {
             tokenManager.activeInstance
-                .distinctUntilChangedBy { it?.id }
+                .distinctUntilChangedBy { Triple(it?.id, it?.mcpEnabled, it?.mcpServerUrls) }
                 .collect { instance ->
                     if (instance != null) {
                         _uiState.update { AssistantUiState.Loading }
@@ -196,6 +198,48 @@ class AssistantViewModel(
         llmConfig = config
         viewModelScope.launch {
             repository.saveLlmConfig(config)
+        }
+    }
+
+    fun toggleMcpEnabled(enabled: Boolean) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val servers = if (enabled && instance.mcpServerUrls.isNullOrEmpty()) {
+                val autoUrl = "${instance.baseUrl.trimEnd('/')}/mcp"
+                listOf(McpServerConfig(url = autoUrl, label = "AAP", isAutoDetected = true))
+            } else {
+                instance.mcpServerUrls
+            }
+            tokenManager.updateMcpConfig(instance.id, enabled, if (enabled) servers else null)
+        }
+    }
+
+    fun addMcpServer(url: String, label: String) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
+            current.add(McpServerConfig(url = url.trimEnd('/'), label = label))
+            tokenManager.updateMcpConfig(instance.id, true, current)
+        }
+    }
+
+    fun removeMcpServer(url: String) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val updated = instance.mcpServerUrls?.filter { it.url != url }
+            val enabled = !updated.isNullOrEmpty()
+            tokenManager.updateMcpConfig(instance.id, enabled, updated)
+        }
+    }
+
+    fun updateMcpServer(oldUrl: String, newUrl: String, label: String) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val updated = instance.mcpServerUrls?.map {
+                if (it.url == oldUrl) it.copy(url = newUrl.trimEnd('/'), label = label, isAutoDetected = false)
+                else it
+            }
+            tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
         }
     }
 

@@ -39,7 +39,8 @@ data class SerializedInstance(
     val apiVersion: String = "CONTROLLER_V2",
     val trustSelfSigned: Boolean = false,
     val certFingerprint: String? = null,
-    val mcpServerUrls: List<McpServerConfig>? = null
+    val mcpServerUrls: List<McpServerConfig>? = null,
+    val mcpEnabled: Boolean = false
 )
 
 @Serializable
@@ -107,7 +108,8 @@ class TokenManager(private val context: Context) {
             apiVersion = serialized.apiVersion,
             trustSelfSigned = serialized.trustSelfSigned,
             certFingerprint = serialized.certFingerprint,
-            mcpServerUrls = serialized.mcpServerUrls
+            mcpServerUrls = serialized.mcpServerUrls,
+            mcpEnabled = serialized.mcpEnabled
         )
     }
 
@@ -120,7 +122,8 @@ class TokenManager(private val context: Context) {
             apiVersion = instance.apiVersion,
             trustSelfSigned = instance.trustSelfSigned,
             certFingerprint = instance.certFingerprint,
-            mcpServerUrls = instance.mcpServerUrls
+            mcpServerUrls = instance.mcpServerUrls,
+            mcpEnabled = instance.mcpEnabled
         )
     }
 
@@ -322,6 +325,20 @@ class TokenManager(private val context: Context) {
             certFingerprint = certFingerprint,
             existingId = existingId
         )
+    }
+
+    suspend fun updateMcpConfig(
+        instanceId: String,
+        enabled: Boolean,
+        servers: List<McpServerConfig>?
+    ) {
+        val state = readState()
+        val updatedInstances = state.instances.map { serialized ->
+            if (serialized.id == instanceId) {
+                serialized.copy(mcpEnabled = enabled, mcpServerUrls = servers)
+            } else serialized
+        }
+        writeState(state.copy(instances = updatedInstances))
     }
 
     /**
