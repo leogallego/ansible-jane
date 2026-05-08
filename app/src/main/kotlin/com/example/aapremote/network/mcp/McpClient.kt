@@ -162,7 +162,6 @@ class McpClient(
                 isError = true
             )
         } catch (e: IOException) {
-            session.updateState(McpConnectionState.Error("Connection lost: ${e.message}"))
             return McpToolResult(
                 content = listOf(McpContent("text", "Connection error: ${e.message}")),
                 isError = true
@@ -172,8 +171,9 @@ class McpClient(
 
     private fun isSessionExpired(result: McpToolResult): Boolean {
         val text = result.content.firstOrNull()?.text ?: return false
-        return text.contains("session", ignoreCase = true) ||
-            text.contains("not found", ignoreCase = true)
+        return text.contains("session not found", ignoreCase = true) ||
+            text.contains("session expired", ignoreCase = true) ||
+            text.contains("invalid session", ignoreCase = true)
     }
 
     companion object {

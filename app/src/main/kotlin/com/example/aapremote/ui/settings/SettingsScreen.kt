@@ -45,6 +45,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -345,9 +347,9 @@ private fun InstanceDetailsBottomSheet(
 }
 
 @Composable
-private fun StatusPill(label: String, color: androidx.compose.ui.graphics.Color) {
-    androidx.compose.material3.Surface(
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+private fun StatusPill(label: String, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
         color = color.copy(alpha = 0.15f)
     ) {
         Text(
