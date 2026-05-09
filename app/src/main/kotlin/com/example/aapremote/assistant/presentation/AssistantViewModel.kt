@@ -157,8 +157,8 @@ class AssistantViewModel(
 
         val maxToolsForMode = when (mode) {
             TokenSavingMode.STANDARD -> Int.MAX_VALUE
-            TokenSavingMode.TOKEN_SAVER -> 5
-            TokenSavingMode.MINIMAL -> 3
+            TokenSavingMode.TOKEN_SAVER -> 8
+            TokenSavingMode.MINIMAL -> 5
         }
         val budgetedTools = if (noToolMatch) emptyList() else tools.take(maxToolsForMode)
         val toolSpecs = budgetedTools.map { it.spec }

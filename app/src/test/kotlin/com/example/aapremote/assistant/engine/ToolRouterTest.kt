@@ -600,6 +600,49 @@ class ToolRouterTest {
     }
 
     @Test
+    fun `SHOULD rank list tools above write tools for budget cuts`() {
+        val tools = listOf(
+            localTool("launch_job", destructive = true),
+            localTool("get_job_stdout"),
+            localTool("list_job_templates"),
+            localTool("get_job"),
+            localTool("list_jobs"),
+            localTool("list_workflow_templates"),
+            localTool("launch_workflow", destructive = true),
+            localTool("get_workflow_job"),
+            localTool("list_schedules"),
+            localTool("toggle_schedule", destructive = true)
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("what job templates are available")
+
+        assertTrue(result.size >= 5)
+        val top5 = result.take(5).map { it.spec.name }
+        assertTrue("list_job_templates" in top5)
+        assertTrue("list_jobs" in top5)
+        assertTrue("list_workflow_templates" in top5)
+        assertFalse("launch_job" in top5)
+        assertFalse("toggle_schedule" in top5)
+    }
+
+    @Test
+    fun `SHOULD boost query-matching tools in ranking`() {
+        val tools = listOf(
+            localTool("list_schedules"),
+            localTool("toggle_schedule", destructive = true),
+            localTool("list_job_templates"),
+            localTool("launch_job", destructive = true),
+            localTool("get_job"),
+            localTool("list_jobs")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show my schedules")
+        val names = result.map { it.spec.name }
+
+        assertEquals("list_schedules", names[0])
+    }
+
+    @Test
     fun `SHOULD select monitoring tools WHEN query mentions mesh topology`() {
         val tools = listOf(
             localTool("get_mesh_topology"),

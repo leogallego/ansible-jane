@@ -165,7 +165,21 @@ class ToolRouter {
             matchesCategory && isEnabled && passesReadOnly
         }
 
-        return filteredLocal + filteredMcp
+        return rankTools(filteredLocal, queryWords) + filteredMcp
+    }
+
+    private fun rankTools(tools: List<Tool>, queryWords: Set<String>): List<Tool> {
+        return tools.sortedByDescending { tool ->
+            val name = tool.spec.name
+            var score = 0
+            if (name.startsWith("list_")) score += 10
+            if (name.startsWith("ping")) score += 10
+            if (name.startsWith("get_")) score += 5
+            if (tool is LocalTool && tool.destructive) score -= 5
+            val nameWords = name.split("_").toSet()
+            score += (nameWords intersect queryWords).size * 3
+            score
+        }
     }
 
     fun getAllRegisteredTools(): List<Pair<Tool, ToolSource>> {
