@@ -6,6 +6,12 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 >
 > This is a vibe-coded, spec-driven, AI-assisted developed application. It comes with **no warranties of any kind** — use at your own risk. This project exists purely for research and investigation purposes.
 
+## Install
+
+- **F-Droid** — add this repo to your F-Droid client: `https://leogallego.github.io/aapdroid/fdroid/repo`
+- **GitHub Releases** — download the latest APK from [Releases](https://github.com/leogallego/aapdroid/releases/latest)
+- **Obtainium** — point [Obtainium](https://github.com/ImranR98/Obtainium) at this repo for automatic updates
+
 ## Features
 
 - **Multi-instance support** — connect to multiple AAP instances simultaneously and switch between them

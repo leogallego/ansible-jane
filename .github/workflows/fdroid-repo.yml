@@ -1,0 +1,74 @@
+name: Update F-Droid repo
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  update-repo:
+    name: Build and deploy F-Droid repo
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install fdroidserver
+        run: |
+          sudo add-apt-repository -y ppa:fdroid/fdroidserver
+          sudo apt-get update
+          sudo apt-get install -y fdroidserver
+
+      - name: Set up repo structure
+        run: |
+          mkdir -p fdroid/repo
+          cp fdroid-metadata/config.yml fdroid/
+
+      - name: Set up repo keystore
+        run: echo "$FDROID_KEYSTORE_B64" | base64 -d > fdroid/keystore.p12
+        env:
+          FDROID_KEYSTORE_B64: ${{ secrets.FDROID_KEYSTORE }}
+
+      - name: Download all release APKs
+        run: |
+          for tag in $(gh release list --json tagName -q '.[].tagName'); do
+            gh release download "$tag" --pattern '*.apk' --dir fdroid/repo --skip-existing 2>/dev/null || true
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Generate repo index
+        working-directory: fdroid
+        run: |
+          fdroid update --create-metadata --nosign
+          fdroid update
+        env:
+          FDROID_KEY_STORE_FILE: keystore.p12
+          FDROID_KEY_ALIAS: ${{ secrets.FDROID_KEY_ALIAS }}
+          FDROID_KEY_STORE_PASS: ${{ secrets.FDROID_KEYSTORE_PASS }}
+          FDROID_KEY_PASS: ${{ secrets.FDROID_KEY_PASS }}
+
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site/fdroid
+          cp -r fdroid/repo _site/fdroid/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
