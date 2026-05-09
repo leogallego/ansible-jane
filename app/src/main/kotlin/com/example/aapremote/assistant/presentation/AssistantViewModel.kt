@@ -194,7 +194,9 @@ class AssistantViewModel(
                             replaceOrAddAssistant(textBuilder.toString())
                         }
                         is ChatEvent.ToolExecuting -> {
-                            replaceOrAddAssistant("Querying: ${event.toolName}...")
+                            val localNames = matchedLocal.map { it.spec.name }.toSet()
+                            val source = if (event.toolName in localNames) "local" else "mcp"
+                            replaceOrAddAssistant("Querying [$source]: ${event.toolName}...")
                         }
                         is ChatEvent.ToolResult -> {
                             replaceOrAddAssistant("Processing results...")
