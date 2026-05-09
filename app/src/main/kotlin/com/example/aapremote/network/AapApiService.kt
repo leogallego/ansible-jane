@@ -121,4 +121,54 @@ interface AapApiService {
         @Query("page_size") pageSize: Int = 20,
         @Query("order_by") orderBy: String = "-created"
     ): PaginatedResponse<JobHostSummary>
+
+    @GET("instances/")
+    suspend fun getInstances(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("order_by") orderBy: String = "hostname"
+    ): PaginatedResponse<Instance>
+
+    @GET("instances/{id}/")
+    suspend fun getInstance(@Path("id") id: Int): Instance
+
+    @GET("instance_groups/")
+    suspend fun getInstanceGroups(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25
+    ): PaginatedResponse<InstanceGroup>
+
+    @GET("ping/")
+    suspend fun ping(): PingResponse
+
+    @GET("mesh_visualizer/")
+    suspend fun getMeshTopology(): kotlinx.serialization.json.JsonElement
+
+    @GET("credentials/")
+    suspend fun getCredentials(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<Credential>
+
+    @GET("credentials/{id}/")
+    suspend fun getCredential(@Path("id") id: Int): Credential
+
+    @GET("projects/")
+    suspend fun getProjects(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "-modified"
+    ): PaginatedResponse<Project>
+
+    @GET("projects/{id}/")
+    suspend fun getProject(@Path("id") id: Int): Project
+
+    @GET("execution_environments/")
+    suspend fun getExecutionEnvironments(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25
+    ): PaginatedResponse<ExecutionEnvironment>
 }
