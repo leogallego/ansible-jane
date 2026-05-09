@@ -34,13 +34,25 @@ jobs:
 
       - name: Set up repo structure
         run: |
-          mkdir -p fdroid/repo
+          mkdir -p fdroid/repo fdroid/metadata
           cp fdroid-metadata/config.yml fdroid/
 
       - name: Set up repo keystore
         run: echo "$FDROID_KEYSTORE_B64" | base64 -d > fdroid/keystore.p12
         env:
           FDROID_KEYSTORE_B64: ${{ secrets.FDROID_KEYSTORE }}
+
+      - name: Inject signing config
+        run: |
+          printf 'keystorepass: "%s"\n' "$FDROID_KEYSTORE_PASS" >> fdroid/config.yml
+          printf 'keypass: "%s"\n' "$FDROID_KEY_PASS" >> fdroid/config.yml
+          printf 'repo_keyalias: "%s"\n' "$FDROID_KEY_ALIAS" >> fdroid/config.yml
+          printf 'keystore: keystore.p12\n' >> fdroid/config.yml
+          printf 'keydname: CN=AAPdroid F-Droid Repo, O=leogallego\n' >> fdroid/config.yml
+        env:
+          FDROID_KEY_ALIAS: ${{ secrets.FDROID_KEY_ALIAS }}
+          FDROID_KEY_PASS: ${{ secrets.FDROID_KEY_PASS }}
+          FDROID_KEYSTORE_PASS: ${{ secrets.FDROID_KEYSTORE_PASS }}
 
       - name: Download all release APKs
         run: |
@@ -52,14 +64,7 @@ jobs:
 
       - name: Generate repo index
         working-directory: fdroid
-        run: |
-          fdroid update --create-metadata --nosign
-          fdroid update
-        env:
-          FDROID_KEY_STORE_FILE: keystore.p12
-          FDROID_KEY_ALIAS: ${{ secrets.FDROID_KEY_ALIAS }}
-          FDROID_KEY_STORE_PASS: ${{ secrets.FDROID_KEYSTORE_PASS }}
-          FDROID_KEY_PASS: ${{ secrets.FDROID_KEY_PASS }}
+        run: fdroid update --create-metadata
 
       - name: Prepare Pages artifact
         run: |
