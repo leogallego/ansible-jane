@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.aapremote"
         minSdk = 31
         targetSdk = 36
-        versionCode = 2605011
-        versionName = "1.1.0"
+        versionCode = 2605012
+        versionName = "1.1.1"
     }
 
     signingConfigs {
