@@ -1,6 +1,0 @@
-repo_url: https://leogallego.github.io/aapdroid/fdroid/repo
-repo_name: AAPdroid F-Droid Repo
-repo_description: >-
-  Self-hosted F-Droid repository for AAPdroid,
-  a remote control app for Ansible Automation Platform.
-archive_older: 3
