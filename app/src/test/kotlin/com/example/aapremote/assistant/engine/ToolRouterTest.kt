@@ -1,9 +1,11 @@
 package com.example.aapremote.assistant.engine
 
 import com.example.aapremote.assistant.tools.LocalTool
+import com.example.aapremote.assistant.tools.Tool
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSource
 import com.example.aapremote.assistant.tools.ToolSpec
+import com.example.aapremote.model.McpServerConfig
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -14,6 +16,11 @@ import org.junit.Test
 class ToolRouterTest {
 
     private lateinit var router: ToolRouter
+
+    private fun mcpTool(name: String, serverLabel: String = "aap") = object : Tool {
+        override val spec = ToolSpec(name, "[$serverLabel] description of $name", JsonObject(emptyMap()))
+        override suspend fun execute(args: Map<String, Any>) = ToolResult(success = true)
+    }
 
     private fun localTool(name: String, destructive: Boolean = false) = object : LocalTool(
         spec = ToolSpec(name, "Local: $name", JsonObject(emptyMap())),
@@ -234,5 +241,250 @@ class ToolRouterTest {
         assertTrue("list_schedules" in names)
         assertTrue("toggle_schedule" in names)
         assertFalse("list_hosts" in names)
+    }
+
+    // --- MCP tool tests ---
+
+    private val readOnlyConfig = McpServerConfig(url = "https://aap:8448/mcp", label = "aap", readOnly = true)
+    private val readWriteConfig = McpServerConfig(url = "https://aap:8448/mcp", label = "aap", readOnly = false)
+
+    @Test
+    fun `SHOULD exclude write MCP tools WHEN readOnly is true`() {
+        val tools = listOf(
+            mcpTool("controller.hosts_list"),
+            mcpTool("controller.hosts_create"),
+            mcpTool("controller.hosts_update"),
+            mcpTool("controller.hosts_delete"),
+            mcpTool("controller.inventories_list")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("list my hosts", listOf(readOnlyConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.hosts_list" in names)
+        assertTrue("controller.inventories_list" in names)
+        assertFalse("controller.hosts_create" in names)
+        assertFalse("controller.hosts_update" in names)
+        assertFalse("controller.hosts_delete" in names)
+    }
+
+    @Test
+    fun `SHOULD keep all MCP tools WHEN readOnly is false`() {
+        val tools = listOf(
+            mcpTool("controller.hosts_list"),
+            mcpTool("controller.hosts_create"),
+            mcpTool("controller.hosts_delete")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("list hosts", listOf(readWriteConfig))
+        assertEquals(tools.size, result.size)
+    }
+
+    @Test
+    fun `SHOULD exclude launch and cancel MCP actions WHEN readOnly is true`() {
+        val tools = listOf(
+            mcpTool("controller.jobs_read"),
+            mcpTool("controller.job_templates_launch"),
+            mcpTool("controller.jobs_relaunch"),
+            mcpTool("controller.jobs_cancel")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("show me jobs", listOf(readOnlyConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.jobs_read" in names)
+        assertFalse("controller.job_templates_launch" in names)
+        assertFalse("controller.jobs_relaunch" in names)
+        assertFalse("controller.jobs_cancel" in names)
+    }
+
+    @Test
+    fun `SHOULD only filter matching server label WHEN multiple MCP servers configured`() {
+        val tools = listOf(
+            mcpTool("controller.hosts_create", "aap"),
+            mcpTool("controller.hosts_list", "aap"),
+            mcpTool("controller.hosts_create", "knowledge")
+        )
+        val configs = listOf(
+            McpServerConfig(url = "https://aap:8448/mcp", label = "aap", readOnly = true),
+            McpServerConfig(url = "https://kb:3000/mcp", label = "knowledge", readOnly = false)
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("list hosts", configs)
+        val names = result.map { it.spec.name to it.spec.description }
+
+        assertTrue(names.any { it.first == "controller.hosts_list" && it.second.contains("[aap]") })
+        assertFalse(names.any { it.first == "controller.hosts_create" && it.second.contains("[aap]") })
+        assertTrue(names.any { it.first == "controller.hosts_create" && it.second.contains("[knowledge]") })
+    }
+
+    @Test
+    fun `SHOULD select MCP inventory tools WHEN query mentions hosts`() {
+        val tools = listOf(
+            mcpTool("controller.hosts_list"),
+            mcpTool("controller.groups_list"),
+            mcpTool("controller.jobs_read"),
+            mcpTool("controller.users_list")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.hosts_list" in names)
+        assertTrue("controller.groups_list" in names)
+        assertFalse("controller.jobs_read" in names)
+        assertFalse("controller.users_list" in names)
+    }
+
+    @Test
+    fun `SHOULD select MCP job tools WHEN query mentions launch and template`() {
+        val tools = listOf(
+            mcpTool("controller.hosts_list"),
+            mcpTool("controller.job_templates_list"),
+            mcpTool("controller.job_templates_launch"),
+            mcpTool("controller.jobs_read")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("launch a job template", listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.job_templates_list" in names)
+        assertTrue("controller.job_templates_launch" in names)
+        assertTrue("controller.jobs_read" in names)
+        assertFalse("controller.hosts_list" in names)
+    }
+
+    @Test
+    fun `SHOULD select MCP monitoring tools WHEN query mentions health`() {
+        val tools = listOf(
+            mcpTool("controller.hosts_list"),
+            mcpTool("controller.instances_list"),
+            mcpTool("controller.ping_read"),
+            mcpTool("controller.dashboard_read")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("check system health", listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.instances_list" in names)
+        assertTrue("controller.ping_read" in names)
+        assertTrue("controller.dashboard_read" in names)
+        assertFalse("controller.hosts_list" in names)
+    }
+
+    @Test
+    fun `SHOULD select MCP user tools WHEN query mentions users or teams`() {
+        val tools = listOf(
+            mcpTool("controller.users_list"),
+            mcpTool("controller.teams_list"),
+            mcpTool("controller.organizations_list"),
+            mcpTool("controller.hosts_list")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("list users in my team", listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.users_list" in names)
+        assertTrue("controller.teams_list" in names)
+        assertTrue("controller.organizations_list" in names)
+        assertFalse("controller.hosts_list" in names)
+    }
+
+    @Test
+    fun `SHOULD select MCP security tools WHEN query mentions credentials`() {
+        val tools = listOf(
+            mcpTool("controller.credentials_list"),
+            mcpTool("controller.credential_types_list"),
+            mcpTool("controller.hosts_list")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("show my credentials", listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.credentials_list" in names)
+        assertTrue("controller.credential_types_list" in names)
+        assertFalse("controller.hosts_list" in names)
+    }
+
+    @Test
+    fun `SHOULD select MCP config tools WHEN query mentions settings or projects`() {
+        val tools = listOf(
+            mcpTool("controller.settings_read"),
+            mcpTool("controller.projects_list"),
+            mcpTool("controller.notification_templates_list"),
+            mcpTool("controller.hosts_list")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("show project settings", listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.settings_read" in names)
+        assertTrue("controller.projects_list" in names)
+        assertTrue("controller.notification_templates_list" in names)
+        assertFalse("controller.hosts_list" in names)
+    }
+
+    @Test
+    fun `SHOULD parse compound MCP resource names correctly`() {
+        val tools = listOf(
+            mcpTool("controller.workflow_job_templates_list"),
+            mcpTool("controller.constructed_inventories_list"),
+            mcpTool("controller.hosts_list")
+        )
+        router.registerMcpTools(tools)
+        val result = router.getToolsForQuery("show my workflow templates", listOf(readWriteConfig))
+        val names = result.map { it.spec.name }
+
+        assertTrue("controller.workflow_job_templates_list" in names)
+        assertFalse("controller.hosts_list" in names)
+    }
+
+    @Test
+    fun `SHOULD return no MCP tools WHEN query matches no category`() {
+        val tools = listOf(
+            mcpTool("controller.hosts_list"),
+            mcpTool("controller.jobs_read"),
+            mcpTool("controller.users_list")
+        )
+        router.registerMcpTools(tools)
+
+        assertTrue(router.getToolsForQuery("hi", listOf(readWriteConfig)).isEmpty())
+        assertTrue(router.getToolsForQuery("hello there", listOf(readWriteConfig)).isEmpty())
+        assertTrue(router.getToolsForQuery("thanks", listOf(readWriteConfig)).isEmpty())
+    }
+
+    // --- Mixed local + MCP tests ---
+
+    @Test
+    fun `SHOULD prefer local tools and disable overlapping MCP tools by default`() {
+        val local = listOf(localTool("list_job_templates"))
+        val mcp = listOf(
+            mcpTool("controller.job_templates_list"),
+            mcpTool("controller.users_list")
+        )
+        router.registerLocalTools(local)
+        router.registerMcpTools(mcp)
+
+        val result = router.getToolsForQuery("show my job templates and users")
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_job_templates" in names)
+        assertFalse("controller.job_templates_list" in names)
+        assertTrue("controller.users_list" in names)
+    }
+
+    @Test
+    fun `SHOULD return both local and MCP tools WHEN no overlap`() {
+        val local = listOf(localTool("list_hosts"))
+        val mcp = listOf(mcpTool("controller.users_list"))
+
+        router.registerLocalTools(local)
+        router.registerMcpTools(mcp)
+
+        val result = router.getToolsForQuery("show hosts and users")
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_hosts" in names)
+        assertTrue("controller.users_list" in names)
     }
 }

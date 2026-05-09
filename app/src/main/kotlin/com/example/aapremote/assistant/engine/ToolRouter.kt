@@ -1,7 +1,6 @@
 package com.example.aapremote.assistant.engine
 
 import com.example.aapremote.assistant.tools.LocalTool
-import com.example.aapremote.assistant.tools.McpTool
 import com.example.aapremote.assistant.tools.Tool
 import com.example.aapremote.assistant.tools.ToolSource
 import com.example.aapremote.model.McpServerConfig
@@ -14,7 +13,7 @@ class ToolRouter {
     )
 
     private val localTools = mutableListOf<LocalTool>()
-    private val mcpTools = mutableListOf<McpTool>()
+    private val mcpTools = mutableListOf<Tool>()
     private val disabledTools = mutableSetOf<Pair<String, ToolSource>>()
 
     private enum class Category(
@@ -91,7 +90,7 @@ class ToolRouter {
         autoDisableOverlappingMcpTools()
     }
 
-    fun registerMcpTools(tools: List<McpTool>) {
+    fun registerMcpTools(tools: List<Tool>) {
         mcpTools.clear()
         mcpTools.addAll(tools)
         autoDisableOverlappingMcpTools()
