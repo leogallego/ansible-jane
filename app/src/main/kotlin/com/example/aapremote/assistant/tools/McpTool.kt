@@ -8,6 +8,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import java.io.IOException
 import java.net.SocketTimeoutException
 
@@ -16,6 +18,10 @@ class McpTool(
     private val mcpToolDef: McpToolDefinition,
     private val serverLabel: String
 ) : Tool {
+
+    companion object {
+        const val MAX_PAGE_SIZE = 10
+    }
 
     override val spec: ToolSpec = ToolSpec(
         name = mcpToolDef.name,
@@ -26,7 +32,8 @@ class McpTool(
     override suspend fun execute(args: Map<String, Any>): ToolResult {
         return try {
             val jsonArgs = argsToJsonObject(args)
-            val mcpResult = client.callTool(mcpToolDef.name, jsonArgs)
+            val cappedArgs = capPageSize(jsonArgs)
+            val mcpResult = client.callTool(mcpToolDef.name, cappedArgs)
 
             val text = mcpResult.content
                 .mapNotNull { it.text }
@@ -61,6 +68,15 @@ class McpTool(
     private fun argsToJsonObject(args: Map<String, Any>): JsonObject = buildJsonObject {
         args.forEach { (key, value) ->
             put(key, toJsonElement(value))
+        }
+    }
+
+    private fun capPageSize(args: JsonObject, max: Int = MAX_PAGE_SIZE): JsonObject {
+        val current = args["page_size"]?.jsonPrimitive?.intOrNull
+        if (current != null && current <= max) return args
+        return buildJsonObject {
+            args.forEach { (k, v) -> put(k, v) }
+            put("page_size", JsonPrimitive(current?.coerceAtMost(max) ?: max))
         }
     }
 

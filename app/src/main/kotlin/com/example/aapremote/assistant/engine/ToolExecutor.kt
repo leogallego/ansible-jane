@@ -6,6 +6,14 @@ import com.example.aapremote.assistant.tools.Tool
 import com.example.aapremote.assistant.tools.ToolResult
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 
 class ToolExecutor(
     private val tools: List<Tool>,
@@ -32,10 +40,14 @@ class ToolExecutor(
             )
         }
 
-        return if (result.data != null && result.data.length > maxResultChars) {
-            result.copy(data = smartTruncate(result.data, maxResultChars))
+        val capped = if (result.data != null) {
+            result.copy(data = capResultArray(result.data))
+        } else result
+
+        return if (capped.data != null && capped.data.length > maxResultChars) {
+            capped.copy(data = smartTruncate(capped.data, maxResultChars))
         } else {
-            result
+            capped
         }
     }
 
@@ -62,6 +74,31 @@ class ToolExecutor(
     }
 
     companion object {
+        private const val MAX_ARRAY_ITEMS = 10
+        private val json = Json { ignoreUnknownKeys = true }
+
+        fun capResultArray(data: String): String {
+            val parsed = try { json.parseToJsonElement(data) } catch (_: Exception) { return data }
+            if (parsed !is JsonObject) return data
+            val results = parsed["results"]
+            if (results !is JsonArray || results.size <= MAX_ARRAY_ITEMS) return data
+            val total = parsed["count"]?.jsonPrimitive?.intOrNull ?: results.size
+            val capped = buildJsonObject {
+                parsed.forEach { (k, v) ->
+                    when (k) {
+                        "results" -> put("results", buildJsonArray {
+                            results.take(MAX_ARRAY_ITEMS).forEach { add(it) }
+                        })
+                        else -> put(k, v)
+                    }
+                }
+                put("_showing", MAX_ARRAY_ITEMS)
+                put("_total", total)
+                put("_note", "Showing first $MAX_ARRAY_ITEMS of $total. Ask user if they want more.")
+            }
+            return json.encodeToString(JsonObject.serializer(), capped)
+        }
+
         fun smartTruncate(data: String, maxChars: Int): String {
             if (data.length <= maxChars) return data
             val firstPortion = (maxChars * 0.6).toInt()
