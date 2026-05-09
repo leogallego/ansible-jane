@@ -1,70 +1,115 @@
 package com.example.aapremote.assistant.engine
 
+import com.example.aapremote.assistant.tools.LocalTool
+import com.example.aapremote.assistant.tools.McpTool
 import com.example.aapremote.assistant.tools.Tool
+import com.example.aapremote.assistant.tools.ToolSource
 import com.example.aapremote.model.McpServerConfig
 
-object ToolRouter {
+class ToolRouter {
 
     private val WRITE_ACTIONS = setOf(
         "_create", "_update", "_delete",
         "_launch", "_relaunch", "_cancel"
     )
 
+    private val localTools = mutableListOf<LocalTool>()
+    private val mcpTools = mutableListOf<McpTool>()
+    private val disabledTools = mutableSetOf<Pair<String, ToolSource>>()
+
     private enum class Category(
         val keywords: Set<String>,
-        val resourcePrefixes: Set<String>
+        val resourcePrefixes: Set<String>,
+        val localToolNames: Set<String>
     ) {
         INVENTORY(
             keywords = setOf("host", "hosts", "group", "groups", "inventory", "inventories", "infrastructure"),
-            resourcePrefixes = setOf("hosts", "groups", "inventories", "constructed_inventories", "inventory_sources")
+            resourcePrefixes = setOf("hosts", "groups", "inventories", "constructed_inventories", "inventory_sources"),
+            localToolNames = setOf("list_inventories", "list_hosts", "get_host_facts")
         ),
         JOBS(
             keywords = setOf("job", "jobs", "template", "templates", "launch", "run", "schedule", "schedules", "workflow", "playbook"),
-            resourcePrefixes = setOf("jobs", "job_templates", "workflow_jobs", "workflow_job_templates", "workflow_job_nodes", "schedules", "ad_hoc_commands")
+            resourcePrefixes = setOf("jobs", "job_templates", "workflow_jobs", "workflow_job_templates", "workflow_job_nodes", "schedules", "ad_hoc_commands"),
+            localToolNames = setOf(
+                "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
+                "list_workflow_templates", "launch_workflow", "get_workflow_job",
+                "list_schedules", "toggle_schedule"
+            )
         ),
         MONITORING(
             keywords = setOf("health", "status", "monitor", "metrics", "log", "logs", "dashboard", "analytics", "instance", "instances"),
-            resourcePrefixes = setOf("dashboard", "ping", "config", "instances", "instance_groups", "metrics")
+            resourcePrefixes = setOf("dashboard", "ping", "config", "instances", "instance_groups", "metrics"),
+            localToolNames = emptySet()
         ),
         USERS(
             keywords = setOf("user", "users", "team", "teams", "organization", "organizations", "org", "role", "roles", "permission", "permissions", "member"),
-            resourcePrefixes = setOf("users", "teams", "organizations", "roles", "tokens", "applications")
+            resourcePrefixes = setOf("users", "teams", "organizations", "roles", "tokens", "applications"),
+            localToolNames = emptySet()
         ),
         SECURITY(
             keywords = setOf("credential", "credentials", "secret", "secrets", "audit", "security", "compliance", "policy", "certificate"),
-            resourcePrefixes = setOf("credentials", "credential_types", "credential_input_sources")
+            resourcePrefixes = setOf("credentials", "credential_types", "credential_input_sources"),
+            localToolNames = emptySet()
         ),
         CONFIGURATION(
             keywords = setOf("setting", "settings", "configure", "configuration", "notification", "notifications", "label", "labels", "project", "projects"),
-            resourcePrefixes = setOf("settings", "notification_templates", "notifications", "labels", "execution_environments", "projects")
+            resourcePrefixes = setOf("settings", "notification_templates", "notifications", "labels", "execution_environments", "projects"),
+            localToolNames = emptySet()
+        ),
+        EDA(
+            keywords = setOf("eda", "rulebook", "activation", "event", "audit"),
+            resourcePrefixes = setOf("audit_rules", "activations", "decision_environments", "rulebooks", "event_streams"),
+            localToolNames = setOf("list_eda_audit_rules")
         )
     }
 
-    fun filterTools(
+    companion object {
+        val OVERLAP_MAPPING = mapOf(
+            "list_job_templates" to setOf("controller.job_templates_list"),
+            "launch_job" to setOf("controller.job_templates_launch_create"),
+            "get_job" to setOf("controller.jobs_read"),
+            "get_job_stdout" to setOf("controller.jobs_stdout_read"),
+            "list_jobs" to setOf("controller.jobs_list"),
+            "list_workflow_templates" to setOf("controller.workflow_job_templates_list"),
+            "launch_workflow" to setOf("controller.workflow_job_templates_launch_create"),
+            "get_workflow_job" to setOf("controller.workflow_jobs_read"),
+            "list_inventories" to setOf("controller.inventories_list"),
+            "list_hosts" to setOf("controller.hosts_list"),
+            "get_host_facts" to setOf("controller.hosts_ansible_facts_read"),
+            "list_schedules" to setOf("controller.schedules_list"),
+            "toggle_schedule" to setOf("controller.schedules_partial_update", "controller.schedules_update"),
+            "list_eda_audit_rules" to setOf("eda.audit_rules_list"),
+        )
+
+        private val MCP_TOOLS_WITH_LOCAL_OVERLAP: Set<String> =
+            OVERLAP_MAPPING.values.flatten().toSet()
+    }
+
+    fun registerLocalTools(tools: List<LocalTool>) {
+        localTools.clear()
+        localTools.addAll(tools)
+        autoDisableOverlappingMcpTools()
+    }
+
+    fun registerMcpTools(tools: List<McpTool>) {
+        mcpTools.clear()
+        mcpTools.addAll(tools)
+        autoDisableOverlappingMcpTools()
+    }
+
+    fun setToolEnabled(toolName: String, source: ToolSource, enabled: Boolean) {
+        val key = toolName to source
+        if (enabled) disabledTools.remove(key) else disabledTools.add(key)
+    }
+
+    fun isToolEnabled(toolName: String, source: ToolSource): Boolean {
+        return (toolName to source) !in disabledTools
+    }
+
+    fun getToolsForQuery(
         query: String,
-        tools: List<Tool>,
-        serverConfigs: List<McpServerConfig>
+        serverConfigs: List<McpServerConfig> = emptyList()
     ): List<Tool> {
-        val readOnlyLabels = serverConfigs
-            .filter { it.readOnly }
-            .map { it.label }
-            .toSet()
-
-        val accessFiltered = if (readOnlyLabels.isEmpty()) {
-            tools
-        } else {
-            tools.filter { tool ->
-                val serverLabel = tool.spec.description
-                    .substringAfter("[", "")
-                    .substringBefore("]", "")
-                if (serverLabel in readOnlyLabels) {
-                    WRITE_ACTIONS.none { action -> tool.spec.name.endsWith(action) }
-                } else {
-                    true
-                }
-            }
-        }
-
         val queryWords = query.lowercase().split(Regex("\\W+")).toSet()
 
         val matchedCategories = Category.entries.filter { category ->
@@ -73,15 +118,59 @@ object ToolRouter {
 
         if (matchedCategories.isEmpty()) return emptyList()
 
-        val relevantPrefixes = matchedCategories
-            .flatMap { it.resourcePrefixes }
+        val matchedLocalNames = matchedCategories.flatMap { it.localToolNames }.toSet()
+        val matchedPrefixes = matchedCategories.flatMap { it.resourcePrefixes }.toSet()
+
+        val readOnlyLabels = serverConfigs
+            .filter { it.readOnly }
+            .map { it.label }
             .toSet()
 
-        return accessFiltered.filter { tool ->
+        val filteredLocal = localTools.filter { tool ->
+            tool.spec.name in matchedLocalNames &&
+                isToolEnabled(tool.spec.name, ToolSource.LOCAL)
+        }
+
+        val filteredMcp = mcpTools.filter { tool ->
             val resource = tool.spec.name
                 .substringAfter(".")
                 .substringBeforeLast("_")
-            resource in relevantPrefixes
+            val matchesCategory = resource in matchedPrefixes
+            val isEnabled = isToolEnabled(tool.spec.name, ToolSource.MCP)
+
+            val passesReadOnly = if (readOnlyLabels.isNotEmpty()) {
+                val serverLabel = tool.spec.description
+                    .substringAfter("[", "")
+                    .substringBefore("]", "")
+                if (serverLabel in readOnlyLabels) {
+                    WRITE_ACTIONS.none { action -> tool.spec.name.endsWith(action) }
+                } else {
+                    true
+                }
+            } else {
+                true
+            }
+
+            matchesCategory && isEnabled && passesReadOnly
+        }
+
+        return filteredLocal + filteredMcp
+    }
+
+    fun getAllRegisteredTools(): List<Pair<Tool, ToolSource>> {
+        val result = mutableListOf<Pair<Tool, ToolSource>>()
+        localTools.forEach { result.add(it to ToolSource.LOCAL) }
+        mcpTools.forEach { result.add(it to ToolSource.MCP) }
+        return result
+    }
+
+    private fun autoDisableOverlappingMcpTools() {
+        val activeLocalNames = localTools.map { it.spec.name }.toSet()
+        for (localName in activeLocalNames) {
+            val overlappingMcpNames = OVERLAP_MAPPING[localName] ?: continue
+            for (mcpName in overlappingMcpNames) {
+                disabledTools.add(mcpName to ToolSource.MCP)
+            }
         }
     }
 }

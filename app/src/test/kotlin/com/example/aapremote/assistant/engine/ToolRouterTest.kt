@@ -1,290 +1,238 @@
 package com.example.aapremote.assistant.engine
 
-import com.example.aapremote.assistant.tools.Tool
+import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.assistant.tools.ToolResult
+import com.example.aapremote.assistant.tools.ToolSource
 import com.example.aapremote.assistant.tools.ToolSpec
-import com.example.aapremote.model.McpServerConfig
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class ToolRouterTest {
 
-    private fun tool(name: String, serverLabel: String = "aap") = object : Tool {
-        override val spec = ToolSpec(name, "[$serverLabel] description of $name", JsonObject(emptyMap()))
+    private lateinit var router: ToolRouter
+
+    private fun localTool(name: String, destructive: Boolean = false) = object : LocalTool(
+        spec = ToolSpec(name, "Local: $name", JsonObject(emptyMap())),
+        destructive = destructive
+    ) {
         override suspend fun execute(args: Map<String, Any>) = ToolResult(success = true)
     }
 
-    private val readOnlyConfig = McpServerConfig(url = "https://aap:8448/mcp", label = "aap", readOnly = true)
-    private val readWriteConfig = McpServerConfig(url = "https://aap:8448/mcp", label = "aap", readOnly = false)
+    @Before
+    fun setup() {
+        router = ToolRouter()
+    }
+
+    // --- Category matching tests ---
 
     @Test
-    fun `SHOULD exclude write tools WHEN readOnly is true GIVEN mixed read and write tools`() {
-        val tools = listOf(
-            tool("controller.hosts_list"),
-            tool("controller.hosts_create"),
-            tool("controller.hosts_update"),
-            tool("controller.hosts_delete"),
-            tool("controller.inventories_list")
-        )
-        val result = ToolRouter.filterTools("list my hosts", tools, listOf(readOnlyConfig))
+    fun `SHOULD select inventory tools WHEN query mentions hosts`() {
+        val inventoryLocal = localTool("list_hosts")
+        val inventoryLocal2 = localTool("list_inventories")
+        val jobLocal = localTool("list_jobs")
+
+        router.registerLocalTools(listOf(inventoryLocal, inventoryLocal2, jobLocal))
+        val result = router.getToolsForQuery("list my hosts")
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.hosts_list" in names)
-        assertTrue("controller.inventories_list" in names)
-        assertTrue("controller.hosts_create" !in names)
-        assertTrue("controller.hosts_update" !in names)
-        assertTrue("controller.hosts_delete" !in names)
+        assertTrue("list_hosts" in names)
+        assertTrue("list_inventories" in names)
+        assertFalse("list_jobs" in names)
     }
 
     @Test
-    fun `SHOULD keep all tools WHEN readOnly is false GIVEN write tools present`() {
+    fun `SHOULD select job tools WHEN query mentions launch and template`() {
         val tools = listOf(
-            tool("controller.hosts_list"),
-            tool("controller.hosts_create"),
-            tool("controller.hosts_delete")
+            localTool("list_job_templates"),
+            localTool("launch_job", destructive = true),
+            localTool("get_job"),
+            localTool("list_hosts")
         )
-        val result = ToolRouter.filterTools("list hosts", tools, listOf(readWriteConfig))
-        assertEquals(tools.size, result.size)
-    }
 
-    @Test
-    fun `SHOULD exclude launch and cancel actions WHEN readOnly is true GIVEN job tools`() {
-        val tools = listOf(
-            tool("controller.jobs_read"),
-            tool("controller.job_templates_launch"),
-            tool("controller.jobs_relaunch"),
-            tool("controller.jobs_cancel")
-        )
-        val result = ToolRouter.filterTools("show me jobs", tools, listOf(readOnlyConfig))
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("launch a job template")
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.jobs_read" in names)
-        assertTrue("controller.job_templates_launch" !in names)
-        assertTrue("controller.jobs_relaunch" !in names)
-        assertTrue("controller.jobs_cancel" !in names)
+        assertTrue("list_job_templates" in names)
+        assertTrue("launch_job" in names)
+        assertTrue("get_job" in names)
+        assertFalse("list_hosts" in names)
     }
 
     @Test
-    fun `SHOULD only filter matching server label WHEN multiple servers configured GIVEN mixed servers`() {
-        val aapWriteTool = tool("controller.hosts_create", "aap")
-        val aapReadTool = tool("controller.hosts_list", "aap")
-        val otherWriteTool = tool("controller.hosts_create", "knowledge")
-        val tools = listOf(aapWriteTool, aapReadTool, otherWriteTool)
-
-        val configs = listOf(
-            McpServerConfig(url = "https://aap:8448/mcp", label = "aap", readOnly = true),
-            McpServerConfig(url = "https://kb:3000/mcp", label = "knowledge", readOnly = false)
-        )
-        val result = ToolRouter.filterTools("list hosts", tools, configs)
-        val names = result.map { it.spec.name to it.spec.description }
-
-        assertTrue(names.any { it.first == "controller.hosts_list" && it.second.contains("[aap]") })
-        assertTrue(names.none { it.first == "controller.hosts_create" && it.second.contains("[aap]") })
-        assertTrue(names.any { it.first == "controller.hosts_create" && it.second.contains("[knowledge]") })
-    }
-
-    @Test
-    fun `SHOULD select inventory tools WHEN query mentions hosts GIVEN mixed category tools`() {
+    fun `SHOULD return no tools WHEN no category matches`() {
         val tools = listOf(
-            tool("controller.hosts_list"),
-            tool("controller.groups_list"),
-            tool("controller.jobs_read"),
-            tool("controller.users_list")
+            localTool("list_hosts"),
+            localTool("list_jobs"),
+            localTool("list_job_templates")
         )
-        val result = ToolRouter.filterTools("list my hosts", tools, listOf(readWriteConfig))
-        val names = result.map { it.spec.name }
-
-        assertTrue("controller.hosts_list" in names)
-        assertTrue("controller.groups_list" in names)
-        assertTrue("controller.jobs_read" !in names)
-        assertTrue("controller.users_list" !in names)
-    }
-
-    @Test
-    fun `SHOULD select job tools WHEN query mentions launch and template GIVEN mixed category tools`() {
-        val tools = listOf(
-            tool("controller.hosts_list"),
-            tool("controller.job_templates_list"),
-            tool("controller.job_templates_launch"),
-            tool("controller.jobs_read")
-        )
-        val result = ToolRouter.filterTools("launch a job template", tools, listOf(readWriteConfig))
-        val names = result.map { it.spec.name }
-
-        assertTrue("controller.job_templates_list" in names)
-        assertTrue("controller.job_templates_launch" in names)
-        assertTrue("controller.jobs_read" in names)
-        assertTrue("controller.hosts_list" !in names)
-    }
-
-    @Test
-    fun `SHOULD include tools from all matched categories WHEN query spans multiple categories GIVEN mixed tools`() {
-        val tools = listOf(
-            tool("controller.hosts_list"),
-            tool("controller.jobs_read"),
-            tool("controller.users_list"),
-            tool("controller.credentials_list")
-        )
-        val result = ToolRouter.filterTools("show hosts running failed jobs", tools, listOf(readWriteConfig))
-        val names = result.map { it.spec.name }
-
-        assertTrue("controller.hosts_list" in names)
-        assertTrue("controller.jobs_read" in names)
-        assertTrue("controller.users_list" !in names)
-    }
-
-    @Test
-    fun `SHOULD return no tools WHEN no category matches GIVEN generic query`() {
-        val tools = listOf(
-            tool("controller.hosts_list"),
-            tool("controller.jobs_read"),
-            tool("controller.users_list")
-        )
-        val result = ToolRouter.filterTools("hello how are you", tools, listOf(readWriteConfig))
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("hello how are you")
         assertTrue(result.isEmpty())
     }
 
     @Test
-    fun `SHOULD apply both readOnly and category filters WHEN readOnly is true and category matches GIVEN mixed tools`() {
+    fun `SHOULD return no tools WHEN query is a greeting`() {
         val tools = listOf(
-            tool("controller.hosts_list"),
-            tool("controller.hosts_create"),
-            tool("controller.hosts_delete"),
-            tool("controller.jobs_read"),
-            tool("controller.inventories_list")
+            localTool("list_hosts"),
+            localTool("list_jobs"),
+            localTool("list_job_templates")
         )
-        val result = ToolRouter.filterTools("list my hosts", tools, listOf(readOnlyConfig))
-        val names = result.map { it.spec.name }
+        router.registerLocalTools(tools)
 
-        assertTrue("controller.hosts_list" in names)
-        assertTrue("controller.inventories_list" in names)
-        assertTrue("controller.hosts_create" !in names)
-        assertTrue("controller.hosts_delete" !in names)
-        assertTrue("controller.jobs_read" !in names)
+        assertTrue(router.getToolsForQuery("hi").isEmpty())
+        assertTrue(router.getToolsForQuery("hello there").isEmpty())
+        assertTrue(router.getToolsForQuery("what can you do?").isEmpty())
+        assertTrue(router.getToolsForQuery("thanks").isEmpty())
     }
 
     @Test
-    fun `SHOULD return empty list WHEN tool list is empty GIVEN any query`() {
-        val result = ToolRouter.filterTools("list hosts", emptyList(), listOf(readOnlyConfig))
+    fun `SHOULD include tools from multiple matched categories WHEN query spans categories`() {
+        val tools = listOf(
+            localTool("list_hosts"),
+            localTool("list_jobs"),
+            localTool("get_job"),
+            localTool("list_eda_audit_rules")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show hosts running failed jobs")
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_hosts" in names)
+        assertTrue("list_jobs" in names)
+        assertTrue("get_job" in names)
+    }
+
+    @Test
+    fun `SHOULD select EDA tools WHEN query mentions eda or rulebook`() {
+        val tools = listOf(
+            localTool("list_eda_audit_rules"),
+            localTool("list_hosts"),
+            localTool("list_jobs")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show eda audit rules")
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_eda_audit_rules" in names)
+        assertFalse("list_hosts" in names)
+        assertFalse("list_jobs" in names)
+    }
+
+    // --- Local tool priority tests ---
+
+    @Test
+    fun `SHOULD auto-disable overlapping MCP tools WHEN local tools are registered`() {
+        val localTools = listOf(
+            localTool("list_job_templates"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(localTools)
+
+        assertFalse(router.isToolEnabled("controller.job_templates_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+        assertTrue(router.isToolEnabled("controller.users_list", ToolSource.MCP))
+    }
+
+    @Test
+    fun `SHOULD allow re-enabling MCP tools via setToolEnabled`() {
+        router.registerLocalTools(listOf(localTool("list_job_templates")))
+        assertFalse(router.isToolEnabled("controller.job_templates_list", ToolSource.MCP))
+
+        router.setToolEnabled("controller.job_templates_list", ToolSource.MCP, true)
+        assertTrue(router.isToolEnabled("controller.job_templates_list", ToolSource.MCP))
+    }
+
+    @Test
+    fun `SHOULD allow disabling local tools via setToolEnabled`() {
+        router.registerLocalTools(listOf(localTool("list_hosts")))
+        assertTrue(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
+
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+        assertFalse(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
+    }
+
+    @Test
+    fun `SHOULD not include disabled local tools in query results`() {
+        val tools = listOf(
+            localTool("list_hosts"),
+            localTool("list_inventories")
+        )
+        router.registerLocalTools(tools)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+
+        val result = router.getToolsForQuery("show my hosts and inventories")
+        val names = result.map { it.spec.name }
+
+        assertFalse("list_hosts" in names)
+        assertTrue("list_inventories" in names)
+    }
+
+    @Test
+    fun `SHOULD return empty WHEN no tools registered at all`() {
+        val result = router.getToolsForQuery("list hosts")
         assertTrue(result.isEmpty())
     }
 
     @Test
-    fun `SHOULD parse compound resource names correctly WHEN query matches compound resource GIVEN compound tool names`() {
+    fun `SHOULD list all registered tools via getAllRegisteredTools`() {
+        router.registerLocalTools(listOf(localTool("list_hosts"), localTool("list_jobs")))
+        val all = router.getAllRegisteredTools()
+
+        assertEquals(2, all.size)
+        assertTrue(all.all { it.second == ToolSource.LOCAL })
+    }
+
+    @Test
+    fun `SHOULD preserve destructive flag on local tools`() {
+        val destructive = localTool("launch_job", destructive = true)
+        val readOnly = localTool("list_jobs", destructive = false)
+
+        router.registerLocalTools(listOf(destructive, readOnly))
+        val all = router.getAllRegisteredTools()
+
+        val launchTool = all.first { it.first.spec.name == "launch_job" }.first as LocalTool
+        val listTool = all.first { it.first.spec.name == "list_jobs" }.first as LocalTool
+
+        assertTrue(launchTool.destructive)
+        assertFalse(listTool.destructive)
+    }
+
+    @Test
+    fun `SHOULD select workflow tools WHEN query mentions workflow`() {
         val tools = listOf(
-            tool("controller.workflow_job_templates_list"),
-            tool("controller.constructed_inventories_list"),
-            tool("controller.hosts_list")
+            localTool("list_workflow_templates"),
+            localTool("launch_workflow", destructive = true),
+            localTool("get_workflow_job"),
+            localTool("list_hosts")
         )
-        val result = ToolRouter.filterTools("show my workflow templates", tools, listOf(readWriteConfig))
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show my workflow templates")
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.workflow_job_templates_list" in names)
-        assertTrue("controller.hosts_list" !in names)
+        assertTrue("list_workflow_templates" in names)
+        assertTrue("launch_workflow" in names)
+        assertTrue("get_workflow_job" in names)
+        assertFalse("list_hosts" in names)
     }
 
     @Test
-    fun `SHOULD not apply readOnly filtering WHEN serverConfigs is empty GIVEN category-matched write tools`() {
+    fun `SHOULD select schedule tools WHEN query mentions schedules`() {
         val tools = listOf(
-            tool("controller.hosts_create"),
-            tool("controller.hosts_delete")
+            localTool("list_schedules"),
+            localTool("toggle_schedule", destructive = true),
+            localTool("list_hosts")
         )
-        val result = ToolRouter.filterTools("list hosts", tools, emptyList())
-        assertEquals(tools.size, result.size)
-    }
-
-    @Test
-    fun `SHOULD return no tools WHEN query is a greeting GIVEN all tools available`() {
-        val tools = listOf(
-            tool("controller.hosts_list"),
-            tool("controller.jobs_read"),
-            tool("controller.users_list"),
-            tool("controller.credentials_list"),
-            tool("controller.settings_read")
-        )
-        assertTrue(ToolRouter.filterTools("hi", tools, listOf(readWriteConfig)).isEmpty())
-        assertTrue(ToolRouter.filterTools("hello there", tools, listOf(readWriteConfig)).isEmpty())
-        assertTrue(ToolRouter.filterTools("what can you do?", tools, listOf(readWriteConfig)).isEmpty())
-        assertTrue(ToolRouter.filterTools("thanks", tools, listOf(readWriteConfig)).isEmpty())
-    }
-
-    @Test
-    fun `SHOULD select monitoring tools WHEN query mentions health or status GIVEN mixed tools`() {
-        val tools = listOf(
-            tool("controller.hosts_list"),
-            tool("controller.instances_list"),
-            tool("controller.ping_read"),
-            tool("controller.dashboard_read")
-        )
-        val result = ToolRouter.filterTools("check system health", tools, listOf(readWriteConfig))
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show my schedules")
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.instances_list" in names)
-        assertTrue("controller.ping_read" in names)
-        assertTrue("controller.dashboard_read" in names)
-        assertTrue("controller.hosts_list" !in names)
-    }
-
-    @Test
-    fun `SHOULD select user tools WHEN query mentions users or teams GIVEN mixed tools`() {
-        val tools = listOf(
-            tool("controller.users_list"),
-            tool("controller.teams_list"),
-            tool("controller.organizations_list"),
-            tool("controller.hosts_list")
-        )
-        val result = ToolRouter.filterTools("list users in my team", tools, listOf(readWriteConfig))
-        val names = result.map { it.spec.name }
-
-        assertTrue("controller.users_list" in names)
-        assertTrue("controller.teams_list" in names)
-        assertTrue("controller.organizations_list" in names)
-        assertTrue("controller.hosts_list" !in names)
-    }
-
-    @Test
-    fun `SHOULD select security tools WHEN query mentions credentials GIVEN mixed tools`() {
-        val tools = listOf(
-            tool("controller.credentials_list"),
-            tool("controller.credential_types_list"),
-            tool("controller.hosts_list"),
-            tool("controller.jobs_read")
-        )
-        val result = ToolRouter.filterTools("show my credentials", tools, listOf(readWriteConfig))
-        val names = result.map { it.spec.name }
-
-        assertTrue("controller.credentials_list" in names)
-        assertTrue("controller.credential_types_list" in names)
-        assertTrue("controller.hosts_list" !in names)
-        assertTrue("controller.jobs_read" !in names)
-    }
-
-    @Test
-    fun `SHOULD select configuration tools WHEN query mentions settings or projects GIVEN mixed tools`() {
-        val tools = listOf(
-            tool("controller.settings_read"),
-            tool("controller.projects_list"),
-            tool("controller.notification_templates_list"),
-            tool("controller.hosts_list")
-        )
-        val result = ToolRouter.filterTools("show project settings", tools, listOf(readWriteConfig))
-        val names = result.map { it.spec.name }
-
-        assertTrue("controller.settings_read" in names)
-        assertTrue("controller.projects_list" in names)
-        assertTrue("controller.notification_templates_list" in names)
-        assertTrue("controller.hosts_list" !in names)
-    }
-
-    @Test
-    fun `SHOULD match each category keyword WHEN single keyword used GIVEN inventory tools`() {
-        val tools = listOf(tool("controller.hosts_list"), tool("controller.jobs_read"))
-
-        assertTrue(ToolRouter.filterTools("show host", tools, listOf(readWriteConfig)).any { it.spec.name.contains("hosts") })
-        assertTrue(ToolRouter.filterTools("list groups", tools, listOf(readWriteConfig)).any { it.spec.name.contains("hosts") })
-        assertTrue(ToolRouter.filterTools("check inventory", tools, listOf(readWriteConfig)).any { it.spec.name.contains("hosts") })
-        assertTrue(ToolRouter.filterTools("show infrastructure", tools, listOf(readWriteConfig)).any { it.spec.name.contains("hosts") })
+        assertTrue("list_schedules" in names)
+        assertTrue("toggle_schedule" in names)
+        assertFalse("list_hosts" in names)
     }
 }

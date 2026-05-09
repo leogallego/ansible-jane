@@ -2,6 +2,7 @@ package com.example.aapremote.assistant
 
 import com.example.aapremote.assistant.data.AssistantRepository
 import com.example.aapremote.assistant.presentation.AssistantViewModel
+import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.network.AuthInterceptor
 import com.example.aapremote.network.CertTrustManager
 import com.example.aapremote.network.mcp.McpServerManager
@@ -55,7 +56,8 @@ val assistantModule = module {
             repository = get(),
             tokenManager = get(),
             httpClient = get(named("llm")),
-            json = networkJson
+            json = networkJson,
+            localTools = getAll<LocalTool>()
         )
     }
 }

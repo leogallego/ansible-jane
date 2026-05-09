@@ -13,6 +13,7 @@ import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.engine.ToolExecutor
 import com.example.aapremote.assistant.engine.ToolRouter
 import com.example.aapremote.assistant.llm.OpenAiCompatibleProvider
+import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.CertTrustManager
@@ -34,7 +35,8 @@ class AssistantViewModel(
     private val repository: AssistantRepository,
     private val tokenManager: TokenManager,
     private val httpClient: OkHttpClient,
-    private val json: Json
+    private val json: Json,
+    private val localTools: List<LocalTool> = emptyList()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AssistantUiState>(AssistantUiState.Idle)
@@ -128,11 +130,14 @@ class AssistantViewModel(
         }
 
         mcpServerManager.refreshConnections()
-        val allTools = mcpServerManager.getAllTools()
         val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
-        val tools = ToolRouter.filterTools(text, allTools, serverConfigs)
+        val toolRouter = ToolRouter()
+        toolRouter.registerLocalTools(localTools)
+        toolRouter.registerMcpTools(mcpServerManager.getAllTools())
+        val tools = toolRouter.getToolsForQuery(text, serverConfigs)
         val mode = config.tokenSavingMode
-        val noToolMatch = tools.isEmpty() && allTools.isNotEmpty()
+        val hasAnyTools = localTools.isNotEmpty() || mcpServerManager.getAllTools().isNotEmpty()
+        val noToolMatch = tools.isEmpty() && hasAnyTools
 
         if (noToolMatch && mode == TokenSavingMode.MINIMAL) {
             val guidanceMsg = ChatMessage(
