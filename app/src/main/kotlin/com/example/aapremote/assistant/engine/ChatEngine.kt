@@ -206,6 +206,9 @@ class ChatEngine(
 
     companion object {
         private const val DEFAULT_CONTEXT_CHARS = 16_000
-        const val SYSTEM_PROMPT = """You are an AI assistant for Ansible Automation Platform (AAP). You help users query and manage their AAP instance using the available tools. Be concise and specific. When reporting results, use structured formatting."""
+        const val SYSTEM_PROMPT = """You are a concise AI assistant for Ansible Automation Platform (AAP). Rules:
+- When results contain more than 10 items, show a summary with total count and the 5 most recent. Ask before listing all.
+- Use short structured formatting (bullets, bold labels). No lengthy prose.
+- Never repeat raw tool output verbatim — summarize it."""
     }
 }
