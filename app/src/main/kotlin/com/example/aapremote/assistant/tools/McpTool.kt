@@ -21,11 +21,12 @@ class McpTool(
 
     companion object {
         const val MAX_PAGE_SIZE = 10
+        private const val MAX_DESCRIPTION_CHARS = 120
     }
 
     override val spec: ToolSpec = ToolSpec(
         name = mcpToolDef.name,
-        description = "[$serverLabel] ${mcpToolDef.description}",
+        description = "[$serverLabel] ${mcpToolDef.description}".take(MAX_DESCRIPTION_CHARS),
         parametersSchema = mcpToolDef.inputSchema
     )
 

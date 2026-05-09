@@ -347,14 +347,22 @@ fun ToolSpec.toOpenAiTool(): JsonObject = buildJsonObject {
 
 private fun compactSchema(schema: JsonObject): JsonObject = buildJsonObject {
     schema["type"]?.let { put("type", it) }
-    schema["required"]?.let { put("required", it) }
+    schema["required"]?.jsonArray?.let { arr ->
+        if (arr.isNotEmpty()) put("required", arr)
+    }
     schema["properties"]?.jsonObject?.let { props ->
         put("properties", buildJsonObject {
             props.forEach { (key, value) ->
                 put(key, buildJsonObject {
                     val prop = value.jsonObject
                     prop["type"]?.let { put("type", it) }
-                    prop["enum"]?.let { put("enum", it) }
+                    prop["enum"]?.jsonArray?.let { enumArr ->
+                        if (enumArr.size > 8) {
+                            put("enum", buildJsonArray {
+                                enumArr.take(8).forEach { add(it) }
+                            })
+                        } else put("enum", enumArr)
+                    }
                 })
             }
         })
