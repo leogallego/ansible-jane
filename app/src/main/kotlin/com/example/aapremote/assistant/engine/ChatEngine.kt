@@ -104,6 +104,7 @@ class ChatEngine(
                         toolCalls = result.toolCalls
                     ))
 
+                    val toolSummaries = mutableListOf<String>()
                     for (toolCall in result.toolCalls) {
                         emit(ChatEvent.ToolExecuting(toolCall.name, toolCall.arguments))
 
@@ -118,6 +119,11 @@ class ChatEngine(
                                 ?: "Tool execution failed: ${toolResult.errorType ?: "unknown error"}",
                             toolCallId = toolCall.id
                         ))
+                        toolSummaries.add("${toolCall.name}: ${toolResult.data?.take(200) ?: "error"}")
+                    }
+
+                    if (iterations > 1) {
+                        compactToolMessages(messages, toolSummaries)
                     }
                 } else {
                     val finalText = if (result.toolCalls.isNotEmpty() && iterations >= maxIterations) {
@@ -146,6 +152,33 @@ class ChatEngine(
             emit(ChatEvent.Error("Unable to reach LLM server: ${e.message}", e))
         } catch (e: Exception) {
             emit(ChatEvent.Error("Error: ${e.message}", e))
+        }
+    }
+
+    private fun compactToolMessages(
+        messages: MutableList<ChatMessage>,
+        currentSummaries: List<String>
+    ) {
+        val keepFrom = messages.indexOfLast { it.role == Role.USER } + 1
+        val toCompact = mutableListOf<Int>()
+        for (i in keepFrom until messages.size - currentSummaries.size) {
+            if (messages[i].role == Role.TOOL || (messages[i].role == Role.ASSISTANT && messages[i].toolCalls != null)) {
+                toCompact.add(i)
+            }
+        }
+        if (toCompact.isEmpty()) return
+        val summary = toCompact
+            .filter { messages[it].role == Role.TOOL }
+            .joinToString("; ") { i ->
+                val msg = messages[i]
+                val preview = msg.content.take(100).replace("\n", " ")
+                "tool_result: $preview"
+            }
+        for (i in toCompact.reversed()) {
+            messages.removeAt(i)
+        }
+        if (summary.isNotBlank()) {
+            messages.add(keepFrom, ChatMessage(role = Role.ASSISTANT, content = "[Previous tool calls: $summary]"))
         }
     }
 
