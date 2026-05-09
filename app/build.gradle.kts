@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.aapremote"
         minSdk = 31
         targetSdk = 36
-        versionCode = 2604010
-        versionName = "26.4.1"
+        versionCode = 2605011
+        versionName = "1.1.0"
     }
 
     signingConfigs {
@@ -44,6 +44,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

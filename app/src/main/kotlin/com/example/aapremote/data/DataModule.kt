@@ -14,4 +14,8 @@ val dataModule = module {
     single { EdaAuditRepository(get<com.example.aapremote.network.AapApiProvider>()) }
     single { InventoryRepository(get<com.example.aapremote.network.AapApiProvider>()) }
     single { HostRepository(get<com.example.aapremote.network.AapApiProvider>()) }
+    single { InfrastructureRepository(get<com.example.aapremote.network.AapApiProvider>()) }
+    single { CredentialRepository(get<com.example.aapremote.network.AapApiProvider>()) }
+    single { ProjectRepository(get<com.example.aapremote.network.AapApiProvider>()) }
+    single { EdaActivationRepository(get<com.example.aapremote.network.AapApiProvider>()) }
 }

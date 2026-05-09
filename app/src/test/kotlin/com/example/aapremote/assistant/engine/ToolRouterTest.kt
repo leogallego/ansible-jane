@@ -487,4 +487,174 @@ class ToolRouterTest {
         assertTrue("list_hosts" in names)
         assertTrue("controller.users_list" in names)
     }
+
+    // --- Phase 2 local tool tests ---
+
+    @Test
+    fun `SHOULD select monitoring tools WHEN query mentions instances`() {
+        val tools = listOf(
+            localTool("list_instances"),
+            localTool("get_instance"),
+            localTool("list_instance_groups"),
+            localTool("ping"),
+            localTool("get_mesh_topology"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show cluster instances")
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_instances" in names)
+        assertTrue("get_instance" in names)
+        assertTrue("list_instance_groups" in names)
+        assertTrue("ping" in names)
+        assertTrue("get_mesh_topology" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD select monitoring tools WHEN query mentions health`() {
+        val tools = listOf(
+            localTool("list_instances"),
+            localTool("ping"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("check system health")
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_instances" in names)
+        assertTrue("ping" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD select credential tools WHEN query mentions credentials`() {
+        val tools = listOf(
+            localTool("list_credentials"),
+            localTool("get_credential"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show my credentials")
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_credentials" in names)
+        assertTrue("get_credential" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD select project tools WHEN query mentions projects`() {
+        val tools = listOf(
+            localTool("list_projects"),
+            localTool("get_project"),
+            localTool("list_execution_environments"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("list projects")
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_projects" in names)
+        assertTrue("get_project" in names)
+        assertTrue("list_execution_environments" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD select EDA activation tools WHEN query mentions activations`() {
+        val tools = listOf(
+            localTool("list_eda_activations"),
+            localTool("get_eda_activation"),
+            localTool("list_eda_audit_rules"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show eda activations")
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_eda_activations" in names)
+        assertTrue("get_eda_activation" in names)
+        assertTrue("list_eda_audit_rules" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD auto-disable Phase 2 MCP overlaps WHEN local tools registered`() {
+        val localTools = listOf(
+            localTool("list_instances"),
+            localTool("ping"),
+            localTool("list_credentials"),
+            localTool("list_projects"),
+            localTool("list_eda_activations")
+        )
+        router.registerLocalTools(localTools)
+
+        assertFalse(router.isToolEnabled("controller.instances_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("controller.ping_read", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("controller.credentials_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("controller.projects_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("eda.activations_list", ToolSource.MCP))
+        assertTrue(router.isToolEnabled("controller.users_list", ToolSource.MCP))
+    }
+
+    @Test
+    fun `SHOULD rank list tools above write tools for budget cuts`() {
+        val tools = listOf(
+            localTool("launch_job", destructive = true),
+            localTool("get_job_stdout"),
+            localTool("list_job_templates"),
+            localTool("get_job"),
+            localTool("list_jobs"),
+            localTool("list_workflow_templates"),
+            localTool("launch_workflow", destructive = true),
+            localTool("get_workflow_job"),
+            localTool("list_schedules"),
+            localTool("toggle_schedule", destructive = true)
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("what job templates are available")
+
+        assertTrue(result.size >= 5)
+        val top5 = result.take(5).map { it.spec.name }
+        assertTrue("list_job_templates" in top5)
+        assertTrue("list_jobs" in top5)
+        assertTrue("list_workflow_templates" in top5)
+        assertFalse("launch_job" in top5)
+        assertFalse("toggle_schedule" in top5)
+    }
+
+    @Test
+    fun `SHOULD boost query-matching tools in ranking`() {
+        val tools = listOf(
+            localTool("list_schedules"),
+            localTool("toggle_schedule", destructive = true),
+            localTool("list_job_templates"),
+            localTool("launch_job", destructive = true),
+            localTool("get_job"),
+            localTool("list_jobs")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show my schedules")
+        val names = result.map { it.spec.name }
+
+        assertEquals("list_schedules", names[0])
+    }
+
+    @Test
+    fun `SHOULD select monitoring tools WHEN query mentions mesh topology`() {
+        val tools = listOf(
+            localTool("get_mesh_topology"),
+            localTool("list_instances"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show mesh topology")
+        val names = result.map { it.spec.name }
+
+        assertTrue("get_mesh_topology" in names)
+        assertTrue("list_instances" in names)
+        assertFalse("list_hosts" in names)
+    }
 }
