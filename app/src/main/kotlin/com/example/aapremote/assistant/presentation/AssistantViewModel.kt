@@ -155,12 +155,14 @@ class AssistantViewModel(
             return
         }
 
-        val maxToolsForMode = when (mode) {
+        val mcpToolLimit = when (mode) {
             TokenSavingMode.STANDARD -> Int.MAX_VALUE
-            TokenSavingMode.TOKEN_SAVER -> 8
-            TokenSavingMode.MINIMAL -> 5
+            TokenSavingMode.TOKEN_SAVER -> 5
+            TokenSavingMode.MINIMAL -> 3
         }
-        val budgetedTools = if (noToolMatch) emptyList() else tools.take(maxToolsForMode)
+        val matchedLocal = tools.filterIsInstance<LocalTool>()
+        val matchedMcp = tools.filter { it !is LocalTool }.take(mcpToolLimit)
+        val budgetedTools = if (noToolMatch) emptyList() else matchedLocal + matchedMcp
         val toolSpecs = budgetedTools.map { it.spec }
         val toolExecutor = ToolExecutor(budgetedTools)
         val engine = ChatEngine(provider, toolExecutor)
