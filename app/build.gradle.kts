@@ -78,6 +78,10 @@ dependencies {
     implementation(libs.tink.android)
     implementation(libs.kotlinx.coroutines.android)
 
+    implementation(libs.markdown.renderer)
+    implementation(libs.markdown.renderer.m3)
+    implementation(libs.markdown.renderer.code)
+
     testImplementation(libs.junit)
     testImplementation(libs.mockwebserver)
     testImplementation(libs.turbine)

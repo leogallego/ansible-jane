@@ -1,5 +1,6 @@
 package com.example.aapremote.assistant.ui
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,11 +14,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.aapremote.assistant.engine.ChatMessage
 import com.example.aapremote.assistant.engine.Role
+import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeBlock
+import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
+import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.m3.markdownTypography
+import dev.snipme.highlights.Highlights
+import dev.snipme.highlights.model.SyntaxThemes
 
 @Composable
 fun ChatBubble(
@@ -64,6 +74,32 @@ fun ChatBubble(
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     }
+                } else if (!isUser && !isError) {
+                    val isDarkTheme = isSystemInDarkTheme()
+                    val highlightsBuilder = remember(isDarkTheme) {
+                        Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
+                    }
+                    Markdown(
+                        content = message.content,
+                        colors = markdownColor(),
+                        typography = markdownTypography(),
+                        components = markdownComponents(
+                            codeBlock = {
+                                MarkdownHighlightedCodeBlock(
+                                    content = it.content,
+                                    node = it.node,
+                                    highlightsBuilder = highlightsBuilder,
+                                )
+                            },
+                            codeFence = {
+                                MarkdownHighlightedCodeFence(
+                                    content = it.content,
+                                    node = it.node,
+                                    highlightsBuilder = highlightsBuilder,
+                                )
+                            },
+                        )
+                    )
                 } else {
                     Text(
                         text = message.content,

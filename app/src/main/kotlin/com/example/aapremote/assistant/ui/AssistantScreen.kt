@@ -20,22 +20,17 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.isShiftPressed
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.assistant.presentation.AssistantUiState
@@ -84,7 +79,6 @@ fun AssistantScreen(
             ActiveChatContent(
                 state = state,
                 onSendMessage = { viewModel.sendMessage(it) },
-                onInputChanged = { viewModel.updateInputText(it) },
                 onOpenSettings = { showSettings = true },
                 modifier = Modifier.fillMaxSize()
             )
@@ -134,16 +128,31 @@ fun AssistantScreen(
 private fun ActiveChatContent(
     state: AssistantUiState.Active,
     onSendMessage: (String) -> Unit,
-    onInputChanged: (String) -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
+    val focusRequester = remember { FocusRequester() }
+    var inputText by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(""))
+    }
+
+    fun submit() {
+        val text = inputText.text
+        if (text.isNotBlank() && !state.isGenerating) {
+            onSendMessage(text)
+            inputText = TextFieldValue("")
+        }
+    }
 
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
             listState.animateScrollToItem(state.messages.size - 1)
         }
+    }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
     }
 
     Column(modifier = modifier) {
@@ -221,33 +230,18 @@ private fun ActiveChatContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedTextField(
-                value = state.inputText,
-                onValueChange = onInputChanged,
+                value = inputText,
+                onValueChange = { inputText = it },
                 modifier = Modifier
                     .weight(1f)
-                    .onPreviewKeyEvent {
-                        if (it.key == Key.Enter && !it.isShiftPressed) {
-                            if (it.type == KeyEventType.KeyUp &&
-                                state.inputText.isNotBlank() && !state.isGenerating) {
-                                onSendMessage(state.inputText)
-                            }
-                            true
-                        } else false
-                    },
+                    .focusRequester(focusRequester),
                 placeholder = { Text("Ask a question...") },
-                enabled = !state.isGenerating,
                 maxLines = 3,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(
-                    onSend = {
-                        if (state.inputText.isNotBlank()) onSendMessage(state.inputText)
-                    }
-                )
             )
 
             IconButton(
-                onClick = { onSendMessage(state.inputText) },
-                enabled = state.inputText.isNotBlank() && !state.isGenerating
+                onClick = { submit() },
+                enabled = inputText.text.isNotBlank() && !state.isGenerating
             ) {
                 if (state.isGenerating) {
                     CircularProgressIndicator(modifier = Modifier.padding(4.dp))
