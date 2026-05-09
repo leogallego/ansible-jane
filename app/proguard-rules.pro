@@ -51,7 +51,7 @@
 
 # ── Koin ─────────────────────────────────────────────────────────────
 -keep class org.koin.** { *; }
--keepclassmembers class * {
+-keepclassmembers class com.example.aapremote.** {
     public <init>(...);
 }
 
