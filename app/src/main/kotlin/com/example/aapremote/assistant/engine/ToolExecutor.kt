@@ -19,6 +19,8 @@ class ToolExecutor(
     private val tools: List<Tool>,
     private val maxResultChars: Int = 8_000
 ) {
+    private val resultCache = mutableMapOf<String, Pair<Long, ToolResult>>()
+
     suspend fun execute(toolCall: ToolCall): ToolResult {
         val tool = tools.find { it.spec.name == toolCall.name }
             ?: return ToolResult(
@@ -26,6 +28,12 @@ class ToolExecutor(
                 data = "Tool '${toolCall.name}' not found",
                 errorType = ErrorType.NOT_FOUND
             )
+
+        val cacheKey = "${toolCall.name}:${toolCall.arguments.hashCode()}"
+        val cached = resultCache[cacheKey]
+        if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
+            return cached.second
+        }
 
         val result = try {
             withTimeout(30_000L) {
@@ -44,11 +52,15 @@ class ToolExecutor(
             result.copy(data = capResultArray(result.data))
         } else result
 
-        return if (capped.data != null && capped.data.length > maxResultChars) {
+        val finalResult = if (capped.data != null && capped.data.length > maxResultChars) {
             capped.copy(data = smartTruncate(capped.data, maxResultChars))
         } else {
             capped
         }
+        if (finalResult.success) {
+            resultCache[cacheKey] = System.currentTimeMillis() to finalResult
+        }
+        return finalResult
     }
 
     private fun jsonObjectToMap(json: kotlinx.serialization.json.JsonObject): Map<String, Any> {
@@ -74,6 +86,7 @@ class ToolExecutor(
     }
 
     companion object {
+        private const val CACHE_TTL_MS = 120_000L
         private const val MAX_ARRAY_ITEMS = 10
         private val json = Json { ignoreUnknownKeys = true }
 
