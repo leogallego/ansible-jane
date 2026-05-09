@@ -43,6 +43,34 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 - **Presentation:** ViewModels with `StateFlow<UiState>` (Idle, Loading, Success, Error pattern)
 - **UI:** Compose screens reacting to ViewModel state
 
+## AI Assistant Architecture
+
+The AI assistant (`assistant/` package) provides natural-language interaction with AAP via tool-use LLMs.
+
+### Tool System
+
+Two tool sources, unified via `Tool` interface (`tools/ToolSpec.kt`):
+
+- **Local tools** (`tools/local/`) — 26 tools that call AAP APIs directly via Retrofit. Zero latency, no MCP server required. Examples: `list_job_templates`, `launch_job`, `get_host_facts`, `ping`.
+- **MCP tools** (`tools/McpTool.kt`) — dynamically discovered from connected MCP servers. Used for resources not covered by local tools (users, teams, notifications, etc.).
+
+### ToolRouter (`engine/ToolRouter.kt`)
+
+Category-based query routing that selects relevant tools per user message:
+
+- **7 categories**: INVENTORY, JOBS, MONITORING, USERS, SECURITY, CONFIGURATION, EDA — each with keyword sets, resource prefixes, and local tool names.
+- **Query matching**: splits user message into words, matches against category keywords, returns tools from matched categories only.
+- **Ranking**: scores tools by keyword overlap with query, boosts `list_`/`ping` tools, penalizes destructive tools.
+- **Overlap mapping** (`OVERLAP_MAPPING`): when a local tool exists, its MCP equivalent is auto-disabled to avoid duplicates.
+- **Read-only enforcement**: `McpServerConfig.readOnly` filters out write actions (`_create`, `_update`, `_delete`, `_launch`, etc.) from read-only MCP servers.
+- **Per-tool enable/disable**: `setToolEnabled()` / `isToolEnabled()` for user-facing tool management UI.
+
+### Engine Pipeline (`engine/`)
+
+- **ChatEngine** — agentic loop: sends user message + tool schemas to LLM, executes tool calls, re-sends results until LLM produces a text response. Max 10 iterations.
+- **ToolExecutor** — executes tool calls with 30s timeout, 2-minute result cache, array capping (max 10 items), and smart truncation (8K char limit).
+- **Token optimization** — 3-tier token saving mode (Standard / Token Saver / Minimal) controls schema detail, tool count caps, and conversation compaction.
+
 ## AI Agent Skills
 
 The `skills/` directory contains SKILL.md files ([agentskills.io](https://agentskills.io) standard) that provide grounding for Android/Kotlin development. Consult the relevant skill when working on:
@@ -70,21 +98,3 @@ See `skills/README.md` for sources and licenses.
 - Only use DataStore + Tink for credentials — never `EncryptedSharedPreferences` (deprecated), plain `SharedPreferences`, or SQLite
 - Enforce HTTPS-only via network security config
 
-## Active Technologies
-- Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit, (001-aap-remote-control)
-- Jetpack DataStore + Tink (encrypted, local only) (001-aap-remote-control)
-- Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Navigation Compose, Retrofit, Koin (002-nav-ui-modernize)
-- DataStore + Tink (unchanged) (002-nav-ui-modernize)
-- Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3 BOM), Navigation Compose, Retrofit + Kotlin Serialization, Koin (004-workflow-templates)
-- DataStore + Tink (unchanged — no new storage needs) (004-workflow-templates)
-- Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Compose Animation, Retrofit, Koin (007-ui-polish-animations)
-- N/A (no new storage for this feature) (007-ui-polish-animations)
-- Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Navigation Compose, Retrofit + Kotlin Serialization, Koin (008-infrastructure-section)
-- N/A (no new local storage — all data fetched from API) (008-infrastructure-section)
-- Kotlin (JVM 17), compileSdk 35, minSdk 31 + Jetpack Compose (Material 3 BOM), Navigation Compose, Retrofit + Kotlin Serialization, Koin, Google Tink (009-multi-instance-support)
-- Jetpack DataStore (Preferences) + Tink AES-256-GCM encryption (009-multi-instance-support)
-- Kotlin 2.2.10, JVM 17, compileSdk 36, minSdk 31 + Jetpack Compose (Material 3 BOM 2026.03.01), Retrofit 2.11.0, OkHttp 4.12.0, kotlinx-serialization-json 1.9.0, Koin 4.1.1, Coroutines 1.10.2 (010-ai-assistant-mcp)
-- Jetpack DataStore (Preferences) 1.2.1 + Tink 1.20.0 (AES-256-GCM encryption for MCP URLs and LLM API keys) (010-ai-assistant-mcp)
-
-## Recent Changes
-- 001-aap-remote-control: Added Kotlin (latest stable, targeting JVM 17) + Jetpack Compose (Material 3), Retrofit,

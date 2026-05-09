@@ -179,6 +179,7 @@ class ToolRouter {
             .removeSuffix("ies").let { if (it != word) "${it}y" else it }
             .removeSuffix("es")
             .removeSuffix("s")
+            .removeSuffix("e")
     }
 
     private fun rankTools(tools: List<Tool>, queryWords: Set<String>): List<Tool> {
