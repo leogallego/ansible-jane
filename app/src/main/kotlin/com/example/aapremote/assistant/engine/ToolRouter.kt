@@ -168,18 +168,28 @@ class ToolRouter {
         return rankTools(filteredLocal, queryWords) + filteredMcp
     }
 
+    private val STOP_WORDS = setOf(
+        "list", "get", "show", "what", "are", "the", "is", "a", "an",
+        "my", "all", "me", "how", "many", "which", "do", "i", "have",
+        "can", "tell", "about", "find", "check", "give"
+    )
+
     private fun rankTools(tools: List<Tool>, queryWords: Set<String>): List<Tool> {
-        return tools.sortedByDescending { tool ->
-            val name = tool.spec.name
-            var score = 0
-            if (name.startsWith("list_")) score += 10
-            if (name.startsWith("ping")) score += 10
-            if (name.startsWith("get_")) score += 5
-            if (tool is LocalTool && tool.destructive) score -= 5
-            val nameWords = name.split("_").toSet()
-            score += (nameWords intersect queryWords).size * 3
-            score
-        }
+        val meaningful = queryWords - STOP_WORDS
+        return tools
+            .map { tool ->
+                val nameWords = tool.spec.name.split("_").toSet()
+                val overlap = (nameWords intersect meaningful).size
+                var score = overlap * 10
+                if (tool.spec.name.startsWith("list_")) score += 3
+                if (tool.spec.name.startsWith("ping")) score += 3
+                if (tool.spec.name.startsWith("get_")) score += 1
+                if (tool is LocalTool && tool.destructive) score -= 5
+                tool to score
+            }
+            .filter { it.second > 0 }
+            .sortedByDescending { it.second }
+            .map { it.first }
     }
 
     fun getAllRegisteredTools(): List<Pair<Tool, ToolSource>> {
