@@ -150,8 +150,14 @@ class AssistantViewModel(
             return
         }
 
-        val toolSpecs = if (noToolMatch) emptyList() else tools.map { it.spec }
-        val toolExecutor = ToolExecutor(tools)
+        val maxToolsForMode = when (mode) {
+            TokenSavingMode.STANDARD -> Int.MAX_VALUE
+            TokenSavingMode.TOKEN_SAVER -> 5
+            TokenSavingMode.MINIMAL -> 3
+        }
+        val budgetedTools = if (noToolMatch) emptyList() else tools.take(maxToolsForMode)
+        val toolSpecs = budgetedTools.map { it.spec }
+        val toolExecutor = ToolExecutor(budgetedTools)
         val engine = ChatEngine(provider, toolExecutor)
         val maxTokens = if (noToolMatch && mode == TokenSavingMode.TOKEN_SAVER) 256 else null
 
