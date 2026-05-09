@@ -3,6 +3,8 @@
 A lightweight Android app for remotely controlling [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Authenticate with your AAP instance, browse job templates, launch playbooks, and monitor job status from your phone.
 
 > **Disclaimer:** This project is not affiliated with or endorsed by Red Hat or the Ansible project.
+>
+> This is a vibe-coded, spec-driven, AI-assisted developed application. It comes with **no warranties of any kind** — use at your own risk. This project exists purely for research and investigation purposes.
 
 ## Features
 
