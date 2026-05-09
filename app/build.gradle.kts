@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.aapremote"
         minSdk = 31
         targetSdk = 36
-        versionCode = 2605012
-        versionName = "1.1.1"
+        versionCode = 2605013
+        versionName = "1.1.2"
     }
 
     signingConfigs {
@@ -30,7 +30,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             signingConfig = if (System.getenv("KEYSTORE_FILE") != null)
                 signingConfigs.getByName("release")
             else signingConfigs.getByName("debug")
