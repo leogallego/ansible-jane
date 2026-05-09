@@ -30,6 +30,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -231,16 +237,21 @@ private fun ActiveChatContent(
         ) {
             OutlinedTextField(
                 value = inputText,
-                onValueChange = { newValue ->
-                    if (newValue.text.count { it == '\n' } > inputText.text.count { it == '\n' }) {
-                        submit()
-                    } else {
-                        inputText = newValue
-                    }
-                },
+                onValueChange = { inputText = it },
                 modifier = Modifier
                     .weight(1f)
-                    .focusRequester(focusRequester),
+                    .focusRequester(focusRequester)
+                    .onPreviewKeyEvent { event ->
+                        if (event.type == KeyEventType.KeyDown &&
+                            event.isCtrlPressed &&
+                            (event.key == Key.Enter || event.key == Key.NumPadEnter)
+                        ) {
+                            submit()
+                            true
+                        } else {
+                            false
+                        }
+                    },
                 placeholder = { Text("Ask a question...") },
                 maxLines = 3,
             )
