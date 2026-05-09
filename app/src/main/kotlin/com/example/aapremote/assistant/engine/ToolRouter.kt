@@ -174,11 +174,18 @@ class ToolRouter {
         "can", "tell", "about", "find", "check", "give"
     )
 
+    private fun stem(word: String): String {
+        return word
+            .removeSuffix("ies").let { if (it != word) "${it}y" else it }
+            .removeSuffix("es")
+            .removeSuffix("s")
+    }
+
     private fun rankTools(tools: List<Tool>, queryWords: Set<String>): List<Tool> {
-        val meaningful = queryWords - STOP_WORDS
+        val meaningful = (queryWords - STOP_WORDS).map { stem(it) }.toSet()
         return tools
             .map { tool ->
-                val nameWords = tool.spec.name.split("_").toSet()
+                val nameWords = tool.spec.name.split("_").map { stem(it) }.toSet()
                 val overlap = (nameWords intersect meaningful).size
                 var score = overlap * 10
                 if (tool.spec.name.startsWith("list_")) score += 3
