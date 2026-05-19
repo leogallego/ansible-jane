@@ -36,11 +36,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class LlmAuthException(message: String) : Exception(message)
-class LlmRateLimitException(message: String, val retryAfter: Int? = null) : Exception(message)
-class LlmServerException(message: String) : Exception(message)
-class LlmTimeoutException(message: String) : Exception(message)
-
 class OpenAiCompatibleProvider(
     private val config: LlmProviderConfig.OpenAiCompatible,
     private val httpClient: OkHttpClient,
