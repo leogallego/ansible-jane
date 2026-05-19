@@ -34,12 +34,13 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.Closeable
 import java.net.SocketTimeoutException
 
 class KoogLlmProvider(
     private val config: LlmProviderConfig.OpenAiCompatible,
     trustSelfSigned: Boolean = false
-) : LlmProvider {
+) : LlmProvider, Closeable {
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -163,6 +164,10 @@ class KoogLlmProvider(
         name = config.model,
         isLocal = false
     )
+
+    override fun close() {
+        client.close()
+    }
 
     private fun buildPrompt(messages: List<ChatMessage>): Prompt {
         val koogMessages = messages.flatMap { msg ->

@@ -122,6 +122,25 @@ class KoogLlmProviderTest {
     }
 
     @Test
+    fun `generate throws LlmRateLimitException on 429`() = runTest {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(429)
+                .setBody("""{"error":{"message":"Rate limit exceeded"}}""")
+        )
+
+        try {
+            provider.generate(
+                listOf(ChatMessage(role = Role.USER, content = "test")),
+                emptyList()
+            )
+            throw AssertionError("Expected exception was not thrown")
+        } catch (e: LlmRateLimitException) {
+            // Expected
+        }
+    }
+
+    @Test
     fun `generate throws LlmServerException on 500`() = runTest {
         server.enqueue(
             MockResponse()

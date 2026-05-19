@@ -171,75 +171,79 @@ class AssistantViewModel(
 
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
-            val textBuilder = StringBuilder()
-            var hasPlaceholder = false
+            try {
+                val textBuilder = StringBuilder()
+                var hasPlaceholder = false
 
-            fun replaceOrAddAssistant(content: String) {
-                updateState {
-                    val msg = ChatMessage(role = Role.ASSISTANT, content = content)
-                    val msgs = if (hasPlaceholder) messages.dropLast(1) + msg
-                        else messages + msg
-                    copy(messages = msgs)
+                fun replaceOrAddAssistant(content: String) {
+                    updateState {
+                        val msg = ChatMessage(role = Role.ASSISTANT, content = content)
+                        val msgs = if (hasPlaceholder) messages.dropLast(1) + msg
+                            else messages + msg
+                        copy(messages = msgs)
+                    }
+                    hasPlaceholder = true
                 }
-                hasPlaceholder = true
-            }
 
-            replaceOrAddAssistant("Thinking...")
+                replaceOrAddAssistant("Thinking...")
 
-            engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens)
-                .collect { event ->
-                    when (event) {
-                        is ChatEvent.TextDelta -> {
-                            textBuilder.append(event.text)
-                            replaceOrAddAssistant(textBuilder.toString())
-                        }
-                        is ChatEvent.ToolExecuting -> {
-                            val localNames = matchedLocal.map { it.spec.name }.toSet()
-                            val source = if (event.toolName in localNames) "local" else "mcp"
-                            replaceOrAddAssistant("Querying [$source]: ${event.toolName}...")
-                        }
-                        is ChatEvent.ToolResult -> {
-                            replaceOrAddAssistant("Processing results...")
-                            textBuilder.clear()
-                        }
-                        is ChatEvent.AssistantMessage -> {
-                            hasPlaceholder = false
-                            updateState {
-                                val msgs = messages.dropLast(1)
-                                copy(messages = msgs)
+                engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens)
+                    .collect { event ->
+                        when (event) {
+                            is ChatEvent.TextDelta -> {
+                                textBuilder.append(event.text)
+                                replaceOrAddAssistant(textBuilder.toString())
                             }
-                            val finalMsg = ChatMessage(
-                                role = Role.ASSISTANT,
-                                content = event.fullText
-                            )
-                            repository.addMessage(finalMsg)
-                            updateState {
-                                copy(
-                                    messages = repository.getHistory(),
-                                    isGenerating = false
+                            is ChatEvent.ToolExecuting -> {
+                                val localNames = matchedLocal.map { it.spec.name }.toSet()
+                                val source = if (event.toolName in localNames) "local" else "mcp"
+                                replaceOrAddAssistant("Querying [$source]: ${event.toolName}...")
+                            }
+                            is ChatEvent.ToolResult -> {
+                                replaceOrAddAssistant("Processing results...")
+                                textBuilder.clear()
+                            }
+                            is ChatEvent.AssistantMessage -> {
+                                hasPlaceholder = false
+                                updateState {
+                                    val msgs = messages.dropLast(1)
+                                    copy(messages = msgs)
+                                }
+                                val finalMsg = ChatMessage(
+                                    role = Role.ASSISTANT,
+                                    content = event.fullText
                                 )
+                                repository.addMessage(finalMsg)
+                                updateState {
+                                    copy(
+                                        messages = repository.getHistory(),
+                                        isGenerating = false
+                                    )
+                                }
                             }
-                        }
-                        is ChatEvent.Error -> {
-                            hasPlaceholder = false
-                            updateState {
-                                val msgs = messages.dropLast(1)
-                                copy(messages = msgs)
-                            }
-                            val errorMsg = ChatMessage(
-                                role = Role.ASSISTANT,
-                                content = "Error: ${event.message}"
-                            )
-                            repository.addMessage(errorMsg)
-                            updateState {
-                                copy(
-                                    messages = repository.getHistory(),
-                                    isGenerating = false
+                            is ChatEvent.Error -> {
+                                hasPlaceholder = false
+                                updateState {
+                                    val msgs = messages.dropLast(1)
+                                    copy(messages = msgs)
+                                }
+                                val errorMsg = ChatMessage(
+                                    role = Role.ASSISTANT,
+                                    content = "Error: ${event.message}"
                                 )
+                                repository.addMessage(errorMsg)
+                                updateState {
+                                    copy(
+                                        messages = repository.getHistory(),
+                                        isGenerating = false
+                                    )
+                                }
                             }
                         }
                     }
-                }
+            } finally {
+                (provider as? KoogLlmProvider)?.close()
+            }
         }
     }
 
