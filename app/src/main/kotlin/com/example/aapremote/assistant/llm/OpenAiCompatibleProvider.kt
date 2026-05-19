@@ -63,8 +63,7 @@ class OpenAiCompatibleProvider(
 
         return response.use { resp ->
             checkHttpErrors(resp)
-            val responseBody = resp.body?.string()
-                ?: throw IOException("Empty response body")
+            val responseBody = resp.body.string()
             parseNonStreamingResponse(responseBody)
         }
     }

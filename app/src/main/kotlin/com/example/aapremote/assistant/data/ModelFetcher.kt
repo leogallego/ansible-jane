@@ -46,7 +46,7 @@ class ModelFetcher(
     }
 
     private fun parseModelsResponse(response: Response): Result {
-        val body = response.body?.string() ?: return Result.Error("Empty response")
+        val body = response.body.string()
         return try {
             val root = json.parseToJsonElement(body).jsonObject
             val data = root["data"]?.jsonArray ?: return Result.Success(emptyList())
