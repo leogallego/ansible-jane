@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-Koog is a viable replacement for ~1,260 lines of custom LLM/MCP/agent code across 4 subsystems. 6 of 8 evaluation questions returned positive results. ~~Two significant risks remain: OkHttp 4→5 version conflict and mandatory Kotlin 2.3.10 upgrade.~~ **Update (May 18):** Kotlin upgraded to 2.3.21, R8 enabled, Compose BOM verified. Only remaining blocker: OkHttp 4→5 compatibility test. Recommendation: incremental adoption in 3 phases.
+Koog is a viable replacement for ~1,260 lines of custom LLM/MCP/agent code across 4 subsystems. 6 of 8 evaluation questions returned positive results. ~~Two significant risks remain: OkHttp 4→5 version conflict and mandatory Kotlin 2.3.10 upgrade.~~ **Update (May 19):** All prerequisites resolved — Kotlin 2.3.21, R8 enabled, Compose BOM verified, OkHttp 5.3.2 tested (PR #65). Ready for Phase 1. Recommendation: incremental adoption in 3 phases.
 
 | Aspect | Current Custom Code | Koog Replacement | Verdict |
 |--------|-------------------|------------------|---------|
@@ -420,7 +420,7 @@ User opens Assistant
 
 1. ~~Enable R8 minification (#43)~~ — **Done** (PR #60, APK 52→8.2 MB)
 2. ~~Upgrade Kotlin 2.2.10 → 2.3.10~~ — **Done** (now 2.3.21, PR #63)
-3. Test Retrofit 2.12 + OkHttp 5.3.2 compatibility — **Next step**
+3. ~~Test Retrofit 2.12 + OkHttp 5.3.2 compatibility~~ — **Done** (PR #65, all tests pass)
 4. ~~Verify Compose BOM compatibility with Kotlin 2.3~~ — **Done** (2026.05.00, PR #63)
 
 ---
@@ -438,6 +438,16 @@ All prerequisites except OkHttp 5 compatibility are resolved. Koog 0.8.0 (latest
 - New in 0.8.0: LLMClient constructors decoupled from Ktor (#1742), reducing coupling for Phase 1
 
 Next action: spike branch to test OkHttp 4.12→5.3.2 with Retrofit 2.12 + CertTrustManager + AuthInterceptor.
+
+### May 19, 2026
+
+**OkHttp 5 compatibility verified** (PR #65). All prerequisites are now met.
+
+- OkHttp bumped 4.12.0 → 5.3.2: compilation passes, all unit tests pass
+- Only code change: `Response.body` is non-null in OkHttp 5 — removed `?.` safe calls (4 files)
+- MockWebServer 5.3.2 backward-compatible with `okhttp3.mockwebserver` package — no test changes
+- CertTrustManager, AuthInterceptor, SSE, Retrofit 2.12 — all unchanged and working
+- **All 4 prerequisites done.** Ready for Phase 1.
 
 ---
 
