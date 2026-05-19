@@ -29,6 +29,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            val gitSha = providers.exec {
+                commandLine("git", "rev-parse", "--short", "HEAD")
+            }.standardOutput.asText.get().trim()
+            versionNameSuffix = "-dev+$gitSha"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
