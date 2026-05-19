@@ -3,11 +3,11 @@
 **Date:** 2026-05-09
 **Issue:** [#56](https://github.com/leogallego/aapdroid/issues/56)
 **Framework:** [Koog](https://github.com/JetBrains/koog) by JetBrains (Apache 2.0, 4.1K stars)
-**Version analyzed:** Commit `24f6695` (May 2026)
+**Version analyzed:** Commit `24f6695` (May 2026), updated for release 0.8.0 (April 2026)
 
 ## Executive Summary
 
-Koog is a viable replacement for ~1,260 lines of custom LLM/MCP/agent code across 4 subsystems. 6 of 8 evaluation questions returned positive results. Two significant risks remain: OkHttp 4→5 version conflict and mandatory Kotlin 2.3.10 upgrade. Recommendation: incremental adoption in 3 phases.
+Koog is a viable replacement for ~1,260 lines of custom LLM/MCP/agent code across 4 subsystems. 6 of 8 evaluation questions returned positive results. ~~Two significant risks remain: OkHttp 4→5 version conflict and mandatory Kotlin 2.3.10 upgrade.~~ **Update (May 19):** All prerequisites resolved — Kotlin 2.3.21, R8 enabled, Compose BOM verified, OkHttp 5.3.2 tested (PR #65). Ready for Phase 1. Recommendation: incremental adoption in 3 phases.
 
 | Aspect | Current Custom Code | Koog Replacement | Verdict |
 |--------|-------------------|------------------|---------|
@@ -418,10 +418,36 @@ User opens Assistant
 
 ### Prerequisites (before Phase 1)
 
-1. Enable R8 minification (#43)
-2. Upgrade Kotlin 2.2.10 → 2.3.10
-3. Test Retrofit 2.11 + OkHttp 5.3.2 compatibility
-4. Verify Compose BOM compatibility with Kotlin 2.3
+1. ~~Enable R8 minification (#43)~~ — **Done** (PR #60, APK 52→8.2 MB)
+2. ~~Upgrade Kotlin 2.2.10 → 2.3.10~~ — **Done** (now 2.3.21, PR #63)
+3. ~~Test Retrofit 2.12 + OkHttp 5.3.2 compatibility~~ — **Done** (PR #65, all tests pass)
+4. ~~Verify Compose BOM compatibility with Kotlin 2.3~~ — **Done** (2026.05.00, PR #63)
+
+---
+
+## Status Updates
+
+### May 18, 2026
+
+All prerequisites except OkHttp 5 compatibility are resolved. Koog 0.8.0 (latest stable) confirmed:
+- Kotlin 2.3.10 required (we have 2.3.21)
+- OkHttp 5.3.2 required (we have 4.12.0 — **only remaining blocker**)
+- Ktor 3.2.2 (new dependency, coexists with Retrofit via `ktor-client-okhttp`)
+- MCP SDK 0.8.1 (wraps official Kotlin SDK)
+- kotlinx-serialization 1.10.0 (we have 1.11.0 — forward compatible)
+- New in 0.8.0: LLMClient constructors decoupled from Ktor (#1742), reducing coupling for Phase 1
+
+Next action: spike branch to test OkHttp 4.12→5.3.2 with Retrofit 2.12 + CertTrustManager + AuthInterceptor.
+
+### May 19, 2026
+
+**OkHttp 5 compatibility verified** (PR #65). All prerequisites are now met.
+
+- OkHttp bumped 4.12.0 → 5.3.2: compilation passes, all unit tests pass
+- Only code change: `Response.body` is non-null in OkHttp 5 — removed `?.` safe calls (4 files)
+- MockWebServer 5.3.2 backward-compatible with `okhttp3.mockwebserver` package — no test changes
+- CertTrustManager, AuthInterceptor, SSE, Retrofit 2.12 — all unchanged and working
+- **All 4 prerequisites done.** Ready for Phase 1.
 
 ---
 
@@ -430,4 +456,4 @@ User opens Assistant
 - **#48** — MCP SDK migration → superseded by Phase 3
 - **#54** — Local tools layer → independent, coexists with Koog (Q8)
 - **#52** — MCP toolset endpoints → complementary, works with Koog's MCP
-- **#43** — R8 minification → prerequisite for managing APK size
+- **#43** — R8 minification → ~~prerequisite~~ **done**

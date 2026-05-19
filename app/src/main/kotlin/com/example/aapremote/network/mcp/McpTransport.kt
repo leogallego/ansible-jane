@@ -15,7 +15,6 @@ import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
-import okio.BufferedSource
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
@@ -133,15 +132,13 @@ class McpTransport(
         }
 
     private fun parseJsonResponse(response: Response): JsonRpcResponse {
-        val responseBody = response.body?.string()
-            ?: throw IOException("Empty response body")
+        val responseBody = response.body.string()
         return json.decodeFromString(JsonRpcResponse.serializer(), responseBody)
     }
 
     private fun parseSseFromBody(response: Response): Flow<JsonRpcResponse> = flow {
         response.use { resp ->
-            val source = resp.body?.source()
-                ?: throw IOException("Empty response body")
+            val source = resp.body.source()
             while (!source.exhausted()) {
                 val line = source.readUtf8Line() ?: break
                 if (line.startsWith("data: ")) {
