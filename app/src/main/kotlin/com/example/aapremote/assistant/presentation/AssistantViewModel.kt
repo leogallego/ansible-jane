@@ -12,7 +12,7 @@ import com.example.aapremote.assistant.engine.ChatMessage
 import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.engine.ToolExecutor
 import com.example.aapremote.assistant.engine.ToolRouter
-import com.example.aapremote.assistant.llm.OpenAiCompatibleProvider
+import com.example.aapremote.assistant.llm.KoogLlmProvider
 import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.McpServerConfig
@@ -123,10 +123,10 @@ class AssistantViewModel(
             isGenerating = true
         ) }
 
-        val llmClient = buildLlmClient()
+        val trustSelfSigned = tokenManager.activeInstance.value?.trustSelfSigned == true
         val provider = when (config) {
             is LlmProviderConfig.OpenAiCompatible ->
-                OpenAiCompatibleProvider(config, llmClient, json)
+                KoogLlmProvider(config, trustSelfSigned)
         }
 
         mcpServerManager.refreshConnections()
