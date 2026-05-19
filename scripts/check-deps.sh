@@ -2,6 +2,11 @@
 # check-deps.sh — Query official Maven repositories for latest dependency versions.
 # Compares against versions declared in gradle/libs.versions.toml.
 #
+# Reports three levels per dependency:
+#   PATCH — same X.Y, newer Z        (e.g., 2.11.0 → 2.11.1)
+#   MINOR — same X, newer Y          (e.g., 2.11.0 → 2.12.0)
+#   MAJOR — newer X (latest overall) (e.g., 2.11.0 → 3.0.0)
+#
 # Usage: ./scripts/check-deps.sh [--json]
 #
 # Sources:
@@ -58,7 +63,6 @@ metadata_url() {
 
 is_stable() {
   local v="$1"
-  # Reject alpha, beta, RC, dev, SNAPSHOT, eap
   local lv="${v,,}"
   if [[ "$lv" =~ (alpha|beta|rc|dev|snapshot|eap|milestone|-b[0-9]) ]]; then
     return 1
@@ -66,52 +70,66 @@ is_stable() {
   return 0
 }
 
-same_major_minor() {
-  local current="$1" candidate="$2"
-
-  # Handle Compose BOM format (YYYY.MM.DD)
-  if [[ "$current" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$ ]]; then
-    local cur_ym="${current%.*}"
-    local cand_ym="${candidate%.*}"
-    [[ "$cur_ym" == "$cand_ym" ]]
-    return $?
+# Extract major version component
+get_major() {
+  local v="$1"
+  # Compose BOM: YYYY.MM.DD — major is YYYY
+  if [[ "$v" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$ ]]; then
+    echo "${v%%.*}"
+    return
   fi
+  echo "${v%%.*}"
+}
 
-  # Standard semver: X.Y.Z — match X.Y
-  local cur_xy="${current%.*}"
-  local cand_xy="${candidate%.*}"
-  [[ "$cur_xy" == "$cand_xy" ]]
+# Extract major.minor version components
+get_major_minor() {
+  local v="$1"
+  # Compose BOM: YYYY.MM.DD — major.minor is YYYY.MM
+  if [[ "$v" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$ ]]; then
+    echo "${v%.*}"
+    return
+  fi
+  echo "${v%.*}"
 }
 
 query_latest() {
   local url="$1" current="$2"
   local xml
   xml=$(curl -sfL --connect-timeout 5 --max-time 10 "$url" 2>/dev/null) || {
-    echo "FETCH_ERROR|FETCH_ERROR|$url"
+    echo "FETCH_ERROR|FETCH_ERROR|FETCH_ERROR|$url"
     return
   }
 
-  local latest_stable="" latest_patch=""
+  local latest_stable="" latest_patch="" latest_minor=""
+  local cur_major cur_major_minor
+  cur_major=$(get_major "$current")
+  cur_major_minor=$(get_major_minor "$current")
 
   # Extract all versions from <version> tags
   local versions
   versions=$(echo "$xml" | grep -oP '(?<=<version>)[^<]+' | sort -V)
 
-  # Find latest stable
   while IFS= read -r v; do
-    if is_stable "$v"; then
-      latest_stable="$v"
-    fi
-  done <<< "$versions"
+    is_stable "$v" || continue
 
-  # Find latest patch for current major.minor
-  while IFS= read -r v; do
-    if is_stable "$v" && same_major_minor "$current" "$v"; then
+    latest_stable="$v"
+
+    local v_major v_major_minor
+    v_major=$(get_major "$v")
+    v_major_minor=$(get_major_minor "$v")
+
+    # Same major.minor → patch candidate
+    if [[ "$v_major_minor" == "$cur_major_minor" ]]; then
       latest_patch="$v"
     fi
+
+    # Same major → minor candidate
+    if [[ "$v_major" == "$cur_major" ]]; then
+      latest_minor="$v"
+    fi
   done <<< "$versions"
 
-  echo "${latest_stable:-NONE}|${latest_patch:-NONE}|$url"
+  echo "${latest_stable:-NONE}|${latest_minor:-NONE}|${latest_patch:-NONE}|$url"
 }
 
 # Ordered keys for consistent output
@@ -139,8 +157,11 @@ for key in "${ORDERED_KEYS[@]}"; do
   url=$(metadata_url "$repo" "$group" "$artifact")
   result=$(query_latest "$url" "$current")
 
+  # Parse: latest_stable|latest_minor|latest_patch|url
   latest_stable="${result%%|*}"
   rest="${result#*|}"
+  latest_minor="${rest%%|*}"
+  rest="${rest#*|}"
   latest_patch="${rest%%|*}"
   source_url="${rest#*|}"
 
@@ -153,25 +174,32 @@ for key in "${ORDERED_KEYS[@]}"; do
     "group": "$group",
     "artifact": "$artifact",
     "current": "$current",
-    "latest_stable": "$latest_stable",
     "latest_patch": "$latest_patch",
+    "latest_minor": "$latest_minor",
+    "latest_stable": "$latest_stable",
     "metadata_url": "$source_url"
   }
 JSONENTRY
   else
-    # Determine status
-    status=""
-    if [[ "$current" == "$latest_stable" ]]; then
-      status="  current"
-    elif [[ "$latest_patch" != "$current" && "$latest_patch" != "NONE" ]]; then
-      status="  PATCH: $latest_patch"
+    # Build status string
+    parts=()
+
+    if [[ "$latest_patch" != "$current" && "$latest_patch" != "NONE" ]]; then
+      parts+=("PATCH: $latest_patch")
     fi
-    if [[ "$latest_stable" != "$current" && "$latest_stable" != "NONE" ]]; then
-      if [[ -n "$status" && "$status" != "  current" ]]; then
-        status="$status | LATEST: $latest_stable"
-      else
-        status="  LATEST: $latest_stable"
-      fi
+
+    if [[ "$latest_minor" != "$current" && "$latest_minor" != "$latest_patch" && "$latest_minor" != "NONE" ]]; then
+      parts+=("MINOR: $latest_minor")
+    fi
+
+    if [[ "$latest_stable" != "$current" && "$latest_stable" != "$latest_minor" && "$latest_stable" != "$latest_patch" && "$latest_stable" != "NONE" ]]; then
+      parts+=("MAJOR: $latest_stable")
+    fi
+
+    if [[ ${#parts[@]} -eq 0 ]]; then
+      status="  current"
+    else
+      status="  $(IFS=' | '; echo "${parts[*]}")"
     fi
 
     printf "%-30s %-16s %s\n" "$key" "$current" "$status"
