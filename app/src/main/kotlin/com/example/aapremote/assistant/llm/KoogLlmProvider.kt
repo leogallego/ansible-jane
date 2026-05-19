@@ -17,6 +17,8 @@ import com.example.aapremote.assistant.data.LlmProviderConfig
 import com.example.aapremote.assistant.engine.ChatMessage
 import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.tools.ToolSpec
+import ai.koog.http.client.KoogHttpClientException
+import ai.koog.prompt.executor.clients.LLMClientException
 import com.example.aapremote.network.CertTrustManager
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -71,7 +73,8 @@ class KoogLlmProvider(
         capabilities = listOf(
             LLMCapability.Completion,
             LLMCapability.Tools,
-            LLMCapability.Temperature
+            LLMCapability.Temperature,
+            LLMCapability.OpenAIEndpoint.Completions
         )
     )
 
@@ -230,6 +233,20 @@ class KoogLlmProvider(
     private fun mapException(e: Throwable): Throwable = when (e) {
         is LlmAuthException, is LlmRateLimitException,
         is LlmServerException, is LlmTimeoutException -> e
+        is LLMClientException -> {
+            val cause = e.cause
+            if (cause != null) mapException(cause) else LlmServerException("LLM error: ${e.message}")
+        }
+        is KoogHttpClientException -> {
+            val code = e.statusCode
+            when {
+                code == 401 || code == 403 -> LlmAuthException("Authentication failed: ${e.message}")
+                code == 429 -> LlmRateLimitException("Rate limited: ${e.message}")
+                code != null && code >= 500 -> LlmServerException("Server error ($code): ${e.message}")
+                code != null -> LlmServerException("Client error ($code): ${e.message}")
+                else -> LlmServerException("HTTP error: ${e.message}")
+            }
+        }
         is ClientRequestException -> {
             val code = e.response.status.value
             when (code) {
