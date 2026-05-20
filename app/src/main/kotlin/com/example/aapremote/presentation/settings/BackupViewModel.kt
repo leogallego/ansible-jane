@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.assistant.data.AssistantRepository
 import com.example.aapremote.data.TokenManager
+import com.example.aapremote.assistant.data.LlmProviderConfig
 import com.example.aapremote.data.backup.BackupDecryptionException
 import com.example.aapremote.data.backup.BackupEnvelope
+import com.example.aapremote.data.backup.BackupInstance
 import com.example.aapremote.data.backup.BackupManager
 import com.example.aapremote.network.ApiVersion
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +26,10 @@ sealed interface BackupUiState {
         val rawData: ByteArray,
         val password: String,
         val duplicateCount: Int,
-        val newCount: Int
+        val newCount: Int,
+        val instances: List<BackupInstance>,
+        val llmConfig: LlmProviderConfig?,
+        val hasExistingInstances: Boolean
     ) : BackupUiState
     data object Importing : BackupUiState
     data class Success(val message: String) : BackupUiState
@@ -78,7 +83,10 @@ class BackupViewModel(
                     rawData = data,
                     password = password,
                     duplicateCount = duplicates,
-                    newCount = newOnes
+                    newCount = newOnes,
+                    instances = envelope.instances,
+                    llmConfig = envelope.llmConfig,
+                    hasExistingInstances = existingUrls.isNotEmpty()
                 )
             } catch (e: BackupDecryptionException) {
                 _uiState.value = BackupUiState.Error(e.message ?: "Decryption failed")

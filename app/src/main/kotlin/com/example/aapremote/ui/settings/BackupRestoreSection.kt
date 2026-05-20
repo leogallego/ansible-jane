@@ -16,15 +16,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -181,11 +190,8 @@ fun BackupRestoreSection(
     }
 
     (uiState as? BackupUiState.ImportPreview)?.let { preview ->
-        ImportPreviewDialog(
-            totalInstances = preview.envelope.instances.size,
-            duplicateCount = preview.duplicateCount,
-            newCount = preview.newCount,
-            hasLlmConfig = preview.envelope.llmConfig != null,
+        ImportPreviewScreen(
+            preview = preview,
             onMerge = { viewModel.confirmImport(ImportMode.MERGE) },
             onReplace = { viewModel.confirmImport(ImportMode.REPLACE) },
             onDismiss = { viewModel.dismiss() }
@@ -306,54 +312,183 @@ private fun ImportPasswordDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ImportPreviewDialog(
-    totalInstances: Int,
-    duplicateCount: Int,
-    newCount: Int,
-    hasLlmConfig: Boolean,
+private fun ImportPreviewScreen(
+    preview: BackupUiState.ImportPreview,
     onMerge: () -> Unit,
     onReplace: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = { Text("Import Preview") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Found $totalInstances instance(s) in backup.")
-                if (duplicateCount > 0) {
-                    Text(
-                        "$duplicateCount already on this device.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 32.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Text(
+                text = "Restore Backup",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            Text(
+                text = "AAP Instances",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            preview.instances.forEach { inst ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
-                }
-                if (newCount > 0) {
-                    Text("$newCount new instance(s) to import.")
-                }
-                if (hasLlmConfig) {
-                    Text(
-                        "LLM configuration included.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        if (inst.alias != null) {
+                            Text(
+                                text = inst.alias,
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+                        Text(
+                            text = inst.baseUrl,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Row(
+                            modifier = Modifier.padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = inst.apiVersion,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (inst.mcpEnabled) {
+                                Text(
+                                    text = "MCP enabled",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            if (inst.trustSelfSigned) {
+                                Text(
+                                    text = "Self-signed",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        if (!inst.mcpServerUrls.isNullOrEmpty()) {
+                            Text(
+                                text = inst.mcpServerUrls.joinToString(", ") { it.label },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                    }
                 }
             }
-        },
-        confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (newCount > 0 || duplicateCount > 0) {
-                    TextButton(onClick = onReplace) { Text("Replace All") }
-                }
-                TextButton(onClick = onMerge) {
-                    Text(if (newCount > 0) "Merge" else "Import")
+
+            preview.llmConfig?.let { config ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "LLM Configuration",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        if (config is com.example.aapremote.assistant.data.LlmProviderConfig.OpenAiCompatible) {
+                            Text(
+                                text = config.model,
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            Text(
+                                text = config.url,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = if (config.apiKey != null) "API key: ••••${config.apiKey.takeLast(4)}" else "No API key",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                            Text(
+                                text = "Token mode: ${config.tokenSavingMode.displayName}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                    }
                 }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+
+            if (preview.hasExistingInstances && preview.duplicateCount > 0) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "${preview.duplicateCount} instance(s) already on this device.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (preview.hasExistingInstances) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Cancel") }
+                    OutlinedButton(
+                        onClick = onReplace,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Replace existing") }
+                    Button(
+                        onClick = onMerge,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Add new") }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Cancel") }
+                    Button(
+                        onClick = onMerge,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Restore") }
+                }
+            }
         }
-    )
+    }
 }
 
 @Composable
@@ -425,11 +560,8 @@ fun ImportFromBackupButton(
     }
 
     (uiState as? BackupUiState.ImportPreview)?.let { preview ->
-        ImportPreviewDialog(
-            totalInstances = preview.envelope.instances.size,
-            duplicateCount = preview.duplicateCount,
-            newCount = preview.newCount,
-            hasLlmConfig = preview.envelope.llmConfig != null,
+        ImportPreviewScreen(
+            preview = preview,
             onMerge = { viewModel.confirmImport(ImportMode.MERGE) },
             onReplace = { viewModel.confirmImport(ImportMode.REPLACE) },
             onDismiss = { viewModel.dismiss() }
