@@ -1,6 +1,7 @@
 package com.example.aapremote.assistant.engine
 
-import com.example.aapremote.assistant.llm.ToolCall
+import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.ResponseMetaInfo
 import com.example.aapremote.assistant.tools.ErrorType
 import com.example.aapremote.assistant.tools.Tool
 import com.example.aapremote.assistant.tools.ToolResult
@@ -16,14 +17,16 @@ import org.junit.Test
 
 class ToolExecutorTest {
 
+    private fun toolCall(name: String, args: String = "{}"): Message.Tool.Call =
+        Message.Tool.Call(id = "1", tool = name, content = args, metaInfo = ResponseMetaInfo.Empty)
+
     @Test
     fun `execute dispatches to correct tool by name`() = runTest {
         val tool1 = StubTool("tool_a", ToolResult(success = true, data = "result_a"))
         val tool2 = StubTool("tool_b", ToolResult(success = true, data = "result_b"))
         val executor = ToolExecutor(listOf<Tool>(tool1, tool2))
 
-        val call = ToolCall("1", "tool_b", JsonObject(emptyMap()))
-        val result = executor.execute(call)
+        val result = executor.execute(toolCall("tool_b"))
 
         assertTrue(result.success)
         assertEquals("result_b", result.data)
@@ -33,8 +36,7 @@ class ToolExecutorTest {
     fun `execute returns NOT_FOUND for unknown tool`() = runTest {
         val executor = ToolExecutor(emptyList())
 
-        val call = ToolCall("1", "nonexistent", JsonObject(emptyMap()))
-        val result = executor.execute(call)
+        val result = executor.execute(toolCall("nonexistent"))
 
         assertFalse(result.success)
         assertEquals(ErrorType.NOT_FOUND, result.errorType)
@@ -47,8 +49,7 @@ class ToolExecutorTest {
         val tool = StubTool("big_tool", ToolResult(success = true, data = longData))
         val executor = ToolExecutor(listOf<Tool>(tool), maxResultChars = 20_000)
 
-        val call = ToolCall("1", "big_tool", JsonObject(emptyMap()))
-        val result = executor.execute(call)
+        val result = executor.execute(toolCall("big_tool"))
 
         assertTrue(result.success)
         assertTrue(result.data!!.contains("chars truncated"))
@@ -61,8 +62,7 @@ class ToolExecutorTest {
         val tool = StubTool("small_tool", ToolResult(success = true, data = data))
         val executor = ToolExecutor(listOf<Tool>(tool))
 
-        val call = ToolCall("1", "small_tool", JsonObject(emptyMap()))
-        val result = executor.execute(call)
+        val result = executor.execute(toolCall("small_tool"))
 
         assertEquals(data, result.data)
     }
@@ -101,8 +101,7 @@ class ToolExecutorTest {
             put("count", 42)
             put("enabled", true)
         }
-        val call = ToolCall("1", "arg_tool", args)
-        executor.execute(call)
+        executor.execute(toolCall("arg_tool", args.toString()))
 
         assertEquals("test", capturedArgs!!["name"])
         assertEquals(42L, capturedArgs!!["count"])

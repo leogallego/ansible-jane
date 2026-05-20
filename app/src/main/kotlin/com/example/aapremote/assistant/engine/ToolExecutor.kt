@@ -1,6 +1,6 @@
 package com.example.aapremote.assistant.engine
 
-import com.example.aapremote.assistant.llm.ToolCall
+import ai.koog.prompt.message.Message
 import com.example.aapremote.assistant.tools.ErrorType
 import com.example.aapremote.assistant.tools.Tool
 import com.example.aapremote.assistant.tools.ToolResult
@@ -8,7 +8,9 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
@@ -21,29 +23,35 @@ class ToolExecutor(
 ) {
     private val resultCache = mutableMapOf<String, Pair<Long, ToolResult>>()
 
-    suspend fun execute(toolCall: ToolCall): ToolResult {
-        val tool = tools.find { it.spec.name == toolCall.name }
+    suspend fun execute(toolCall: Message.Tool.Call): ToolResult {
+        val tool = tools.find { it.spec.name == toolCall.tool }
             ?: return ToolResult(
                 success = false,
-                data = "Tool '${toolCall.name}' not found",
+                data = "Tool '${toolCall.tool}' not found",
                 errorType = ErrorType.NOT_FOUND
             )
 
-        val cacheKey = "${toolCall.name}:${toolCall.arguments.hashCode()}"
+        val cacheKey = "${toolCall.tool}:${toolCall.content.hashCode()}"
         val cached = resultCache[cacheKey]
         if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
             return cached.second
         }
 
+        val argsJson = try {
+            json.parseToJsonElement(toolCall.content)
+        } catch (_: Exception) {
+            JsonObject(emptyMap())
+        }
+        val argsMap = if (argsJson is JsonObject) jsonObjectToMap(argsJson) else emptyMap()
+
         val result = try {
             withTimeout(30_000L) {
-                val args = jsonObjectToMap(toolCall.arguments)
-                tool.execute(args)
+                tool.execute(argsMap)
             }
         } catch (_: TimeoutCancellationException) {
             return ToolResult(
                 success = false,
-                data = "Tool '${toolCall.name}' timed out after 30s",
+                data = "Tool '${toolCall.tool}' timed out after 30s",
                 errorType = ErrorType.TIMEOUT
             )
         }
@@ -63,15 +71,15 @@ class ToolExecutor(
         return finalResult
     }
 
-    private fun jsonObjectToMap(json: kotlinx.serialization.json.JsonObject): Map<String, Any> {
+    private fun jsonObjectToMap(json: JsonObject): Map<String, Any> {
         return json.entries.associate { (key, value) ->
             key to jsonElementToAny(value)
         }
     }
 
-    private fun jsonElementToAny(element: kotlinx.serialization.json.JsonElement): Any {
+    private fun jsonElementToAny(element: JsonElement): Any {
         return when (element) {
-            is kotlinx.serialization.json.JsonPrimitive -> {
+            is JsonPrimitive -> {
                 when {
                     element.isString -> element.content
                     element.content == "true" -> true
@@ -80,8 +88,8 @@ class ToolExecutor(
                     else -> element.content.toLongOrNull() ?: element.content
                 }
             }
-            is kotlinx.serialization.json.JsonArray -> element.map { jsonElementToAny(it) }
-            is kotlinx.serialization.json.JsonObject -> jsonObjectToMap(element)
+            is JsonArray -> element.map { jsonElementToAny(it) }
+            is JsonObject -> jsonObjectToMap(element)
         }
     }
 

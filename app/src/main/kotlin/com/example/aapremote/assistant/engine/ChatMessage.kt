@@ -1,6 +1,5 @@
 package com.example.aapremote.assistant.engine
 
-import com.example.aapremote.assistant.llm.ToolCall
 import java.util.concurrent.atomic.AtomicLong
 
 enum class Role { USER, ASSISTANT, TOOL, SYSTEM }
@@ -8,8 +7,9 @@ enum class Role { USER, ASSISTANT, TOOL, SYSTEM }
 data class ChatMessage(
     val role: Role,
     val content: String,
-    val toolCalls: List<ToolCall>? = null,
+    val toolCallsJson: String? = null,
     val toolCallId: String? = null,
+    val toolName: String? = null,
     val timestamp: Long = System.currentTimeMillis(),
     val id: Long = nextId.getAndIncrement()
 ) {

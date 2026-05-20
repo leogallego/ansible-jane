@@ -1,11 +1,13 @@
 package com.example.aapremote.assistant.engine
 
+import ai.koog.agents.core.tools.ToolDescriptor
+import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.ResponseMetaInfo
+import ai.koog.prompt.streaming.StreamFrame
 import app.cash.turbine.test
 import com.example.aapremote.assistant.llm.LlmProvider
-import com.example.aapremote.assistant.llm.LlmResult
 import com.example.aapremote.assistant.llm.ModelInfo
-import com.example.aapremote.assistant.llm.StreamEvent
-import com.example.aapremote.assistant.llm.ToolCall
 import com.example.aapremote.assistant.tools.Tool
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
@@ -13,8 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -24,7 +24,7 @@ class ChatEngineTest {
     @Test
     fun `single turn text response emits TextDelta and AssistantMessage`() = runTest {
         val provider = FakeLlmProvider(listOf(
-            LlmResult(text = "Hello there!", toolCalls = emptyList())
+            FakeResponse(text = "Hello there!")
         ))
         val executor = ToolExecutor(emptyList())
         val engine = ChatEngine(provider, executor)
@@ -44,15 +44,12 @@ class ChatEngineTest {
 
     @Test
     fun `tool calling loop executes tools and re-sends to LLM`() = runTest {
-        val toolCallResult = LlmResult(
-            text = null,
-            toolCalls = listOf(
-                ToolCall("call_1", "list_jobs", buildJsonObject { put("status", "failed") })
-            )
-        )
-        val finalResult = LlmResult(text = "Found 3 failed jobs.", toolCalls = emptyList())
-
-        val provider = FakeLlmProvider(listOf(toolCallResult, finalResult))
+        val provider = FakeLlmProvider(listOf(
+            FakeResponse(toolCalls = listOf(
+                FakeToolCall("call_1", "list_jobs", """{"status":"failed"}""")
+            )),
+            FakeResponse(text = "Found 3 failed jobs.")
+        ))
         val fakeTool = FakeTool(
             spec = ToolSpec("list_jobs", "List jobs", JsonObject(emptyMap())),
             result = ToolResult(success = true, data = "[{\"id\":1},{\"id\":2},{\"id\":3}]")
@@ -82,14 +79,12 @@ class ChatEngineTest {
 
     @Test
     fun `max iteration limit stops infinite loops`() = runTest {
-        val toolCallResult = LlmResult(
-            text = null,
-            toolCalls = listOf(
-                ToolCall("call_1", "loop_tool", JsonObject(emptyMap()))
-            )
-        )
         val provider = FakeLlmProvider(
-            (1..15).map { toolCallResult }.toList()
+            (1..15).map {
+                FakeResponse(toolCalls = listOf(
+                    FakeToolCall("call_1", "loop_tool", "{}")
+                ))
+            }
         )
         val fakeTool = FakeTool(
             spec = ToolSpec("loop_tool", "Loops", JsonObject(emptyMap())),
@@ -132,34 +127,66 @@ class ChatEngineTest {
     }
 }
 
+private data class FakeToolCall(val id: String, val name: String, val arguments: String)
+
+private data class FakeResponse(
+    val text: String? = null,
+    val toolCalls: List<FakeToolCall> = emptyList()
+)
+
 private class FakeLlmProvider(
-    private val results: List<LlmResult> = emptyList(),
+    private val responses: List<FakeResponse> = emptyList(),
     private val error: Throwable? = null
 ) : LlmProvider {
     private var callIndex = 0
 
     override suspend fun generate(
-        messages: List<ChatMessage>,
-        tools: List<ToolSpec>,
+        prompt: Prompt,
+        tools: List<ToolDescriptor>,
         maxTokens: Int?
-    ): LlmResult = results.getOrElse(callIndex++) { LlmResult() }
+    ): List<Message.Response> {
+        val resp = responses.getOrElse(callIndex++) { FakeResponse() }
+        return buildResponseMessages(resp)
+    }
 
     override fun generateStream(
-        messages: List<ChatMessage>,
-        tools: List<ToolSpec>,
+        prompt: Prompt,
+        tools: List<ToolDescriptor>,
         maxTokens: Int?
-    ): Flow<StreamEvent> = flow {
+    ): Flow<StreamFrame> = flow {
         if (error != null) {
-            emit(StreamEvent.Error(error))
-            return@flow
+            throw error
         }
-        val result = results.getOrElse(callIndex++) { LlmResult() }
-        result.text?.let { emit(StreamEvent.TextDelta(it)) }
-        emit(StreamEvent.Done(result))
+        val resp = responses.getOrElse(callIndex++) { FakeResponse() }
+        resp.text?.let { emit(StreamFrame.TextDelta(it)) }
+        for (tc in resp.toolCalls) {
+            emit(StreamFrame.ToolCallComplete(
+                id = tc.id,
+                name = tc.name,
+                content = tc.arguments
+            ))
+        }
+        emit(StreamFrame.End(finishReason = "stop"))
     }
 
     override fun isAvailable(): Boolean = true
     override fun modelInfo(): ModelInfo = ModelInfo("fake-model")
+
+    private fun buildResponseMessages(resp: FakeResponse): List<Message.Response> {
+        val messages = mutableListOf<Message.Response>()
+        if (resp.text != null) {
+            messages.add(Message.Assistant(content = resp.text, metaInfo = ResponseMetaInfo.Empty))
+        }
+        for (tc in resp.toolCalls) {
+            messages.add(Message.Tool.Call(
+                id = tc.id,
+                tool = tc.name,
+                content = tc.arguments,
+                metaInfo = ResponseMetaInfo.Empty
+            ))
+        }
+        return messages
+    }
 }
 
 private class FakeTool(

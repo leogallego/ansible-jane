@@ -1,21 +1,28 @@
 package com.example.aapremote.assistant.engine
 
+import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.RequestMetaInfo
+import ai.koog.prompt.message.ResponseMetaInfo
+import ai.koog.prompt.streaming.StreamFrame
 import com.example.aapremote.assistant.llm.LlmAuthException
 import com.example.aapremote.assistant.llm.LlmProvider
 import com.example.aapremote.assistant.llm.LlmRateLimitException
 import com.example.aapremote.assistant.llm.LlmServerException
 import com.example.aapremote.assistant.llm.LlmTimeoutException
-import com.example.aapremote.assistant.llm.StreamEvent
-import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
+import com.example.aapremote.assistant.tools.toToolDescriptor
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration.Companion.seconds
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.io.IOException
 
 sealed interface ChatEvent {
@@ -31,6 +38,8 @@ class ChatEngine(
     private val toolExecutor: ToolExecutor,
     private val maxIterations: Int = 10
 ) {
+    private val json = Json { ignoreUnknownKeys = true }
+
     fun processMessage(
         userMessage: String,
         history: List<ChatMessage>,
@@ -44,92 +53,119 @@ class ChatEngine(
                 .forEach { messages.add(it) }
             messages.add(ChatMessage(role = Role.USER, content = userMessage))
 
+            val toolDescriptors = tools.map { it.toToolDescriptor() }
             var iterations = 0
             var totalToolCalls = 0
-            var streamError: Throwable? = null
             val toolCallHistory = mutableListOf<List<String>>()
 
             loop@ while (iterations < maxIterations) {
                 iterations++
                 coroutineContext.ensureActive()
                 val textBuilder = StringBuilder()
-                var lastResult: com.example.aapremote.assistant.llm.LlmResult? = null
+                val pendingToolCalls = mutableMapOf<String, MutableToolCall>()
 
                 trimMessages(messages)
-                provider.generateStream(messages, tools, maxTokens).collect { event ->
-                    when (event) {
-                        is StreamEvent.TextDelta -> {
-                            textBuilder.append(event.text)
-                            emit(ChatEvent.TextDelta(event.text))
+                val prompt = buildPrompt(messages)
+
+                provider.generateStream(prompt, toolDescriptors, maxTokens).collect { frame ->
+                    when (frame) {
+                        is StreamFrame.TextDelta -> {
+                            textBuilder.append(frame.text)
+                            emit(ChatEvent.TextDelta(frame.text))
                         }
-                        is StreamEvent.ToolCallStart -> {}
-                        is StreamEvent.ToolCallArgs -> {}
-                        is StreamEvent.Done -> {
-                            lastResult = event.result
+                        is StreamFrame.ToolCallDelta -> {
+                            val id = frame.id ?: return@collect
+                            val tc = pendingToolCalls.getOrPut(id) { MutableToolCall(id) }
+                            if (frame.name != null) tc.name = frame.name
+                            if (frame.content != null) tc.args.append(frame.content)
                         }
-                        is StreamEvent.Error -> {
-                            streamError = event.cause
+                        is StreamFrame.ToolCallComplete -> {
+                            val id = frame.id ?: return@collect
+                            val tc = pendingToolCalls.getOrPut(id) { MutableToolCall(id) }
+                            tc.name = frame.name
+                            tc.args.clear()
+                            tc.args.append(frame.content)
                         }
+                        is StreamFrame.End -> { /* handled after collect */ }
+                        else -> { /* ReasoningDelta etc — ignore */ }
                     }
                 }
 
-                if (streamError != null) {
-                    emit(ChatEvent.Error(
-                        "LLM error: ${streamError.message}",
-                        streamError
-                    ))
-                    return@flow
-                }
+                val completedCalls = pendingToolCalls.values
+                    .filter { it.name != null }
+                    .map { tc ->
+                        Message.Tool.Call(
+                            id = tc.id,
+                            tool = tc.name!!,
+                            content = tc.args.toString().ifEmpty { "{}" },
+                            metaInfo = ResponseMetaInfo.Empty
+                        )
+                    }
 
-                val result = lastResult ?: break
+                val responseText = textBuilder.toString().ifEmpty { null }
 
-                if (result.toolCalls.isNotEmpty() && iterations < maxIterations) {
-                    val currentSignature = result.toolCalls.map {
-                        "${it.name}:${it.arguments.hashCode()}"
+                if (completedCalls.isNotEmpty() && iterations < maxIterations) {
+                    val currentSignature = completedCalls.map {
+                        "${it.tool}:${it.content.hashCode()}"
                     }
                     toolCallHistory.add(currentSignature)
 
                     if (isRepeatingToolCalls(toolCallHistory)) {
                         emit(ChatEvent.AssistantMessage(
-                            (result.text ?: "") + "\n\nStopped: the same tools were being called repeatedly.",
+                            (responseText ?: "") + "\n\nStopped: the same tools were being called repeatedly.",
                             totalToolCalls
                         ))
                         return@flow
                     }
 
-                    val assistantContent = result.text ?: ""
+                    val toolCallsJson = json.encodeToString(
+                        JsonArray.serializer(),
+                        JsonArray(completedCalls.map { tc ->
+                            JsonObject(mapOf(
+                                "id" to kotlinx.serialization.json.JsonPrimitive(tc.id),
+                                "name" to kotlinx.serialization.json.JsonPrimitive(tc.tool),
+                                "arguments" to kotlinx.serialization.json.JsonPrimitive(tc.content)
+                            ))
+                        })
+                    )
                     messages.add(ChatMessage(
                         role = Role.ASSISTANT,
-                        content = assistantContent,
-                        toolCalls = result.toolCalls
+                        content = responseText ?: "",
+                        toolCallsJson = toolCallsJson
                     ))
 
                     val toolSummaries = mutableListOf<String>()
-                    for (toolCall in result.toolCalls) {
-                        emit(ChatEvent.ToolExecuting(toolCall.name, toolCall.arguments))
+                    for (toolCall in completedCalls) {
+                        val argsJson = try {
+                            json.parseToJsonElement(toolCall.content).jsonObject
+                        } catch (_: Exception) {
+                            JsonObject(emptyMap())
+                        }
+                        emit(ChatEvent.ToolExecuting(toolCall.tool, argsJson))
 
                         val toolResult = toolExecutor.execute(toolCall)
                         totalToolCalls++
 
-                        emit(ChatEvent.ToolResult(toolCall.name, toolResult))
+                        emit(ChatEvent.ToolResult(toolCall.tool, toolResult))
 
                         messages.add(ChatMessage(
                             role = Role.TOOL,
                             content = toolResult.data
                                 ?: "Tool execution failed: ${toolResult.errorType ?: "unknown error"}",
-                            toolCallId = toolCall.id
+                            toolCallId = toolCall.id,
+                            toolName = toolCall.tool
                         ))
-                        toolSummaries.add("${toolCall.name}: ${toolResult.data?.take(200) ?: "error"}")
+                        toolSummaries.add("${toolCall.tool}: ${toolResult.data?.take(200) ?: "error"}")
                     }
 
                     if (iterations > 1) {
                         compactToolMessages(messages, toolSummaries)
                     }
                 } else {
-                    val finalText = if (result.toolCalls.isNotEmpty() && iterations >= maxIterations) {
-                        (result.text ?: "") + "\n\nI wasn't able to complete this request within the tool call limit."
+                    val finalText = if (completedCalls.isNotEmpty() && iterations >= maxIterations) {
+                        (responseText ?: "") + "\n\nI wasn't able to complete this request within the tool call limit."
                     } else {
-                        result.text ?: textBuilder.toString()
+                        responseText ?: textBuilder.toString()
                     }
                     emit(ChatEvent.AssistantMessage(finalText, totalToolCalls))
                     return@flow
@@ -155,6 +191,57 @@ class ChatEngine(
         }
     }
 
+    private fun buildPrompt(messages: List<ChatMessage>): Prompt {
+        val koogMessages = messages.flatMap { msg ->
+            when (msg.role) {
+                Role.SYSTEM -> listOf(Message.System(
+                    content = msg.content,
+                    metaInfo = RequestMetaInfo.Empty
+                ))
+                Role.USER -> listOf(Message.User(
+                    content = msg.content,
+                    metaInfo = RequestMetaInfo.Empty
+                ))
+                Role.ASSISTANT -> {
+                    if (msg.toolCallsJson != null) {
+                        parseToolCalls(msg.toolCallsJson)
+                    } else {
+                        listOf(Message.Assistant(
+                            content = msg.content,
+                            metaInfo = ResponseMetaInfo.Empty
+                        ))
+                    }
+                }
+                Role.TOOL -> listOf(Message.Tool.Result(
+                    id = msg.toolCallId,
+                    tool = msg.toolName ?: msg.toolCallId ?: "",
+                    content = msg.content,
+                    metaInfo = RequestMetaInfo.Empty
+                ))
+            }
+        }
+        return Prompt(messages = koogMessages, id = "chat")
+    }
+
+    private fun parseToolCalls(toolCallsJson: String): List<Message.Tool.Call> {
+        return try {
+            val element = json.parseToJsonElement(toolCallsJson)
+            if (element is JsonArray) {
+                element.map { el ->
+                    val obj = el.jsonObject
+                    Message.Tool.Call(
+                        id = obj["id"]?.jsonPrimitive?.content,
+                        tool = obj["name"]?.jsonPrimitive?.content ?: "",
+                        content = obj["arguments"]?.jsonPrimitive?.content ?: "{}",
+                        metaInfo = ResponseMetaInfo.Empty
+                    )
+                }
+            } else emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     private fun compactToolMessages(
         messages: MutableList<ChatMessage>,
         currentSummaries: List<String>
@@ -162,7 +249,7 @@ class ChatEngine(
         val keepFrom = messages.indexOfLast { it.role == Role.USER } + 1
         val toCompact = mutableListOf<Int>()
         for (i in keepFrom until messages.size - currentSummaries.size) {
-            if (messages[i].role == Role.TOOL || (messages[i].role == Role.ASSISTANT && messages[i].toolCalls != null)) {
+            if (messages[i].role == Role.TOOL || (messages[i].role == Role.ASSISTANT && messages[i].toolCallsJson != null)) {
                 toCompact.add(i)
             }
         }
@@ -213,28 +300,9 @@ class ChatEngine(
         }
     }
 
-    private suspend fun <T> retryWithBackoff(
-        maxAttempts: Int = 3,
-        block: suspend () -> T
-    ): T {
-        var lastException: Exception? = null
-        repeat(maxAttempts) { attempt ->
-            try {
-                return block()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: LlmAuthException) {
-                throw e
-            } catch (e: LlmRateLimitException) {
-                throw e
-            } catch (e: Exception) {
-                lastException = e
-                if (attempt < maxAttempts - 1) {
-                    delay((attempt + 1).seconds)
-                }
-            }
-        }
-        throw lastException!!
+    private class MutableToolCall(val id: String) {
+        var name: String? = null
+        val args = StringBuilder()
     }
 
     companion object {
