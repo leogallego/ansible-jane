@@ -356,6 +356,87 @@ private fun ImportPreviewDialog(
     )
 }
 
+@Composable
+fun ImportFromBackupButton(
+    onNavigateToDashboard: () -> Unit,
+    viewModel: BackupViewModel = koinViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    var showPasswordDialog by remember { mutableStateOf(false) }
+    var pendingData by remember { mutableStateOf<ByteArray?>(null) }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            val data = readFromUri(context, uri)
+            if (data != null) {
+                pendingData = data
+                showPasswordDialog = true
+            } else {
+                Toast.makeText(context, "Failed to read file", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is BackupUiState.Success -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                viewModel.dismiss()
+                onNavigateToDashboard()
+            }
+            is BackupUiState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                viewModel.dismiss()
+            }
+            else -> {}
+        }
+    }
+
+    TextButton(
+        onClick = { importLauncher.launch(arrayOf("*/*")) },
+        modifier = Modifier.testTag("button_import_backup_auth")
+    ) {
+        Icon(
+            Icons.Default.FileDownload,
+            contentDescription = null,
+            modifier = Modifier
+                .size(18.dp)
+                .padding(end = 4.dp)
+        )
+        Text("Import from backup")
+    }
+
+    if (showPasswordDialog) {
+        ImportPasswordDialog(
+            onConfirm = { password ->
+                showPasswordDialog = false
+                pendingData?.let { viewModel.startImport(it, password) }
+                pendingData = null
+            },
+            onDismiss = {
+                showPasswordDialog = false
+                pendingData = null
+            }
+        )
+    }
+
+    (uiState as? BackupUiState.ImportPreview)?.let { preview ->
+        ImportPreviewDialog(
+            totalInstances = preview.envelope.instances.size,
+            duplicateCount = preview.duplicateCount,
+            newCount = preview.newCount,
+            hasLlmConfig = preview.envelope.llmConfig != null,
+            onMerge = { viewModel.confirmImport(ImportMode.MERGE) },
+            onReplace = { viewModel.confirmImport(ImportMode.REPLACE) },
+            onDismiss = { viewModel.dismiss() }
+        )
+    }
+}
+
 private fun writeToUri(context: Context, uri: Uri, data: ByteArray) {
     context.contentResolver.openOutputStream(uri)?.use { it.write(data) }
 }
