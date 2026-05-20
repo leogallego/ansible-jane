@@ -17,7 +17,6 @@ import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.data.TokenManager
 import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.CertTrustManager
-import com.example.aapremote.network.mcp.McpConnectionState
 import com.example.aapremote.network.mcp.McpServerManager
 
 import kotlinx.coroutines.Job
@@ -45,6 +44,9 @@ class AssistantViewModel(
     val activeInstance get() = tokenManager.activeInstance.value
 
     private var generateJob: Job? = null
+    private var cachedProvider: KoogLlmProvider? = null
+    private var cachedProviderKey: String? = null
+
     private val _llmConfig = MutableStateFlow<LlmProviderConfig?>(null)
     val llmConfig: StateFlow<LlmProviderConfig?> = _llmConfig.asStateFlow()
 
@@ -116,7 +118,7 @@ class AssistantViewModel(
         ) }
 
         val trustSelfSigned = tokenManager.activeInstance.value?.trustSelfSigned == true
-        val provider = KoogLlmProvider(config as LlmProviderConfig.OpenAiCompatible, trustSelfSigned)
+        val provider = getOrCreateProvider(config as LlmProviderConfig.OpenAiCompatible, trustSelfSigned)
 
         mcpServerManager.refreshConnections()
         val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
@@ -178,79 +180,75 @@ class AssistantViewModel(
 
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
-            try {
-                val textBuilder = StringBuilder()
-                var hasPlaceholder = false
+            val textBuilder = StringBuilder()
+            var hasPlaceholder = false
 
-                fun replaceOrAddAssistant(content: String) {
-                    updateState {
-                        val msg = ChatMessage(role = Role.ASSISTANT, content = content)
-                        val msgs = if (hasPlaceholder) messages.dropLast(1) + msg
-                            else messages + msg
-                        copy(messages = msgs)
-                    }
-                    hasPlaceholder = true
+            fun replaceOrAddAssistant(content: String) {
+                updateState {
+                    val msg = ChatMessage(role = Role.ASSISTANT, content = content)
+                    val msgs = if (hasPlaceholder) messages.dropLast(1) + msg
+                        else messages + msg
+                    copy(messages = msgs)
                 }
+                hasPlaceholder = true
+            }
 
-                replaceOrAddAssistant("Thinking...")
+            replaceOrAddAssistant("Thinking...")
 
-                engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens)
-                    .collect { event ->
-                        when (event) {
-                            is ChatEvent.TextDelta -> {
-                                textBuilder.append(event.text)
-                                replaceOrAddAssistant(textBuilder.toString())
+            engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens)
+                .collect { event ->
+                    when (event) {
+                        is ChatEvent.TextDelta -> {
+                            textBuilder.append(event.text)
+                            replaceOrAddAssistant(textBuilder.toString())
+                        }
+                        is ChatEvent.ToolExecuting -> {
+                            val localNames = matchedLocal.map { it.spec.name }.toSet()
+                            val source = if (event.toolName in localNames) "local" else "mcp"
+                            replaceOrAddAssistant("Querying [$source]: ${event.toolName}...")
+                        }
+                        is ChatEvent.ToolResult -> {
+                            replaceOrAddAssistant("Processing results...")
+                            textBuilder.clear()
+                        }
+                        is ChatEvent.AssistantMessage -> {
+                            hasPlaceholder = false
+                            updateState {
+                                val msgs = messages.dropLast(1)
+                                copy(messages = msgs)
                             }
-                            is ChatEvent.ToolExecuting -> {
-                                val localNames = matchedLocal.map { it.spec.name }.toSet()
-                                val source = if (event.toolName in localNames) "local" else "mcp"
-                                replaceOrAddAssistant("Querying [$source]: ${event.toolName}...")
-                            }
-                            is ChatEvent.ToolResult -> {
-                                replaceOrAddAssistant("Processing results...")
-                                textBuilder.clear()
-                            }
-                            is ChatEvent.AssistantMessage -> {
-                                hasPlaceholder = false
-                                updateState {
-                                    val msgs = messages.dropLast(1)
-                                    copy(messages = msgs)
-                                }
-                                val finalMsg = ChatMessage(
-                                    role = Role.ASSISTANT,
-                                    content = event.fullText
+                            val finalMsg = ChatMessage(
+                                role = Role.ASSISTANT,
+                                content = event.fullText
+                            )
+                            repository.addMessage(finalMsg)
+                            updateState {
+                                copy(
+                                    messages = repository.getHistory(),
+                                    isGenerating = false
                                 )
-                                repository.addMessage(finalMsg)
-                                updateState {
-                                    copy(
-                                        messages = repository.getHistory(),
-                                        isGenerating = false
-                                    )
-                                }
                             }
-                            is ChatEvent.Error -> {
-                                hasPlaceholder = false
-                                updateState {
-                                    val msgs = messages.dropLast(1)
-                                    copy(messages = msgs)
-                                }
-                                val errorMsg = ChatMessage(
-                                    role = Role.ASSISTANT,
-                                    content = "Error: ${event.message}"
+                        }
+                        is ChatEvent.Error -> {
+                            hasPlaceholder = false
+                            updateState {
+                                val msgs = messages.dropLast(1)
+                                copy(messages = msgs)
+                            }
+                            val errorMsg = ChatMessage(
+                                role = Role.ASSISTANT,
+                                content = "Error: ${event.message}"
+                            )
+                            repository.addMessage(errorMsg)
+                            updateState {
+                                copy(
+                                    messages = repository.getHistory(),
+                                    isGenerating = false
                                 )
-                                repository.addMessage(errorMsg)
-                                updateState {
-                                    copy(
-                                        messages = repository.getHistory(),
-                                        isGenerating = false
-                                    )
-                                }
                             }
                         }
                     }
-            } finally {
-                provider.close()
-            }
+                }
         }
     }
 
@@ -261,6 +259,10 @@ class AssistantViewModel(
 
     fun updateLlmConfig(config: LlmProviderConfig) {
         _llmConfig.value = config
+        generateJob?.cancel()
+        cachedProvider?.close()
+        cachedProvider = null
+        cachedProviderKey = null
         viewModelScope.launch {
             repository.saveLlmConfig(config)
         }
@@ -341,6 +343,19 @@ class AssistantViewModel(
         }
     }
 
+    private fun getOrCreateProvider(
+        config: LlmProviderConfig.OpenAiCompatible,
+        trustSelfSigned: Boolean
+    ): KoogLlmProvider {
+        val key = "${config.url}|${config.model}|${config.apiKey}|$trustSelfSigned"
+        cachedProvider?.let { if (cachedProviderKey == key) return it }
+        cachedProvider?.close()
+        return KoogLlmProvider(config, trustSelfSigned).also {
+            cachedProvider = it
+            cachedProviderKey = key
+        }
+    }
+
     private fun buildLlmClient(): OkHttpClient {
         val instance = tokenManager.activeInstance.value
         val builder = httpClient.newBuilder()
@@ -355,6 +370,8 @@ class AssistantViewModel(
     override fun onCleared() {
         super.onCleared()
         generateJob?.cancel()
+        cachedProvider?.close()
+        cachedProvider = null
         mcpServerManager.disconnectAll()
     }
 
