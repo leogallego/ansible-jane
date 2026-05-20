@@ -10,7 +10,6 @@
 
 # IDE
 .idea/
-.vscode/
 *.iml
 
 # Claude Code local/sandbox config
@@ -22,6 +21,9 @@
 
 # Documentation scraps
 aap-docs/
+
+# Temporary files
+.tmp/
 
 # Android / Gradle
 build/
