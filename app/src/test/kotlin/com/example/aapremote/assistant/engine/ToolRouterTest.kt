@@ -43,7 +43,7 @@ class ToolRouterTest {
         val jobLocal = localTool("list_jobs")
 
         router.registerLocalTools(listOf(inventoryLocal, inventoryLocal2, jobLocal))
-        val result = router.getToolsForQuery("list my hosts")
+        val result = router.getToolsForQuery("list my hosts").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_hosts" in names)
@@ -61,7 +61,7 @@ class ToolRouterTest {
         )
 
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("launch a job template")
+        val result = router.getToolsForQuery("launch a job template").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_job_templates" in names)
@@ -78,7 +78,7 @@ class ToolRouterTest {
             localTool("list_job_templates")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("hello how are you")
+        val result = router.getToolsForQuery("hello how are you").tools
         assertTrue(result.isEmpty())
     }
 
@@ -91,10 +91,10 @@ class ToolRouterTest {
         )
         router.registerLocalTools(tools)
 
-        assertTrue(router.getToolsForQuery("hi").isEmpty())
-        assertTrue(router.getToolsForQuery("hello there").isEmpty())
-        assertTrue(router.getToolsForQuery("what can you do?").isEmpty())
-        assertTrue(router.getToolsForQuery("thanks").isEmpty())
+        assertTrue(router.getToolsForQuery("hi").tools.isEmpty())
+        assertTrue(router.getToolsForQuery("hello there").tools.isEmpty())
+        assertTrue(router.getToolsForQuery("what can you do?").tools.isEmpty())
+        assertTrue(router.getToolsForQuery("thanks").tools.isEmpty())
     }
 
     @Test
@@ -106,7 +106,7 @@ class ToolRouterTest {
             localTool("list_eda_audit_rules")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("show hosts running failed jobs")
+        val result = router.getToolsForQuery("show hosts running failed jobs").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_hosts" in names)
@@ -122,7 +122,7 @@ class ToolRouterTest {
             localTool("list_jobs")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("show eda audit rules")
+        val result = router.getToolsForQuery("show eda audit rules").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_eda_audit_rules" in names)
@@ -172,7 +172,7 @@ class ToolRouterTest {
         router.registerLocalTools(tools)
         router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
 
-        val result = router.getToolsForQuery("show my hosts and inventories")
+        val result = router.getToolsForQuery("show my hosts and inventories").tools
         val names = result.map { it.spec.name }
 
         assertFalse("list_hosts" in names)
@@ -181,7 +181,7 @@ class ToolRouterTest {
 
     @Test
     fun `SHOULD return empty WHEN no tools registered at all`() {
-        val result = router.getToolsForQuery("list hosts")
+        val result = router.getToolsForQuery("list hosts").tools
         assertTrue(result.isEmpty())
     }
 
@@ -218,7 +218,7 @@ class ToolRouterTest {
             localTool("list_hosts")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("show my workflow templates")
+        val result = router.getToolsForQuery("show my workflow templates").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_workflow_templates" in names)
@@ -235,7 +235,7 @@ class ToolRouterTest {
             localTool("list_hosts")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("show my schedules")
+        val result = router.getToolsForQuery("show my schedules").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_schedules" in names)
@@ -258,7 +258,7 @@ class ToolRouterTest {
             mcpTool("controller.inventories_list")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("list my hosts", listOf(readOnlyConfig))
+        val result = router.getToolsForQuery("list my hosts", listOf(readOnlyConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("controller.hosts_list" in names)
@@ -276,7 +276,7 @@ class ToolRouterTest {
             mcpTool("controller.hosts_delete")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("list hosts", listOf(readWriteConfig))
+        val result = router.getToolsForQuery("list hosts", listOf(readWriteConfig)).tools
         assertEquals(tools.size, result.size)
     }
 
@@ -289,7 +289,7 @@ class ToolRouterTest {
             mcpTool("controller.jobs_cancel")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("show me jobs", listOf(readOnlyConfig))
+        val result = router.getToolsForQuery("show me jobs", listOf(readOnlyConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("controller.jobs_read" in names)
@@ -310,7 +310,7 @@ class ToolRouterTest {
             McpServerConfig(url = "https://kb:3000/mcp", label = "knowledge", readOnly = false)
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("list hosts", configs)
+        val result = router.getToolsForQuery("list hosts", configs).tools
         val names = result.map { it.spec.name to it.spec.description }
 
         assertTrue(names.any { it.first == "controller.hosts_list" && it.second.contains("[aap]") })
@@ -327,7 +327,7 @@ class ToolRouterTest {
             mcpTool("controller.users_list")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig))
+        val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("controller.hosts_list" in names)
@@ -345,7 +345,7 @@ class ToolRouterTest {
             mcpTool("controller.jobs_read")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("launch a job template", listOf(readWriteConfig))
+        val result = router.getToolsForQuery("launch a job template", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("controller.job_templates_list" in names)
@@ -363,7 +363,7 @@ class ToolRouterTest {
             mcpTool("controller.dashboard_read")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("check system health", listOf(readWriteConfig))
+        val result = router.getToolsForQuery("check system health", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("controller.instances_list" in names)
@@ -381,7 +381,7 @@ class ToolRouterTest {
             mcpTool("controller.hosts_list")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("list users in my team", listOf(readWriteConfig))
+        val result = router.getToolsForQuery("list users in my team", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("controller.users_list" in names)
@@ -398,7 +398,7 @@ class ToolRouterTest {
             mcpTool("controller.hosts_list")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("show my credentials", listOf(readWriteConfig))
+        val result = router.getToolsForQuery("show my credentials", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("controller.credentials_list" in names)
@@ -415,7 +415,7 @@ class ToolRouterTest {
             mcpTool("controller.hosts_list")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("show project settings", listOf(readWriteConfig))
+        val result = router.getToolsForQuery("show project settings", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("controller.settings_read" in names)
@@ -432,7 +432,7 @@ class ToolRouterTest {
             mcpTool("controller.hosts_list")
         )
         router.registerMcpTools(tools)
-        val result = router.getToolsForQuery("show my workflow templates", listOf(readWriteConfig))
+        val result = router.getToolsForQuery("show my workflow templates", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("controller.workflow_job_templates_list" in names)
@@ -448,9 +448,9 @@ class ToolRouterTest {
         )
         router.registerMcpTools(tools)
 
-        assertTrue(router.getToolsForQuery("hi", listOf(readWriteConfig)).isEmpty())
-        assertTrue(router.getToolsForQuery("hello there", listOf(readWriteConfig)).isEmpty())
-        assertTrue(router.getToolsForQuery("thanks", listOf(readWriteConfig)).isEmpty())
+        assertTrue(router.getToolsForQuery("hi", listOf(readWriteConfig)).tools.isEmpty())
+        assertTrue(router.getToolsForQuery("hello there", listOf(readWriteConfig)).tools.isEmpty())
+        assertTrue(router.getToolsForQuery("thanks", listOf(readWriteConfig)).tools.isEmpty())
     }
 
     // --- Mixed local + MCP tests ---
@@ -465,7 +465,7 @@ class ToolRouterTest {
         router.registerLocalTools(local)
         router.registerMcpTools(mcp)
 
-        val result = router.getToolsForQuery("show my job templates and users")
+        val result = router.getToolsForQuery("show my job templates and users").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_job_templates" in names)
@@ -481,7 +481,7 @@ class ToolRouterTest {
         router.registerLocalTools(local)
         router.registerMcpTools(mcp)
 
-        val result = router.getToolsForQuery("show hosts and users")
+        val result = router.getToolsForQuery("show hosts and users").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_hosts" in names)
@@ -501,7 +501,7 @@ class ToolRouterTest {
             localTool("list_hosts")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("show cluster instances")
+        val result = router.getToolsForQuery("show cluster instances").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_instances" in names)
@@ -520,7 +520,7 @@ class ToolRouterTest {
             localTool("list_hosts")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("check system health")
+        val result = router.getToolsForQuery("check system health").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_instances" in names)
@@ -536,7 +536,7 @@ class ToolRouterTest {
             localTool("list_hosts")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("show my credentials")
+        val result = router.getToolsForQuery("show my credentials").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_credentials" in names)
@@ -553,7 +553,7 @@ class ToolRouterTest {
             localTool("list_hosts")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("list projects")
+        val result = router.getToolsForQuery("list projects").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_projects" in names)
@@ -571,7 +571,7 @@ class ToolRouterTest {
             localTool("list_hosts")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("show eda activations")
+        val result = router.getToolsForQuery("show eda activations").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_eda_activations" in names)
@@ -614,7 +614,7 @@ class ToolRouterTest {
             localTool("toggle_schedule", destructive = true)
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("what job templates are available")
+        val result = router.getToolsForQuery("what job templates are available").tools
 
         assertTrue(result.size >= 5)
         val top5 = result.take(5).map { it.spec.name }
@@ -636,7 +636,7 @@ class ToolRouterTest {
             localTool("list_jobs")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("show my schedules")
+        val result = router.getToolsForQuery("show my schedules").tools
         val names = result.map { it.spec.name }
 
         assertEquals("list_schedules", names[0])
@@ -650,7 +650,7 @@ class ToolRouterTest {
             localTool("list_hosts")
         )
         router.registerLocalTools(tools)
-        val result = router.getToolsForQuery("show mesh topology")
+        val result = router.getToolsForQuery("show mesh topology").tools
         val names = result.map { it.spec.name }
 
         assertTrue("get_mesh_topology" in names)

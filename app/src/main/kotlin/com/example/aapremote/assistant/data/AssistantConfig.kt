@@ -10,20 +10,20 @@ enum class TokenSavingMode {
     @SerialName("token_saver")
     TOKEN_SAVER,
     @SerialName("minimal")
-    MINIMAL;
+    TOOLS_ONLY;
 
     val displayName: String
         get() = when (this) {
             STANDARD -> "Standard"
             TOKEN_SAVER -> "Token Saver"
-            MINIMAL -> "Minimal"
+            TOOLS_ONLY -> "Tools Only"
         }
 
     val description: String
         get() = when (this) {
             STANDARD -> "Full conversation with LLM, tools when relevant"
             TOKEN_SAVER -> "Short replies for general chat, tools when relevant"
-            MINIMAL -> "Tools only — no LLM call for general chat"
+            TOOLS_ONLY -> "Tools only — no general conversation"
         }
 }
 
