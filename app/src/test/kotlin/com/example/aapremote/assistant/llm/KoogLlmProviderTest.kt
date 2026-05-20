@@ -1,9 +1,13 @@
 package com.example.aapremote.assistant.llm
 
+import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.RequestMetaInfo
+import ai.koog.prompt.streaming.StreamFrame
 import com.example.aapremote.assistant.data.LlmProviderConfig
-import com.example.aapremote.assistant.engine.ChatMessage
-import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.tools.ToolSpec
+import com.example.aapremote.assistant.tools.toToolDescriptor
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -12,7 +16,6 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -37,8 +40,14 @@ class KoogLlmProviderTest {
 
     @After
     fun tearDown() {
+        provider.close()
         server.shutdown()
     }
+
+    private fun userPrompt(content: String): Prompt = Prompt(
+        messages = listOf(Message.User(content = content, metaInfo = RequestMetaInfo.Empty)),
+        id = "test"
+    )
 
     private fun textResponse(content: String) = MockResponse()
         .setBody(
@@ -62,8 +71,7 @@ class KoogLlmProviderTest {
     fun `generate sends correct request format`() = runTest {
         server.enqueue(textResponse("Hello!"))
 
-        val messages = listOf(ChatMessage(role = Role.USER, content = "Hi"))
-        provider.generate(messages, emptyList())
+        provider.generate(userPrompt("Hi"), emptyList())
 
         val request = server.takeRequest()
         assertEquals("POST", request.method)
@@ -78,28 +86,23 @@ class KoogLlmProviderTest {
     fun `generate parses text response`() = runTest {
         server.enqueue(textResponse("The answer is 42"))
 
-        val result = provider.generate(
-            listOf(ChatMessage(role = Role.USER, content = "What is the answer?")),
-            emptyList()
-        )
+        val result = provider.generate(userPrompt("What is the answer?"), emptyList())
 
-        assertEquals("The answer is 42", result.text)
-        assertTrue(result.toolCalls.isEmpty())
+        val assistant = result.filterIsInstance<Message.Assistant>()
+        assertEquals(1, assistant.size)
+        assertEquals("The answer is 42", assistant[0].content)
     }
 
     @Test
     fun `generate parses tool calls`() = runTest {
         server.enqueue(toolCallResponse())
 
-        val result = provider.generate(
-            listOf(ChatMessage(role = Role.USER, content = "List failed jobs")),
-            emptyList()
-        )
+        val result = provider.generate(userPrompt("List failed jobs"), emptyList())
 
-        assertNull(result.text)
-        assertEquals(1, result.toolCalls.size)
-        assertEquals("call_1", result.toolCalls[0].id)
-        assertEquals("list_jobs", result.toolCalls[0].name)
+        val toolCalls = result.filterIsInstance<Message.Tool.Call>()
+        assertEquals(1, toolCalls.size)
+        assertEquals("call_1", toolCalls[0].id)
+        assertEquals("list_jobs", toolCalls[0].tool)
     }
 
     @Test
@@ -111,10 +114,7 @@ class KoogLlmProviderTest {
         )
 
         try {
-            provider.generate(
-                listOf(ChatMessage(role = Role.USER, content = "test")),
-                emptyList()
-            )
+            provider.generate(userPrompt("test"), emptyList())
             throw AssertionError("Expected exception was not thrown")
         } catch (e: LlmAuthException) {
             // Expected
@@ -130,10 +130,7 @@ class KoogLlmProviderTest {
         )
 
         try {
-            provider.generate(
-                listOf(ChatMessage(role = Role.USER, content = "test")),
-                emptyList()
-            )
+            provider.generate(userPrompt("test"), emptyList())
             throw AssertionError("Expected exception was not thrown")
         } catch (e: LlmRateLimitException) {
             // Expected
@@ -149,10 +146,7 @@ class KoogLlmProviderTest {
         )
 
         try {
-            provider.generate(
-                listOf(ChatMessage(role = Role.USER, content = "test")),
-                emptyList()
-            )
+            provider.generate(userPrompt("test"), emptyList())
             throw AssertionError("Expected exception was not thrown")
         } catch (e: LlmServerException) {
             // Expected
@@ -178,10 +172,7 @@ class KoogLlmProviderTest {
             )
         )
 
-        provider.generate(
-            listOf(ChatMessage(role = Role.USER, content = "test")),
-            tools
-        )
+        provider.generate(userPrompt("test"), tools.map { it.toToolDescriptor() })
 
         val body = server.takeRequest().body.readUtf8()
         assertTrue(body.contains("list_jobs"))
