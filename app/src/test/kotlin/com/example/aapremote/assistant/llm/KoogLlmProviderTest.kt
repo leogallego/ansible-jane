@@ -49,29 +49,33 @@ class KoogLlmProviderTest {
         id = "test"
     )
 
-    private fun textResponse(content: String) = MockResponse()
-        .setBody(
-            """{"id":"chatcmpl-1","object":"chat.completion","created":1700000000,"model":"test-model",""" +
-                """"choices":[{"index":0,"message":{"role":"assistant","content":"$content"},"finish_reason":"stop"}],""" +
-                """"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}"""
-        )
-        .setHeader("Content-Type", "application/json")
+    private fun sseTextResponse(content: String): MockResponse {
+        val chunk = """{"id":"chatcmpl-1","object":"chat.completion.chunk","created":1700000000,"model":"test-model",""" +
+            """"choices":[{"index":0,"delta":{"role":"assistant","content":"$content"},"finish_reason":null}]}"""
+        val done = """{"id":"chatcmpl-1","object":"chat.completion.chunk","created":1700000000,"model":"test-model",""" +
+            """"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}"""
+        return MockResponse()
+            .setBody("data: $chunk\n\ndata: $done\n\ndata: [DONE]\n\n")
+            .setHeader("Content-Type", "text/event-stream")
+    }
 
-    private fun toolCallResponse() = MockResponse()
-        .setBody(
-            """{"id":"chatcmpl-1","object":"chat.completion","created":1700000000,"model":"test-model",""" +
-                """"choices":[{"index":0,"message":{"role":"assistant","content":null,""" +
-                """"tool_calls":[{"id":"call_1","type":"function","function":{"name":"list_jobs","arguments":"{\"status\":\"failed\"}"}}]},""" +
-                """"finish_reason":"tool_calls"}],""" +
-                """"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}"""
-        )
-        .setHeader("Content-Type", "application/json")
+    private fun sseToolCallResponse(): MockResponse {
+        val chunk1 = """{"id":"chatcmpl-1","object":"chat.completion.chunk","created":1700000000,"model":"test-model",""" +
+            """"choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"list_jobs","arguments":""}}]},"finish_reason":null}]}"""
+        val chunk2 = """{"id":"chatcmpl-1","object":"chat.completion.chunk","created":1700000000,"model":"test-model",""" +
+            """"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\"status\":\"failed\"}"}}]},"finish_reason":null}]}"""
+        val done = """{"id":"chatcmpl-1","object":"chat.completion.chunk","created":1700000000,"model":"test-model",""" +
+            """"choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}"""
+        return MockResponse()
+            .setBody("data: $chunk1\n\ndata: $chunk2\n\ndata: $done\n\ndata: [DONE]\n\n")
+            .setHeader("Content-Type", "text/event-stream")
+    }
 
     @Test
-    fun `generate sends correct request format`() = runTest {
-        server.enqueue(textResponse("Hello!"))
+    fun `generateStream sends correct request format`() = runTest {
+        server.enqueue(sseTextResponse("Hello!"))
 
-        provider.generate(userPrompt("Hi"), emptyList())
+        provider.generateStream(userPrompt("Hi"), emptyList()).toList()
 
         val request = server.takeRequest()
         assertEquals("POST", request.method)
@@ -83,30 +87,31 @@ class KoogLlmProviderTest {
     }
 
     @Test
-    fun `generate parses text response`() = runTest {
-        server.enqueue(textResponse("The answer is 42"))
+    fun `generateStream parses text response`() = runTest {
+        server.enqueue(sseTextResponse("The answer is 42"))
 
-        val result = provider.generate(userPrompt("What is the answer?"), emptyList())
+        val frames = provider.generateStream(userPrompt("What is the answer?"), emptyList()).toList()
 
-        val assistant = result.filterIsInstance<Message.Assistant>()
-        assertEquals(1, assistant.size)
-        assertEquals("The answer is 42", assistant[0].content)
+        val textFrames = frames.filterIsInstance<StreamFrame.TextDelta>()
+        assertTrue(textFrames.isNotEmpty())
+        val fullText = textFrames.joinToString("") { it.text }
+        assertTrue(fullText.contains("The answer is 42"))
     }
 
     @Test
-    fun `generate parses tool calls`() = runTest {
-        server.enqueue(toolCallResponse())
+    fun `generateStream parses tool calls`() = runTest {
+        server.enqueue(sseToolCallResponse())
 
-        val result = provider.generate(userPrompt("List failed jobs"), emptyList())
+        val frames = provider.generateStream(userPrompt("List failed jobs"), emptyList()).toList()
 
-        val toolCalls = result.filterIsInstance<Message.Tool.Call>()
+        val toolCalls = frames.filterIsInstance<StreamFrame.ToolCallComplete>()
         assertEquals(1, toolCalls.size)
         assertEquals("call_1", toolCalls[0].id)
-        assertEquals("list_jobs", toolCalls[0].tool)
+        assertEquals("list_jobs", toolCalls[0].name)
     }
 
     @Test
-    fun `generate throws LlmAuthException on 401`() = runTest {
+    fun `generateStream throws LlmAuthException on 401`() = runTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(401)
@@ -114,7 +119,7 @@ class KoogLlmProviderTest {
         )
 
         try {
-            provider.generate(userPrompt("test"), emptyList())
+            provider.generateStream(userPrompt("test"), emptyList()).toList()
             throw AssertionError("Expected exception was not thrown")
         } catch (e: LlmAuthException) {
             // Expected
@@ -122,7 +127,7 @@ class KoogLlmProviderTest {
     }
 
     @Test
-    fun `generate throws LlmRateLimitException on 429`() = runTest {
+    fun `generateStream throws LlmRateLimitException on 429`() = runTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(429)
@@ -130,7 +135,7 @@ class KoogLlmProviderTest {
         )
 
         try {
-            provider.generate(userPrompt("test"), emptyList())
+            provider.generateStream(userPrompt("test"), emptyList()).toList()
             throw AssertionError("Expected exception was not thrown")
         } catch (e: LlmRateLimitException) {
             // Expected
@@ -138,7 +143,7 @@ class KoogLlmProviderTest {
     }
 
     @Test
-    fun `generate throws LlmServerException on 500`() = runTest {
+    fun `generateStream throws LlmServerException on 500`() = runTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(500)
@@ -146,7 +151,7 @@ class KoogLlmProviderTest {
         )
 
         try {
-            provider.generate(userPrompt("test"), emptyList())
+            provider.generateStream(userPrompt("test"), emptyList()).toList()
             throw AssertionError("Expected exception was not thrown")
         } catch (e: LlmServerException) {
             // Expected
@@ -154,8 +159,8 @@ class KoogLlmProviderTest {
     }
 
     @Test
-    fun `generate includes tools in request when provided`() = runTest {
-        server.enqueue(textResponse("ok"))
+    fun `generateStream includes tools in request when provided`() = runTest {
+        server.enqueue(sseTextResponse("ok"))
 
         val tools = listOf(
             ToolSpec(
@@ -172,7 +177,7 @@ class KoogLlmProviderTest {
             )
         )
 
-        provider.generate(userPrompt("test"), tools.map { it.toToolDescriptor() })
+        provider.generateStream(userPrompt("test"), tools.map { it.toToolDescriptor() }).toList()
 
         val body = server.takeRequest().body.readUtf8()
         assertTrue(body.contains("list_jobs"))

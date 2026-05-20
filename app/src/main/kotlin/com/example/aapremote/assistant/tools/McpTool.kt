@@ -19,8 +19,6 @@ class McpTool(
     private val serverLabel: String
 ) : Tool {
 
-    val source: ToolSource = ToolSource.MCP
-
     companion object {
         const val MAX_PAGE_SIZE = 10
         private const val MAX_DESCRIPTION_CHARS = 120

@@ -116,10 +116,7 @@ class AssistantViewModel(
         ) }
 
         val trustSelfSigned = tokenManager.activeInstance.value?.trustSelfSigned == true
-        val provider = when (config) {
-            is LlmProviderConfig.OpenAiCompatible ->
-                KoogLlmProvider(config, trustSelfSigned)
-        }
+        val provider = KoogLlmProvider(config as LlmProviderConfig.OpenAiCompatible, trustSelfSigned)
 
         mcpServerManager.refreshConnections()
         val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
@@ -234,7 +231,7 @@ class AssistantViewModel(
                         }
                     }
             } finally {
-                (provider as? KoogLlmProvider)?.close()
+                provider.close()
             }
         }
     }
