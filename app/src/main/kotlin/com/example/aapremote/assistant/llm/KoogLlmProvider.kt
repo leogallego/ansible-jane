@@ -45,10 +45,15 @@ class KoogLlmProvider(
     private val json = Json { ignoreUnknownKeys = true }
 
     private val client: OpenAILLMClient = run {
-        val baseUrl = config.url.trimEnd('/')
+        val parsed = java.net.URI(config.url.trimEnd('/'))
+        val baseUrl = "${parsed.scheme}://${parsed.host}" +
+            if (parsed.port > 0) ":${parsed.port}" else ""
+        val pathPrefix = parsed.path.trimStart('/').trimEnd('/')
+        val chatPath = if (pathPrefix.isNotEmpty()) "$pathPrefix/chat/completions"
+            else "v1/chat/completions"
         val settings = OpenAIClientSettings(
             baseUrl = baseUrl,
-            chatCompletionsPath = "chat/completions"
+            chatCompletionsPath = chatPath
         )
         val httpClient = if (trustSelfSigned) {
             HttpClient(CIO) {

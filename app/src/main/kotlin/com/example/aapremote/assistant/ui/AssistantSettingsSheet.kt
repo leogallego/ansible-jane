@@ -43,6 +43,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
@@ -108,6 +111,7 @@ fun AssistantSettingsSheet(
     ) {
         Column(
             modifier = Modifier
+                .semantics { testTagsAsResourceId = true }
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 16.dp)
                 .verticalScroll(rememberScrollState()),
@@ -141,7 +145,8 @@ fun AssistantSettingsSheet(
                 }
                 Switch(
                     checked = mcpEnabled,
-                    onCheckedChange = onToggleMcp
+                    onCheckedChange = onToggleMcp,
+                    modifier = Modifier.testTag("switch_mcp_enabled")
                 )
             }
 
@@ -270,6 +275,7 @@ fun AssistantSettingsSheet(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(providerExpanded) },
                     modifier = Modifier
                         .fillMaxWidth()
+                        .testTag("field_provider")
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 )
                 ExposedDropdownMenu(
@@ -333,6 +339,7 @@ fun AssistantSettingsSheet(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(modelExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .testTag("field_model")
                             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
                         singleLine = true
                     )
@@ -427,7 +434,7 @@ fun AssistantSettingsSheet(
                     value = llmApiKey,
                     onValueChange = { llmApiKey = it },
                     label = { Text("API Key${if (selectedProvider == KnownProvider.CUSTOM) " (optional)" else ""}") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("field_api_key"),
                     singleLine = true,
                     visualTransformation = if (apiKeyVisible) VisualTransformation.None
                         else PasswordVisualTransformation(),
@@ -504,7 +511,7 @@ fun AssistantSettingsSheet(
                     onSaveLlmConfig(config)
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("button_save_llm"),
                 enabled = (llmUrl.isNotBlank() || !selectedProvider.urlEditable) && llmModel.isNotBlank()
             ) {
                 Text("Save LLM Config")
@@ -514,7 +521,7 @@ fun AssistantSettingsSheet(
 
             OutlinedButton(
                 onClick = onClearHistory,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().testTag("button_clear_history")
             ) {
                 Text("Clear Chat History")
             }
