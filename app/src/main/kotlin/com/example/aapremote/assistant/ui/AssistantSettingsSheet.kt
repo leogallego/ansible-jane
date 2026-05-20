@@ -90,7 +90,7 @@ fun AssistantSettingsSheet(
 
     var providerState by remember {
         mutableStateOf<Map<KnownProvider, Pair<String, String>>>(
-            if (savedConfig != null) mapOf(initialProvider to ((savedConfig.model ?: "") to (savedConfig.apiKey ?: "")))
+            if (savedConfig != null) mapOf(initialProvider to (savedConfig.model to (savedConfig.apiKey ?: "")))
             else emptyMap()
         )
     }

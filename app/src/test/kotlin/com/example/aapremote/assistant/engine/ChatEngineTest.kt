@@ -2,8 +2,6 @@ package com.example.aapremote.assistant.engine
 
 import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.prompt.dsl.Prompt
-import ai.koog.prompt.message.Message
-import ai.koog.prompt.message.ResponseMetaInfo
 import ai.koog.prompt.streaming.StreamFrame
 import app.cash.turbine.test
 import com.example.aapremote.assistant.llm.LlmProvider
@@ -140,15 +138,6 @@ private class FakeLlmProvider(
 ) : LlmProvider {
     private var callIndex = 0
 
-    override suspend fun generate(
-        prompt: Prompt,
-        tools: List<ToolDescriptor>,
-        maxTokens: Int?
-    ): List<Message.Response> {
-        val resp = responses.getOrElse(callIndex++) { FakeResponse() }
-        return buildResponseMessages(resp)
-    }
-
     override fun generateStream(
         prompt: Prompt,
         tools: List<ToolDescriptor>,
@@ -171,22 +160,6 @@ private class FakeLlmProvider(
 
     override fun isAvailable(): Boolean = true
     override fun modelInfo(): ModelInfo = ModelInfo("fake-model")
-
-    private fun buildResponseMessages(resp: FakeResponse): List<Message.Response> {
-        val messages = mutableListOf<Message.Response>()
-        if (resp.text != null) {
-            messages.add(Message.Assistant(content = resp.text, metaInfo = ResponseMetaInfo.Empty))
-        }
-        for (tc in resp.toolCalls) {
-            messages.add(Message.Tool.Call(
-                id = tc.id,
-                tool = tc.name,
-                content = tc.arguments,
-                metaInfo = ResponseMetaInfo.Empty
-            ))
-        }
-        return messages
-    }
 }
 
 private class FakeTool(

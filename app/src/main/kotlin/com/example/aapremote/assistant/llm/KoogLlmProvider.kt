@@ -7,7 +7,7 @@ import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.LLMProvider as KoogLLMProvider
-import ai.koog.prompt.message.Message
+
 import ai.koog.prompt.streaming.StreamFrame
 import ai.koog.http.client.KoogHttpClientException
 import ai.koog.prompt.executor.clients.LLMClientException
@@ -67,16 +67,6 @@ class KoogLlmProvider(
             LLMCapability.OpenAIEndpoint.Completions
         )
     )
-
-    override suspend fun generate(
-        prompt: Prompt,
-        tools: List<ToolDescriptor>,
-        maxTokens: Int?
-    ): List<Message.Response> = try {
-        client.execute(prompt, model, tools)
-    } catch (e: Exception) {
-        throw mapException(e)
-    }
 
     override fun generateStream(
         prompt: Prompt,

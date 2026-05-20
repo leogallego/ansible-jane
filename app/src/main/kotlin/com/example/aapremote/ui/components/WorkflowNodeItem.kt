@@ -44,7 +44,7 @@ fun WorkflowNodeItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(
-                    if (isClickable) Modifier.clickable { onToggleExpand?.invoke() }
+                    if (onToggleExpand != null && job != null) Modifier.clickable { onToggleExpand() }
                     else Modifier
                 )
                 .padding(horizontal = 16.dp, vertical = 8.dp),

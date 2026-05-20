@@ -7,11 +7,6 @@ import com.example.aapremote.model.McpServerConfig
 
 class ToolRouter {
 
-    private val WRITE_ACTIONS = setOf(
-        "_create", "_update", "_delete",
-        "_launch", "_relaunch", "_cancel"
-    )
-
     private val localTools = mutableListOf<LocalTool>()
     private val mcpTools = mutableListOf<Tool>()
     private val disabledTools = mutableSetOf<Pair<String, ToolSource>>()
@@ -94,6 +89,17 @@ class ToolRouter {
 
         private val MCP_TOOLS_WITH_LOCAL_OVERLAP: Set<String> =
             OVERLAP_MAPPING.values.flatten().toSet()
+
+        private val WRITE_ACTIONS = setOf(
+            "_create", "_update", "_delete",
+            "_launch", "_relaunch", "_cancel"
+        )
+
+        private val STOP_WORDS = setOf(
+            "list", "get", "show", "what", "are", "the", "is", "a", "an",
+            "my", "all", "me", "how", "many", "which", "do", "i", "have",
+            "can", "tell", "about", "find", "check", "give"
+        )
     }
 
     fun registerLocalTools(tools: List<LocalTool>) {
@@ -167,12 +173,6 @@ class ToolRouter {
 
         return rankTools(filteredLocal, queryWords) + filteredMcp
     }
-
-    private val STOP_WORDS = setOf(
-        "list", "get", "show", "what", "are", "the", "is", "a", "an",
-        "my", "all", "me", "how", "many", "which", "do", "i", "have",
-        "can", "tell", "about", "find", "check", "give"
-    )
 
     private fun stem(word: String): String {
         return word
