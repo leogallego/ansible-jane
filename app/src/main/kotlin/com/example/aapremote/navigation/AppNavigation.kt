@@ -54,6 +54,7 @@ object Routes {
 
 @Composable
 fun AppNavigation(
+    modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
     val tokenManager: TokenManager = koinInject()
@@ -101,7 +102,8 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = Routes.SPLASH
+        startDestination = Routes.SPLASH,
+        modifier = modifier
     ) {
         composable(
             Routes.SPLASH,

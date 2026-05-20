@@ -80,6 +80,8 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.okhttp.sse)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.koog.openai.client)
+    implementation(libs.ktor.client.cio)
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)

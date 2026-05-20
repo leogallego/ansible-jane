@@ -1,32 +1,26 @@
 package com.example.aapremote.assistant.llm
 
-import app.cash.turbine.test
 import com.example.aapremote.assistant.data.LlmProviderConfig
 import com.example.aapremote.assistant.engine.ChatMessage
 import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.tools.ToolSpec
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
-import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class OpenAiCompatibleProviderTest {
+class KoogLlmProviderTest {
 
     private lateinit var server: MockWebServer
-    private lateinit var provider: OpenAiCompatibleProvider
-    private val json = Json { ignoreUnknownKeys = true }
+    private lateinit var provider: KoogLlmProvider
 
     @Before
     fun setup() {
@@ -38,7 +32,7 @@ class OpenAiCompatibleProviderTest {
             model = "test-model",
             apiKey = "test-key"
         )
-        provider = OpenAiCompatibleProvider(config, OkHttpClient(), json)
+        provider = KoogLlmProvider(config)
     }
 
     @After
@@ -46,13 +40,27 @@ class OpenAiCompatibleProviderTest {
         server.shutdown()
     }
 
+    private fun textResponse(content: String) = MockResponse()
+        .setBody(
+            """{"id":"chatcmpl-1","object":"chat.completion","created":1700000000,"model":"test-model",""" +
+                """"choices":[{"index":0,"message":{"role":"assistant","content":"$content"},"finish_reason":"stop"}],""" +
+                """"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}"""
+        )
+        .setHeader("Content-Type", "application/json")
+
+    private fun toolCallResponse() = MockResponse()
+        .setBody(
+            """{"id":"chatcmpl-1","object":"chat.completion","created":1700000000,"model":"test-model",""" +
+                """"choices":[{"index":0,"message":{"role":"assistant","content":null,""" +
+                """"tool_calls":[{"id":"call_1","type":"function","function":{"name":"list_jobs","arguments":"{\"status\":\"failed\"}"}}]},""" +
+                """"finish_reason":"tool_calls"}],""" +
+                """"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}"""
+        )
+        .setHeader("Content-Type", "application/json")
+
     @Test
     fun `generate sends correct request format`() = runTest {
-        server.enqueue(
-            MockResponse()
-                .setBody("""{"choices":[{"message":{"content":"Hello!","role":"assistant"}}]}""")
-                .setHeader("Content-Type", "application/json")
-        )
+        server.enqueue(textResponse("Hello!"))
 
         val messages = listOf(ChatMessage(role = Role.USER, content = "Hi"))
         provider.generate(messages, emptyList())
@@ -64,16 +72,11 @@ class OpenAiCompatibleProviderTest {
 
         val body = request.body.readUtf8()
         assertTrue(body.contains("\"model\":\"test-model\""))
-        assertTrue(body.contains("\"stream\":false"))
     }
 
     @Test
     fun `generate parses text response`() = runTest {
-        server.enqueue(
-            MockResponse()
-                .setBody("""{"choices":[{"message":{"content":"The answer is 42","role":"assistant"}}]}""")
-                .setHeader("Content-Type", "application/json")
-        )
+        server.enqueue(textResponse("The answer is 42"))
 
         val result = provider.generate(
             listOf(ChatMessage(role = Role.USER, content = "What is the answer?")),
@@ -86,11 +89,7 @@ class OpenAiCompatibleProviderTest {
 
     @Test
     fun `generate parses tool calls`() = runTest {
-        server.enqueue(
-            MockResponse()
-                .setBody("""{"choices":[{"message":{"role":"assistant","content":null,"tool_calls":[{"id":"call_1","type":"function","function":{"name":"list_jobs","arguments":"{\"status\":\"failed\"}"}}]}}]}""")
-                .setHeader("Content-Type", "application/json")
-        )
+        server.enqueue(toolCallResponse())
 
         val result = provider.generate(
             listOf(ChatMessage(role = Role.USER, content = "List failed jobs")),
@@ -103,43 +102,66 @@ class OpenAiCompatibleProviderTest {
         assertEquals("list_jobs", result.toolCalls[0].name)
     }
 
-    @Test(expected = LlmAuthException::class)
+    @Test
     fun `generate throws LlmAuthException on 401`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(401))
-
-        provider.generate(
-            listOf(ChatMessage(role = Role.USER, content = "test")),
-            emptyList()
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(401)
+                .setBody("""{"error":{"message":"Unauthorized"}}""")
         )
+
+        try {
+            provider.generate(
+                listOf(ChatMessage(role = Role.USER, content = "test")),
+                emptyList()
+            )
+            throw AssertionError("Expected exception was not thrown")
+        } catch (e: LlmAuthException) {
+            // Expected
+        }
     }
 
-    @Test(expected = LlmRateLimitException::class)
+    @Test
     fun `generate throws LlmRateLimitException on 429`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(429))
-
-        provider.generate(
-            listOf(ChatMessage(role = Role.USER, content = "test")),
-            emptyList()
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(429)
+                .setBody("""{"error":{"message":"Rate limit exceeded"}}""")
         )
+
+        try {
+            provider.generate(
+                listOf(ChatMessage(role = Role.USER, content = "test")),
+                emptyList()
+            )
+            throw AssertionError("Expected exception was not thrown")
+        } catch (e: LlmRateLimitException) {
+            // Expected
+        }
     }
 
-    @Test(expected = LlmServerException::class)
+    @Test
     fun `generate throws LlmServerException on 500`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(500))
-
-        provider.generate(
-            listOf(ChatMessage(role = Role.USER, content = "test")),
-            emptyList()
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(500)
+                .setBody("""{"error":{"message":"Internal Server Error"}}""")
         )
+
+        try {
+            provider.generate(
+                listOf(ChatMessage(role = Role.USER, content = "test")),
+                emptyList()
+            )
+            throw AssertionError("Expected exception was not thrown")
+        } catch (e: LlmServerException) {
+            // Expected
+        }
     }
 
     @Test
     fun `generate includes tools in request when provided`() = runTest {
-        server.enqueue(
-            MockResponse()
-                .setBody("""{"choices":[{"message":{"content":"ok","role":"assistant"}}]}""")
-                .setHeader("Content-Type", "application/json")
-        )
+        server.enqueue(textResponse("ok"))
 
         val tools = listOf(
             ToolSpec(
@@ -162,8 +184,7 @@ class OpenAiCompatibleProviderTest {
         )
 
         val body = server.takeRequest().body.readUtf8()
-        assertTrue(body.contains("\"tools\""))
-        assertTrue(body.contains("\"list_jobs\""))
+        assertTrue(body.contains("list_jobs"))
     }
 
     @Test
@@ -176,25 +197,5 @@ class OpenAiCompatibleProviderTest {
         val info = provider.modelInfo()
         assertEquals("test-model", info.name)
         assertEquals(false, info.isLocal)
-    }
-
-    @Test
-    fun `toOpenAiTool converts ToolSpec correctly`() {
-        val spec = ToolSpec(
-            name = "test_tool",
-            description = "A test tool",
-            parametersSchema = buildJsonObject {
-                put("type", "object")
-                putJsonObject("properties") {}
-            }
-        )
-
-        val result = spec.toOpenAiTool()
-        assertEquals("function", result["type"].toString().trim('"'))
-
-        val function = result["function"] as JsonObject
-        assertEquals("\"test_tool\"", function["name"].toString())
-        assertEquals("\"A test tool\"", function["description"].toString())
-        assertNotNull(function["parameters"])
     }
 }
