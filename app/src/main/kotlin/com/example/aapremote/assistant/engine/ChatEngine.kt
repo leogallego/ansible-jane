@@ -157,7 +157,8 @@ class ChatEngine(
                             role = Role.TOOL,
                             content = toolResult.data
                                 ?: "Tool execution failed: ${toolResult.errorType ?: "unknown error"}",
-                            toolCallId = toolCall.id
+                            toolCallId = toolCall.id,
+                            toolName = toolCall.tool
                         ))
                         toolSummaries.add("${toolCall.tool}: ${toolResult.data?.take(200) ?: "error"}")
                     }
@@ -218,7 +219,7 @@ class ChatEngine(
                 }
                 Role.TOOL -> listOf(Message.Tool.Result(
                     id = msg.toolCallId,
-                    tool = msg.toolCallId ?: "",
+                    tool = msg.toolName ?: msg.toolCallId ?: "",
                     content = msg.content,
                     metaInfo = RequestMetaInfo.Empty
                 ))

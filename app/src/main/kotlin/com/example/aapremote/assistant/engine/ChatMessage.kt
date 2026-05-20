@@ -9,6 +9,7 @@ data class ChatMessage(
     val content: String,
     val toolCallsJson: String? = null,
     val toolCallId: String? = null,
+    val toolName: String? = null,
     val timestamp: Long = System.currentTimeMillis(),
     val id: Long = nextId.getAndIncrement()
 ) {
