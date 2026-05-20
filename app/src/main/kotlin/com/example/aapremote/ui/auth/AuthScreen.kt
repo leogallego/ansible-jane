@@ -1,9 +1,13 @@
 package com.example.aapremote.ui.auth
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -11,6 +15,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -24,7 +29,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.R
 import com.example.aapremote.presentation.auth.AuthUiState
 import com.example.aapremote.presentation.auth.AuthViewModel
+import com.example.aapremote.presentation.settings.BackupViewModel
+import com.example.aapremote.presentation.settings.BackupUiState
+import com.example.aapremote.presentation.settings.ImportMode
 import com.example.aapremote.ui.components.ErrorMessage
+import com.example.aapremote.ui.settings.ImportFromBackupButton
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -245,6 +254,11 @@ fun AuthScreen(
                     }
                 }
             }
+        }
+
+        if (!isReAuth && !isAddInstance) {
+            Spacer(modifier = Modifier.height(16.dp))
+            ImportFromBackupButton(onNavigateToDashboard = onNavigateToDashboard)
         }
     }
 }

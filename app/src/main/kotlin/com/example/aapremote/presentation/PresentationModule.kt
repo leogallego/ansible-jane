@@ -1,6 +1,7 @@
 package com.example.aapremote.presentation
 
 import com.example.aapremote.presentation.auth.AuthViewModel
+import com.example.aapremote.presentation.settings.BackupViewModel
 import com.example.aapremote.presentation.jobs.JobStatusViewModel
 import com.example.aapremote.presentation.jobs.RecentJobsViewModel
 import com.example.aapremote.presentation.eda.EdaAuditViewModel
@@ -28,4 +29,5 @@ val presentationModule = module {
     viewModelOf(::InventoryHostsViewModel)
     viewModelOf(::HostsViewModel)
     viewModelOf(::SettingsViewModel)
+    viewModelOf(::BackupViewModel)
 }

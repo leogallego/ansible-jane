@@ -151,6 +151,10 @@ fun SettingsScreen(
                 else -> {}
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            BackupRestoreSection()
+
             Spacer(modifier = Modifier.weight(1f))
 
             AboutSection()
