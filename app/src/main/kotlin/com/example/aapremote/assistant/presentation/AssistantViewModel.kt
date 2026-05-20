@@ -259,6 +259,7 @@ class AssistantViewModel(
 
     fun updateLlmConfig(config: LlmProviderConfig) {
         _llmConfig.value = config
+        generateJob?.cancel()
         cachedProvider?.close()
         cachedProvider = null
         cachedProviderKey = null
