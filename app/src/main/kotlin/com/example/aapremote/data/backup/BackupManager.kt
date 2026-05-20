@@ -71,10 +71,13 @@ class BackupManager {
 
     private fun deriveKey(password: String, salt: ByteArray): SecretKeySpec {
         val spec = PBEKeySpec(password.toCharArray(), salt, PBKDF2_ITERATIONS, KEY_LENGTH_BITS)
-        val factory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
-        val keyBytes = factory.generateSecret(spec).encoded
-        spec.clearPassword()
-        return SecretKeySpec(keyBytes, "AES")
+        try {
+            val factory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
+            val keyBytes = factory.generateSecret(spec).encoded
+            return SecretKeySpec(keyBytes, "AES")
+        } finally {
+            spec.clearPassword()
+        }
     }
 
     private fun AapInstance.toBackupInstance() = BackupInstance(

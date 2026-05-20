@@ -225,6 +225,9 @@ private fun ExportPasswordDialog(
                     label = { Text("Password") },
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
+                    supportingText = if (password.isNotEmpty() && password.length < 8) {
+                        { Text("At least 8 characters") }
+                    } else null,
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("field_export_password")
@@ -260,7 +263,7 @@ private fun ExportPasswordDialog(
                         onConfirm(password, includeLlm)
                     }
                 },
-                enabled = password.isNotEmpty()
+                enabled = password.length >= 8
             ) {
                 Text("Export")
             }

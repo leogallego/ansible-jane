@@ -23,8 +23,6 @@ sealed interface BackupUiState {
     data class ExportReady(val data: ByteArray) : BackupUiState
     data class ImportPreview(
         val envelope: BackupEnvelope,
-        val rawData: ByteArray,
-        val password: String,
         val duplicateCount: Int,
         val newCount: Int,
         val instances: List<BackupInstance>,
@@ -44,6 +42,8 @@ class BackupViewModel(
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
+
+    private var pendingEnvelope: BackupEnvelope? = null
 
     fun exportBackup(password: String, includeAssistantConfig: Boolean) {
         viewModelScope.launch {
@@ -78,10 +78,9 @@ class BackupViewModel(
                     if (inst.baseUrl.trimEnd('/').lowercase() in existingUrls) duplicates++ else newOnes++
                 }
 
+                pendingEnvelope = envelope
                 _uiState.value = BackupUiState.ImportPreview(
                     envelope = envelope,
-                    rawData = data,
-                    password = password,
                     duplicateCount = duplicates,
                     newCount = newOnes,
                     instances = envelope.instances,
@@ -97,7 +96,7 @@ class BackupViewModel(
     }
 
     fun confirmImport(mode: ImportMode) {
-        val preview = _uiState.value as? BackupUiState.ImportPreview ?: return
+        val envelope = pendingEnvelope ?: return
         viewModelScope.launch {
             _uiState.value = BackupUiState.Importing
             try {
@@ -110,7 +109,7 @@ class BackupViewModel(
                     .toSet()
 
                 var imported = 0
-                for (inst in preview.envelope.instances) {
+                for (inst in envelope.instances) {
                     val normalizedUrl = inst.baseUrl.trimEnd('/').lowercase()
                     if (mode == ImportMode.MERGE && normalizedUrl in existingUrls) continue
 
@@ -141,11 +140,12 @@ class BackupViewModel(
                     imported++
                 }
 
-                preview.envelope.llmConfig?.let { config ->
+                envelope.llmConfig?.let { config ->
                     assistantRepository.saveLlmConfig(config)
                 }
 
-                val llmNote = if (preview.envelope.llmConfig != null) " + LLM config" else ""
+                val llmNote = if (envelope.llmConfig != null) " + LLM config" else ""
+                pendingEnvelope = null
                 _uiState.value = BackupUiState.Success("Imported $imported instance(s)$llmNote")
             } catch (e: Exception) {
                 _uiState.value = BackupUiState.Error("Import failed: ${e.message}")
@@ -154,6 +154,7 @@ class BackupViewModel(
     }
 
     fun dismiss() {
+        pendingEnvelope = null
         _uiState.value = BackupUiState.Idle
     }
 }
