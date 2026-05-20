@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -242,6 +243,7 @@ private fun ActiveChatContent(
                 onValueChange = { inputText = it },
                 modifier = Modifier
                     .weight(1f)
+                    .testTag("field_assistant_input")
                     .focusRequester(focusRequester)
                     .onPreviewKeyEvent {
                         if (it.type == KeyEventType.KeyUp && it.key == Key.Enter) {
@@ -257,6 +259,7 @@ private fun ActiveChatContent(
 
             IconButton(
                 onClick = { submit() },
+                modifier = Modifier.testTag("button_send"),
                 enabled = inputText.text.isNotBlank() && !state.isGenerating
             ) {
                 if (state.isGenerating) {

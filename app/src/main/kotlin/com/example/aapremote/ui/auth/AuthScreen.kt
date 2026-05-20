@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -112,6 +113,7 @@ fun AuthScreen(
             colors = textFieldColors,
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("field_url")
                 .semantics { contentType = ContentType.Username }
         )
 
@@ -132,7 +134,7 @@ fun AuthScreen(
                 }
             },
             colors = textFieldColors,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().testTag("field_alias")
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -164,6 +166,7 @@ fun AuthScreen(
             colors = textFieldColors,
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("field_token")
                 .semantics { contentType = ContentType.Password }
         )
 
@@ -180,7 +183,8 @@ fun AuthScreen(
             )
             Switch(
                 checked = trustSelfSigned,
-                onCheckedChange = { trustSelfSigned = it }
+                onCheckedChange = { trustSelfSigned = it },
+                modifier = Modifier.testTag("switch_self_signed")
             )
         }
 
@@ -226,7 +230,7 @@ fun AuthScreen(
             else -> {
                 Button(
                     onClick = { onConnect() },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("button_connect"),
                     enabled = baseUrl.isNotBlank() && token.isNotBlank()
                 ) {
                     Text(if (isReAuth) "Re-authenticate" else "Connect")
