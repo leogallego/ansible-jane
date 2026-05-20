@@ -92,6 +92,13 @@ See `skills/README.md` for sources and licenses.
 
 - **MUST** create all temporary files and directories inside the project directory (e.g., `.tmp/`). NEVER use `/tmp`, `$TMPDIR`, or any system temp directory. Clean up temp files when done.
 
+## Android Device Testing
+
+- **MUST** use the `android` CLI (`android run`, `android emulator`, `android screen capture`, `android layout`) for all device interaction. Prefer `android layout` over screenshots for inspecting UI state.
+- Use `uiautomator dump` to find elements by `resource-id` (from Compose `testTag`). Never hard-code pixel coordinates — always resolve element positions from the layout tree or resource-ids.
+- All Compose screens **MUST** have `testTag` modifiers on interactive elements (fields, buttons, switches) using the convention `field_<name>`, `button_<name>`, `switch_<name>`. The root `AppNavigation` has `testTagsAsResourceId = true` so tags appear as `resource-id` in uiautomator.
+- Use `adb logcat` to verify network requests and errors instead of relying on screenshots.
+
 ## Security Rules
 
 - Never hardcode URLs or tokens
