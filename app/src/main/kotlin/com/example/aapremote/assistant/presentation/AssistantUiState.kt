@@ -10,8 +10,7 @@ sealed interface AssistantUiState {
     data class Active(
         val messages: List<ChatMessage> = emptyList(),
         val isGenerating: Boolean = false,
-        val connections: Map<String, McpConnectionState> = emptyMap(),
-        val inputText: String = ""
+        val connections: Map<String, McpConnectionState> = emptyMap()
     ) : AssistantUiState
     data class Error(val error: AppError) : AssistantUiState
 }

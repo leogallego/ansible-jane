@@ -35,7 +35,7 @@ fun ChatBubble(
     modifier: Modifier = Modifier
 ) {
     val isUser = message.role == Role.USER
-    val isToolIndicator = message.content.startsWith("Querying tool:")
+    val isToolIndicator = message.content.startsWith("Querying [")
     val isError = message.content.startsWith("Error:")
 
     Row(

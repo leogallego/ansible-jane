@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlin.coroutines.coroutineContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
@@ -62,7 +63,6 @@ class ChatEngine(
                 coroutineContext.ensureActive()
                 val textBuilder = StringBuilder()
                 val pendingToolCalls = mutableMapOf<String, MutableToolCall>()
-                var streamError: Throwable? = null
 
                 trimMessages(messages)
                 val prompt = buildPrompt(messages)
@@ -89,11 +89,6 @@ class ChatEngine(
                         is StreamFrame.End -> { /* handled after collect */ }
                         else -> { /* ReasoningDelta etc — ignore */ }
                     }
-                }
-
-                if (streamError != null) {
-                    emit(ChatEvent.Error("LLM error: ${streamError.message}", streamError))
-                    return@flow
                 }
 
                 val completedCalls = pendingToolCalls.values
@@ -124,8 +119,8 @@ class ChatEngine(
                     }
 
                     val toolCallsJson = json.encodeToString(
-                        kotlinx.serialization.json.JsonArray.serializer(),
-                        kotlinx.serialization.json.JsonArray(completedCalls.map { tc ->
+                        JsonArray.serializer(),
+                        JsonArray(completedCalls.map { tc ->
                             JsonObject(mapOf(
                                 "id" to kotlinx.serialization.json.JsonPrimitive(tc.id),
                                 "name" to kotlinx.serialization.json.JsonPrimitive(tc.tool),
@@ -231,7 +226,7 @@ class ChatEngine(
     private fun parseToolCalls(toolCallsJson: String): List<Message.Tool.Call> {
         return try {
             val element = json.parseToJsonElement(toolCallsJson)
-            if (element is kotlinx.serialization.json.JsonArray) {
+            if (element is JsonArray) {
                 element.map { el ->
                     val obj = el.jsonObject
                     Message.Tool.Call(

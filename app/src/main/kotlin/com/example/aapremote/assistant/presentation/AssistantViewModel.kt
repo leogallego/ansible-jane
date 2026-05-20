@@ -19,7 +19,7 @@ import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.CertTrustManager
 import com.example.aapremote.network.mcp.McpConnectionState
 import com.example.aapremote.network.mcp.McpServerManager
-import com.example.aapremote.network.networkJson
+
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -89,13 +89,6 @@ class AssistantViewModel(
         }
     }
 
-    fun updateInputText(text: String) {
-        _uiState.update { current ->
-            if (current is AssistantUiState.Active) current.copy(inputText = text)
-            else current
-        }
-    }
-
     fun sendMessage(text: String) {
         if (text.isBlank()) return
 
@@ -119,7 +112,6 @@ class AssistantViewModel(
 
         updateState { copy(
             messages = repository.getHistory(),
-            inputText = "",
             isGenerating = true
         ) }
 

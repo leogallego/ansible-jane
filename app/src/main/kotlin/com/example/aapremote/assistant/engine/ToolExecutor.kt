@@ -8,7 +8,9 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
@@ -75,9 +77,9 @@ class ToolExecutor(
         }
     }
 
-    private fun jsonElementToAny(element: kotlinx.serialization.json.JsonElement): Any {
+    private fun jsonElementToAny(element: JsonElement): Any {
         return when (element) {
-            is kotlinx.serialization.json.JsonPrimitive -> {
+            is JsonPrimitive -> {
                 when {
                     element.isString -> element.content
                     element.content == "true" -> true
