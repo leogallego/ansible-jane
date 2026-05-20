@@ -1,10 +1,12 @@
 package com.example.aapremote.data
 
+import com.example.aapremote.data.backup.BackupManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val dataModule = module {
     single { TokenManager(androidContext()) }
+    single { BackupManager() }
     single { ConnectivityObserver(androidContext()) }
     single { AuthRepository(get(), get()) }
     single { TemplateRepository(get<com.example.aapremote.network.AapApiProvider>()) }
