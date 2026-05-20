@@ -123,17 +123,22 @@ class ToolRouter {
         return (toolName to source) !in disabledTools
     }
 
+    data class QueryResult(
+        val tools: List<Tool>,
+        val categoryMatched: Boolean
+    )
+
     fun getToolsForQuery(
         query: String,
         serverConfigs: List<McpServerConfig> = emptyList()
-    ): List<Tool> {
+    ): QueryResult {
         val queryWords = query.lowercase().split(Regex("\\W+")).toSet()
 
         val matchedCategories = Category.entries.filter { category ->
             category.keywords.any { it in queryWords }
         }
 
-        if (matchedCategories.isEmpty()) return emptyList()
+        if (matchedCategories.isEmpty()) return QueryResult(emptyList(), categoryMatched = false)
 
         val matchedLocalNames = matchedCategories.flatMap { it.localToolNames }.toSet()
         val matchedPrefixes = matchedCategories.flatMap { it.resourcePrefixes }.toSet()
@@ -171,7 +176,7 @@ class ToolRouter {
             matchesCategory && isEnabled && passesReadOnly
         }
 
-        return rankTools(filteredLocal, queryWords) + filteredMcp
+        return QueryResult(rankTools(filteredLocal, queryWords) + filteredMcp, categoryMatched = true)
     }
 
     private fun stem(word: String): String {

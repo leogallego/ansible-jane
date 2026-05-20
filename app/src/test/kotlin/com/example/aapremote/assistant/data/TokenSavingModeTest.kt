@@ -43,15 +43,15 @@ class TokenSavingModeTest {
     }
 
     @Test
-    fun `SHOULD serialize and deserialize MINIMAL mode GIVEN config with minimal`() {
+    fun `SHOULD serialize and deserialize TOOLS_ONLY mode GIVEN config with minimal`() {
         val config = LlmProviderConfig.OpenAiCompatible(
             url = "https://api.openai.com/v1",
             model = "gpt-4",
-            tokenSavingMode = TokenSavingMode.MINIMAL
+            tokenSavingMode = TokenSavingMode.TOOLS_ONLY
         )
         val serialized = json.encodeToString(LlmProviderConfig.serializer(), config)
         val deserialized = json.decodeFromString(LlmProviderConfig.serializer(), serialized)
-        assertEquals(TokenSavingMode.MINIMAL, (deserialized as LlmProviderConfig.OpenAiCompatible).tokenSavingMode)
+        assertEquals(TokenSavingMode.TOOLS_ONLY, (deserialized as LlmProviderConfig.OpenAiCompatible).tokenSavingMode)
     }
 
     @Test
@@ -90,9 +90,9 @@ class TokenSavingModeTest {
         val config: LlmProviderConfig = LlmProviderConfig.OpenAiCompatible(
             url = "https://api.openai.com/v1",
             model = "gpt-4",
-            tokenSavingMode = TokenSavingMode.MINIMAL
+            tokenSavingMode = TokenSavingMode.TOOLS_ONLY
         )
-        assertEquals(TokenSavingMode.MINIMAL, config.tokenSavingMode)
+        assertEquals(TokenSavingMode.TOOLS_ONLY, config.tokenSavingMode)
     }
 
     @Test
@@ -103,8 +103,8 @@ class TokenSavingModeTest {
             apiKey = "sk-test-key",
             tokenSavingMode = TokenSavingMode.STANDARD
         )
-        val updated = config.copy(tokenSavingMode = TokenSavingMode.MINIMAL)
+        val updated = config.copy(tokenSavingMode = TokenSavingMode.TOOLS_ONLY)
         assertEquals("sk-test-key", updated.apiKey)
-        assertEquals(TokenSavingMode.MINIMAL, updated.tokenSavingMode)
+        assertEquals(TokenSavingMode.TOOLS_ONLY, updated.tokenSavingMode)
     }
 }

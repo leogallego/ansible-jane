@@ -123,22 +123,40 @@ class AssistantViewModel(
         val toolRouter = ToolRouter()
         toolRouter.registerLocalTools(localTools)
         toolRouter.registerMcpTools(mcpServerManager.getAllTools())
-        val tools = toolRouter.getToolsForQuery(text, serverConfigs)
+        val queryResult = toolRouter.getToolsForQuery(text, serverConfigs)
         val mode = config.tokenSavingMode
-        val hasAnyTools = localTools.isNotEmpty() || mcpServerManager.getAllTools().isNotEmpty()
-        val noToolMatch = tools.isEmpty() && hasAnyTools
 
-        if (noToolMatch && mode == TokenSavingMode.MINIMAL) {
-            val guidanceMsg = ChatMessage(
-                role = Role.ASSISTANT,
-                content = "I can help you query your AAP instance. Try asking about:\n\n" +
+        val noToolsForCategory = queryResult.categoryMatched && queryResult.tools.isEmpty()
+        val generalQueryInToolsOnly = !queryResult.categoryMatched && mode == TokenSavingMode.TOOLS_ONLY
+
+        if (noToolsForCategory || generalQueryInToolsOnly) {
+            val hasMcp = mcpServerManager.getAllTools().isNotEmpty()
+            val content = if (generalQueryInToolsOnly) {
+                "I can help you query your AAP instance. Try asking about:\n\n" +
                     "- **Inventory** — hosts, groups, inventories\n" +
                     "- **Jobs** — job templates, workflows, schedules\n" +
                     "- **Users** — users, teams, organizations, roles\n" +
                     "- **Credentials** — credentials, secrets\n" +
                     "- **Monitoring** — system health, instance status\n" +
                     "- **Configuration** — projects, settings, notifications"
-            )
+            } else if (!hasMcp) {
+                "I don't have the right tools for that query. This may require an MCP server connection.\n\n" +
+                    "I can help with:\n" +
+                    "- **Inventory** — hosts, groups, inventories\n" +
+                    "- **Jobs** — job templates, workflows, schedules\n" +
+                    "- **Monitoring** — system health, instance status\n" +
+                    "- **Credentials** — credentials, secrets\n" +
+                    "- **Configuration** — projects, execution environments"
+            } else {
+                "I don't have the right tools for that query. Try asking about:\n\n" +
+                    "- **Inventory** — hosts, groups, inventories\n" +
+                    "- **Jobs** — job templates, workflows, schedules\n" +
+                    "- **Users** — users, teams, organizations, roles\n" +
+                    "- **Credentials** — credentials, secrets\n" +
+                    "- **Monitoring** — system health, instance status\n" +
+                    "- **Configuration** — projects, settings, notifications"
+            }
+            val guidanceMsg = ChatMessage(role = Role.ASSISTANT, content = content)
             repository.addMessage(guidanceMsg)
             updateState { copy(messages = repository.getHistory(), isGenerating = false) }
             return
@@ -147,16 +165,16 @@ class AssistantViewModel(
         val toolLimit = when (mode) {
             TokenSavingMode.STANDARD -> 8
             TokenSavingMode.TOKEN_SAVER -> 5
-            TokenSavingMode.MINIMAL -> 3
+            TokenSavingMode.TOOLS_ONLY -> 3
         }
-        val matchedLocal = tools.filterIsInstance<LocalTool>().take(toolLimit)
+        val matchedLocal = queryResult.tools.filterIsInstance<LocalTool>().take(toolLimit)
         val remaining = toolLimit - matchedLocal.size
-        val matchedMcp = tools.filter { it !is LocalTool }.take(remaining.coerceAtLeast(0))
-        val budgetedTools = if (noToolMatch) emptyList() else matchedLocal + matchedMcp
+        val matchedMcp = queryResult.tools.filter { it !is LocalTool }.take(remaining.coerceAtLeast(0))
+        val budgetedTools = matchedLocal + matchedMcp
         val toolSpecs = budgetedTools.map { it.spec }
         val toolExecutor = ToolExecutor(budgetedTools)
         val engine = ChatEngine(provider, toolExecutor)
-        val maxTokens = if (noToolMatch && mode == TokenSavingMode.TOKEN_SAVER) 256 else null
+        val maxTokens: Int? = null
 
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
