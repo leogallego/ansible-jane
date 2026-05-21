@@ -9,6 +9,7 @@ import com.example.aapremote.testInstance
 import com.example.aapremote.testLabel1
 import com.example.aapremote.testLabel2
 import com.example.aapremote.testWorkflowJobTemplate
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -107,6 +108,7 @@ class WorkflowTemplatesViewModelTest {
         viewModel.uiState.test { expectMostRecentItem() }
 
         viewModel.search("pipeline")
+        advanceTimeBy(350)
 
         viewModel.uiState.test {
             expectMostRecentItem()
