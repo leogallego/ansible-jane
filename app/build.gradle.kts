@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.aapremote"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.aapremote"
