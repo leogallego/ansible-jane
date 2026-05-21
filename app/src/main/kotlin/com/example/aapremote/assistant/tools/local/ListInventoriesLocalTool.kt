@@ -6,6 +6,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.InventoryRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class ListInventoriesLocalTool(
     private val repository: InventoryRepository
@@ -19,10 +20,10 @@ class ListInventoriesLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val result = repository.getInventories(
-            page = (args["page"] as? Number)?.toInt() ?: 1,
-            search = args["search"] as? String
+            page = args.intArg("page") ?: 1,
+            search = args.stringArg("search")
         ).getOrThrow()
         ToolResult(
             success = true,

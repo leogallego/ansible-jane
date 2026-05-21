@@ -7,6 +7,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.JobRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class GetJobLocalTool(
     private val repository: JobRepository
@@ -20,8 +21,8 @@ class GetJobLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val jobId = (args["job_id"] as? Number)?.toInt()
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val jobId = args.intArg("job_id")
             ?: return@executeSafely ToolResult(success = false, data = "job_id is required", errorType = ErrorType.NOT_FOUND)
         val job = repository.getJobStatus(jobId).getOrThrow()
         ToolResult(success = true, data = networkJson.encodeToString(job))

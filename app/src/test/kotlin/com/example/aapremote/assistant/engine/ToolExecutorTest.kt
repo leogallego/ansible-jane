@@ -8,7 +8,10 @@ import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -86,10 +89,10 @@ class ToolExecutorTest {
 
     @Test
     fun `execute passes arguments to tool`() = runTest {
-        var capturedArgs: Map<String, Any>? = null
+        var capturedArgs: JsonObject? = null
         val tool = object : Tool {
             override val spec = ToolSpec("arg_tool", "desc", JsonObject(emptyMap()))
-            override suspend fun execute(args: Map<String, Any>): ToolResult {
+            override suspend fun execute(args: JsonObject): ToolResult {
                 capturedArgs = args
                 return ToolResult(success = true, data = "ok")
             }
@@ -103,9 +106,9 @@ class ToolExecutorTest {
         }
         executor.execute(toolCall("arg_tool", args.toString()))
 
-        assertEquals("test", capturedArgs!!["name"])
-        assertEquals(42L, capturedArgs!!["count"])
-        assertEquals(true, capturedArgs!!["enabled"])
+        assertEquals("test", capturedArgs!!["name"]!!.jsonPrimitive.content)
+        assertEquals(42, capturedArgs!!["count"]!!.jsonPrimitive.int)
+        assertEquals(true, capturedArgs!!["enabled"]!!.jsonPrimitive.boolean)
     }
 }
 
@@ -114,5 +117,5 @@ private class StubTool(
     private val result: ToolResult
 ) : Tool {
     override val spec = ToolSpec(name, "Fake tool", JsonObject(emptyMap()))
-    override suspend fun execute(args: Map<String, Any>): ToolResult = result
+    override suspend fun execute(args: JsonObject): ToolResult = result
 }

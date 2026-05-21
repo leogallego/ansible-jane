@@ -2,11 +2,8 @@ package com.example.aapremote.assistant.tools
 
 import com.example.aapremote.network.mcp.McpClient
 import com.example.aapremote.network.mcp.McpToolDefinition
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -30,10 +27,9 @@ class McpTool(
         parametersSchema = mcpToolDef.inputSchema
     )
 
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
+    override suspend fun execute(args: JsonObject): ToolResult {
         return try {
-            val jsonArgs = argsToJsonObject(args)
-            val cappedArgs = capPageSize(jsonArgs)
+            val cappedArgs = capPageSize(args)
             val mcpResult = client.callTool(mcpToolDef.name, cappedArgs)
 
             val text = mcpResult.content
@@ -66,12 +62,6 @@ class McpTool(
         }
     }
 
-    private fun argsToJsonObject(args: Map<String, Any>): JsonObject = buildJsonObject {
-        args.forEach { (key, value) ->
-            put(key, toJsonElement(value))
-        }
-    }
-
     private fun capPageSize(args: JsonObject, max: Int = MAX_PAGE_SIZE): JsonObject {
         val current = args["page_size"]?.jsonPrimitive?.intOrNull
         if (current != null && current <= max) return args
@@ -81,17 +71,4 @@ class McpTool(
         }
     }
 
-    private fun toJsonElement(value: Any?): JsonElement = when (value) {
-        null -> JsonNull
-        is String -> JsonPrimitive(value)
-        is Number -> JsonPrimitive(value)
-        is Boolean -> JsonPrimitive(value)
-        is Map<*, *> -> buildJsonObject {
-            value.forEach { (k, v) -> put(k.toString(), toJsonElement(v)) }
-        }
-        is List<*> -> buildJsonArray {
-            value.forEach { add(toJsonElement(it)) }
-        }
-        else -> JsonPrimitive(value.toString())
-    }
 }

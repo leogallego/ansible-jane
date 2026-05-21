@@ -6,6 +6,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.EdaActivationRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class ListEdaActivationsLocalTool(
     private val repository: EdaActivationRepository
@@ -19,10 +20,10 @@ class ListEdaActivationsLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val pageSize = (args["page_size"] as? Number)?.toInt()?.coerceIn(1, 20) ?: 20
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val pageSize = args.intArg("page_size")?.coerceIn(1, 20) ?: 20
         val result = repository.getActivations(
-            page = (args["page"] as? Number)?.toInt() ?: 1,
+            page = args.intArg("page") ?: 1,
             pageSize = pageSize
         ).getOrThrow()
         ToolResult(

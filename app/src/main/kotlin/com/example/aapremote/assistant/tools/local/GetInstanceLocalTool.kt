@@ -7,6 +7,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.InfrastructureRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class GetInstanceLocalTool(
     private val repository: InfrastructureRepository
@@ -20,8 +21,8 @@ class GetInstanceLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val instanceId = (args["instance_id"] as? Number)?.toInt()
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val instanceId = args.intArg("instance_id")
             ?: return@executeSafely ToolResult(success = false, data = "instance_id is required", errorType = ErrorType.NOT_FOUND)
         val instance = repository.getInstance(instanceId).getOrThrow()
         ToolResult(success = true, data = networkJson.encodeToString(instance))

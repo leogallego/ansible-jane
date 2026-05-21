@@ -7,6 +7,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.ProjectRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class GetProjectLocalTool(
     private val repository: ProjectRepository
@@ -20,8 +21,8 @@ class GetProjectLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val projectId = (args["project_id"] as? Number)?.toInt()
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val projectId = args.intArg("project_id")
             ?: return@executeSafely ToolResult(success = false, data = "project_id is required", errorType = ErrorType.NOT_FOUND)
         val project = repository.getProject(projectId).getOrThrow()
         ToolResult(success = true, data = networkJson.encodeToString(project))

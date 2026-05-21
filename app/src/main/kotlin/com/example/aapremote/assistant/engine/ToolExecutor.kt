@@ -8,9 +8,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
@@ -38,15 +36,15 @@ class ToolExecutor(
         }
 
         val argsJson = try {
-            json.parseToJsonElement(toolCall.content)
+            val parsed = json.parseToJsonElement(toolCall.content)
+            if (parsed is JsonObject) parsed else JsonObject(emptyMap())
         } catch (_: Exception) {
             JsonObject(emptyMap())
         }
-        val argsMap = if (argsJson is JsonObject) jsonObjectToMap(argsJson) else emptyMap()
 
         val result = try {
             withTimeout(30_000L) {
-                tool.execute(argsMap)
+                tool.execute(argsJson)
             }
         } catch (_: TimeoutCancellationException) {
             return ToolResult(
@@ -69,28 +67,6 @@ class ToolExecutor(
             resultCache[cacheKey] = System.currentTimeMillis() to finalResult
         }
         return finalResult
-    }
-
-    private fun jsonObjectToMap(json: JsonObject): Map<String, Any> {
-        return json.entries.associate { (key, value) ->
-            key to jsonElementToAny(value)
-        }
-    }
-
-    private fun jsonElementToAny(element: JsonElement): Any {
-        return when (element) {
-            is JsonPrimitive -> {
-                when {
-                    element.isString -> element.content
-                    element.content == "true" -> true
-                    element.content == "false" -> false
-                    element.content.contains('.') -> element.content.toDoubleOrNull() ?: element.content
-                    else -> element.content.toLongOrNull() ?: element.content
-                }
-            }
-            is JsonArray -> element.map { jsonElementToAny(it) }
-            is JsonObject -> jsonObjectToMap(element)
-        }
     }
 
     companion object {
