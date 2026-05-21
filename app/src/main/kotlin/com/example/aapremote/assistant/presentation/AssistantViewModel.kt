@@ -164,14 +164,13 @@ class AssistantViewModel(
             return
         }
 
-        val toolLimit = when (mode) {
-            TokenSavingMode.STANDARD -> 8
+        val mcpLimit = when (mode) {
+            TokenSavingMode.STANDARD -> 10
             TokenSavingMode.TOKEN_SAVER -> 5
             TokenSavingMode.TOOLS_ONLY -> 3
         }
-        val matchedLocal = queryResult.tools.filterIsInstance<LocalTool>().take(toolLimit)
-        val remaining = toolLimit - matchedLocal.size
-        val matchedMcp = queryResult.tools.filter { it !is LocalTool }.take(remaining.coerceAtLeast(0))
+        val matchedLocal = queryResult.tools.filterIsInstance<LocalTool>()
+        val matchedMcp = queryResult.tools.filter { it !is LocalTool }.take(mcpLimit)
         val budgetedTools = matchedLocal + matchedMcp
         val toolSpecs = budgetedTools.map { it.spec }
         val toolExecutor = ToolExecutor(budgetedTools)

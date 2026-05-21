@@ -17,12 +17,22 @@ class ToolRouter {
         val localToolNames: Set<String>
     ) {
         INVENTORY(
-            keywords = setOf("host", "hosts", "group", "groups", "inventory", "inventories", "infrastructure"),
+            keywords = setOf(
+                "host", "hosts", "group", "groups", "inventory", "inventories",
+                "infrastructure", "facts", "gather", "info", "server", "servers",
+                "machine", "machines", "asset", "assets"
+            ),
             resourcePrefixes = setOf("hosts", "groups", "inventories", "constructed_inventories", "inventory_sources"),
             localToolNames = setOf("list_inventories", "list_hosts", "get_host_facts")
         ),
         JOBS(
-            keywords = setOf("job", "jobs", "template", "templates", "launch", "run", "schedule", "schedules", "workflow", "playbook"),
+            keywords = setOf(
+                "job", "jobs", "template", "templates", "launch", "run",
+                "schedule", "schedules", "workflow", "playbook", "jt", "wfjt",
+                "output", "stdout", "running", "failed", "started", "task",
+                "tasks", "command", "error", "errors", "failure", "status",
+                "playbooks", "workflows", "execution", "executions"
+            ),
             resourcePrefixes = setOf("jobs", "job_templates", "workflow_jobs", "workflow_job_templates", "workflow_job_nodes", "schedules", "ad_hoc_commands"),
             localToolNames = setOf(
                 "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
@@ -31,30 +41,60 @@ class ToolRouter {
             )
         ),
         MONITORING(
-            keywords = setOf("health", "status", "monitor", "metrics", "log", "logs", "dashboard", "analytics", "instance", "instances", "mesh", "topology", "ping", "cluster", "capacity", "node"),
+            keywords = setOf(
+                "health", "status", "monitor", "metrics", "log", "logs",
+                "dashboard", "analytics", "instance", "instances", "mesh",
+                "topology", "ping", "cluster", "capacity", "node",
+                "monitoring", "healthy", "overview", "nodes", "workers",
+                "alive", "up", "down", "diagnostics", "group"
+            ),
             resourcePrefixes = setOf("dashboard", "ping", "config", "instances", "instance_groups", "metrics", "mesh_visualizer"),
             localToolNames = setOf("list_instances", "get_instance", "list_instance_groups", "ping", "get_mesh_topology")
         ),
         USERS(
-            keywords = setOf("user", "users", "team", "teams", "organization", "organizations", "org", "role", "roles", "permission", "permissions", "member"),
+            keywords = setOf(
+                "user", "users", "team", "teams", "organization", "organizations",
+                "org", "role", "roles", "permission", "permissions", "member",
+                "members", "people", "admin", "admins", "token", "tokens",
+                "application", "applications", "app", "apps", "access", "rbac"
+            ),
             resourcePrefixes = setOf("users", "teams", "organizations", "roles", "tokens", "applications"),
             localToolNames = emptySet()
         ),
         SECURITY(
-            keywords = setOf("credential", "credentials", "secret", "secrets", "audit", "security", "compliance", "policy", "certificate"),
+            keywords = setOf(
+                "credential", "credentials", "secret", "secrets", "security",
+                "compliance", "policy", "certificate", "creds", "vault",
+                "password", "passwords", "key", "keys", "cert", "certs"
+            ),
             resourcePrefixes = setOf("credentials", "credential_types", "credential_input_sources"),
             localToolNames = setOf("list_credentials", "get_credential")
         ),
         CONFIGURATION(
-            keywords = setOf("setting", "settings", "configure", "configuration", "notification", "notifications", "label", "labels", "project", "projects", "execution", "environment", "environments"),
+            keywords = setOf(
+                "setting", "settings", "configure", "configuration", "notification",
+                "notifications", "label", "labels", "project", "projects",
+                "execution", "environment", "environments", "config", "ee",
+                "ees", "scm", "repo", "repos", "repository", "alert", "alerts",
+                "tag", "tags"
+            ),
             resourcePrefixes = setOf("settings", "notification_templates", "notifications", "labels", "execution_environments", "projects"),
             localToolNames = setOf("list_projects", "get_project", "list_execution_environments")
         ),
         EDA(
-            keywords = setOf("eda", "rulebook", "activation", "event", "audit"),
+            keywords = setOf(
+                "eda", "rulebook", "activation", "event", "audit", "de",
+                "rule", "rules", "trigger", "triggers", "webhook", "webhooks",
+                "stream", "streams", "decision", "driven", "rulebooks",
+                "activations", "events", "environment"
+            ),
             resourcePrefixes = setOf("audit_rules", "activations", "decision_environments", "rulebooks", "event_streams"),
             localToolNames = setOf("list_eda_audit_rules", "list_eda_activations", "get_eda_activation")
-        )
+        );
+
+        val stemmedKeywords: Set<String> by lazy {
+            keywords.map { stem(it) }.toSet()
+        }
     }
 
     companion object {
@@ -98,8 +138,19 @@ class ToolRouter {
         private val STOP_WORDS = setOf(
             "list", "get", "show", "what", "are", "the", "is", "a", "an",
             "my", "all", "me", "how", "many", "which", "do", "i", "have",
-            "can", "tell", "about", "find", "check", "give"
+            "can", "tell", "about", "find", "check", "give",
+            "of", "for", "in", "on", "to", "and", "or", "with", "from",
+            "any", "been"
         )
+
+        fun stem(word: String): String {
+            val result = word
+                .removeSuffix("ies").let { if (it != word) "${it}y" else it }
+                .removeSuffix("es")
+                .removeSuffix("s")
+                .removeSuffix("e")
+            return if (result.length < 3) word else result
+        }
     }
 
     fun registerLocalTools(tools: List<LocalTool>) {
@@ -133,9 +184,10 @@ class ToolRouter {
         serverConfigs: List<McpServerConfig> = emptyList()
     ): QueryResult {
         val queryWords = query.lowercase().split(Regex("\\W+")).toSet()
+        val stemmedQuery = (queryWords - STOP_WORDS).map { stem(it) }.toSet()
 
         val matchedCategories = Category.entries.filter { category ->
-            category.keywords.any { it in queryWords }
+            category.stemmedKeywords.any { it in stemmedQuery }
         }
 
         if (matchedCategories.isEmpty()) return QueryResult(emptyList(), categoryMatched = false)
@@ -176,30 +228,25 @@ class ToolRouter {
             matchesCategory && isEnabled && passesReadOnly
         }
 
-        return QueryResult(rankTools(filteredLocal, queryWords) + filteredMcp, categoryMatched = true)
+        val cherryPickedLocal = cherryPick(filteredLocal, stemmedQuery)
+        val cherryPickedMcp = cherryPick(filteredMcp, stemmedQuery)
+
+        return QueryResult(cherryPickedLocal + cherryPickedMcp, categoryMatched = true)
     }
 
-    private fun stem(word: String): String {
-        return word
-            .removeSuffix("ies").let { if (it != word) "${it}y" else it }
-            .removeSuffix("es")
-            .removeSuffix("s")
-            .removeSuffix("e")
-    }
-
-    private fun rankTools(tools: List<Tool>, queryWords: Set<String>): List<Tool> {
-        val meaningful = (queryWords - STOP_WORDS).map { stem(it) }.toSet()
-        return tools
-            .map { tool ->
-                val nameWords = tool.spec.name.split("_").map { stem(it) }.toSet()
-                val overlap = (nameWords intersect meaningful).size
-                var score = overlap * 10
-                if (tool.spec.name.startsWith("list_")) score += 3
-                if (tool.spec.name.startsWith("ping")) score += 3
-                if (tool.spec.name.startsWith("get_")) score += 1
-                if (tool is LocalTool && tool.destructive) score -= 5
-                tool to score
-            }
+    private fun cherryPick(tools: List<Tool>, stemmedQuery: Set<String>): List<Tool> {
+        return tools.map { tool ->
+            val nameParts = tool.spec.name
+                .split(".", "_")
+                .map { stem(it) }
+                .toSet()
+            val overlap = (nameParts intersect stemmedQuery).size
+            var score = overlap * 10
+            if (tool.spec.name.contains("list") || tool.spec.name.contains("ping")) score += 3
+            if (tool.spec.name.contains("get") || tool.spec.name.contains("read")) score += 1
+            if (overlap > 0 && tool is LocalTool && tool.destructive) score -= 5
+            tool to score
+        }
             .filter { it.second > 0 }
             .sortedByDescending { it.second }
             .map { it.first }
