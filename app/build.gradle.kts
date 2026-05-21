@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.aapremote"
         minSdk = 31
         targetSdk = 36
-        versionCode = 26052101
-        versionName = "1.2.5"
+        versionCode = 26052102
+        versionName = "1.2.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
