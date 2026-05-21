@@ -191,7 +191,7 @@ private fun ActiveChatContent(
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onOpenSettings, modifier = Modifier.testTag("button_configure")) {
+                TextButton(onClick = onOpenSettings, modifier = Modifier.testTag("button_configure_llm")) {
                     Text("Configure LLM", style = MaterialTheme.typography.bodySmall)
                 }
             }

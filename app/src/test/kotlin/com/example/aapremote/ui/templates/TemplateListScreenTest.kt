@@ -65,7 +65,7 @@ class TemplateListScreenTest {
     }
 
     @Test
-    fun `shows loading skeletons when no instance is set`() {
+    fun `does not show template data when no instance is set`() {
         fakeRepo.templates = listOf(testJobTemplate())
         // Don't set instances, so ViewModel stays in Idle/Loading
         setUpScreen()
