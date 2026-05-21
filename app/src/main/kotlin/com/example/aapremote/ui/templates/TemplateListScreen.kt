@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.model.Label
@@ -159,7 +160,7 @@ fun TemplateListScreen(
 
                             LazyColumn(
                                 state = listState,
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize().testTag("list_templates")
                             ) {
                                 items(
                                     items = state.templates,

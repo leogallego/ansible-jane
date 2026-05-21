@@ -30,6 +30,7 @@ import androidx.compose.runtime.snapshotFlow
 import com.example.aapremote.ui.components.pressScale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -115,7 +116,7 @@ fun EdaAuditScreen(
 
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize().testTag("list_eda_audit")
                     ) {
                         items(
                             items = state.auditRules,

@@ -180,7 +180,7 @@ private fun ActiveChatContent(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                TextButton(onClick = onOpenSettings) {
+                TextButton(onClick = onOpenSettings, modifier = Modifier.testTag("button_configure")) {
                     Text("Configure", style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -191,7 +191,7 @@ private fun ActiveChatContent(
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onOpenSettings) {
+                TextButton(onClick = onOpenSettings, modifier = Modifier.testTag("button_configure")) {
                     Text("Configure LLM", style = MaterialTheme.typography.bodySmall)
                 }
             }

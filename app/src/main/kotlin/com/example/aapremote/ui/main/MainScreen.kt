@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.data.TokenManager
@@ -90,17 +91,23 @@ fun MainScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Notifications coming soon")
-                        }
-                    }) {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Notifications coming soon")
+                            }
+                        },
+                        modifier = Modifier.testTag("button_notifications")
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Notifications,
                             contentDescription = "Notifications"
                         )
                     }
-                    IconButton(onClick = onNavigateToSettings) {
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.testTag("button_settings")
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings"
@@ -115,6 +122,7 @@ fun MainScreen(
             ) {
                 tabs.forEachIndexed { index, tab ->
                     NavigationBarItem(
+                        modifier = Modifier.testTag("nav_${tab.route.substringAfterLast("/")}"),
                         selected = selectedTabIndex == index,
                         onClick = { selectedTabIndex = index },
                         icon = {
@@ -149,6 +157,7 @@ fun MainScreen(
                 ) {
                     selectedTab.segments.forEachIndexed { index, segment ->
                         SegmentedButton(
+                            modifier = Modifier.testTag("segment_${segment.label.lowercase().replace(" ", "_")}"),
                             selected = currentSegmentIndex == index,
                             onClick = {
                                 selectedSegmentIndices = selectedSegmentIndices +

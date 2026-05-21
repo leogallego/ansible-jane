@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.aapremote.model.JobTemplate
@@ -96,7 +97,7 @@ fun TemplateListItem(
             if (template.summaryFields.userCapabilities.start) {
                 IconButton(
                     onClick = onLaunch,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(48.dp).testTag("button_launch_${template.id}")
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
