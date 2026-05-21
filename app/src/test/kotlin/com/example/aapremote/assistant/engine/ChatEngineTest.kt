@@ -160,6 +160,7 @@ private class FakeLlmProvider(
 
     override fun isAvailable(): Boolean = true
     override fun modelInfo(): ModelInfo = ModelInfo("fake-model")
+    override fun close() {}
 }
 
 private class FakeTool(
