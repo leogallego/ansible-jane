@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -62,6 +64,7 @@ import com.example.aapremote.model.AapInstance
 import com.example.aapremote.presentation.settings.SettingsUiState
 import com.example.aapremote.presentation.settings.SettingsViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -155,6 +158,18 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             BackupRestoreSection()
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            when (val state = uiState) {
+                is SettingsUiState.Success -> {
+                    TimezoneSection(
+                        currentTimezone = state.timezoneId,
+                        onTimezoneSelected = { viewModel.setTimezone(it) }
+                    )
+                }
+                else -> {}
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -410,6 +425,155 @@ private fun AboutSection() {
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TimezoneSection(
+    currentTimezone: String?,
+    onTimezoneSelected: (String?) -> Unit
+) {
+    var showPicker by remember { mutableStateOf(false) }
+    val displayValue = currentTimezone ?: "System (${ZoneId.systemDefault().id})"
+
+    Text(
+        text = "Display",
+        style = MaterialTheme.typography.titleMedium
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = { showPicker = true }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "Timezone",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = displayValue,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+
+    if (showPicker) {
+        TimezonePickerSheet(
+            currentTimezone = currentTimezone,
+            onSelect = {
+                onTimezoneSelected(it)
+                showPicker = false
+            },
+            onDismiss = { showPicker = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TimezonePickerSheet(
+    currentTimezone: String?,
+    onSelect: (String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val systemZone = ZoneId.systemDefault().id
+
+    val timezones = remember {
+        listOf(null to "System ($systemZone)") + ZoneId.getAvailableZoneIds()
+            .filter { it.contains("/") && !it.startsWith("SystemV") }
+            .sorted()
+            .map { it to it }
+    }
+
+    var searchQuery by remember { mutableStateOf("") }
+    val filtered = remember(searchQuery) {
+        if (searchQuery.isBlank()) timezones
+        else timezones.filter { (_, label) ->
+            label.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+        ) {
+            Text(
+                text = "Select Timezone",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            LazyColumn(
+                modifier = Modifier.height(400.dp)
+            ) {
+                items(
+                    items = filtered,
+                    key = { it.second }
+                ) { (zoneId, label) ->
+                    val isSelected = zoneId == currentTimezone
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                text = label,
+                                fontWeight = if (isSelected) FontWeight.Bold else null
+                            )
+                        },
+                        trailingContent = {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        },
+                        modifier = Modifier.clickable { onSelect(zoneId) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier.fillMaxWidth(),
+        placeholder = { Text("Search timezones...") },
+        singleLine = true,
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                }
+            }
+        }
+    )
 }
 
 @Composable

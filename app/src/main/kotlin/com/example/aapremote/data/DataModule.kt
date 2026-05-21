@@ -8,6 +8,7 @@ import org.koin.dsl.module
 
 val dataModule = module {
     single { TokenManager(androidContext()) } bind ITokenManager::class
+    single { UserPreferencesRepository(androidContext()) } bind IUserPreferencesRepository::class
     single { BackupManager() }
     single { ConnectivityObserver(androidContext()) }
     single { AuthRepository(get(), get()) } bind IAuthRepository::class

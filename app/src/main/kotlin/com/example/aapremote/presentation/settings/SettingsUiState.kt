@@ -8,7 +8,8 @@ sealed interface SettingsUiState {
     data class Success(
         val instances: List<AapInstance>,
         val selectedInstance: AapInstance?,
-        val selectedInstanceForDetails: AapInstance? = null
+        val selectedInstanceForDetails: AapInstance? = null,
+        val timezoneId: String? = null
     ) : SettingsUiState
     data class Error(val message: String) : SettingsUiState
 }

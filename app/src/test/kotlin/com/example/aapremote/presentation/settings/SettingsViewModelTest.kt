@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.example.aapremote.MainDispatcherRule
 import com.example.aapremote.fakes.FakeAapApiProvider
 import com.example.aapremote.fakes.FakeTokenManager
+import com.example.aapremote.fakes.FakeUserPreferencesRepository
 import com.example.aapremote.model.AapInstance
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -20,6 +21,7 @@ class SettingsViewModelTest {
 
     private lateinit var fakeTokenManager: FakeTokenManager
     private lateinit var fakeApiProvider: FakeAapApiProvider
+    private lateinit var fakeUserPreferences: FakeUserPreferencesRepository
 
     private val instance1 = AapInstance(
         id = "inst-1",
@@ -39,13 +41,14 @@ class SettingsViewModelTest {
     fun setup() {
         fakeTokenManager = FakeTokenManager()
         fakeApiProvider = FakeAapApiProvider()
+        fakeUserPreferences = FakeUserPreferencesRepository()
     }
 
     @Test
     fun `init emits Success with instances from TokenManager`() = runTest {
         fakeTokenManager.setInstances(listOf(instance1, instance2))
 
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         val state = viewModel.uiState.value
         assertTrue(state is SettingsUiState.Success)
@@ -57,7 +60,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `init with empty instances emits Success with empty list`() = runTest {
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         val state = viewModel.uiState.value
         assertTrue(state is SettingsUiState.Success)
@@ -71,7 +74,7 @@ class SettingsViewModelTest {
         fakeTokenManager.setInstances(listOf(instance1, instance2))
         fakeTokenManager.setActiveInstanceDirect(instance2)
 
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         val state = viewModel.uiState.value as SettingsUiState.Success
         assertEquals("inst-2", state.selectedInstance?.id)
@@ -80,7 +83,7 @@ class SettingsViewModelTest {
     @Test
     fun `switchInstance updates active instance`() = runTest {
         fakeTokenManager.setInstances(listOf(instance1, instance2))
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         viewModel.uiState.test {
             val initial = awaitItem() as SettingsUiState.Success
@@ -96,7 +99,7 @@ class SettingsViewModelTest {
     @Test
     fun `removeInstance removes instance and evicts from API provider`() = runTest {
         fakeTokenManager.setInstances(listOf(instance1, instance2))
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         viewModel.uiState.test {
             val initial = awaitItem() as SettingsUiState.Success
@@ -114,7 +117,7 @@ class SettingsViewModelTest {
     @Test
     fun `removeInstance with active instance switches to remaining`() = runTest {
         fakeTokenManager.setInstances(listOf(instance1, instance2))
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         viewModel.uiState.test {
             awaitItem() // initial
@@ -129,7 +132,7 @@ class SettingsViewModelTest {
     @Test
     fun `showInstanceDetails sets selectedInstanceForDetails`() = runTest {
         fakeTokenManager.setInstances(listOf(instance1, instance2))
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         // Wait for init to complete
         val initial = viewModel.uiState.value as SettingsUiState.Success
@@ -145,7 +148,7 @@ class SettingsViewModelTest {
     @Test
     fun `showInstanceDetails with unknown ID sets null`() = runTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         viewModel.showInstanceDetails("unknown-id")
 
@@ -156,7 +159,7 @@ class SettingsViewModelTest {
     @Test
     fun `dismissDetails clears selectedInstanceForDetails`() = runTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         viewModel.showInstanceDetails("inst-1")
         val withDetails = viewModel.uiState.value as SettingsUiState.Success
@@ -169,7 +172,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `dismissDetails when no details shown is a no-op`() = runTest {
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
 
         val before = viewModel.uiState.value
         viewModel.dismissDetails()

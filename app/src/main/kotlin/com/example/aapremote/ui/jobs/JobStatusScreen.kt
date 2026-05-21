@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.model.Job
 import com.example.aapremote.presentation.jobs.JobStatusUiState
 import com.example.aapremote.presentation.jobs.JobStatusViewModel
+import com.example.aapremote.ui.components.DateFormatter
 import com.example.aapremote.ui.components.ErrorMessage
 import com.example.aapremote.ui.components.JobStatusBadge
 import org.koin.compose.viewmodel.koinViewModel
@@ -139,10 +140,10 @@ private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null
                 Spacer(modifier = Modifier.height(8.dp))
 
                 job.started?.let { started ->
-                    DetailRow("Started", started)
+                    DetailRow("Started", DateFormatter.formatDateTime(started))
                 }
                 job.finished?.let { finished ->
-                    DetailRow("Finished", finished)
+                    DetailRow("Finished", DateFormatter.formatDateTime(finished))
                 }
                 job.elapsed?.let { elapsed ->
                     DetailRow("Elapsed", String.format("%.1f seconds", elapsed))

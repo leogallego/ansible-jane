@@ -3,17 +3,21 @@ package com.example.aapremote.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aapremote.data.ITokenManager
+import com.example.aapremote.data.IUserPreferencesRepository
 import com.example.aapremote.model.AapInstance
 import com.example.aapremote.network.IAapApiProvider
+import com.example.aapremote.ui.components.DateFormatter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.time.ZoneId
 
 class SettingsViewModel(
     private val tokenManager: ITokenManager,
-    private val apiProvider: IAapApiProvider
+    private val apiProvider: IAapApiProvider,
+    private val userPreferences: IUserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Idle)
@@ -23,11 +27,16 @@ class SettingsViewModel(
         viewModelScope.launch {
             combine(
                 tokenManager.instances,
-                tokenManager.activeInstance
-            ) { instances, active ->
+                tokenManager.activeInstance,
+                userPreferences.timezoneId
+            ) { instances, active, timezone ->
+                DateFormatter.zoneOverride = timezone?.let {
+                    try { ZoneId.of(it) } catch (_: Exception) { null }
+                }
                 SettingsUiState.Success(
                     instances = instances,
-                    selectedInstance = active
+                    selectedInstance = active,
+                    timezoneId = timezone
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -60,6 +69,12 @@ class SettingsViewModel(
         val current = _uiState.value
         if (current is SettingsUiState.Success) {
             _uiState.value = current.copy(selectedInstanceForDetails = null)
+        }
+    }
+
+    fun setTimezone(zoneId: String?) {
+        viewModelScope.launch {
+            userPreferences.setTimezoneId(zoneId)
         }
     }
 }
