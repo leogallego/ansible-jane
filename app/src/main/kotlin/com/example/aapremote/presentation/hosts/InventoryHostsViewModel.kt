@@ -2,7 +2,7 @@ package com.example.aapremote.presentation.hosts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.HostRepository
+import com.example.aapremote.data.IHostRepository
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Host
 import kotlinx.coroutines.Job
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class InventoryHostsViewModel(
-    private val hostRepository: HostRepository
+    private val hostRepository: IHostRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<InventoryHostsUiState>(InventoryHostsUiState.Loading)

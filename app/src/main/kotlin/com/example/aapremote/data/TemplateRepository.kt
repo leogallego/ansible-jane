@@ -4,12 +4,12 @@ import com.example.aapremote.model.JobTemplate
 import com.example.aapremote.model.LaunchRequest
 import com.example.aapremote.network.AapApiProvider
 
-class TemplateRepository(private val apiProvider: AapApiProvider) {
+class TemplateRepository(private val apiProvider: AapApiProvider) : ITemplateRepository {
 
-    suspend fun getTemplates(
-        page: Int = 1,
-        search: String? = null,
-        labelFilter: String? = null
+    override suspend fun getTemplates(
+        page: Int,
+        search: String?,
+        labelFilter: String?
     ): Result<TemplateListResult> {
         return try {
             val response = apiProvider.getApiService().getJobTemplates(
@@ -29,7 +29,7 @@ class TemplateRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun launchJob(templateId: Int, extraVars: String? = null): Result<Int> {
+    override suspend fun launchJob(templateId: Int, extraVars: String?): Result<Int> {
         return try {
             val request = LaunchRequest(extraVars = extraVars)
             val response = apiProvider.getApiService().launchJob(templateId, request)

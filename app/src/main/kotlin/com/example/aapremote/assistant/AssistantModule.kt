@@ -1,6 +1,7 @@
 package com.example.aapremote.assistant
 
 import com.example.aapremote.assistant.data.AssistantRepository
+import com.example.aapremote.assistant.data.IAssistantRepository
 import com.example.aapremote.assistant.presentation.AssistantViewModel
 import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.network.AuthInterceptor
@@ -11,6 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val assistantModule = module {
@@ -40,7 +42,7 @@ val assistantModule = module {
         )
     }
 
-    single { AssistantRepository(get()) }
+    single { AssistantRepository(get()) } bind IAssistantRepository::class
 
     single(named("llm")) {
         OkHttpClient.Builder()

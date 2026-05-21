@@ -3,12 +3,12 @@ package com.example.aapremote.data
 import com.example.aapremote.model.Credential
 import com.example.aapremote.network.AapApiProvider
 
-class CredentialRepository(private val apiProvider: AapApiProvider) {
+class CredentialRepository(private val apiProvider: AapApiProvider) : ICredentialRepository {
 
-    suspend fun getCredentials(
-        page: Int = 1,
-        pageSize: Int = 25,
-        search: String? = null
+    override suspend fun getCredentials(
+        page: Int,
+        pageSize: Int,
+        search: String?
     ): Result<CredentialListResult> {
         return try {
             val response = apiProvider.getApiService().getCredentials(
@@ -28,7 +28,7 @@ class CredentialRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getCredential(id: Int): Result<Credential> {
+    override suspend fun getCredential(id: Int): Result<Credential> {
         return try {
             Result.success(apiProvider.getApiService().getCredential(id))
         } catch (e: Exception) {

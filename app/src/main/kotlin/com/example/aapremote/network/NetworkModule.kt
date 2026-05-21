@@ -3,6 +3,7 @@ package com.example.aapremote.network
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val networkJson = Json {
@@ -19,7 +20,7 @@ val networkModule = module {
             tokenManager = get(),
             json = networkJson
         )
-    }
+    } bind IAapApiProvider::class
 
     factory {
         OkHttpClient.Builder()

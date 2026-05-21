@@ -1,23 +1,25 @@
 package com.example.aapremote.data
 
 import com.example.aapremote.data.backup.BackupManager
+import com.example.aapremote.network.AapApiProvider
 import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val dataModule = module {
-    single { TokenManager(androidContext()) }
+    single { TokenManager(androidContext()) } bind ITokenManager::class
     single { BackupManager() }
     single { ConnectivityObserver(androidContext()) }
-    single { AuthRepository(get(), get()) }
-    single { TemplateRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { JobRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { WorkflowRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { ScheduleRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { EdaAuditRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { InventoryRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { HostRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { InfrastructureRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { CredentialRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { ProjectRepository(get<com.example.aapremote.network.AapApiProvider>()) }
-    single { EdaActivationRepository(get<com.example.aapremote.network.AapApiProvider>()) }
+    single { AuthRepository(get(), get()) } bind IAuthRepository::class
+    single { TemplateRepository(get<AapApiProvider>()) } bind ITemplateRepository::class
+    single { JobRepository(get<AapApiProvider>()) } bind IJobRepository::class
+    single { WorkflowRepository(get<AapApiProvider>()) } bind IWorkflowRepository::class
+    single { ScheduleRepository(get<AapApiProvider>()) } bind IScheduleRepository::class
+    single { EdaAuditRepository(get<AapApiProvider>()) } bind IEdaAuditRepository::class
+    single { InventoryRepository(get<AapApiProvider>()) } bind IInventoryRepository::class
+    single { HostRepository(get<AapApiProvider>()) } bind IHostRepository::class
+    single { InfrastructureRepository(get<AapApiProvider>()) } bind IInfrastructureRepository::class
+    single { CredentialRepository(get<AapApiProvider>()) } bind ICredentialRepository::class
+    single { ProjectRepository(get<AapApiProvider>()) } bind IProjectRepository::class
+    single { EdaActivationRepository(get<AapApiProvider>()) } bind IEdaActivationRepository::class
 }

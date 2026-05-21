@@ -1,8 +1,8 @@
 package com.example.aapremote.data
 
 import com.example.aapremote.model.User
-import com.example.aapremote.network.AapApiProvider
 import com.example.aapremote.network.AapApiService
+import com.example.aapremote.network.IAapApiProvider
 import com.example.aapremote.network.ApiVersion
 import com.example.aapremote.network.ApiVersionDetector
 import com.example.aapremote.network.AuthInterceptor
@@ -17,16 +17,16 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class AuthRepository(
-    private val tokenManager: TokenManager,
-    private val apiProvider: AapApiProvider
-) {
+    private val tokenManager: ITokenManager,
+    private val apiProvider: IAapApiProvider
+) : IAuthRepository {
 
-    suspend fun validateCredentials(
+    override suspend fun validateCredentials(
         baseUrl: String,
         token: String,
         trustSelfSigned: Boolean,
-        alias: String? = null,
-        existingInstanceId: String? = null
+        alias: String?,
+        existingInstanceId: String?
     ): Result<User> = withContext(Dispatchers.IO) {
         try {
             val client = buildClient(token, trustSelfSigned)
@@ -55,7 +55,7 @@ class AuthRepository(
         }
     }
 
-    suspend fun reAuthenticate(instanceId: String, newToken: String): Result<User> =
+    override suspend fun reAuthenticate(instanceId: String, newToken: String): Result<User> =
         withContext(Dispatchers.IO) {
             try {
                 val instance = tokenManager.getInstanceById(instanceId)
@@ -91,7 +91,7 @@ class AuthRepository(
             }
         }
 
-    suspend fun checkExistingCredentials(): Result<User>? = withContext(Dispatchers.IO) {
+    override suspend fun checkExistingCredentials(): Result<User>? = withContext(Dispatchers.IO) {
         if (!tokenManager.loadCredentials()) return@withContext null
         val activeInstance = tokenManager.activeInstance.value ?: return@withContext null
 
@@ -112,15 +112,15 @@ class AuthRepository(
         }
     }
 
-    suspend fun logoutInstance(instanceId: String) {
+    override suspend fun logoutInstance(instanceId: String) {
         tokenManager.removeInstance(instanceId)
     }
 
-    suspend fun logout() {
+    override suspend fun logout() {
         tokenManager.clearCredentials()
     }
 
-    fun isLoggedIn() = tokenManager.isLoggedIn
+    override fun isLoggedIn() = tokenManager.isLoggedIn
 
     private fun buildClient(token: String, trustSelfSigned: Boolean): OkHttpClient {
         val builder = OkHttpClient.Builder()

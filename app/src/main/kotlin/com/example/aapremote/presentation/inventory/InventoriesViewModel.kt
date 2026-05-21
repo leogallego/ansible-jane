@@ -2,8 +2,8 @@ package com.example.aapremote.presentation.inventory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.InventoryRepository
-import com.example.aapremote.data.TokenManager
+import com.example.aapremote.data.IInventoryRepository
+import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Inventory
 import kotlinx.coroutines.Job
@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class InventoriesViewModel(
-    private val inventoryRepository: InventoryRepository,
-    private val tokenManager: TokenManager
+    private val inventoryRepository: IInventoryRepository,
+    private val tokenManager: ITokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<InventoriesUiState>(InventoriesUiState.Loading)

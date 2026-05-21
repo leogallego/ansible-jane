@@ -6,11 +6,11 @@ import com.example.aapremote.model.PingResponse
 import com.example.aapremote.network.AapApiProvider
 import kotlinx.serialization.json.JsonElement
 
-class InfrastructureRepository(private val apiProvider: AapApiProvider) {
+class InfrastructureRepository(private val apiProvider: AapApiProvider) : IInfrastructureRepository {
 
-    suspend fun getInstances(
-        page: Int = 1,
-        pageSize: Int = 25
+    override suspend fun getInstances(
+        page: Int,
+        pageSize: Int
     ): Result<InstanceListResult> {
         return try {
             val response = apiProvider.getApiService().getInstances(
@@ -29,7 +29,7 @@ class InfrastructureRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getInstance(id: Int): Result<Instance> {
+    override suspend fun getInstance(id: Int): Result<Instance> {
         return try {
             Result.success(apiProvider.getApiService().getInstance(id))
         } catch (e: Exception) {
@@ -37,9 +37,9 @@ class InfrastructureRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getInstanceGroups(
-        page: Int = 1,
-        pageSize: Int = 25
+    override suspend fun getInstanceGroups(
+        page: Int,
+        pageSize: Int
     ): Result<InstanceGroupListResult> {
         return try {
             val response = apiProvider.getApiService().getInstanceGroups(
@@ -58,7 +58,7 @@ class InfrastructureRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun ping(): Result<PingResponse> {
+    override suspend fun ping(): Result<PingResponse> {
         return try {
             Result.success(apiProvider.getApiService().ping())
         } catch (e: Exception) {
@@ -66,7 +66,7 @@ class InfrastructureRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getMeshTopology(): Result<JsonElement> {
+    override suspend fun getMeshTopology(): Result<JsonElement> {
         return try {
             Result.success(apiProvider.getApiService().getMeshTopology())
         } catch (e: Exception) {

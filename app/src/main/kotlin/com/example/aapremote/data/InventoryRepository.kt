@@ -3,12 +3,12 @@ package com.example.aapremote.data
 import com.example.aapremote.model.Inventory
 import com.example.aapremote.network.AapApiProvider
 
-class InventoryRepository(private val apiProvider: AapApiProvider) {
+class InventoryRepository(private val apiProvider: AapApiProvider) : IInventoryRepository {
 
-    suspend fun getInventories(
-        page: Int = 1,
-        pageSize: Int = 25,
-        search: String? = null
+    override suspend fun getInventories(
+        page: Int,
+        pageSize: Int,
+        search: String?
     ): Result<InventoryListResult> {
         return try {
             val response = apiProvider.getApiService().getInventories(
@@ -28,7 +28,7 @@ class InventoryRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getInventory(id: Int): Result<Inventory> {
+    override suspend fun getInventory(id: Int): Result<Inventory> {
         return try {
             Result.success(apiProvider.getApiService().getInventory(id))
         } catch (e: Exception) {

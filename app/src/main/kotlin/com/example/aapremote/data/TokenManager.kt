@@ -49,16 +49,16 @@ data class InstancesState(
     val activeInstanceId: String? = null
 )
 
-class TokenManager(private val context: Context) {
+class TokenManager(private val context: Context) : ITokenManager {
 
     private val aead: Aead
 
     // Multi-instance reactive state
     private val _instances = MutableStateFlow<List<AapInstance>>(emptyList())
-    val instances: StateFlow<List<AapInstance>> = _instances.asStateFlow()
+    override val instances: StateFlow<List<AapInstance>> = _instances.asStateFlow()
 
     private val _activeInstance = MutableStateFlow<AapInstance?>(null)
-    val activeInstance: StateFlow<AapInstance?> = _activeInstance.asStateFlow()
+    override val activeInstance: StateFlow<AapInstance?> = _activeInstance.asStateFlow()
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -164,14 +164,14 @@ class TokenManager(private val context: Context) {
      * If this is the first instance, it becomes active automatically.
      * Returns the instance ID.
      */
-    suspend fun saveInstance(
+    override suspend fun saveInstance(
         baseUrl: String,
         token: String,
-        alias: String? = null,
+        alias: String?,
         apiVersion: ApiVersion,
-        trustSelfSigned: Boolean = false,
-        certFingerprint: String? = null,
-        existingId: String? = null
+        trustSelfSigned: Boolean,
+        certFingerprint: String?,
+        existingId: String?
     ): String {
         val normalizedUrl = baseUrl.trimEnd('/').lowercase()
 
@@ -243,7 +243,7 @@ class TokenManager(private val context: Context) {
      * If the removed instance was active, promotes the next available instance.
      * Returns true if an instance was removed.
      */
-    suspend fun removeInstance(instanceId: String): Boolean {
+    override suspend fun removeInstance(instanceId: String): Boolean {
         val state = readState()
         val updatedInstances = state.instances.filter { it.id != instanceId }
         if (updatedInstances.size == state.instances.size) return false
@@ -261,7 +261,7 @@ class TokenManager(private val context: Context) {
     /**
      * Set the active instance by ID.
      */
-    suspend fun setActiveInstance(instanceId: String) {
+    override suspend fun setActiveInstance(instanceId: String) {
         val state = readState()
         if (state.instances.none { it.id == instanceId }) return
         writeState(state.copy(activeInstanceId = instanceId))
@@ -270,7 +270,7 @@ class TokenManager(private val context: Context) {
     /**
      * Get a specific instance by ID.
      */
-    fun getInstanceById(instanceId: String): AapInstance? {
+    override fun getInstanceById(instanceId: String): AapInstance? {
         return _instances.value.find { it.id == instanceId }
     }
 
@@ -279,7 +279,7 @@ class TokenManager(private val context: Context) {
      * Also handles legacy credential cleanup (R-005).
      * Returns true if any instances exist after loading.
      */
-    suspend fun loadCredentials(): Boolean {
+    override suspend fun loadCredentials(): Boolean {
         val prefs = context.credentialsDataStore.data.first()
 
         // Legacy cleanup (R-005): if instances_json is absent but old keys exist, clear them
@@ -307,14 +307,14 @@ class TokenManager(private val context: Context) {
      * Legacy compatibility: save credentials as a single instance.
      * Used by AuthRepository during the connect flow.
      */
-    suspend fun saveCredentials(
+    override suspend fun saveCredentials(
         baseUrl: String,
         token: String,
         apiVersion: ApiVersion,
-        trustSelfSigned: Boolean = false,
-        certFingerprint: String? = null,
-        alias: String? = null,
-        existingId: String? = null
+        trustSelfSigned: Boolean,
+        certFingerprint: String?,
+        alias: String?,
+        existingId: String?
     ): String {
         return saveInstance(
             baseUrl = baseUrl,
@@ -327,7 +327,7 @@ class TokenManager(private val context: Context) {
         )
     }
 
-    suspend fun updateMcpConfig(
+    override suspend fun updateMcpConfig(
         instanceId: String,
         enabled: Boolean,
         servers: List<McpServerConfig>?
@@ -344,13 +344,13 @@ class TokenManager(private val context: Context) {
     /**
      * Clear all instances (full logout).
      */
-    suspend fun clearCredentials() {
+    override suspend fun clearCredentials() {
         context.credentialsDataStore.edit { it.clear() }
         _instances.value = emptyList()
         _activeInstance.value = null
     }
 
-    val isLoggedIn: Flow<Boolean> = context.credentialsDataStore.data.map { prefs ->
+    override val isLoggedIn: Flow<Boolean> = context.credentialsDataStore.data.map { prefs ->
         val jsonString = prefs[KEY_INSTANCES_JSON]
         if (jsonString != null) {
             try {

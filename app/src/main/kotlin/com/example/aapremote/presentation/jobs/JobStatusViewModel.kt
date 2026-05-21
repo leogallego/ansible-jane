@@ -3,7 +3,7 @@ package com.example.aapremote.presentation.jobs
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.JobRepository
+import com.example.aapremote.data.IJobRepository
 import com.example.aapremote.model.AppError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 class JobStatusViewModel(
     savedStateHandle: SavedStateHandle,
-    private val jobRepository: JobRepository
+    private val jobRepository: IJobRepository
 ) : ViewModel() {
 
     private val jobId: Int = savedStateHandle.get<Int>("jobId") ?: -1

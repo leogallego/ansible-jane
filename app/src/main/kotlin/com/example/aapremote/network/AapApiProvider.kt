@@ -11,12 +11,12 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 class AapApiProvider(
     private val tokenManager: TokenManager,
     private val json: Json
-) {
+) : IAapApiProvider {
     // Per-instance service cache: instanceId -> (AapApiService, EdaApiService)
     private val serviceCache = mutableMapOf<String, Pair<AapApiService, EdaApiService?>>()
 
     @Synchronized
-    fun getApiService(): AapApiService {
+    override fun getApiService(): AapApiService {
         val instance = tokenManager.activeInstance.value
             ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
@@ -36,7 +36,7 @@ class AapApiProvider(
     }
 
     @Synchronized
-    fun getEdaApiService(): EdaApiService {
+    override fun getEdaApiService(): EdaApiService {
         val instance = tokenManager.activeInstance.value
             ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
@@ -61,7 +61,7 @@ class AapApiProvider(
     }
 
     @Synchronized
-    fun evictInstance(instanceId: String) {
+    override fun evictInstance(instanceId: String) {
         serviceCache.remove(instanceId)
     }
 

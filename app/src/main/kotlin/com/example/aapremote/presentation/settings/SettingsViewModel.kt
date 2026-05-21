@@ -2,9 +2,9 @@ package com.example.aapremote.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.TokenManager
+import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.AapInstance
-import com.example.aapremote.network.AapApiProvider
+import com.example.aapremote.network.IAapApiProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    private val tokenManager: TokenManager,
-    private val apiProvider: AapApiProvider
+    private val tokenManager: ITokenManager,
+    private val apiProvider: IAapApiProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Idle)

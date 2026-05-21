@@ -3,11 +3,11 @@ package com.example.aapremote.data
 import com.example.aapremote.model.EdaActivation
 import com.example.aapremote.network.AapApiProvider
 
-class EdaActivationRepository(private val apiProvider: AapApiProvider) {
+class EdaActivationRepository(private val apiProvider: AapApiProvider) : IEdaActivationRepository {
 
-    suspend fun getActivations(
-        page: Int = 1,
-        pageSize: Int = 20
+    override suspend fun getActivations(
+        page: Int,
+        pageSize: Int
     ): Result<EdaActivationListResult> {
         return try {
             val response = apiProvider.getEdaApiService().getActivations(
@@ -26,7 +26,7 @@ class EdaActivationRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getActivation(id: Int): Result<EdaActivation> {
+    override suspend fun getActivation(id: Int): Result<EdaActivation> {
         return try {
             Result.success(apiProvider.getEdaApiService().getActivation(id))
         } catch (e: Exception) {

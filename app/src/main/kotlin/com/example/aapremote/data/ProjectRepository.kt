@@ -4,12 +4,12 @@ import com.example.aapremote.model.ExecutionEnvironment
 import com.example.aapremote.model.Project
 import com.example.aapremote.network.AapApiProvider
 
-class ProjectRepository(private val apiProvider: AapApiProvider) {
+class ProjectRepository(private val apiProvider: AapApiProvider) : IProjectRepository {
 
-    suspend fun getProjects(
-        page: Int = 1,
-        pageSize: Int = 25,
-        search: String? = null
+    override suspend fun getProjects(
+        page: Int,
+        pageSize: Int,
+        search: String?
     ): Result<ProjectListResult> {
         return try {
             val response = apiProvider.getApiService().getProjects(
@@ -29,7 +29,7 @@ class ProjectRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getProject(id: Int): Result<Project> {
+    override suspend fun getProject(id: Int): Result<Project> {
         return try {
             Result.success(apiProvider.getApiService().getProject(id))
         } catch (e: Exception) {
@@ -37,9 +37,9 @@ class ProjectRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getExecutionEnvironments(
-        page: Int = 1,
-        pageSize: Int = 25
+    override suspend fun getExecutionEnvironments(
+        page: Int,
+        pageSize: Int
     ): Result<ExecutionEnvironmentListResult> {
         return try {
             val response = apiProvider.getApiService().getExecutionEnvironments(

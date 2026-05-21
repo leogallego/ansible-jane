@@ -3,9 +3,9 @@ package com.example.aapremote.data
 import com.example.aapremote.model.Schedule
 import com.example.aapremote.network.AapApiProvider
 
-class ScheduleRepository(private val apiProvider: AapApiProvider) {
+class ScheduleRepository(private val apiProvider: AapApiProvider) : IScheduleRepository {
 
-    suspend fun getSchedules(page: Int = 1, pageSize: Int = 20): Result<SchedulesResult> {
+    override suspend fun getSchedules(page: Int, pageSize: Int): Result<SchedulesResult> {
         return try {
             val response = apiProvider.getApiService().getSchedules(
                 page = page,
@@ -23,7 +23,7 @@ class ScheduleRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun toggleSchedule(id: Int, enabled: Boolean): Result<Schedule> {
+    override suspend fun toggleSchedule(id: Int, enabled: Boolean): Result<Schedule> {
         return try {
             val updated = apiProvider.getApiService().toggleSchedule(id, mapOf("enabled" to enabled))
             Result.success(updated)

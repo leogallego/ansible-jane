@@ -5,12 +5,12 @@ import com.example.aapremote.model.JobHostSummary
 import com.example.aapremote.network.AapApiProvider
 import kotlinx.serialization.json.JsonElement
 
-class HostRepository(private val apiProvider: AapApiProvider) {
+class HostRepository(private val apiProvider: AapApiProvider) : IHostRepository {
 
-    suspend fun getAllHosts(
-        page: Int = 1,
-        pageSize: Int = 25,
-        search: String? = null
+    override suspend fun getAllHosts(
+        page: Int,
+        pageSize: Int,
+        search: String?
     ): Result<HostListResult> {
         return try {
             val response = apiProvider.getApiService().getHosts(
@@ -30,11 +30,11 @@ class HostRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getInventoryHosts(
+    override suspend fun getInventoryHosts(
         inventoryId: Int,
-        page: Int = 1,
-        pageSize: Int = 25,
-        search: String? = null
+        page: Int,
+        pageSize: Int,
+        search: String?
     ): Result<HostListResult> {
         return try {
             val response = apiProvider.getApiService().getInventoryHosts(
@@ -55,7 +55,7 @@ class HostRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getHostFacts(hostId: Int): Result<Map<String, JsonElement>> {
+    override suspend fun getHostFacts(hostId: Int): Result<Map<String, JsonElement>> {
         return try {
             Result.success(apiProvider.getApiService().getHostFacts(hostId))
         } catch (e: Exception) {
@@ -63,10 +63,10 @@ class HostRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getHostJobSummaries(
+    override suspend fun getHostJobSummaries(
         hostId: Int,
-        page: Int = 1,
-        pageSize: Int = 20
+        page: Int,
+        pageSize: Int
     ): Result<JobHostSummaryResult> {
         return try {
             val response = apiProvider.getApiService().getHostJobSummaries(
