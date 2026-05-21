@@ -15,6 +15,7 @@ import com.example.aapremote.assistant.data.LlmProviderConfig
 import com.example.aapremote.network.CertTrustManager
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.flow.Flow
@@ -40,10 +41,12 @@ class KoogLlmProvider(
             chatCompletionsPath = chatPath
         )
         val httpClient = if (trustSelfSigned) {
-            HttpClient(CIO) {
+            val tm = CertTrustManager.createTrustAllManager()
+            HttpClient(OkHttp) {
                 engine {
-                    https {
-                        trustManager = CertTrustManager.createTrustAllManager()
+                    config {
+                        sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
+                        hostnameVerifier { _, _ -> true }
                     }
                 }
             }
