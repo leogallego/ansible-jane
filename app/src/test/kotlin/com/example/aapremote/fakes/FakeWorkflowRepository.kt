@@ -15,10 +15,17 @@ class FakeWorkflowRepository : IWorkflowRepository {
     var shouldFail = false
     var failureException: Exception = RuntimeException("Test error")
     var launchResult = 99
+    var hasMore = false
+    var lastRequestedPage = 0
+    var lastSearchQuery: String? = null
+    var lastLabelFilter: String? = null
 
     override suspend fun getWorkflowTemplates(page: Int, search: String?, labelFilter: String?): Result<WorkflowTemplateListResult> {
+        lastRequestedPage = page
+        lastSearchQuery = search
+        lastLabelFilter = labelFilter
         if (shouldFail) return Result.failure(failureException)
-        return Result.success(WorkflowTemplateListResult(templates, hasMore = false, totalCount = templates.size))
+        return Result.success(WorkflowTemplateListResult(templates, hasMore = hasMore, totalCount = templates.size))
     }
 
     override suspend fun launchWorkflow(templateId: Int, extraVars: String?): Result<Int> {

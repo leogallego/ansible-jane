@@ -14,15 +14,17 @@ class FakeHostRepository : IHostRepository {
     var jobSummaries = listOf<JobHostSummary>()
     var shouldFail = false
     var failureException: Exception = RuntimeException("Test error")
+    var hasMore = false
+    var inventoryHostsHasMore = false
 
     override suspend fun getAllHosts(page: Int, pageSize: Int, search: String?): Result<HostListResult> {
         if (shouldFail) return Result.failure(failureException)
-        return Result.success(HostListResult(hosts, hasMore = false, totalCount = hosts.size))
+        return Result.success(HostListResult(hosts, hasMore = hasMore, totalCount = hosts.size))
     }
 
     override suspend fun getInventoryHosts(inventoryId: Int, page: Int, pageSize: Int, search: String?): Result<HostListResult> {
         if (shouldFail) return Result.failure(failureException)
-        return Result.success(HostListResult(inventoryHosts, hasMore = false, totalCount = inventoryHosts.size))
+        return Result.success(HostListResult(inventoryHosts, hasMore = inventoryHostsHasMore, totalCount = inventoryHosts.size))
     }
 
     override suspend fun getHostFacts(hostId: Int): Result<Map<String, JsonElement>> {
