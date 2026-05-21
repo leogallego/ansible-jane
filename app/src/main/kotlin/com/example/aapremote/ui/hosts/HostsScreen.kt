@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -116,7 +117,7 @@ fun HostsScreen(
 
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize().testTag("list_hosts")
                     ) {
                         item {
                             SearchBar(

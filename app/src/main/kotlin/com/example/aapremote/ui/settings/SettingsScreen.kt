@@ -51,6 +51,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -79,7 +80,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = { Text("Settings") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("button_back")) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -130,7 +131,7 @@ fun SettingsScreen(
 
                     FilledTonalButton(
                         onClick = onAddInstance,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().testTag("button_add_instance")
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -163,7 +164,7 @@ fun SettingsScreen(
 
             FilledTonalButton(
                 onClick = { showLogoutAllConfirm = true },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().testTag("button_logout_all")
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
