@@ -20,14 +20,10 @@ class GetProjectLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val projectId = (args["project_id"] as? Number)?.toInt()
-                ?: return ToolResult(success = false, data = "project_id is required", errorType = ErrorType.NOT_FOUND)
-            val project = repository.getProject(projectId).getOrThrow()
-            ToolResult(success = true, data = networkJson.encodeToString(project))
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val projectId = (args["project_id"] as? Number)?.toInt()
+            ?: return@executeSafely ToolResult(success = false, data = "project_id is required", errorType = ErrorType.NOT_FOUND)
+        val project = repository.getProject(projectId).getOrThrow()
+        ToolResult(success = true, data = networkJson.encodeToString(project))
     }
 }

@@ -20,21 +20,17 @@ class GetWorkflowJobLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val jobId = (args["workflow_job_id"] as? Number)?.toInt()
-                ?: return ToolResult(success = false, data = "workflow_job_id is required", errorType = ErrorType.NOT_FOUND)
-            val job = repository.getWorkflowJobStatus(jobId).getOrThrow()
-            val nodes = repository.getWorkflowNodes(jobId).getOrElse { emptyList() }
-            ToolResult(
-                success = true,
-                data = networkJson.encodeToString(mapOf(
-                    "workflow_job" to networkJson.encodeToString(job),
-                    "nodes" to networkJson.encodeToString(nodes)
-                ))
-            )
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val jobId = (args["workflow_job_id"] as? Number)?.toInt()
+            ?: return@executeSafely ToolResult(success = false, data = "workflow_job_id is required", errorType = ErrorType.NOT_FOUND)
+        val job = repository.getWorkflowJobStatus(jobId).getOrThrow()
+        val nodes = repository.getWorkflowNodes(jobId).getOrElse { emptyList() }
+        ToolResult(
+            success = true,
+            data = networkJson.encodeToString(mapOf(
+                "workflow_job" to networkJson.encodeToString(job),
+                "nodes" to networkJson.encodeToString(nodes)
+            ))
+        )
     }
 }

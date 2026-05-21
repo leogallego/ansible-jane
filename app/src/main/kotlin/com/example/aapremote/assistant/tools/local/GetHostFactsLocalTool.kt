@@ -20,14 +20,10 @@ class GetHostFactsLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val hostId = (args["host_id"] as? Number)?.toInt()
-                ?: return ToolResult(success = false, data = "host_id is required", errorType = ErrorType.NOT_FOUND)
-            val facts = repository.getHostFacts(hostId).getOrThrow()
-            ToolResult(success = true, data = networkJson.encodeToString(facts))
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val hostId = (args["host_id"] as? Number)?.toInt()
+            ?: return@executeSafely ToolResult(success = false, data = "host_id is required", errorType = ErrorType.NOT_FOUND)
+        val facts = repository.getHostFacts(hostId).getOrThrow()
+        ToolResult(success = true, data = networkJson.encodeToString(facts))
     }
 }

@@ -1,6 +1,5 @@
 package com.example.aapremote.assistant.tools.local
 
-import com.example.aapremote.assistant.tools.ErrorType
 import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
@@ -15,12 +14,8 @@ class GetMeshTopologyLocalTool(
         parametersSchema = buildToolSchema()
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val topology = repository.getMeshTopology().getOrThrow()
-            ToolResult(success = true, data = topology.toString())
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val topology = repository.getMeshTopology().getOrThrow()
+        ToolResult(success = true, data = topology.toString())
     }
 }

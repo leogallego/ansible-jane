@@ -1,6 +1,5 @@
 package com.example.aapremote.assistant.tools.local
 
-import com.example.aapremote.assistant.tools.ErrorType
 import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
@@ -19,20 +18,16 @@ class ListSchedulesLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val result = repository.getSchedules(
-                page = (args["page"] as? Number)?.toInt() ?: 1
-            ).getOrThrow()
-            ToolResult(
-                success = true,
-                data = networkJson.encodeToString(mapOf(
-                    "count" to result.totalCount.toString(),
-                    "schedules" to networkJson.encodeToString(result.schedules)
-                ))
-            )
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val result = repository.getSchedules(
+            page = (args["page"] as? Number)?.toInt() ?: 1
+        ).getOrThrow()
+        ToolResult(
+            success = true,
+            data = networkJson.encodeToString(mapOf(
+                "count" to result.totalCount.toString(),
+                "schedules" to networkJson.encodeToString(result.schedules)
+            ))
+        )
     }
 }

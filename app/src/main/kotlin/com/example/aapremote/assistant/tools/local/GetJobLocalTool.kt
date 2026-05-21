@@ -20,14 +20,10 @@ class GetJobLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val jobId = (args["job_id"] as? Number)?.toInt()
-                ?: return ToolResult(success = false, data = "job_id is required", errorType = ErrorType.NOT_FOUND)
-            val job = repository.getJobStatus(jobId).getOrThrow()
-            ToolResult(success = true, data = networkJson.encodeToString(job))
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val jobId = (args["job_id"] as? Number)?.toInt()
+            ?: return@executeSafely ToolResult(success = false, data = "job_id is required", errorType = ErrorType.NOT_FOUND)
+        val job = repository.getJobStatus(jobId).getOrThrow()
+        ToolResult(success = true, data = networkJson.encodeToString(job))
     }
 }

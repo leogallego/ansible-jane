@@ -1,6 +1,5 @@
 package com.example.aapremote.assistant.tools.local
 
-import com.example.aapremote.assistant.tools.ErrorType
 import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
@@ -21,34 +20,30 @@ class ListHostsLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val inventoryId = (args["inventory_id"] as? Number)?.toInt()
-            val page = (args["page"] as? Number)?.toInt() ?: 1
-            val search = args["search"] as? String
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val inventoryId = (args["inventory_id"] as? Number)?.toInt()
+        val page = (args["page"] as? Number)?.toInt() ?: 1
+        val search = args["search"] as? String
 
-            val result = if (inventoryId != null) {
-                repository.getInventoryHosts(
-                    inventoryId = inventoryId,
-                    page = page,
-                    search = search
-                )
-            } else {
-                repository.getAllHosts(
-                    page = page,
-                    search = search
-                )
-            }.getOrThrow()
-
-            ToolResult(
-                success = true,
-                data = networkJson.encodeToString(mapOf(
-                    "count" to result.totalCount.toString(),
-                    "hosts" to networkJson.encodeToString(result.hosts)
-                ))
+        val result = if (inventoryId != null) {
+            repository.getInventoryHosts(
+                inventoryId = inventoryId,
+                page = page,
+                search = search
             )
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+        } else {
+            repository.getAllHosts(
+                page = page,
+                search = search
+            )
+        }.getOrThrow()
+
+        ToolResult(
+            success = true,
+            data = networkJson.encodeToString(mapOf(
+                "count" to result.totalCount.toString(),
+                "hosts" to networkJson.encodeToString(result.hosts)
+            ))
+        )
     }
 }

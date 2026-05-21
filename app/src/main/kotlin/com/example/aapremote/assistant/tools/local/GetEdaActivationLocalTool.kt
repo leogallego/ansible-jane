@@ -20,14 +20,10 @@ class GetEdaActivationLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val activationId = (args["activation_id"] as? Number)?.toInt()
-                ?: return ToolResult(success = false, data = "activation_id is required", errorType = ErrorType.NOT_FOUND)
-            val activation = repository.getActivation(activationId).getOrThrow()
-            ToolResult(success = true, data = networkJson.encodeToString(activation))
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val activationId = (args["activation_id"] as? Number)?.toInt()
+            ?: return@executeSafely ToolResult(success = false, data = "activation_id is required", errorType = ErrorType.NOT_FOUND)
+        val activation = repository.getActivation(activationId).getOrThrow()
+        ToolResult(success = true, data = networkJson.encodeToString(activation))
     }
 }
