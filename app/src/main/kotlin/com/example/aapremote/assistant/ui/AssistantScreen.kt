@@ -1,11 +1,16 @@
 package com.example.aapremote.assistant.ui
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,6 +40,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -133,6 +139,7 @@ fun AssistantScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ActiveChatContent(
     state: AssistantUiState.Active,
@@ -154,9 +161,17 @@ private fun ActiveChatContent(
         }
     }
 
+    val imeVisible = WindowInsets.isImeVisible
+
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
-            listState.animateScrollToItem(state.messages.size - 1)
+            listState.animateScrollToItem(0)
+        }
+    }
+
+    LaunchedEffect(imeVisible) {
+        if (imeVisible && state.messages.isNotEmpty()) {
+            listState.animateScrollToItem(0)
         }
     }
 
@@ -164,7 +179,7 @@ private fun ActiveChatContent(
         focusRequester.requestFocus()
     }
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.imePadding()) {
         if (state.connections.isNotEmpty()) {
             val connected = state.connections.count { it.value is McpConnectionState.Connected }
             val total = state.connections.size
@@ -199,11 +214,13 @@ private fun ActiveChatContent(
 
         LazyColumn(
             state = listState,
+            reverseLayout = true,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom)
         ) {
             if (state.messages.isEmpty()) {
                 item {
@@ -223,7 +240,7 @@ private fun ActiveChatContent(
             }
 
             items(
-                items = state.messages,
+                items = state.messages.asReversed(),
                 key = { it.id },
                 contentType = { it.role }
             ) { message ->
@@ -246,7 +263,10 @@ private fun ActiveChatContent(
                     .testTag("field_assistant_input")
                     .focusRequester(focusRequester)
                     .onPreviewKeyEvent {
-                        if (it.type == KeyEventType.KeyUp && it.key == Key.Enter) {
+                        if (it.type == KeyEventType.KeyUp &&
+                            it.key == Key.Enter &&
+                            it.isCtrlPressed
+                        ) {
                             submit()
                             true
                         } else false
