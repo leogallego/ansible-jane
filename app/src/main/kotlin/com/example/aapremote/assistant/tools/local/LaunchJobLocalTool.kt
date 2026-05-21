@@ -5,6 +5,7 @@ import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.TemplateRepository
+import kotlinx.serialization.json.JsonObject
 
 class LaunchJobLocalTool(
     private val repository: TemplateRepository
@@ -20,10 +21,10 @@ class LaunchJobLocalTool(
     ),
     destructive = true
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val templateId = (args["template_id"] as? Number)?.toInt()
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val templateId = args.intArg("template_id")
             ?: return@executeSafely ToolResult(success = false, data = "template_id is required", errorType = ErrorType.NOT_FOUND)
-        val extraVars = args["extra_vars"] as? String
+        val extraVars = args.stringArg("extra_vars")
         val jobId = repository.launchJob(templateId, extraVars).getOrThrow()
         ToolResult(success = true, data = """{"job_id": $jobId, "status": "launched"}""")
     }

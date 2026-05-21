@@ -6,6 +6,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.WorkflowRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class ListWorkflowTemplatesLocalTool(
     private val repository: WorkflowRepository
@@ -20,11 +21,11 @@ class ListWorkflowTemplatesLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val result = repository.getWorkflowTemplates(
-            page = (args["page"] as? Number)?.toInt() ?: 1,
-            search = args["search"] as? String,
-            labelFilter = args["labels"] as? String
+            page = args.intArg("page") ?: 1,
+            search = args.stringArg("search"),
+            labelFilter = args.stringArg("labels")
         ).getOrThrow()
         ToolResult(
             success = true,

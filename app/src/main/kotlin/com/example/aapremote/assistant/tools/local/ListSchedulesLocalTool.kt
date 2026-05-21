@@ -6,6 +6,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.ScheduleRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class ListSchedulesLocalTool(
     private val repository: ScheduleRepository
@@ -18,9 +19,9 @@ class ListSchedulesLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val result = repository.getSchedules(
-            page = (args["page"] as? Number)?.toInt() ?: 1
+            page = args.intArg("page") ?: 1
         ).getOrThrow()
         ToolResult(
             success = true,

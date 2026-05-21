@@ -10,7 +10,7 @@ data class ToolSpec(
 
 interface Tool {
     val spec: ToolSpec
-    suspend fun execute(args: Map<String, Any>): ToolResult
+    suspend fun execute(args: JsonObject): ToolResult
 }
 
 data class ToolResult(

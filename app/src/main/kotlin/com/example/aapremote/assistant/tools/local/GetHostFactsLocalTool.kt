@@ -7,6 +7,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.HostRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class GetHostFactsLocalTool(
     private val repository: HostRepository
@@ -20,8 +21,8 @@ class GetHostFactsLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val hostId = (args["host_id"] as? Number)?.toInt()
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val hostId = args.intArg("host_id")
             ?: return@executeSafely ToolResult(success = false, data = "host_id is required", errorType = ErrorType.NOT_FOUND)
         val facts = repository.getHostFacts(hostId).getOrThrow()
         ToolResult(success = true, data = networkJson.encodeToString(facts))

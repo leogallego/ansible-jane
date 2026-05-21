@@ -6,6 +6,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.HostRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class ListHostsLocalTool(
     private val repository: HostRepository
@@ -20,10 +21,10 @@ class ListHostsLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val inventoryId = (args["inventory_id"] as? Number)?.toInt()
-        val page = (args["page"] as? Number)?.toInt() ?: 1
-        val search = args["search"] as? String
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val inventoryId = args.intArg("inventory_id")
+        val page = args.intArg("page") ?: 1
+        val search = args.stringArg("search")
 
         val result = if (inventoryId != null) {
             repository.getInventoryHosts(

@@ -7,6 +7,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.ScheduleRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class ToggleScheduleLocalTool(
     private val repository: ScheduleRepository
@@ -22,10 +23,10 @@ class ToggleScheduleLocalTool(
     ),
     destructive = true
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val scheduleId = (args["schedule_id"] as? Number)?.toInt()
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val scheduleId = args.intArg("schedule_id")
             ?: return@executeSafely ToolResult(success = false, data = "schedule_id is required", errorType = ErrorType.NOT_FOUND)
-        val enabled = args["enabled"] as? Boolean
+        val enabled = args.booleanArg("enabled")
             ?: return@executeSafely ToolResult(success = false, data = "enabled is required", errorType = ErrorType.NOT_FOUND)
         val schedule = repository.toggleSchedule(scheduleId, enabled).getOrThrow()
         ToolResult(

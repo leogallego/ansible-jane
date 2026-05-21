@@ -166,5 +166,5 @@ private class FakeTool(
     override val spec: ToolSpec,
     private val result: ToolResult
 ) : Tool {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = result
+    override suspend fun execute(args: JsonObject): ToolResult = result
 }

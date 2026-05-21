@@ -6,6 +6,7 @@ import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.InfrastructureRepository
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class PingLocalTool(
     private val repository: InfrastructureRepository
@@ -16,7 +17,7 @@ class PingLocalTool(
         parametersSchema = buildToolSchema()
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val ping = repository.ping().getOrThrow()
         ToolResult(success = true, data = networkJson.encodeToString(ping))
     }

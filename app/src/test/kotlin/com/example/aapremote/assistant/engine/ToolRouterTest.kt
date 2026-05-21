@@ -19,14 +19,14 @@ class ToolRouterTest {
 
     private fun mcpTool(name: String, serverLabel: String = "aap") = object : Tool {
         override val spec = ToolSpec(name, "[$serverLabel] description of $name", JsonObject(emptyMap()))
-        override suspend fun execute(args: Map<String, Any>) = ToolResult(success = true)
+        override suspend fun execute(args: JsonObject) = ToolResult(success = true)
     }
 
     private fun localTool(name: String, destructive: Boolean = false) = object : LocalTool(
         spec = ToolSpec(name, "Local: $name", JsonObject(emptyMap())),
         destructive = destructive
     ) {
-        override suspend fun execute(args: Map<String, Any>) = ToolResult(success = true)
+        override suspend fun execute(args: JsonObject) = ToolResult(success = true)
     }
 
     @Before

@@ -7,6 +7,7 @@ import com.example.aapremote.data.JobRepository
 import com.example.aapremote.model.JobStatus
 import com.example.aapremote.network.networkJson
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 
 class ListJobsLocalTool(
     private val repository: JobRepository
@@ -21,13 +22,13 @@ class ListJobsLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val statusFilter = (args["status"] as? String)?.let { statusStr ->
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val statusFilter = args.stringArg("status")?.let { statusStr ->
             JobStatus.entries.filter { it.apiValue == statusStr }.toSet()
         } ?: emptySet()
-        val pageSize = (args["page_size"] as? Number)?.toInt()?.coerceIn(1, 20) ?: 10
+        val pageSize = args.intArg("page_size")?.coerceIn(1, 20) ?: 10
         val result = repository.getRecentJobs(
-            page = (args["page"] as? Number)?.toInt() ?: 1,
+            page = args.intArg("page") ?: 1,
             pageSize = pageSize,
             statusFilters = statusFilter
         ).getOrThrow()

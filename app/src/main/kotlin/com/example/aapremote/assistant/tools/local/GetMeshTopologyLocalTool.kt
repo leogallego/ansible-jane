@@ -4,6 +4,7 @@ import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.InfrastructureRepository
+import kotlinx.serialization.json.JsonObject
 
 class GetMeshTopologyLocalTool(
     private val repository: InfrastructureRepository
@@ -14,7 +15,7 @@ class GetMeshTopologyLocalTool(
         parametersSchema = buildToolSchema()
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val topology = repository.getMeshTopology().getOrThrow()
         ToolResult(success = true, data = topology.toString())
     }

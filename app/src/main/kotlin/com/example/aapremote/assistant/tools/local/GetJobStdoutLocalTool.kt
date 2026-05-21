@@ -5,6 +5,7 @@ import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.data.JobRepository
+import kotlinx.serialization.json.JsonObject
 
 class GetJobStdoutLocalTool(
     private val repository: JobRepository
@@ -18,8 +19,8 @@ class GetJobStdoutLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
-        val jobId = (args["job_id"] as? Number)?.toInt()
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val jobId = args.intArg("job_id")
             ?: return@executeSafely ToolResult(success = false, data = "job_id is required", errorType = ErrorType.NOT_FOUND)
         val stdout = repository.getJobStdout(jobId).getOrThrow()
         ToolResult(success = true, data = stdout)
