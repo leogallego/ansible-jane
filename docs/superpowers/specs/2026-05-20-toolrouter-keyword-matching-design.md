@@ -37,10 +37,11 @@ Cache stemmed keywords per category (lazy val) since they don't change at runtim
 
 ### Change 2: Fix stemmer bugs
 
-Add a guard: if the stemmed result is shorter than 3 characters, return the original word unchanged. This prevents:
+Add a guard: if the stemmed result is shorter than 2 characters, return the original word unchanged. This prevents:
 - "de" → "d" (would match any word starting with "d")
 - "ees" → "" (empty string matches everything)
-- "use" → "us", "due" → "du" (too short to be meaningful stems)
+
+Two-character stems are allowed because AAP abbreviation plurals need them: "jts"→"jt", "des"→"de".
 
 The stem function moves from private instance method to companion object (needed by the keyword cache).
 

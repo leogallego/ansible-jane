@@ -83,7 +83,7 @@ class ToolRouter {
         ),
         EDA(
             keywords = setOf(
-                "eda", "rulebook", "activation", "event", "audit", "de",
+                "eda", "rulebook", "activation", "event", "audit", "de", "des",
                 "rule", "rules", "trigger", "triggers", "webhook", "webhooks",
                 "stream", "streams", "decision", "driven", "rulebooks",
                 "activations", "events", "environment"
@@ -149,7 +149,7 @@ class ToolRouter {
                 .removeSuffix("es")
                 .removeSuffix("s")
                 .removeSuffix("e")
-            return if (result.length < 3) word else result
+            return if (result.length < 2) word else result
         }
     }
 

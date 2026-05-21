@@ -688,10 +688,17 @@ class ToolRouterTest {
     // --- Stemmer guard tests ---
 
     @Test
-    fun `stem SHOULD return original word WHEN result would be shorter than 3 chars`() {
+    fun `stem SHOULD return original WHEN result would be single char or empty`() {
         assertEquals("de", ToolRouter.stem("de"))
-        assertEquals("up", ToolRouter.stem("up"))
         assertEquals("ee", ToolRouter.stem("ee"))
+        assertEquals("des", ToolRouter.stem("des"))
+        assertEquals("ees", ToolRouter.stem("ees"))
+    }
+
+    @Test
+    fun `stem SHOULD allow 2-char results`() {
+        assertEquals("jt", ToolRouter.stem("jts"))
+        assertEquals("up", ToolRouter.stem("up"))
     }
 
     @Test
@@ -700,13 +707,6 @@ class ToolRouterTest {
         assertEquals("host", ToolRouter.stem("hosts"))
         assertEquals("credential", ToolRouter.stem("credentials"))
         assertEquals("inventory", ToolRouter.stem("inventories"))
-    }
-
-    @Test
-    fun `stem SHOULD not produce empty string from ees`() {
-        val result = ToolRouter.stem("ees")
-        assertTrue(result.isNotEmpty())
-        assertTrue(result.length >= 3 || result == "ees")
     }
 
     // --- New keyword tests ---
