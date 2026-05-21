@@ -20,14 +20,10 @@ class GetCredentialLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val credentialId = (args["credential_id"] as? Number)?.toInt()
-                ?: return ToolResult(success = false, data = "credential_id is required", errorType = ErrorType.NOT_FOUND)
-            val credential = repository.getCredential(credentialId).getOrThrow()
-            ToolResult(success = true, data = networkJson.encodeToString(credential))
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val credentialId = (args["credential_id"] as? Number)?.toInt()
+            ?: return@executeSafely ToolResult(success = false, data = "credential_id is required", errorType = ErrorType.NOT_FOUND)
+        val credential = repository.getCredential(credentialId).getOrThrow()
+        ToolResult(success = true, data = networkJson.encodeToString(credential))
     }
 }

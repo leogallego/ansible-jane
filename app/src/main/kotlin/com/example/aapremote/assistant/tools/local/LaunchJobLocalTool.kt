@@ -20,15 +20,11 @@ class LaunchJobLocalTool(
     ),
     destructive = true
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val templateId = (args["template_id"] as? Number)?.toInt()
-                ?: return ToolResult(success = false, data = "template_id is required", errorType = ErrorType.NOT_FOUND)
-            val extraVars = args["extra_vars"] as? String
-            val jobId = repository.launchJob(templateId, extraVars).getOrThrow()
-            ToolResult(success = true, data = """{"job_id": $jobId, "status": "launched"}""")
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val templateId = (args["template_id"] as? Number)?.toInt()
+            ?: return@executeSafely ToolResult(success = false, data = "template_id is required", errorType = ErrorType.NOT_FOUND)
+        val extraVars = args["extra_vars"] as? String
+        val jobId = repository.launchJob(templateId, extraVars).getOrThrow()
+        ToolResult(success = true, data = """{"job_id": $jobId, "status": "launched"}""")
     }
 }

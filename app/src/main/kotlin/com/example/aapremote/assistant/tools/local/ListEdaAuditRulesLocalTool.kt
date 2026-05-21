@@ -1,6 +1,5 @@
 package com.example.aapremote.assistant.tools.local
 
-import com.example.aapremote.assistant.tools.ErrorType
 import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.assistant.tools.ToolResult
 import com.example.aapremote.assistant.tools.ToolSpec
@@ -20,22 +19,18 @@ class ListEdaAuditRulesLocalTool(
         )
     )
 ) {
-    override suspend fun execute(args: Map<String, Any>): ToolResult {
-        return try {
-            val pageSize = (args["page_size"] as? Number)?.toInt()?.coerceIn(1, 20) ?: 10
-            val result = repository.getAuditRules(
-                page = (args["page"] as? Number)?.toInt() ?: 1,
-                pageSize = pageSize
-            ).getOrThrow()
-            ToolResult(
-                success = true,
-                data = networkJson.encodeToString(mapOf(
-                    "count" to result.totalCount.toString(),
-                    "audit_rules" to networkJson.encodeToString(result.auditRules)
-                ))
-            )
-        } catch (e: Exception) {
-            ToolResult(success = false, data = "Error: ${e.message}", errorType = ErrorType.SERVER_ERROR)
-        }
+    override suspend fun execute(args: Map<String, Any>): ToolResult = executeSafely {
+        val pageSize = (args["page_size"] as? Number)?.toInt()?.coerceIn(1, 20) ?: 10
+        val result = repository.getAuditRules(
+            page = (args["page"] as? Number)?.toInt() ?: 1,
+            pageSize = pageSize
+        ).getOrThrow()
+        ToolResult(
+            success = true,
+            data = networkJson.encodeToString(mapOf(
+                "count" to result.totalCount.toString(),
+                "audit_rules" to networkJson.encodeToString(result.auditRules)
+            ))
+        )
     }
 }
