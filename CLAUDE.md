@@ -94,6 +94,7 @@ See `skills/README.md` for sources and licenses.
 
 ## Android Device Testing
 
+- **MUST** load the `android-cli` skill at the start of every session (invoke via Skill tool).
 - **MUST** use the `android` CLI (`android run`, `android emulator`, `android screen capture`, `android layout`) for all device interaction. Prefer `android layout` over screenshots for inspecting UI state.
 - Use `uiautomator dump` to find elements by `resource-id` (from Compose `testTag`). Never hard-code pixel coordinates — always resolve element positions from the layout tree or resource-ids.
 - All Compose screens **MUST** have `testTag` modifiers on interactive elements (fields, buttons, switches) using the convention `field_<name>`, `button_<name>`, `switch_<name>`. The root `AppNavigation` has `testTagsAsResourceId = true` so tags appear as `resource-id` in uiautomator.
