@@ -35,9 +35,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.model.EdaRuleAudit
+import com.example.aapremote.model.JobStatus
 import com.example.aapremote.presentation.eda.EdaAuditUiState
 import com.example.aapremote.presentation.eda.EdaAuditViewModel
+import com.example.aapremote.ui.components.DateFormatter
 import com.example.aapremote.ui.components.ErrorMessage
+import com.example.aapremote.ui.components.JobStatusBadge
 import com.example.aapremote.ui.components.SkeletonCard
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -191,32 +194,26 @@ private fun EdaAuditItem(
                     )
                 }
                 Text(
-                    text = auditRule.firedAt,
+                    text = DateFormatter.formatDateTime(auditRule.firedAt),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            EdaStatusBadge(status = auditRule.status)
+            val jobStatus = try {
+                JobStatus.valueOf(auditRule.status.uppercase())
+            } catch (_: IllegalArgumentException) {
+                null
+            }
+            if (jobStatus != null) {
+                JobStatusBadge(status = jobStatus)
+            } else {
+                Text(
+                    text = auditRule.status.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
-}
-
-@Composable
-private fun EdaStatusBadge(
-    status: String,
-    modifier: Modifier = Modifier
-) {
-    val color = when (status.lowercase()) {
-        "successful" -> MaterialTheme.colorScheme.tertiary
-        "failed" -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    Text(
-        text = status.replaceFirstChar { it.uppercase() },
-        style = MaterialTheme.typography.labelMedium,
-        color = color,
-        modifier = modifier
-    )
 }

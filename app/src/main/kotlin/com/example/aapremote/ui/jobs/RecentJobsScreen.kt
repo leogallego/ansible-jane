@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.model.Job
 import com.example.aapremote.presentation.jobs.RecentJobsUiState
 import com.example.aapremote.presentation.jobs.RecentJobsViewModel
+import com.example.aapremote.ui.components.DateFormatter
 import com.example.aapremote.ui.components.ErrorMessage
 import com.example.aapremote.ui.components.JobStatusBadge
 import com.example.aapremote.ui.components.SkeletonCard
@@ -195,7 +196,7 @@ private fun RecentJobItem(
                 )
                 job.started?.let {
                     Text(
-                        text = it,
+                        text = DateFormatter.formatDateTime(it),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performScrollTo
 import com.example.aapremote.MainDispatcherRule
 import com.example.aapremote.fakes.FakeAapApiProvider
 import com.example.aapremote.fakes.FakeTokenManager
+import com.example.aapremote.fakes.FakeUserPreferencesRepository
 import com.example.aapremote.model.AapInstance
 import com.example.aapremote.presentation.settings.SettingsViewModel
 import com.example.aapremote.testKoinModule
@@ -32,6 +33,7 @@ class SettingsScreenTest {
 
     private val fakeTokenManager = FakeTokenManager()
     private val fakeApiProvider = FakeAapApiProvider()
+    private val fakeUserPreferences = FakeUserPreferencesRepository()
 
     @After
     fun tearDown() {
@@ -58,7 +60,7 @@ class SettingsScreenTest {
         onAddInstance: () -> Unit = {}
     ) {
         startKoin { modules(testKoinModule(tokenManager = fakeTokenManager)) }
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider)
+        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
         composeTestRule.setContent {
             MaterialTheme {
                 SettingsScreen(

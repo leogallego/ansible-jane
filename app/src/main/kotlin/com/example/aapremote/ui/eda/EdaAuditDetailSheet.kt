@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.aapremote.model.EdaRuleAudit
+import com.example.aapremote.ui.components.DateFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +44,7 @@ fun EdaAuditDetailSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             DetailRow(label = "Status", value = auditRule.status)
-            DetailRow(label = "Fired At", value = auditRule.firedAt)
+            DetailRow(label = "Fired At", value = DateFormatter.formatDateTime(auditRule.firedAt))
 
             if (auditRule.displayRuleSetName.isNotEmpty()) {
                 DetailRow(label = "Rule Set", value = auditRule.displayRuleSetName)
@@ -57,7 +58,7 @@ fun EdaAuditDetailSheet(
                 DetailRow(label = "Activation Instance", value = it.toString())
             }
 
-            DetailRow(label = "Created", value = auditRule.createdAt)
+            DetailRow(label = "Created", value = DateFormatter.formatDateTime(auditRule.createdAt))
         }
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -33,9 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.model.Schedule
+import com.example.aapremote.ui.components.DateFormatter
 import com.example.aapremote.presentation.schedules.SchedulesUiState
 import com.example.aapremote.presentation.schedules.SchedulesViewModel
 import com.example.aapremote.ui.components.ErrorMessage
@@ -184,7 +187,7 @@ private fun ScheduleItem(
                 schedule.nextRun?.let {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Next: $it",
+                        text = "Next: ${DateFormatter.formatDateTime(it)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -194,6 +197,13 @@ private fun ScheduleItem(
             Switch(
                 checked = schedule.enabled,
                 onCheckedChange = { onToggle() },
+                colors = SwitchDefaults.colors(
+                    checkedTrackColor = Color(0xFF4CAF50),
+                    checkedThumbColor = Color.White,
+                    uncheckedTrackColor = Color(0xFFF44336),
+                    uncheckedThumbColor = Color.White,
+                    uncheckedBorderColor = Color(0xFFF44336)
+                ),
                 modifier = Modifier.testTag("switch_schedule_${schedule.id}")
             )
         }
