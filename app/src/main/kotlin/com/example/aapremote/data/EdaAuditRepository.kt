@@ -3,9 +3,9 @@ package com.example.aapremote.data
 import com.example.aapremote.model.EdaRuleAudit
 import com.example.aapremote.network.AapApiProvider
 
-class EdaAuditRepository(private val apiProvider: AapApiProvider) {
+class EdaAuditRepository(private val apiProvider: AapApiProvider) : IEdaAuditRepository {
 
-    suspend fun getAuditRules(page: Int = 1, pageSize: Int = 20): Result<EdaAuditResult> {
+    override suspend fun getAuditRules(page: Int, pageSize: Int): Result<EdaAuditResult> {
         return try {
             val response = apiProvider.getEdaApiService().getAuditRules(
                 page = page,

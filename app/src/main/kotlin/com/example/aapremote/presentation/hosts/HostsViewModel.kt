@@ -2,8 +2,8 @@ package com.example.aapremote.presentation.hosts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.HostRepository
-import com.example.aapremote.data.TokenManager
+import com.example.aapremote.data.IHostRepository
+import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Host
 import kotlinx.coroutines.Job
@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class HostsViewModel(
-    private val hostRepository: HostRepository,
-    private val tokenManager: TokenManager
+    private val hostRepository: IHostRepository,
+    private val tokenManager: ITokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HostsUiState>(HostsUiState.Loading)

@@ -7,9 +7,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class JobRepository(private val apiProvider: AapApiProvider) {
+class JobRepository(private val apiProvider: AapApiProvider) : IJobRepository {
 
-    suspend fun getJobStatus(jobId: Int): Result<Job> {
+    override suspend fun getJobStatus(jobId: Int): Result<Job> {
         return try {
             Result.success(apiProvider.getApiService().getJob(jobId))
         } catch (e: Exception) {
@@ -17,7 +17,7 @@ class JobRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    fun pollJobStatus(jobId: Int): Flow<Job> = flow {
+    override fun pollJobStatus(jobId: Int): Flow<Job> = flow {
         while (true) {
             try {
                 val job = apiProvider.getApiService().getJob(jobId)
@@ -30,7 +30,7 @@ class JobRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getJobStdout(jobId: Int): Result<String> {
+    override suspend fun getJobStdout(jobId: Int): Result<String> {
         return try {
             val response = apiProvider.getApiService().getJobStdout(jobId)
             Result.success(response.string())
@@ -39,10 +39,10 @@ class JobRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getRecentJobs(
-        page: Int = 1,
-        pageSize: Int = 20,
-        statusFilters: Set<JobStatus> = emptySet()
+    override suspend fun getRecentJobs(
+        page: Int,
+        pageSize: Int,
+        statusFilters: Set<JobStatus>
     ): Result<RecentJobsResult> {
         return try {
             val orStatus = if (statusFilters.size > 1) {

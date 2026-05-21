@@ -3,8 +3,8 @@ package com.example.aapremote.presentation.workflows
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.JobRepository
-import com.example.aapremote.data.WorkflowRepository
+import com.example.aapremote.data.IJobRepository
+import com.example.aapremote.data.IWorkflowRepository
 import com.example.aapremote.model.AppError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +21,8 @@ sealed interface NodeStdoutState {
 
 class WorkflowJobStatusViewModel(
     savedStateHandle: SavedStateHandle,
-    private val workflowRepository: WorkflowRepository,
-    private val jobRepository: JobRepository
+    private val workflowRepository: IWorkflowRepository,
+    private val jobRepository: IJobRepository
 ) : ViewModel() {
 
     private val workflowJobId: Int = savedStateHandle.get<Int>("workflowJobId") ?: -1

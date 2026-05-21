@@ -2,8 +2,8 @@ package com.example.aapremote.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.assistant.data.AssistantRepository
-import com.example.aapremote.data.TokenManager
+import com.example.aapremote.assistant.data.IAssistantRepository
+import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.assistant.data.LlmProviderConfig
 import com.example.aapremote.data.backup.BackupDecryptionException
 import com.example.aapremote.data.backup.BackupEnvelope
@@ -36,8 +36,8 @@ sealed interface BackupUiState {
 
 class BackupViewModel(
     private val backupManager: BackupManager,
-    private val tokenManager: TokenManager,
-    private val assistantRepository: AssistantRepository
+    private val tokenManager: ITokenManager,
+    private val assistantRepository: IAssistantRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)

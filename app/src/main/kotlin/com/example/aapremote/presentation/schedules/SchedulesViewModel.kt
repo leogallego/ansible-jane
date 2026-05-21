@@ -2,8 +2,8 @@ package com.example.aapremote.presentation.schedules
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.ScheduleRepository
-import com.example.aapremote.data.TokenManager
+import com.example.aapremote.data.IScheduleRepository
+import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Schedule
 import kotlinx.coroutines.Job
@@ -17,8 +17,8 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class SchedulesViewModel(
-    private val scheduleRepository: ScheduleRepository,
-    private val tokenManager: TokenManager
+    private val scheduleRepository: IScheduleRepository,
+    private val tokenManager: ITokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SchedulesUiState>(SchedulesUiState.Loading)

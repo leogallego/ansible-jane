@@ -2,8 +2,8 @@ package com.example.aapremote.presentation.jobs
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.JobRepository
-import com.example.aapremote.data.TokenManager
+import com.example.aapremote.data.IJobRepository
+import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Job
 import com.example.aapremote.model.JobStatus
@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class RecentJobsViewModel(
-    private val jobRepository: JobRepository,
-    private val tokenManager: TokenManager
+    private val jobRepository: IJobRepository,
+    private val tokenManager: ITokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<RecentJobsUiState>(RecentJobsUiState.Loading)

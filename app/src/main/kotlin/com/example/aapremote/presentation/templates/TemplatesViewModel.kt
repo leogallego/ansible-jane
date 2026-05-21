@@ -2,8 +2,8 @@ package com.example.aapremote.presentation.templates
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.TemplateRepository
-import com.example.aapremote.data.TokenManager
+import com.example.aapremote.data.ITemplateRepository
+import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.JobTemplate
 import com.example.aapremote.model.Label
@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class TemplatesViewModel(
-    private val templateRepository: TemplateRepository,
-    private val tokenManager: TokenManager
+    private val templateRepository: ITemplateRepository,
+    private val tokenManager: ITokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TemplatesUiState>(TemplatesUiState.Idle)

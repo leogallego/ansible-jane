@@ -9,12 +9,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class WorkflowRepository(private val apiProvider: AapApiProvider) {
+class WorkflowRepository(private val apiProvider: AapApiProvider) : IWorkflowRepository {
 
-    suspend fun getWorkflowTemplates(
-        page: Int = 1,
-        search: String? = null,
-        labelFilter: String? = null
+    override suspend fun getWorkflowTemplates(
+        page: Int,
+        search: String?,
+        labelFilter: String?
     ): Result<WorkflowTemplateListResult> {
         return try {
             val response = apiProvider.getApiService().getWorkflowJobTemplates(
@@ -34,7 +34,7 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun launchWorkflow(templateId: Int, extraVars: String? = null): Result<Int> {
+    override suspend fun launchWorkflow(templateId: Int, extraVars: String?): Result<Int> {
         return try {
             val request = LaunchRequest(extraVars = extraVars)
             val response = apiProvider.getApiService().launchWorkflowJob(templateId, request)
@@ -44,7 +44,7 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getWorkflowJobStatus(workflowJobId: Int): Result<WorkflowJob> {
+    override suspend fun getWorkflowJobStatus(workflowJobId: Int): Result<WorkflowJob> {
         return try {
             Result.success(apiProvider.getApiService().getWorkflowJob(workflowJobId))
         } catch (e: Exception) {
@@ -52,7 +52,7 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    fun pollWorkflowJobStatus(workflowJobId: Int): Flow<WorkflowJob> = flow {
+    override fun pollWorkflowJobStatus(workflowJobId: Int): Flow<WorkflowJob> = flow {
         while (true) {
             try {
                 val job = apiProvider.getApiService().getWorkflowJob(workflowJobId)
@@ -65,7 +65,7 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) {
         }
     }
 
-    suspend fun getWorkflowNodes(workflowJobId: Int): Result<List<WorkflowNode>> {
+    override suspend fun getWorkflowNodes(workflowJobId: Int): Result<List<WorkflowNode>> {
         return try {
             val response = apiProvider.getApiService().getWorkflowNodes(workflowJobId)
             Result.success(response.results)

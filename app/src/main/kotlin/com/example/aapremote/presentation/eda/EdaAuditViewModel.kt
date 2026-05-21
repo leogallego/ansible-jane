@@ -2,8 +2,8 @@ package com.example.aapremote.presentation.eda
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.EdaAuditRepository
-import com.example.aapremote.data.TokenManager
+import com.example.aapremote.data.IEdaAuditRepository
+import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.EdaRuleAudit
 import kotlinx.coroutines.Job
@@ -15,8 +15,8 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
 class EdaAuditViewModel(
-    private val edaAuditRepository: EdaAuditRepository,
-    private val tokenManager: TokenManager
+    private val edaAuditRepository: IEdaAuditRepository,
+    private val tokenManager: ITokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EdaAuditUiState>(EdaAuditUiState.Loading)

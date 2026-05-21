@@ -2,7 +2,7 @@ package com.example.aapremote.assistant.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.assistant.data.AssistantRepository
+import com.example.aapremote.assistant.data.IAssistantRepository
 import com.example.aapremote.assistant.data.LlmProviderConfig
 import com.example.aapremote.assistant.data.ModelFetcher
 import com.example.aapremote.assistant.data.TokenSavingMode
@@ -14,7 +14,7 @@ import com.example.aapremote.assistant.engine.ToolExecutor
 import com.example.aapremote.assistant.engine.ToolRouter
 import com.example.aapremote.assistant.llm.KoogLlmProvider
 import com.example.aapremote.assistant.tools.LocalTool
-import com.example.aapremote.data.TokenManager
+import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.CertTrustManager
 import com.example.aapremote.network.mcp.McpServerManager
@@ -31,8 +31,8 @@ import okhttp3.OkHttpClient
 
 class AssistantViewModel(
     private val mcpServerManager: McpServerManager,
-    private val repository: AssistantRepository,
-    private val tokenManager: TokenManager,
+    private val repository: IAssistantRepository,
+    private val tokenManager: ITokenManager,
     private val httpClient: OkHttpClient,
     private val json: Json,
     private val localTools: List<LocalTool> = emptyList()

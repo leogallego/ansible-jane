@@ -2,8 +2,8 @@ package com.example.aapremote.presentation.workflows
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.aapremote.data.TokenManager
-import com.example.aapremote.data.WorkflowRepository
+import com.example.aapremote.data.ITokenManager
+import com.example.aapremote.data.IWorkflowRepository
 import com.example.aapremote.model.AppError
 import com.example.aapremote.model.Label
 import com.example.aapremote.model.WorkflowJobTemplate
@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
 class WorkflowTemplatesViewModel(
-    private val workflowRepository: WorkflowRepository,
-    private val tokenManager: TokenManager
+    private val workflowRepository: IWorkflowRepository,
+    private val tokenManager: ITokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<WorkflowTemplatesUiState>(WorkflowTemplatesUiState.Idle)

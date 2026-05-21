@@ -15,7 +15,7 @@ private val Context.assistantDataStore: DataStore<Preferences> by preferencesDat
     name = "assistant_config"
 )
 
-class AssistantRepository(private val context: Context) {
+class AssistantRepository(private val context: Context) : IAssistantRepository {
 
     private val messages = mutableListOf<ChatMessage>()
     private val json = Json { ignoreUnknownKeys = true }
@@ -25,27 +25,27 @@ class AssistantRepository(private val context: Context) {
         const val MAX_MESSAGES = 100
     }
 
-    fun addMessage(message: ChatMessage) {
+    override fun addMessage(message: ChatMessage) {
         messages.add(message)
         if (messages.size > MAX_MESSAGES) {
             messages.removeAt(0)
         }
     }
 
-    fun getHistory(): List<ChatMessage> = messages.toList()
+    override fun getHistory(): List<ChatMessage> = messages.toList()
 
-    fun clearHistory() {
+    override fun clearHistory() {
         messages.clear()
     }
 
-    suspend fun saveLlmConfig(config: LlmProviderConfig) {
+    override suspend fun saveLlmConfig(config: LlmProviderConfig) {
         val jsonString = json.encodeToString(LlmProviderConfig.serializer(), config)
         context.assistantDataStore.edit { prefs ->
             prefs[KEY_LLM_CONFIG] = jsonString
         }
     }
 
-    suspend fun loadLlmConfig(): LlmProviderConfig? {
+    override suspend fun loadLlmConfig(): LlmProviderConfig? {
         val prefs = context.assistantDataStore.data.first()
         val jsonString = prefs[KEY_LLM_CONFIG] ?: return null
         return try {
