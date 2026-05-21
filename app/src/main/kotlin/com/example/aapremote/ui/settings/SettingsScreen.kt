@@ -63,6 +63,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aapremote.model.AapInstance
 import com.example.aapremote.presentation.settings.SettingsUiState
 import com.example.aapremote.presentation.settings.SettingsViewModel
+import com.example.aapremote.ui.components.TimeFormat
 import org.koin.compose.viewmodel.koinViewModel
 import java.time.ZoneId
 
@@ -163,9 +164,11 @@ fun SettingsScreen(
 
             when (val state = uiState) {
                 is SettingsUiState.Success -> {
-                    TimezoneSection(
+                    DisplaySection(
                         currentTimezone = state.timezoneId,
-                        onTimezoneSelected = { viewModel.setTimezone(it) }
+                        currentTimeFormat = state.timeFormat,
+                        onTimezoneSelected = { viewModel.setTimezone(it) },
+                        onTimeFormatSelected = { viewModel.setTimeFormat(it) }
                     )
                 }
                 else -> {}
@@ -429,12 +432,14 @@ private fun AboutSection() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TimezoneSection(
+private fun DisplaySection(
     currentTimezone: String?,
-    onTimezoneSelected: (String?) -> Unit
+    currentTimeFormat: TimeFormat,
+    onTimezoneSelected: (String?) -> Unit,
+    onTimeFormatSelected: (TimeFormat) -> Unit
 ) {
-    var showPicker by remember { mutableStateOf(false) }
-    val displayValue = currentTimezone ?: "System (${ZoneId.systemDefault().id})"
+    var showTimezonePicker by remember { mutableStateOf(false) }
+    val timezoneDisplay = currentTimezone ?: "System (${ZoneId.systemDefault().id})"
 
     Text(
         text = "Display",
@@ -443,7 +448,7 @@ private fun TimezoneSection(
     Spacer(modifier = Modifier.height(8.dp))
     Card(
         modifier = Modifier.fillMaxWidth(),
-        onClick = { showPicker = true }
+        onClick = { showTimezonePicker = true }
     ) {
         Row(
             modifier = Modifier
@@ -458,7 +463,7 @@ private fun TimezoneSection(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = displayValue,
+                    text = timezoneDisplay,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -466,14 +471,41 @@ private fun TimezoneSection(
         }
     }
 
-    if (showPicker) {
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Time format",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TimeFormat.entries.forEach { format ->
+                    FilterChip(
+                        selected = currentTimeFormat == format,
+                        onClick = { onTimeFormatSelected(format) },
+                        label = { Text(format.displayName) }
+                    )
+                }
+            }
+        }
+    }
+
+    if (showTimezonePicker) {
         TimezonePickerSheet(
             currentTimezone = currentTimezone,
             onSelect = {
                 onTimezoneSelected(it)
-                showPicker = false
+                showTimezonePicker = false
             },
-            onDismiss = { showPicker = false }
+            onDismiss = { showTimezonePicker = false }
         )
     }
 }

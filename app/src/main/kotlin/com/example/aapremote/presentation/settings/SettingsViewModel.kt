@@ -7,6 +7,7 @@ import com.example.aapremote.data.IUserPreferencesRepository
 import com.example.aapremote.model.AapInstance
 import com.example.aapremote.network.IAapApiProvider
 import com.example.aapremote.ui.components.DateFormatter
+import com.example.aapremote.ui.components.TimeFormat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,15 +29,18 @@ class SettingsViewModel(
             combine(
                 tokenManager.instances,
                 tokenManager.activeInstance,
-                userPreferences.timezoneId
-            ) { instances, active, timezone ->
+                userPreferences.timezoneId,
+                userPreferences.timeFormat
+            ) { instances, active, timezone, timeFormat ->
                 DateFormatter.zoneOverride = timezone?.let {
                     try { ZoneId.of(it) } catch (_: Exception) { null }
                 }
+                DateFormatter.timeFormat = timeFormat
                 SettingsUiState.Success(
                     instances = instances,
                     selectedInstance = active,
-                    timezoneId = timezone
+                    timezoneId = timezone,
+                    timeFormat = timeFormat
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -75,6 +79,12 @@ class SettingsViewModel(
     fun setTimezone(zoneId: String?) {
         viewModelScope.launch {
             userPreferences.setTimezoneId(zoneId)
+        }
+    }
+
+    fun setTimeFormat(format: TimeFormat) {
+        viewModelScope.launch {
+            userPreferences.setTimeFormat(format)
         }
     }
 }

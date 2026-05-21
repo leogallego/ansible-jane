@@ -36,6 +36,7 @@ class AapRemoteApp : Application() {
             DateFormatter.zoneOverride = savedZone?.let {
                 try { ZoneId.of(it) } catch (_: Exception) { null }
             }
+            DateFormatter.timeFormat = userPreferences.timeFormat.first()
         }
     }
 }

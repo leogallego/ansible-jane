@@ -1,6 +1,7 @@
 package com.example.aapremote.presentation.settings
 
 import com.example.aapremote.model.AapInstance
+import com.example.aapremote.ui.components.TimeFormat
 
 sealed interface SettingsUiState {
     data object Idle : SettingsUiState
@@ -9,7 +10,8 @@ sealed interface SettingsUiState {
         val instances: List<AapInstance>,
         val selectedInstance: AapInstance?,
         val selectedInstanceForDetails: AapInstance? = null,
-        val timezoneId: String? = null
+        val timezoneId: String? = null,
+        val timeFormat: TimeFormat = TimeFormat.SYSTEM
     ) : SettingsUiState
     data class Error(val message: String) : SettingsUiState
 }
