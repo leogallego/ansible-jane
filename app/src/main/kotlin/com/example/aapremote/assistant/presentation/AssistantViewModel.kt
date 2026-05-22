@@ -20,6 +20,7 @@ import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.CertTrustManager
 import com.example.aapremote.network.mcp.McpServerManager
+import com.example.aapremote.assistant.engine.DebugLog as Log
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +60,8 @@ class AssistantViewModel(
     val modelFetchState: StateFlow<ModelFetchState> = _modelFetchState.asStateFlow()
 
     init {
+        Log.d(TAG, "INIT: ${localTools.size} local tools: ${localTools.map { it.spec.name }}")
+
         viewModelScope.launch {
             _llmConfig.value = repository.loadLlmConfig()
         }
@@ -123,17 +126,23 @@ class AssistantViewModel(
         val provider = getOrCreateProvider(config as LlmProviderConfig.OpenAiCompatible, trustSelfSigned)
 
         mcpServerManager.refreshConnections()
+        val mcpTools = mcpServerManager.getAllTools()
         val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
         val toolRouter = ToolRouter()
         toolRouter.registerLocalTools(localTools)
-        toolRouter.registerMcpTools(mcpServerManager.getAllTools())
+        toolRouter.registerMcpTools(mcpTools)
+        Log.d(TAG, "ROUTE: query=\"$text\", ${localTools.size} local, ${mcpTools.size} mcp tools available")
         val queryResult = toolRouter.getToolsForQuery(text, serverConfigs)
         val mode = config.tokenSavingMode
+        Log.d(TAG, "ROUTE: categoryMatched=${queryResult.categoryMatched}, " +
+            "${queryResult.tools.size} tools selected, mode=$mode")
 
         val noToolsForCategory = queryResult.categoryMatched && queryResult.tools.isEmpty()
         val generalQueryInToolsOnly = !queryResult.categoryMatched && mode == TokenSavingMode.TOOLS_ONLY
 
         if (noToolsForCategory || generalQueryInToolsOnly) {
+            Log.d(TAG, "ROUTE: no tools path — noToolsForCategory=$noToolsForCategory, " +
+                "generalQueryInToolsOnly=$generalQueryInToolsOnly")
             val hasMcp = mcpServerManager.getAllTools().isNotEmpty()
             val content = if (generalQueryInToolsOnly) {
                 "I can help you query your AAP instance. Try asking about:\n\n" +
@@ -174,6 +183,8 @@ class AssistantViewModel(
         val matchedLocal = queryResult.tools.filterIsInstance<LocalTool>()
         val matchedMcp = queryResult.tools.filter { it !is LocalTool }.take(mcpLimit)
         val budgetedTools = matchedLocal + matchedMcp
+        Log.d(TAG, "BUDGET: ${matchedLocal.size} local [${matchedLocal.map { it.spec.name }}], " +
+            "${matchedMcp.size} mcp (limit=$mcpLimit) [${matchedMcp.map { it.spec.name }}]")
         val toolSpecs = budgetedTools.map { it.spec }
         val toolExecutor = ToolExecutor(budgetedTools)
         val engine = ChatEngine(provider, toolExecutor)
@@ -387,5 +398,9 @@ class AssistantViewModel(
             if (current is AssistantUiState.Active) current.transform()
             else current
         }
+    }
+
+    companion object {
+        private const val TAG = "AssistantVM"
     }
 }

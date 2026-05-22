@@ -1,6 +1,7 @@
 package com.example.aapremote.assistant.engine
 
 import ai.koog.prompt.message.Message
+import com.example.aapremote.assistant.engine.DebugLog as Log
 import com.example.aapremote.assistant.tools.ErrorType
 import com.example.aapremote.assistant.tools.Tool
 import com.example.aapremote.assistant.tools.ToolResult
@@ -23,15 +24,19 @@ class ToolExecutor(
 
     suspend fun execute(toolCall: Message.Tool.Call): ToolResult {
         val tool = tools.find { it.spec.name == toolCall.tool }
-            ?: return ToolResult(
-                success = false,
-                data = "Tool '${toolCall.tool}' not found",
-                errorType = ErrorType.NOT_FOUND
-            )
+            ?: run {
+                Log.w(TAG, "EXEC: tool '${toolCall.tool}' not found in ${tools.size} registered tools")
+                return ToolResult(
+                    success = false,
+                    data = "Tool '${toolCall.tool}' not found",
+                    errorType = ErrorType.NOT_FOUND
+                )
+            }
 
         val cacheKey = "${toolCall.tool}:${toolCall.content.hashCode()}"
         val cached = resultCache[cacheKey]
         if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
+            Log.d(TAG, "EXEC: cache hit for ${toolCall.tool}")
             return cached.second
         }
 
@@ -42,27 +47,37 @@ class ToolExecutor(
             JsonObject(emptyMap())
         }
 
+        Log.d(TAG, "EXEC: ${toolCall.tool}(${toolCall.content.take(200)})")
+        val startMs = System.currentTimeMillis()
         val result = try {
             withTimeout(30_000L) {
                 tool.execute(argsJson)
             }
         } catch (_: TimeoutCancellationException) {
+            Log.w(TAG, "EXEC: ${toolCall.tool} timed out after 30s")
             return ToolResult(
                 success = false,
                 data = "Tool '${toolCall.tool}' timed out after 30s",
                 errorType = ErrorType.TIMEOUT
             )
         }
+        val elapsedMs = System.currentTimeMillis() - startMs
+        val rawLen = result.data?.length ?: 0
 
         val capped = if (result.data != null) {
             result.copy(data = capResultArray(result.data))
         } else result
+        val cappedLen = capped.data?.length ?: 0
 
         val finalResult = if (capped.data != null && capped.data.length > maxResultChars) {
             capped.copy(data = smartTruncate(capped.data, maxResultChars))
         } else {
             capped
         }
+        val finalLen = finalResult.data?.length ?: 0
+        Log.d(TAG, "EXEC: ${toolCall.tool} ${if (finalResult.success) "OK" else "FAIL"} " +
+            "in ${elapsedMs}ms, result=${rawLen}→${if (cappedLen != rawLen) "${cappedLen}→" else ""}${finalLen} chars")
+
         if (finalResult.success) {
             resultCache[cacheKey] = System.currentTimeMillis() to finalResult
         }
@@ -70,6 +85,7 @@ class ToolExecutor(
     }
 
     companion object {
+        private const val TAG = "ToolExecutor"
         private const val CACHE_TTL_MS = 120_000L
         private const val MAX_ARRAY_ITEMS = 10
         private val json = Json { ignoreUnknownKeys = true }

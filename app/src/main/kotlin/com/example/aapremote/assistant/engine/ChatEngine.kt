@@ -10,6 +10,7 @@ import com.example.aapremote.assistant.llm.LlmProvider
 import com.example.aapremote.assistant.llm.LlmRateLimitException
 import com.example.aapremote.assistant.llm.LlmServerException
 import com.example.aapremote.assistant.llm.LlmTimeoutException
+import com.example.aapremote.assistant.engine.DebugLog as Log
 import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.assistant.tools.toToolDescriptor
 import kotlinx.coroutines.CancellationException
@@ -54,6 +55,15 @@ class ChatEngine(
             messages.add(ChatMessage(role = Role.USER, content = userMessage))
 
             val toolDescriptors = tools.map { it.toToolDescriptor() }
+            val toolSchemaChars = toolDescriptors.sumOf {
+                it.name.length + it.description.length +
+                    it.requiredParameters.sumOf { p -> p.name.length + p.description.length + 20 } +
+                    it.optionalParameters.sumOf { p -> p.name.length + p.description.length + 20 }
+            }
+            val msgChars = messages.sumOf { it.content.length }
+            Log.d(TAG, "PAYLOAD: ${tools.size} tools (~${toolSchemaChars} schema chars), " +
+                "${messages.size} messages (~${msgChars} msg chars), total ~${toolSchemaChars + msgChars} chars")
+            Log.d(TAG, "PAYLOAD tools: ${tools.map { it.name }}")
             var iterations = 0
             var totalToolCalls = 0
             val toolCallHistory = mutableListOf<List<String>>()
@@ -105,12 +115,15 @@ class ChatEngine(
                 val responseText = textBuilder.toString().ifEmpty { null }
 
                 if (completedCalls.isNotEmpty() && iterations < maxIterations) {
+                    Log.d(TAG, "ITER $iterations: ${completedCalls.size} tool calls: " +
+                        "${completedCalls.map { it.tool }}")
                     val currentSignature = completedCalls.map {
                         "${it.tool}:${it.content.hashCode()}"
                     }
                     toolCallHistory.add(currentSignature)
 
                     if (isRepeatingToolCalls(toolCallHistory)) {
+                        Log.w(TAG, "ITER $iterations: repeat detected, stopping")
                         emit(ChatEvent.AssistantMessage(
                             (responseText ?: "") + "\n\nStopped: the same tools were being called repeatedly.",
                             totalToolCalls
@@ -162,6 +175,8 @@ class ChatEngine(
                         compactToolMessages(messages, toolSummaries)
                     }
                 } else {
+                    Log.d(TAG, "DONE: $iterations iterations, $totalToolCalls total tool calls, " +
+                        "response=${responseText?.length ?: 0} chars")
                     val finalText = if (completedCalls.isNotEmpty() && iterations >= maxIterations) {
                         (responseText ?: "") + "\n\nI wasn't able to complete this request within the tool call limit."
                     } else {
@@ -179,14 +194,19 @@ class ChatEngine(
         } catch (e: CancellationException) {
             throw e
         } catch (e: LlmAuthException) {
+            Log.e(TAG, "AUTH error: ${e.message}", e)
             emit(ChatEvent.Error(e.message ?: "Authentication failed — check API key", e))
         } catch (e: LlmRateLimitException) {
+            Log.w(TAG, "RATE_LIMIT: ${e.message}")
             emit(ChatEvent.Error(e.message ?: "Rate limited — try again later", e))
         } catch (e: LlmTimeoutException) {
+            Log.w(TAG, "TIMEOUT: ${e.message}")
             emit(ChatEvent.Error("Response timed out", e))
         } catch (e: IOException) {
+            Log.e(TAG, "IO error: ${e.message}", e)
             emit(ChatEvent.Error("Unable to reach LLM server: ${e.message}", e))
         } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error: ${e.message}", e)
             emit(ChatEvent.Error("Error: ${e.message}", e))
         }
     }
@@ -281,6 +301,7 @@ class ChatEngine(
     ) {
         val totalChars = messages.sumOf { it.content.length }
         if (totalChars <= maxChars) return
+        Log.d(TAG, "TRIM: $totalChars chars > $maxChars limit, trimming ${messages.size} messages")
 
         val systemMessages = messages.takeWhile { it.role == Role.SYSTEM }
         val systemChars = systemMessages.sumOf { it.content.length }
@@ -306,6 +327,7 @@ class ChatEngine(
     }
 
     companion object {
+        private const val TAG = "ChatEngine"
         private const val DEFAULT_CONTEXT_CHARS = 16_000
         const val SYSTEM_PROMPT = """You are a concise AI assistant for Ansible Automation Platform (AAP). Rules:
 - NEVER fabricate, invent, or guess data. Only present information returned by tool calls. If you have no tool to answer a question, say so clearly.
