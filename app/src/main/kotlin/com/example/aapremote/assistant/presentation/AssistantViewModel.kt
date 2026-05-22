@@ -16,6 +16,7 @@ import com.example.aapremote.assistant.llm.GeminiLlmProvider
 import com.example.aapremote.assistant.llm.KoogLlmProvider
 import com.example.aapremote.assistant.llm.LlmProvider
 import com.example.aapremote.assistant.tools.LocalTool
+import com.example.aapremote.assistant.tools.local.ListToolsLocalTool
 import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.McpServerConfig
 import com.example.aapremote.network.CertTrustManager
@@ -182,9 +183,14 @@ class AssistantViewModel(
         }
         val matchedLocal = queryResult.tools.filterIsInstance<LocalTool>()
         val matchedMcp = queryResult.tools.filter { it !is LocalTool }.take(mcpLimit)
-        val budgetedTools = matchedLocal + matchedMcp
-        Log.d(TAG, "BUDGET: ${matchedLocal.size} local [${matchedLocal.map { it.spec.name }}], " +
-            "${matchedMcp.size} mcp (limit=$mcpLimit) [${matchedMcp.map { it.spec.name }}]")
+        val budgetedTools = if (matchedLocal.isEmpty() && matchedMcp.isEmpty()) {
+            val listTool = ListToolsLocalTool { toolRouter.getAllRegisteredTools() }
+            listOf(listTool)
+        } else {
+            matchedLocal + matchedMcp
+        }
+        Log.d(TAG, "BUDGET: ${budgetedTools.size} tools [${budgetedTools.map { it.spec.name }}]" +
+            if (matchedLocal.isEmpty() && matchedMcp.isEmpty()) " (fallback: list_tools)" else "")
         val toolSpecs = budgetedTools.map { it.spec }
         val toolExecutor = ToolExecutor(budgetedTools)
         val engine = ChatEngine(provider, toolExecutor)
