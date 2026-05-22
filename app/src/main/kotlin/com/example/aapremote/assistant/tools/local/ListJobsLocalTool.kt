@@ -28,7 +28,7 @@ class ListJobsLocalTool(
         } ?: emptySet()
         val pageSize = args.intArg("page_size")?.coerceIn(1, 20) ?: 10
         val result = repository.getRecentJobs(
-            page = args.intArg("page") ?: 1,
+            page = args.pageArg(),
             pageSize = pageSize,
             statusFilters = statusFilter
         ).getOrThrow()

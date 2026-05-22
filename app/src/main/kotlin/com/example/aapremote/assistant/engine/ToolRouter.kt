@@ -1,5 +1,6 @@
 package com.example.aapremote.assistant.engine
 
+import com.example.aapremote.assistant.engine.DebugLog as Log
 import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.assistant.tools.Tool
 import com.example.aapremote.assistant.tools.ToolSource
@@ -98,6 +99,8 @@ class ToolRouter {
     }
 
     companion object {
+        private const val TAG = "ToolRouter"
+
         val OVERLAP_MAPPING = mapOf(
             "list_job_templates" to setOf("controller.job_templates_list"),
             "launch_job" to setOf("controller.job_templates_launch_create"),
@@ -185,12 +188,17 @@ class ToolRouter {
     ): QueryResult {
         val queryWords = query.lowercase().split(Regex("\\W+")).toSet()
         val stemmedQuery = (queryWords - STOP_WORDS).map { stem(it) }.toSet()
+        Log.d(TAG, "QUERY: words=$queryWords, stemmed=$stemmedQuery")
 
         val matchedCategories = Category.entries.filter { category ->
             category.stemmedKeywords.any { it in stemmedQuery }
         }
 
-        if (matchedCategories.isEmpty()) return QueryResult(emptyList(), categoryMatched = false)
+        if (matchedCategories.isEmpty()) {
+            Log.d(TAG, "QUERY: no categories matched")
+            return QueryResult(emptyList(), categoryMatched = false)
+        }
+        Log.d(TAG, "QUERY: matched categories=${matchedCategories.map { it.name }}")
 
         val matchedLocalNames = matchedCategories.flatMap { it.localToolNames }.toSet()
         val matchedPrefixes = matchedCategories.flatMap { it.resourcePrefixes }.toSet()
@@ -228,14 +236,17 @@ class ToolRouter {
             matchesCategory && isEnabled && passesReadOnly
         }
 
+        Log.d(TAG, "FILTER: ${filteredLocal.size} local, ${filteredMcp.size} mcp after category+enable+readOnly filter")
         val cherryPickedLocal = cherryPick(filteredLocal, stemmedQuery)
         val cherryPickedMcp = cherryPick(filteredMcp, stemmedQuery)
+        Log.d(TAG, "CHERRY: ${cherryPickedLocal.size} local [${cherryPickedLocal.map { it.spec.name }}], " +
+            "${cherryPickedMcp.size} mcp [${cherryPickedMcp.map { it.spec.name }}]")
 
         return QueryResult(cherryPickedLocal + cherryPickedMcp, categoryMatched = true)
     }
 
     private fun cherryPick(tools: List<Tool>, stemmedQuery: Set<String>): List<Tool> {
-        return tools.map { tool ->
+        val scored = tools.map { tool ->
             val nameParts = tool.spec.name
                 .split(".", "_")
                 .map { stem(it) }
@@ -247,6 +258,8 @@ class ToolRouter {
             if (overlap > 0 && tool is LocalTool && tool.destructive) score -= 5
             tool to score
         }
+        Log.d(TAG, "SCORES: ${scored.map { "${it.first.spec.name}=${it.second}" }}")
+        return scored
             .filter { it.second > 0 }
             .sortedByDescending { it.second }
             .map { it.first }
@@ -261,11 +274,17 @@ class ToolRouter {
 
     private fun autoDisableOverlappingMcpTools() {
         val activeLocalNames = localTools.map { it.spec.name }.toSet()
+        var disabledCount = 0
         for (localName in activeLocalNames) {
             val overlappingMcpNames = OVERLAP_MAPPING[localName] ?: continue
             for (mcpName in overlappingMcpNames) {
                 disabledTools.add(mcpName to ToolSource.MCP)
+                disabledCount++
             }
         }
+        if (disabledCount > 0) {
+            Log.d(TAG, "OVERLAP: disabled $disabledCount MCP tools overlapping with ${activeLocalNames.size} local tools")
+        }
     }
+
 }

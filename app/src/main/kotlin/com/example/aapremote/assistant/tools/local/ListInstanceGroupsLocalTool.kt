@@ -23,7 +23,7 @@ class ListInstanceGroupsLocalTool(
     override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val pageSize = args.intArg("page_size")?.coerceIn(1, 25) ?: 25
         val result = repository.getInstanceGroups(
-            page = args.intArg("page") ?: 1,
+            page = args.pageArg(),
             pageSize = pageSize
         ).getOrThrow()
         ToolResult(

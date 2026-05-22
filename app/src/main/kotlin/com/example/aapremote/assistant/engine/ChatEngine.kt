@@ -10,6 +10,7 @@ import com.example.aapremote.assistant.llm.LlmProvider
 import com.example.aapremote.assistant.llm.LlmRateLimitException
 import com.example.aapremote.assistant.llm.LlmServerException
 import com.example.aapremote.assistant.llm.LlmTimeoutException
+import com.example.aapremote.assistant.engine.DebugLog as Log
 import com.example.aapremote.assistant.tools.ToolSpec
 import com.example.aapremote.assistant.tools.toToolDescriptor
 import kotlinx.coroutines.CancellationException
@@ -44,7 +45,8 @@ class ChatEngine(
         userMessage: String,
         history: List<ChatMessage>,
         tools: List<ToolSpec>,
-        maxTokens: Int? = null
+        maxTokens: Int? = null,
+        contextChars: Int = DEFAULT_CONTEXT_CHARS
     ): Flow<ChatEvent> = flow {
         try {
             val messages = mutableListOf<ChatMessage>()
@@ -54,9 +56,19 @@ class ChatEngine(
             messages.add(ChatMessage(role = Role.USER, content = userMessage))
 
             val toolDescriptors = tools.map { it.toToolDescriptor() }
+            val toolSchemaChars = toolDescriptors.sumOf {
+                it.name.length + it.description.length +
+                    it.requiredParameters.sumOf { p -> p.name.length + p.description.length + 20 } +
+                    it.optionalParameters.sumOf { p -> p.name.length + p.description.length + 20 }
+            }
+            val msgChars = messages.sumOf { it.content.length }
+            Log.d(TAG, "PAYLOAD: ${tools.size} tools (~${toolSchemaChars} schema chars), " +
+                "${messages.size} messages (~${msgChars} msg chars), total ~${toolSchemaChars + msgChars} chars")
+            Log.d(TAG, "PAYLOAD tools: ${tools.map { it.name }}")
             var iterations = 0
             var totalToolCalls = 0
             val toolCallHistory = mutableListOf<List<String>>()
+            val softLimit = (contextChars * 0.9).toInt()
 
             loop@ while (iterations < maxIterations) {
                 iterations++
@@ -64,7 +76,8 @@ class ChatEngine(
                 val textBuilder = StringBuilder()
                 val pendingToolCalls = mutableMapOf<String, MutableToolCall>()
 
-                trimMessages(messages)
+                compactHistory(messages, softLimit)
+                trimMessages(messages, contextChars)
                 val prompt = buildPrompt(messages)
 
                 provider.generateStream(prompt, toolDescriptors, maxTokens).collect { frame ->
@@ -105,12 +118,15 @@ class ChatEngine(
                 val responseText = textBuilder.toString().ifEmpty { null }
 
                 if (completedCalls.isNotEmpty() && iterations < maxIterations) {
+                    Log.d(TAG, "ITER $iterations: ${completedCalls.size} tool calls: " +
+                        "${completedCalls.map { it.tool }}")
                     val currentSignature = completedCalls.map {
                         "${it.tool}:${it.content.hashCode()}"
                     }
                     toolCallHistory.add(currentSignature)
 
                     if (isRepeatingToolCalls(toolCallHistory)) {
+                        Log.w(TAG, "ITER $iterations: repeat detected, stopping")
                         emit(ChatEvent.AssistantMessage(
                             (responseText ?: "") + "\n\nStopped: the same tools were being called repeatedly.",
                             totalToolCalls
@@ -162,6 +178,8 @@ class ChatEngine(
                         compactToolMessages(messages, toolSummaries)
                     }
                 } else {
+                    Log.d(TAG, "DONE: $iterations iterations, $totalToolCalls total tool calls, " +
+                        "response=${responseText?.length ?: 0} chars")
                     val finalText = if (completedCalls.isNotEmpty() && iterations >= maxIterations) {
                         (responseText ?: "") + "\n\nI wasn't able to complete this request within the tool call limit."
                     } else {
@@ -179,14 +197,19 @@ class ChatEngine(
         } catch (e: CancellationException) {
             throw e
         } catch (e: LlmAuthException) {
+            Log.e(TAG, "AUTH error: ${e.message}", e)
             emit(ChatEvent.Error(e.message ?: "Authentication failed — check API key", e))
         } catch (e: LlmRateLimitException) {
+            Log.w(TAG, "RATE_LIMIT: ${e.message}")
             emit(ChatEvent.Error(e.message ?: "Rate limited — try again later", e))
         } catch (e: LlmTimeoutException) {
+            Log.w(TAG, "TIMEOUT: ${e.message}")
             emit(ChatEvent.Error("Response timed out", e))
         } catch (e: IOException) {
+            Log.e(TAG, "IO error: ${e.message}", e)
             emit(ChatEvent.Error("Unable to reach LLM server: ${e.message}", e))
         } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error: ${e.message}", e)
             emit(ChatEvent.Error("Error: ${e.message}", e))
         }
     }
@@ -275,12 +298,59 @@ class ChatEngine(
         return history[history.size - 2] == last && history[history.size - 3] == last
     }
 
+    private fun compactHistory(
+        messages: MutableList<ChatMessage>,
+        softLimit: Int
+    ) {
+        val totalChars = messages.sumOf { it.content.length }
+        if (totalChars <= softLimit) return
+
+        val systemCount = messages.takeWhile { it.role == Role.SYSTEM }.size
+        val keepTail = 4
+        if (messages.size <= systemCount + keepTail) return
+
+        val compactEnd = messages.size - keepTail
+        val toCompact = messages.subList(systemCount, compactEnd)
+        if (toCompact.isEmpty()) return
+
+        Log.d(TAG, "COMPACT: $totalChars chars > $softLimit soft limit, " +
+            "compacting ${toCompact.size} messages (keeping last $keepTail)")
+
+        val summaries = mutableListOf<String>()
+        var i = 0
+        while (i < toCompact.size) {
+            val msg = toCompact[i]
+            when (msg.role) {
+                Role.USER -> {
+                    val topic = msg.content.take(40).replace("\n", " ").trim()
+                    val nextAssistant = toCompact.getOrNull(i + 1)
+                    val result = if (nextAssistant?.role == Role.ASSISTANT && nextAssistant.toolCallsJson == null) {
+                        nextAssistant.content.take(40).replace("\n", " ").trim()
+                        .let { if (it.length >= 40) "${it}…" else it }
+                    } else null
+                    summaries.add(if (result != null) "$topic ($result)" else topic)
+                    i++
+                }
+                Role.TOOL, Role.ASSISTANT -> i++
+                else -> i++
+            }
+        }
+
+        toCompact.clear()
+        if (summaries.isNotEmpty()) {
+            val digest = "[Earlier: ${summaries.joinToString("; ")}]"
+            messages.add(systemCount, ChatMessage(role = Role.ASSISTANT, content = digest))
+            Log.d(TAG, "COMPACT: ${summaries.size} exchanges → ${digest.length} chars")
+        }
+    }
+
     private fun trimMessages(
         messages: MutableList<ChatMessage>,
         maxChars: Int = DEFAULT_CONTEXT_CHARS
     ) {
         val totalChars = messages.sumOf { it.content.length }
         if (totalChars <= maxChars) return
+        Log.d(TAG, "TRIM: $totalChars chars > $maxChars limit, trimming ${messages.size} messages")
 
         val systemMessages = messages.takeWhile { it.role == Role.SYSTEM }
         val systemChars = systemMessages.sumOf { it.content.length }
@@ -306,13 +376,15 @@ class ChatEngine(
     }
 
     companion object {
+        private const val TAG = "ChatEngine"
         private const val DEFAULT_CONTEXT_CHARS = 16_000
         const val SYSTEM_PROMPT = """You are a concise AI assistant for Ansible Automation Platform (AAP). Rules:
-- NEVER fabricate, invent, or guess data. Only present information returned by tool calls. If you have no tool to answer a question, say so clearly.
+- NEVER fabricate, invent, or guess data. Only present information returned by tool calls. If a tool call fails, report the error — do not make up results. If you have no tool to answer a question, say so clearly.
+- You have local tools (list_jobs, launch_job, etc.) that connect directly to the AAP instance and MCP tools (controller.*, eda.*) for extended capabilities. Prefer local tools when available.
 - When results contain more than 10 items, show a summary with total count and the 5 most recent. Ask before listing all.
 - Use short structured formatting (bullets, bold labels). No lengthy prose.
 - Never repeat raw tool output verbatim — summarize it.
-- You have local tools (list_jobs, launch_job, etc.) that connect directly to the AAP instance and MCP tools (controller.*, eda.*) for extended capabilities. Prefer local tools when available.
-- For write operations (launch, cancel, toggle), explain what you will do and wait for confirmation."""
+- For write operations (launch, cancel, toggle), explain what you will do and wait for confirmation.
+- For optional tool parameters you don't need, omit them entirely — do not pass null or empty values."""
     }
 }
