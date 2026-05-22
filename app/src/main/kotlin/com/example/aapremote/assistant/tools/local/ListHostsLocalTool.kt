@@ -23,7 +23,7 @@ class ListHostsLocalTool(
 ) {
     override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val inventoryId = args.intArg("inventory_id")
-        val page = args.intArg("page") ?: 1
+        val page = args.pageArg()
         val search = args.stringArg("search")
 
         val result = if (inventoryId != null) {

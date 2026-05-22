@@ -23,7 +23,7 @@ class ListInstancesLocalTool(
     override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val pageSize = args.intArg("page_size")?.coerceIn(1, 25) ?: 25
         val result = repository.getInstances(
-            page = args.intArg("page") ?: 1,
+            page = args.pageArg(),
             pageSize = pageSize
         ).getOrThrow()
         ToolResult(

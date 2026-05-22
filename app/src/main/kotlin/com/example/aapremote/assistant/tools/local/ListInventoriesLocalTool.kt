@@ -22,7 +22,7 @@ class ListInventoriesLocalTool(
 ) {
     override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val result = repository.getInventories(
-            page = args.intArg("page") ?: 1,
+            page = args.pageArg(),
             search = args.stringArg("search")
         ).getOrThrow()
         ToolResult(

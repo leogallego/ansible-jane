@@ -23,7 +23,7 @@ class ListWorkflowTemplatesLocalTool(
 ) {
     override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val result = repository.getWorkflowTemplates(
-            page = args.intArg("page") ?: 1,
+            page = args.pageArg(),
             search = args.stringArg("search"),
             labelFilter = args.stringArg("labels")
         ).getOrThrow()

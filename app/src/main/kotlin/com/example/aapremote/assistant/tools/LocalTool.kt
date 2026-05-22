@@ -22,6 +22,9 @@ abstract class LocalTool(
     protected fun JsonObject.intArg(name: String): Int? =
         this[name]?.jsonPrimitive?.intOrNull
 
+    protected fun JsonObject.pageArg(name: String = "page"): Int =
+        (intArg(name) ?: 1).coerceAtLeast(1)
+
     protected fun JsonObject.stringArg(name: String): String? =
         this[name]?.jsonPrimitive?.contentOrNull?.takeUnless { it in NULL_SENTINELS }
 

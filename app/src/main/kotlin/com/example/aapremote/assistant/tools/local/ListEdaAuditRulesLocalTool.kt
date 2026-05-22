@@ -23,7 +23,7 @@ class ListEdaAuditRulesLocalTool(
     override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val pageSize = args.intArg("page_size")?.coerceIn(1, 20) ?: 10
         val result = repository.getAuditRules(
-            page = args.intArg("page") ?: 1,
+            page = args.pageArg(),
             pageSize = pageSize
         ).getOrThrow()
         ToolResult(

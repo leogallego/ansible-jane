@@ -21,7 +21,7 @@ class ListSchedulesLocalTool(
 ) {
     override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
         val result = repository.getSchedules(
-            page = args.intArg("page") ?: 1
+            page = args.pageArg()
         ).getOrThrow()
         ToolResult(
             success = true,
