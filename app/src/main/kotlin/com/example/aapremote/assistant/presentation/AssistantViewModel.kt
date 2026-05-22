@@ -12,7 +12,9 @@ import com.example.aapremote.assistant.engine.ChatMessage
 import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.engine.ToolExecutor
 import com.example.aapremote.assistant.engine.ToolRouter
+import com.example.aapremote.assistant.llm.GeminiLlmProvider
 import com.example.aapremote.assistant.llm.KoogLlmProvider
+import com.example.aapremote.assistant.llm.LlmProvider
 import com.example.aapremote.assistant.tools.LocalTool
 import com.example.aapremote.data.ITokenManager
 import com.example.aapremote.model.McpServerConfig
@@ -44,7 +46,7 @@ class AssistantViewModel(
     val activeInstance get() = tokenManager.activeInstance.value
 
     private var generateJob: Job? = null
-    private var cachedProvider: KoogLlmProvider? = null
+    private var cachedProvider: LlmProvider? = null
     private var cachedProviderKey: String? = null
 
     private val _llmConfig = MutableStateFlow<LlmProviderConfig?>(null)
@@ -345,11 +347,17 @@ class AssistantViewModel(
     private fun getOrCreateProvider(
         config: LlmProviderConfig.OpenAiCompatible,
         trustSelfSigned: Boolean
-    ): KoogLlmProvider {
+    ): LlmProvider {
         val key = "${config.url}|${config.model}|${config.apiKey}|$trustSelfSigned"
         cachedProvider?.let { if (cachedProviderKey == key) return it }
         cachedProvider?.close()
-        return KoogLlmProvider(config, trustSelfSigned).also {
+        val isGemini = config.url.contains("generativelanguage.googleapis.com")
+        val provider: LlmProvider = if (isGemini) {
+            GeminiLlmProvider(apiKey = config.apiKey ?: "", modelId = config.model)
+        } else {
+            KoogLlmProvider(config, trustSelfSigned)
+        }
+        return provider.also {
             cachedProvider = it
             cachedProviderKey = key
         }
