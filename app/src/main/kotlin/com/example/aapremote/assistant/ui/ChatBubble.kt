@@ -82,7 +82,14 @@ fun ChatBubble(
                     Markdown(
                         content = message.content,
                         colors = markdownColor(),
-                        typography = markdownTypography(),
+                        typography = markdownTypography(
+                            h1 = MaterialTheme.typography.titleLarge,
+                            h2 = MaterialTheme.typography.titleMedium,
+                            h3 = MaterialTheme.typography.titleSmall,
+                            h4 = MaterialTheme.typography.labelLarge,
+                            h5 = MaterialTheme.typography.labelMedium,
+                            h6 = MaterialTheme.typography.labelSmall,
+                        ),
                         components = markdownComponents(
                             codeBlock = {
                                 MarkdownHighlightedCodeBlock(
