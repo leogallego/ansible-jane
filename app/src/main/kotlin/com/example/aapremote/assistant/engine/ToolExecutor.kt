@@ -77,6 +77,7 @@ class ToolExecutor(
         val finalLen = finalResult.data?.length ?: 0
         Log.d(TAG, "EXEC: ${toolCall.tool} ${if (finalResult.success) "OK" else "FAIL"} " +
             "in ${elapsedMs}ms, result=${rawLen}→${if (cappedLen != rawLen) "${cappedLen}→" else ""}${finalLen} chars")
+        Log.d(TAG, "EXEC DATA: ${finalResult.data?.take(500)}")
 
         if (finalResult.success) {
             resultCache[cacheKey] = System.currentTimeMillis() to finalResult

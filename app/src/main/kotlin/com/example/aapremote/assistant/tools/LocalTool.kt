@@ -23,7 +23,13 @@ abstract class LocalTool(
         this[name]?.jsonPrimitive?.intOrNull
 
     protected fun JsonObject.stringArg(name: String): String? =
-        this[name]?.jsonPrimitive?.contentOrNull
+        this[name]?.jsonPrimitive?.contentOrNull?.takeUnless { it in NULL_SENTINELS }
+
+    companion object {
+        private val NULL_SENTINELS = setOf(
+            "<nil>", "null", "none", "nil", "", "undefined", "N/A"
+        )
+    }
 
     protected fun JsonObject.booleanArg(name: String): Boolean? =
         this[name]?.jsonPrimitive?.booleanOrNull
