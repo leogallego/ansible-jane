@@ -9,6 +9,7 @@ import com.example.aapremote.assistant.data.TokenSavingMode
 import com.example.aapremote.assistant.engine.ChatEngine
 import com.example.aapremote.assistant.engine.ChatEvent
 import com.example.aapremote.assistant.engine.ChatMessage
+import com.example.aapremote.assistant.engine.ResponseSource
 import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.engine.ToolExecutor
 import com.example.aapremote.assistant.engine.ToolRouter
@@ -107,7 +108,8 @@ class AssistantViewModel(
                     current.copy(
                         messages = current.messages + ChatMessage(
                             role = Role.ASSISTANT,
-                            content = "Please configure an LLM provider in settings first."
+                            content = "Please configure an LLM provider in settings first.",
+                            source = ResponseSource.LLM
                         )
                     )
                 } else current
@@ -170,7 +172,7 @@ class AssistantViewModel(
                     "- **Monitoring** — system health, instance status\n" +
                     "- **Configuration** — projects, settings, notifications"
             }
-            val guidanceMsg = ChatMessage(role = Role.ASSISTANT, content = content)
+            val guidanceMsg = ChatMessage(role = Role.ASSISTANT, content = content, source = ResponseSource.LLM)
             repository.addMessage(guidanceMsg)
             updateState { copy(messages = repository.getHistory(), isGenerating = false) }
             return
@@ -204,60 +206,52 @@ class AssistantViewModel(
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
             val textBuilder = StringBuilder()
-            var hasPlaceholder = false
+            val usedSources = mutableSetOf<String>()
+            val usedToolNames = mutableListOf<String>()
+            val localNames = matchedLocal.map { it.spec.name }.toSet()
 
-            fun replaceOrAddAssistant(content: String) {
-                updateState {
-                    val msg = ChatMessage(role = Role.ASSISTANT, content = content)
-                    val msgs = if (hasPlaceholder) messages.dropLast(1) + msg
-                        else messages + msg
-                    copy(messages = msgs)
-                }
-                hasPlaceholder = true
-            }
-
-            replaceOrAddAssistant("Thinking...")
+            updateState { copy(streamingText = "Thinking...") }
 
             engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens, contextChars)
                 .collect { event ->
                     when (event) {
                         is ChatEvent.TextDelta -> {
                             textBuilder.append(event.text)
-                            replaceOrAddAssistant(textBuilder.toString())
+                            updateState { copy(streamingText = "Generating response...") }
                         }
                         is ChatEvent.ToolExecuting -> {
-                            val localNames = matchedLocal.map { it.spec.name }.toSet()
-                            val source = if (event.toolName in localNames) "local" else "mcp"
-                            replaceOrAddAssistant("Querying [$source]: ${event.toolName}...")
+                            val toolSource = if (event.toolName in localNames) "local" else "mcp"
+                            usedSources.add(toolSource)
+                            usedToolNames.add(event.toolName)
+                            updateState { copy(streamingText = "Querying [$toolSource]: ${event.toolName}...") }
                         }
                         is ChatEvent.ToolResult -> {
-                            replaceOrAddAssistant("Processing results...")
+                            updateState { copy(streamingText = "Processing results...") }
                             textBuilder.clear()
                         }
                         is ChatEvent.AssistantMessage -> {
-                            hasPlaceholder = false
-                            updateState {
-                                val msgs = messages.dropLast(1)
-                                copy(messages = msgs)
+                            val responseSource = when {
+                                usedSources.isEmpty() -> ResponseSource.LLM
+                                usedSources.size > 1 -> ResponseSource.MIXED
+                                "local" in usedSources -> ResponseSource.LOCAL
+                                else -> ResponseSource.MCP
                             }
                             val finalMsg = ChatMessage(
                                 role = Role.ASSISTANT,
-                                content = event.fullText
+                                content = event.fullText,
+                                source = responseSource,
+                                toolsUsed = usedToolNames.distinct()
                             )
                             repository.addMessage(finalMsg)
                             updateState {
                                 copy(
                                     messages = repository.getHistory(),
-                                    isGenerating = false
+                                    isGenerating = false,
+                                    streamingText = null
                                 )
                             }
                         }
                         is ChatEvent.Error -> {
-                            hasPlaceholder = false
-                            updateState {
-                                val msgs = messages.dropLast(1)
-                                copy(messages = msgs)
-                            }
                             val errorMsg = ChatMessage(
                                 role = Role.ASSISTANT,
                                 content = "Error: ${event.message}"
@@ -266,7 +260,8 @@ class AssistantViewModel(
                             updateState {
                                 copy(
                                     messages = repository.getHistory(),
-                                    isGenerating = false
+                                    isGenerating = false,
+                                    streamingText = null
                                 )
                             }
                         }
