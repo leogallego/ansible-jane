@@ -45,7 +45,8 @@ class ChatEngine(
         userMessage: String,
         history: List<ChatMessage>,
         tools: List<ToolSpec>,
-        maxTokens: Int? = null
+        maxTokens: Int? = null,
+        contextChars: Int = DEFAULT_CONTEXT_CHARS
     ): Flow<ChatEvent> = flow {
         try {
             val messages = mutableListOf<ChatMessage>()
@@ -67,6 +68,7 @@ class ChatEngine(
             var iterations = 0
             var totalToolCalls = 0
             val toolCallHistory = mutableListOf<List<String>>()
+            val softLimit = (contextChars * 0.9).toInt()
 
             loop@ while (iterations < maxIterations) {
                 iterations++
@@ -74,7 +76,8 @@ class ChatEngine(
                 val textBuilder = StringBuilder()
                 val pendingToolCalls = mutableMapOf<String, MutableToolCall>()
 
-                trimMessages(messages)
+                compactHistory(messages, softLimit)
+                trimMessages(messages, contextChars)
                 val prompt = buildPrompt(messages)
 
                 provider.generateStream(prompt, toolDescriptors, maxTokens).collect { frame ->
@@ -293,6 +296,52 @@ class ChatEngine(
         if (history.size < 3) return false
         val last = history.last()
         return history[history.size - 2] == last && history[history.size - 3] == last
+    }
+
+    private fun compactHistory(
+        messages: MutableList<ChatMessage>,
+        softLimit: Int
+    ) {
+        val totalChars = messages.sumOf { it.content.length }
+        if (totalChars <= softLimit) return
+
+        val systemCount = messages.takeWhile { it.role == Role.SYSTEM }.size
+        val keepTail = 4
+        if (messages.size <= systemCount + keepTail) return
+
+        val compactEnd = messages.size - keepTail
+        val toCompact = messages.subList(systemCount, compactEnd)
+        if (toCompact.isEmpty()) return
+
+        Log.d(TAG, "COMPACT: $totalChars chars > $softLimit soft limit, " +
+            "compacting ${toCompact.size} messages (keeping last $keepTail)")
+
+        val summaries = mutableListOf<String>()
+        var i = 0
+        while (i < toCompact.size) {
+            val msg = toCompact[i]
+            when (msg.role) {
+                Role.USER -> {
+                    val topic = msg.content.take(40).replace("\n", " ").trim()
+                    val nextAssistant = toCompact.getOrNull(i + 1)
+                    val result = if (nextAssistant?.role == Role.ASSISTANT && nextAssistant.toolCallsJson == null) {
+                        nextAssistant.content.take(40).replace("\n", " ").trim()
+                        .let { if (it.length >= 40) "${it}…" else it }
+                    } else null
+                    summaries.add(if (result != null) "$topic ($result)" else topic)
+                    i++
+                }
+                Role.TOOL, Role.ASSISTANT -> i++
+                else -> i++
+            }
+        }
+
+        toCompact.clear()
+        if (summaries.isNotEmpty()) {
+            val digest = "[Earlier: ${summaries.joinToString("; ")}]"
+            messages.add(systemCount, ChatMessage(role = Role.ASSISTANT, content = digest))
+            Log.d(TAG, "COMPACT: ${summaries.size} exchanges → ${digest.length} chars")
+        }
     }
 
     private fun trimMessages(

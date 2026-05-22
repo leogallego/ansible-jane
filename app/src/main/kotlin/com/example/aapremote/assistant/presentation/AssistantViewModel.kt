@@ -195,6 +195,11 @@ class AssistantViewModel(
         val toolExecutor = ToolExecutor(budgetedTools)
         val engine = ChatEngine(provider, toolExecutor)
         val maxTokens: Int? = null
+        val contextChars = when (mode) {
+            TokenSavingMode.STANDARD -> 16_000
+            TokenSavingMode.TOKEN_SAVER -> 8_000
+            TokenSavingMode.TOOLS_ONLY -> 4_000
+        }
 
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
@@ -213,7 +218,7 @@ class AssistantViewModel(
 
             replaceOrAddAssistant("Thinking...")
 
-            engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens)
+            engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens, contextChars)
                 .collect { event ->
                     when (event) {
                         is ChatEvent.TextDelta -> {
