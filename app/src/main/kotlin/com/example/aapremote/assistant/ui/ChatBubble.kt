@@ -1,15 +1,18 @@
 package com.example.aapremote.assistant.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,78 +20,119 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.aapremote.assistant.engine.ChatMessage
-import com.example.aapremote.assistant.engine.Role
+import com.example.aapremote.assistant.engine.ResponseSource
+import com.mikepenz.markdown.compose.LocalBulletListHandler
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeBlock
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.BulletHandler
+import com.mikepenz.markdown.model.markdownDimens
+import com.mikepenz.markdown.model.markdownPadding
 import dev.snipme.highlights.Highlights
+import dev.snipme.highlights.model.SyntaxLanguage
 import dev.snipme.highlights.model.SyntaxThemes
 
 @Composable
-fun ChatBubble(
+fun UserBubble(
     message: ChatMessage,
     modifier: Modifier = Modifier
 ) {
-    val isUser = message.role == Role.USER
-    val isToolIndicator = message.content.startsWith("Querying [")
-    val isError = message.content.startsWith("Error:")
+    SelectionContainer {
+        Row(modifier = modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Spacer(Modifier.weight(1f))
+            Column(
+                modifier = Modifier
+                    .background(
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                        RoundedCornerShape(12.dp),
+                    )
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = message.content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+        }
+    }
+}
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
-    ) {
+@Composable
+fun AssistantMessage(
+    content: String,
+    source: ResponseSource? = null,
+    toolsUsed: List<String> = emptyList(),
+    modifier: Modifier = Modifier
+) {
+    val isError = content.startsWith("Error:")
+
+    if (isError) {
         Surface(
-            shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = if (isUser) 16.dp else 4.dp,
-                bottomEnd = if (isUser) 4.dp else 16.dp
-            ),
-            color = when {
-                isUser -> MaterialTheme.colorScheme.primaryContainer
-                isError -> MaterialTheme.colorScheme.errorContainer
-                isToolIndicator -> MaterialTheme.colorScheme.tertiaryContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant
-            },
-            modifier = Modifier.widthIn(max = 300.dp)
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.errorContainer,
+            modifier = modifier
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                if (isToolIndicator) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                        Text(
-                            text = message.content,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    }
-                } else if (!isUser && !isError) {
-                    val isDarkTheme = isSystemInDarkTheme()
-                    val highlightsBuilder = remember(isDarkTheme) {
-                        Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
-                    }
+            Text(
+                text = content,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.padding(12.dp)
+            )
+        }
+    } else {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+        ) {
+            if (source != null) {
+                SourceBand(source = source, toolsUsed = toolsUsed)
+            }
+            SelectionContainer {
+                val isDarkTheme = isSystemInDarkTheme()
+                val highlightsBuilder = remember(isDarkTheme) {
+                    Highlights.Builder().theme(SyntaxThemes.monokai(darkMode = isDarkTheme))
+                }
+                val noBullet = BulletHandler { _, _, _, _, _ -> "" }
+                CompositionLocalProvider(LocalBulletListHandler provides noBullet) {
                     Markdown(
-                        content = message.content,
-                        colors = markdownColor(),
+                        content = content,
+                        colors = markdownColor(
+                            codeBackground = MaterialTheme.colorScheme.surfaceVariant,
+                            inlineCodeBackground = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
                         typography = markdownTypography(
                             h1 = MaterialTheme.typography.titleLarge,
                             h2 = MaterialTheme.typography.titleMedium,
                             h3 = MaterialTheme.typography.titleSmall,
-                            h4 = MaterialTheme.typography.labelLarge,
-                            h5 = MaterialTheme.typography.labelMedium,
-                            h6 = MaterialTheme.typography.labelSmall,
+                            h4 = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                            h5 = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            h6 = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            paragraph = MaterialTheme.typography.bodyMedium,
+                            bullet = MaterialTheme.typography.bodyMedium,
+                            list = MaterialTheme.typography.bodyMedium,
+                            code = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        ),
+                        padding = markdownPadding(
+                            block = 8.dp,
+                            list = 8.dp,
+                            listItemTop = 6.dp,
+                            listItemBottom = 6.dp,
+                            listIndent = 8.dp,
+                            codeBlock = PaddingValues(12.dp),
+                            blockQuote = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        ),
+                        dimens = markdownDimens(
+                            codeBackgroundCornerSize = 8.dp,
+                            blockQuoteThickness = 3.dp,
                         ),
                         components = markdownComponents(
                             codeBlock = {
@@ -96,29 +140,76 @@ fun ChatBubble(
                                     content = it.content,
                                     node = it.node,
                                     highlightsBuilder = highlightsBuilder,
+                                    showHeader = true,
                                 )
                             },
-                            codeFence = {
+                            codeFence = { model ->
+                                val firstLine = model.content.lineSequence().firstOrNull { it.startsWith("```") }
+                                val lang = firstLine?.removePrefix("```")?.trim()?.lowercase()?.ifEmpty { null }
+                                val isSupported = lang != null && SyntaxLanguage.getByName(lang) != null
                                 MarkdownHighlightedCodeFence(
-                                    content = it.content,
-                                    node = it.node,
-                                    highlightsBuilder = highlightsBuilder,
+                                    content = model.content,
+                                    node = model.node,
+                                    highlightsBuilder = if (isSupported) highlightsBuilder else Highlights.Builder(),
+                                    showHeader = true,
                                 )
                             },
-                        )
-                    )
-                } else {
-                    Text(
-                        text = message.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = when {
-                            isUser -> MaterialTheme.colorScheme.onPrimaryContainer
-                            isError -> MaterialTheme.colorScheme.onErrorContainer
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant
-                        }
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SourceBand(
+    source: ResponseSource,
+    toolsUsed: List<String>,
+    modifier: Modifier = Modifier
+) {
+    val sourceLabel = when (source) {
+        ResponseSource.LOCAL -> "local"
+        ResponseSource.MCP -> "mcp"
+        ResponseSource.LLM -> "llm"
+        ResponseSource.MIXED -> "local + mcp"
+    }
+    val color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+
+    Column(modifier = modifier.fillMaxWidth().padding(bottom = 4.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = sourceLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = color,
+            )
+            if (toolsUsed.isNotEmpty()) {
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = "·",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = color,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = toolsUsed.joinToString(", "),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = FontFamily.Monospace
+                    ),
+                    color = color,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+            }
+        }
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+            thickness = 0.5.dp,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }

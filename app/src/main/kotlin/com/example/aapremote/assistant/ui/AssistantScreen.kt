@@ -1,20 +1,31 @@
 package com.example.aapremote.assistant.ui
 
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.CircularProgressIndicator
@@ -22,7 +33,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,20 +44,25 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.aapremote.assistant.engine.ChatMessage
+import com.example.aapremote.assistant.engine.Role
 import com.example.aapremote.assistant.presentation.AssistantUiState
 import com.example.aapremote.assistant.presentation.AssistantViewModel
 import com.example.aapremote.network.mcp.McpConnectionState
@@ -162,16 +177,20 @@ private fun ActiveChatContent(
     }
 
     val imeVisible = WindowInsets.isImeVisible
+    val messageCount = state.messages.size
+    val hasStreamingSection = state.isGenerating
+    val totalItems = messageCount + (if (hasStreamingSection) 1 else 0) +
+        (if (messageCount == 0 && !hasStreamingSection) 1 else 0)
 
-    LaunchedEffect(state.messages.size) {
-        if (state.messages.isNotEmpty()) {
-            listState.animateScrollToItem(0)
+    LaunchedEffect(messageCount, state.isGenerating) {
+        if (totalItems > 0) {
+            listState.animateScrollToItem(totalItems - 1)
         }
     }
 
     LaunchedEffect(imeVisible) {
-        if (imeVisible && state.messages.isNotEmpty()) {
-            listState.animateScrollToItem(0)
+        if (imeVisible && totalItems > 0) {
+            listState.animateScrollToItem(totalItems - 1)
         }
     }
 
@@ -214,16 +233,15 @@ private fun ActiveChatContent(
 
         LazyColumn(
             state = listState,
-            reverseLayout = true,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom)
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            if (state.messages.isEmpty()) {
-                item {
+            if (state.messages.isEmpty() && state.streamingText == null) {
+                item(key = "empty_placeholder") {
                     Box(
                         modifier = Modifier
                             .fillParentMaxSize()
@@ -240,11 +258,25 @@ private fun ActiveChatContent(
             }
 
             items(
-                items = state.messages.asReversed(),
+                items = state.messages,
                 key = { it.id },
                 contentType = { it.role }
             ) { message ->
-                ChatBubble(message = message, modifier = Modifier.padding(vertical = 2.dp))
+                when (message.role) {
+                    Role.USER -> UserBubble(message = message)
+                    Role.ASSISTANT -> AssistantMessage(
+                        content = message.content,
+                        source = message.source,
+                        toolsUsed = message.toolsUsed
+                    )
+                    else -> AssistantMessage(content = message.content)
+                }
+            }
+
+            if (state.isGenerating) {
+                item(key = "streaming", contentType = "streaming") {
+                    StreamingIndicator(statusText = state.streamingText ?: "Thinking...")
+                }
             }
         }
 
@@ -292,5 +324,56 @@ private fun ActiveChatContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun StreamingIndicator(
+    statusText: String,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pulseScale",
+    )
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pulseAlpha",
+    )
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    this.alpha = alpha
+                }
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = statusText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
