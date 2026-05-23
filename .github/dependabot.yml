@@ -1,0 +1,46 @@
+version: 2
+
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "org.jetbrains.kotlinx:kotlinx-coroutines*"
+          - "org.jetbrains.kotlinx:kotlinx-serialization*"
+          - "org.jetbrains.kotlinx:kotlinx-collections*"
+      compose:
+        patterns:
+          - "androidx.compose*"
+          - "androidx.activity:activity-compose"
+      lifecycle:
+        patterns:
+          - "androidx.lifecycle*"
+      networking:
+        patterns:
+          - "com.squareup.okhttp3*"
+          - "com.squareup.retrofit2*"
+      koin:
+        patterns:
+          - "io.insert-koin*"
+      ktor:
+        patterns:
+          - "io.ktor*"
+      testing:
+        patterns:
+          - "junit*"
+          - "org.robolectric*"
+          - "app.cash.turbine*"
+          - "androidx.test*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
