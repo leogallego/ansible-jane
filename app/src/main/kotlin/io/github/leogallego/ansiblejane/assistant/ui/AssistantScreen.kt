@@ -36,6 +36,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -148,12 +149,16 @@ private fun ActiveChatContent(
     }
 
     val imeVisible = WindowInsets.isImeVisible
-    val messageCount = state.messages.size
-    val hasStreamingSection = state.isGenerating
-    val totalItems = messageCount + (if (hasStreamingSection) 1 else 0) +
-        (if (messageCount == 0 && !hasStreamingSection) 1 else 0)
+    val totalItems by remember {
+        derivedStateOf {
+            val msgCount = state.messages.size
+            val streaming = if (state.isGenerating) 1 else 0
+            val empty = if (msgCount == 0 && !state.isGenerating) 1 else 0
+            msgCount + streaming + empty
+        }
+    }
 
-    LaunchedEffect(messageCount, state.isGenerating) {
+    LaunchedEffect(state.messages.size, state.isGenerating) {
         if (totalItems > 0) {
             listState.animateScrollToItem(totalItems - 1)
         }
@@ -169,10 +174,18 @@ private fun ActiveChatContent(
         focusRequester.requestFocus()
     }
 
+    val mcpStatusText by remember(state.connections) {
+        derivedStateOf {
+            if (state.connections.isEmpty()) null
+            else {
+                val connected = state.connections.count { it.value is McpConnectionState.Connected }
+                "${connected}/${state.connections.size} MCP servers connected"
+            }
+        }
+    }
+
     Column(modifier = modifier.imePadding()) {
-        if (state.connections.isNotEmpty()) {
-            val connected = state.connections.count { it.value is McpConnectionState.Connected }
-            val total = state.connections.size
+        mcpStatusText?.let { statusText ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -180,7 +193,7 @@ private fun ActiveChatContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "$connected/$total MCP servers connected",
+                    text = statusText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

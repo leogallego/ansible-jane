@@ -1,11 +1,13 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
+import androidx.compose.runtime.Immutable
 import java.util.concurrent.atomic.AtomicLong
 
 enum class Role { USER, ASSISTANT, TOOL, SYSTEM }
 
 enum class ResponseSource { LOCAL, MCP, LLM, MIXED }
 
+@Immutable
 data class ChatMessage(
     val role: Role,
     val content: String,

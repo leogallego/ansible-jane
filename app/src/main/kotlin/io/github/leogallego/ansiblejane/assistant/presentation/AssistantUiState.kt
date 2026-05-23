@@ -1,14 +1,18 @@
 package io.github.leogallego.ansiblejane.assistant.presentation
 
+import androidx.compose.runtime.Immutable
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 sealed interface AssistantUiState {
     data object Idle : AssistantUiState
     data object Loading : AssistantUiState
+    @Immutable
     data class Active(
-        val messages: List<ChatMessage> = emptyList(),
+        val messages: ImmutableList<ChatMessage> = persistentListOf(),
         val isGenerating: Boolean = false,
         val streamingText: String? = null,
         val connections: Map<String, McpConnectionState> = emptyMap()

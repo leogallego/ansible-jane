@@ -11,6 +11,7 @@ kotlinx-serialization-json = "1.11.0"
 koin = "4.2.1"
 datastore-preferences = "1.2.1"
 tink-android = "1.21.0"
+collections-immutable = "0.3.8"
 coroutines = "1.11.0"
 core-ktx = "1.18.0"
 markdownRenderer = "0.41.0"
@@ -46,6 +47,7 @@ koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = 
 koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel", version.ref = "koin" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore-preferences" }
 tink-android = { group = "com.google.crypto.tink", name = "tink-android", version.ref = "tink-android" }
+kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "collections-immutable" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
 junit = { group = "junit", name = "junit", version = "4.13.2" }

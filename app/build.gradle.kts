@@ -118,6 +118,7 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.tink.android)
+    implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.markdown.renderer)
