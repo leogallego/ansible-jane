@@ -16,6 +16,12 @@ class FakeAssistantRepository : IAssistantRepository {
     private val _activeConfigFlow = MutableStateFlow<LlmProviderConfig?>(null)
     override val activeConfigFlow: Flow<LlmProviderConfig?> = _activeConfigFlow
 
+    private val _savedConfigsFlow = MutableStateFlow<Map<String, LlmProviderConfig>>(emptyMap())
+    override val savedConfigsFlow: Flow<Map<String, LlmProviderConfig>> = _savedConfigsFlow
+
+    private val _activeProviderKeyFlow = MutableStateFlow<String?>(null)
+    override val activeProviderKeyFlow: Flow<String?> = _activeProviderKeyFlow
+
     override fun addMessage(message: ChatMessage) {
         messages.add(message)
     }
@@ -34,6 +40,8 @@ class FakeAssistantRepository : IAssistantRepository {
         activeProvider = providerKey
         savedConfig = config
         _activeConfigFlow.value = config
+        _savedConfigsFlow.value = allConfigs.toMap()
+        _activeProviderKeyFlow.value = providerKey
     }
 
     override suspend fun loadLlmConfig(): LlmProviderConfig? {
@@ -43,7 +51,14 @@ class FakeAssistantRepository : IAssistantRepository {
 
     override suspend fun saveAllLlmConfigs(configs: Map<String, LlmProviderConfig>) {
         allConfigs = configs.toMutableMap()
+        _savedConfigsFlow.value = allConfigs.toMap()
     }
 
     override suspend fun loadAllLlmConfigs(): Map<String, LlmProviderConfig> = allConfigs.toMap()
+
+    override suspend fun switchActiveProvider(providerKey: String) {
+        activeProvider = providerKey
+        _activeProviderKeyFlow.value = providerKey
+        _activeConfigFlow.value = allConfigs[providerKey]
+    }
 }

@@ -156,7 +156,7 @@ class SettingsScreenTest {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
 
-        composeTestRule.onNodeWithText("Backup & Restore").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Backup & Restore").performScrollTo().assertIsDisplayed()
     }
 
     @Test

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -41,6 +42,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             val configs = assistantRepository.loadAllLlmConfigs()
             val activeConfig = assistantRepository.loadLlmConfig()
+            val initialActiveKey = assistantRepository.activeProviderKeyFlow.first()
 
             combine(
                 tokenManager.instances,
@@ -60,6 +62,7 @@ class SettingsViewModel(
                 val preservedModelFetchState = (current as? SettingsUiState.Ready)?.modelFetchState ?: ModelFetchState.Idle
                 val preservedSavedConfigs = (current as? SettingsUiState.Ready)?.savedConfigs ?: configs
                 val preservedActiveConfig = (current as? SettingsUiState.Ready)?.activeConfig ?: activeConfig
+                val preservedActiveKey = (current as? SettingsUiState.Ready)?.activeProviderKey ?: initialActiveKey
                 val preservedDetails = (current as? SettingsUiState.Ready)?.selectedInstanceForDetails
 
                 SettingsUiState.Ready(
@@ -71,6 +74,7 @@ class SettingsViewModel(
                     timeFormat = timeFormat,
                     savedConfigs = preservedSavedConfigs,
                     activeConfig = preservedActiveConfig,
+                    activeProviderKey = preservedActiveKey,
                     fetchedModels = preservedFetchedModels,
                     modelFetchState = preservedModelFetchState,
                     mcpEnabled = active?.mcpEnabled ?: false,
@@ -79,6 +83,30 @@ class SettingsViewModel(
                 )
             }.collect { state ->
                 _uiState.value = state
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferences.themeMode.collect { mode ->
+                updateReady { copy(themeMode = mode) }
+            }
+        }
+
+        viewModelScope.launch {
+            assistantRepository.activeProviderKeyFlow.collect { key ->
+                updateReady { copy(activeProviderKey = key) }
+            }
+        }
+
+        viewModelScope.launch {
+            assistantRepository.savedConfigsFlow.collect { configs ->
+                updateReady { copy(savedConfigs = configs) }
+            }
+        }
+
+        viewModelScope.launch {
+            assistantRepository.activeConfigFlow.collect { config ->
+                updateReady { copy(activeConfig = config) }
             }
         }
     }
@@ -130,20 +158,25 @@ class SettingsViewModel(
         }
     }
 
-    // --- Agent (LLM Config) ---
-
-    fun updateLlmConfig(config: LlmProviderConfig) {
+    fun setThemeMode(mode: io.github.leogallego.ansiblejane.ui.components.ThemeMode) {
         viewModelScope.launch {
-            assistantRepository.saveLlmConfig(config)
-            val configs = assistantRepository.loadAllLlmConfigs()
-            updateReady { copy(activeConfig = config, savedConfigs = configs) }
+            userPreferences.setThemeMode(mode)
         }
     }
 
-    fun updateAllLlmConfigs(configs: Map<String, LlmProviderConfig>) {
+    // --- Agent (LLM Config) ---
+
+    fun saveProviderConfig(providerKey: String, config: LlmProviderConfig) {
         viewModelScope.launch {
-            assistantRepository.saveAllLlmConfigs(configs)
-            updateReady { copy(savedConfigs = configs) }
+            val current = assistantRepository.loadAllLlmConfigs().toMutableMap()
+            current[providerKey] = config
+            assistantRepository.saveAllLlmConfigs(current)
+        }
+    }
+
+    fun switchActiveProvider(providerKey: String) {
+        viewModelScope.launch {
+            assistantRepository.switchActiveProvider(providerKey)
         }
     }
 

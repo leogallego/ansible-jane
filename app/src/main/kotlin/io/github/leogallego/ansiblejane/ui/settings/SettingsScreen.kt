@@ -72,10 +72,11 @@ fun SettingsScreen(
                     onAddInstance = onAddInstance,
                     onTimezoneSelected = { viewModel.setTimezone(it) },
                     onTimeFormatSelected = { viewModel.setTimeFormat(it) },
+                    onThemeModeSelected = { viewModel.setThemeMode(it) },
                     onClearHistory = { viewModel.clearHistory() },
                     onLogout = onLogout,
-                    onSaveLlmConfig = { viewModel.updateLlmConfig(it) },
-                    onSaveAllConfigs = { viewModel.updateAllLlmConfigs(it) },
+                    onSaveProviderConfig = { key, config -> viewModel.saveProviderConfig(key, config) },
+                    onSwitchActiveProvider = { viewModel.switchActiveProvider(it) },
                     onFetchModels = { url, key -> viewModel.fetchAvailableModels(url, key) },
                     onClearFetchedModels = { viewModel.clearFetchedModels() },
                     onToggleMcp = { viewModel.toggleMcpEnabled(it) },
@@ -102,10 +103,11 @@ private fun SettingsContent(
     onAddInstance: () -> Unit,
     onTimezoneSelected: (String?) -> Unit,
     onTimeFormatSelected: (io.github.leogallego.ansiblejane.ui.components.TimeFormat) -> Unit,
+    onThemeModeSelected: (io.github.leogallego.ansiblejane.ui.components.ThemeMode) -> Unit,
     onClearHistory: () -> Unit,
     onLogout: () -> Unit,
-    onSaveLlmConfig: (io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig) -> Unit,
-    onSaveAllConfigs: (Map<String, io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig>) -> Unit,
+    onSaveProviderConfig: (String, io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig) -> Unit,
+    onSwitchActiveProvider: (String) -> Unit,
     onFetchModels: (String, String?) -> Unit,
     onClearFetchedModels: () -> Unit,
     onToggleMcp: (Boolean) -> Unit,
@@ -124,8 +126,10 @@ private fun SettingsContent(
             SettingsTab.General -> GeneralTab(
                 timezoneId = state.timezoneId,
                 timeFormat = state.timeFormat,
+                themeMode = state.themeMode,
                 onTimezoneSelected = onTimezoneSelected,
                 onTimeFormatSelected = onTimeFormatSelected,
+                onThemeModeSelected = onThemeModeSelected,
                 onClearHistory = onClearHistory,
                 onLogout = onLogout,
                 modifier = Modifier.weight(1f)
@@ -142,14 +146,15 @@ private fun SettingsContent(
                 modifier = Modifier.weight(1f)
             )
             SettingsTab.Agent -> AgentTab(
+                activeProviderKey = state.activeProviderKey,
                 activeConfig = state.activeConfig,
                 savedConfigs = state.savedConfigs,
                 fetchedModels = state.fetchedModels,
                 modelFetchState = state.modelFetchState,
                 onFetchModels = onFetchModels,
                 onClearFetchedModels = onClearFetchedModels,
-                onSaveLlmConfig = onSaveLlmConfig,
-                onSaveAllConfigs = onSaveAllConfigs,
+                onSaveProviderConfig = onSaveProviderConfig,
+                onSwitchActiveProvider = onSwitchActiveProvider,
                 modifier = Modifier.weight(1f)
             )
             SettingsTab.Tools -> ToolsTab(

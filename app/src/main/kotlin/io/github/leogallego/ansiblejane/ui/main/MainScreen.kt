@@ -38,7 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.data.TokenManager
+import io.github.leogallego.ansiblejane.ui.components.ProviderSwitchChip
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -49,7 +51,11 @@ fun MainScreen(
     content: @Composable (TopLevelTab, Segment) -> Unit
 ) {
     val tokenManager: TokenManager = koinInject()
+    val assistantRepository: IAssistantRepository = koinInject()
     val activeInstance by tokenManager.activeInstance.collectAsStateWithLifecycle()
+    val activeConfig by assistantRepository.activeConfigFlow.collectAsStateWithLifecycle(null)
+    val savedConfigs by assistantRepository.savedConfigsFlow.collectAsStateWithLifecycle(emptyMap())
+    val activeProviderKey by assistantRepository.activeProviderKeyFlow.collectAsStateWithLifecycle(null)
 
     val tabs = TopLevelTab.entries
     val janeTabIndex = tabs.indexOfFirst { it is TopLevelTab.Assistant }.coerceAtLeast(0)
@@ -88,6 +94,17 @@ fun MainScreen(
                     }
                 },
                 actions = {
+                    ProviderSwitchChip(
+                        activeProviderKey = activeProviderKey,
+                        activeConfig = activeConfig,
+                        savedConfigs = savedConfigs,
+                        onSwitchProvider = { key ->
+                            scope.launch {
+                                assistantRepository.switchActiveProvider(key)
+                            }
+                        },
+                        onNavigateToSettings = onNavigateToSettings
+                    )
                     IconButton(
                         onClick = {
                             scope.launch {

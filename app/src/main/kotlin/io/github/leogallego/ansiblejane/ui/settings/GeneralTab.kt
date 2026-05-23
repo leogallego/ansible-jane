@@ -22,7 +22,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -45,6 +47,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.BuildConfig
+import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import java.time.ZoneId
 
@@ -52,8 +55,10 @@ import java.time.ZoneId
 fun GeneralTab(
     timezoneId: String?,
     timeFormat: TimeFormat,
+    themeMode: ThemeMode,
     onTimezoneSelected: (String?) -> Unit,
     onTimeFormatSelected: (TimeFormat) -> Unit,
+    onThemeModeSelected: (ThemeMode) -> Unit,
     onClearHistory: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
@@ -70,8 +75,10 @@ fun GeneralTab(
         DisplaySection(
             currentTimezone = timezoneId,
             currentTimeFormat = timeFormat,
+            currentThemeMode = themeMode,
             onTimezoneSelected = onTimezoneSelected,
-            onTimeFormatSelected = onTimeFormatSelected
+            onTimeFormatSelected = onTimeFormatSelected,
+            onThemeModeSelected = onThemeModeSelected
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -157,8 +164,10 @@ fun GeneralTab(
 private fun DisplaySection(
     currentTimezone: String?,
     currentTimeFormat: TimeFormat,
+    currentThemeMode: ThemeMode,
     onTimezoneSelected: (String?) -> Unit,
-    onTimeFormatSelected: (TimeFormat) -> Unit
+    onTimeFormatSelected: (TimeFormat) -> Unit,
+    onThemeModeSelected: (ThemeMode) -> Unit
 ) {
     var showTimezonePicker by remember { mutableStateOf(false) }
     val timezoneDisplay = currentTimezone ?: "System (${ZoneId.systemDefault().id})"
@@ -200,13 +209,45 @@ private fun DisplaySection(
         ) {
             Text("Time format", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TimeFormat.entries.forEach { format ->
-                    FilterChip(
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                TimeFormat.entries.forEachIndexed { index, format ->
+                    SegmentedButton(
                         selected = currentTimeFormat == format,
                         onClick = { onTimeFormatSelected(format) },
-                        label = { Text(format.displayName) }
-                    )
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = TimeFormat.entries.size
+                        )
+                    ) {
+                        Text(format.displayName, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text("Theme", style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                ThemeMode.entries.forEachIndexed { index, mode ->
+                    SegmentedButton(
+                        selected = currentThemeMode == mode,
+                        onClick = { onThemeModeSelected(mode) },
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = ThemeMode.entries.size
+                        )
+                    ) {
+                        Text(mode.displayName, style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }

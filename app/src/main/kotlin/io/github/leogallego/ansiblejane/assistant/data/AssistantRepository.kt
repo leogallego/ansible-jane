@@ -107,4 +107,29 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
                 null
             }
         }.distinctUntilChanged()
+
+    override val savedConfigsFlow: Flow<Map<String, LlmProviderConfig>> =
+        context.assistantDataStore.data.map { prefs ->
+            val mapJson = prefs[KEY_LLM_CONFIGS] ?: return@map emptyMap()
+            try {
+                json.decodeFromString(
+                    MapSerializer(String.serializer(), LlmProviderConfig.serializer()),
+                    mapJson
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to deserialize saved configs from flow", e)
+                emptyMap()
+            }
+        }.distinctUntilChanged()
+
+    override val activeProviderKeyFlow: Flow<String?> =
+        context.assistantDataStore.data.map { prefs ->
+            prefs[KEY_ACTIVE_PROVIDER]
+        }.distinctUntilChanged()
+
+    override suspend fun switchActiveProvider(providerKey: String) {
+        context.assistantDataStore.edit { prefs ->
+            prefs[KEY_ACTIVE_PROVIDER] = providerKey
+        }
+    }
 }

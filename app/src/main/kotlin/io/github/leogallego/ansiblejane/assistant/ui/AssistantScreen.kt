@@ -34,7 +34,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,7 +69,6 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AssistantScreen(
-    onNavigateToSettings: () -> Unit = {},
     viewModel: AssistantViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -109,7 +107,6 @@ fun AssistantScreen(
             ActiveChatContent(
                 state = state,
                 onSendMessage = { viewModel.sendMessage(it) },
-                onNavigateToSettings = onNavigateToSettings,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -134,7 +131,6 @@ fun AssistantScreen(
 private fun ActiveChatContent(
     state: AssistantUiState.Active,
     onSendMessage: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -181,7 +177,6 @@ private fun ActiveChatContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -189,20 +184,6 @@ private fun ActiveChatContent(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                TextButton(onClick = onNavigateToSettings, modifier = Modifier.testTag("button_configure")) {
-                    Text("Configure", style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = onNavigateToSettings, modifier = Modifier.testTag("button_configure_llm")) {
-                    Text("Configure LLM", style = MaterialTheme.typography.bodySmall)
-                }
             }
         }
 

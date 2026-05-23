@@ -12,4 +12,7 @@ interface IAssistantRepository {
     suspend fun saveAllLlmConfigs(configs: Map<String, LlmProviderConfig>)
     suspend fun loadAllLlmConfigs(): Map<String, LlmProviderConfig>
     val activeConfigFlow: Flow<LlmProviderConfig?>
+    val savedConfigsFlow: Flow<Map<String, LlmProviderConfig>>
+    val activeProviderKeyFlow: Flow<String?>
+    suspend fun switchActiveProvider(providerKey: String)
 }

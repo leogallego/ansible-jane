@@ -196,9 +196,6 @@ fun AppNavigation(
                     },
                     onNavigateToWorkflowJobStatus = { workflowJobId ->
                         navController.navigate(Routes.workflowJobStatus(workflowJobId))
-                    },
-                    onNavigateToSettings = {
-                        navController.navigate(Routes.SETTINGS)
                     }
                 )
             }
