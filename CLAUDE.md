@@ -73,18 +73,19 @@ Category-based query routing that selects relevant tools per user message:
 
 ## AI Agent Skills
 
-The `skills/` directory contains SKILL.md files ([agentskills.io](https://agentskills.io) standard) that provide grounding for Android/Kotlin development. Consult the relevant skill when working on:
+The `skills/` directory contains SKILL.md reference files for Android/Kotlin development. Read the relevant skill file before writing or reviewing code in that area. The full inventory with when-to-use guidance is in `docs/skills-reference.md`.
 
-- **Compose UI**: `skills/compose-skill/compose-skill.md` (comprehensive) or `skills/android-community/compose-editor.md`
-- **Compose performance**: `skills/android-community/compose-performance-auditor.md` or `skills/compose-skill/references/performance.md`
-- **Coroutines/Flow**: `skills/android-community/kotlin-coroutines.md` or `skills/compose-skill/references/coroutines-flow.md`
-- **Koin DI**: `skills/android-community/koin-editor.md` or `skills/compose-skill/references/koin.md`
-- **Kotlin conventions**: `skills/android-community/kotlin-convention.md`
-- **Testing**: `skills/android-community/android-unit-test-editor.md` or `skills/compose-skill/references/testing.md`
-- **Edge-to-edge/insets**: `skills/android-official/edge-to-edge.md`
-- **Navigation 3 migration**: `skills/android-official/navigation-3.md`
-- **Gradle/build config**: `skills/android-community/gradle-configuration.md`
-- **Anti-patterns**: `skills/compose-skill/references/anti-patterns.md`
+Quick lookup:
+- **Compose UI/state/layout** — `compose-skill/`, `compose-state-*`, `compose-modifier-and-layout-style/`
+- **Compose performance** — `compose-recomposition-performance/`, `compose-stability-diagnostics/`, `compose-state-deferred-reads/`
+- **Compose animations** — `compose-animations/`
+- **Compose side effects** — `compose-side-effects/`
+- **Compose testing** — `compose-ui-testing-patterns/`, `android-community/android-unit-test-editor.md`
+- **Coroutines/Flow** — `kotlin-coroutines-structured-concurrency/`, `kotlin-flow-state-event-modeling/`
+- **Koin DI** — `android-community/koin-editor.md`
+- **KMP** — `kotlin-multiplatform-expect-actual/`, `kotlin-types-value-class/`
+- **Navigation** — `android-official/navigation-3.md`, `android-official/edge-to-edge.md`
+- **Gradle** — `android-community/gradle-configuration.md`
 
 See `skills/README.md` for sources and licenses.
 
@@ -94,7 +95,7 @@ See `skills/README.md` for sources and licenses.
 
 ## Android Device Testing
 
-- **MUST** load the `android-cli` skill at the start of every session (invoke via Skill tool).
+- **MUST** invoke the `android-cli` skill (via Skill tool) before ANY emulator or device interaction — deploying, starting/stopping emulators, capturing screenshots, inspecting layouts, or running apps. Never use `adb` directly for tasks the `android` CLI covers. If the skill is not loaded yet in this session, load it before proceeding.
 - **MUST** use the `android` CLI (`android run`, `android emulator`, `android screen capture`, `android layout`) for all device interaction. Prefer `android layout` over screenshots for inspecting UI state.
 - Use `uiautomator dump` to find elements by `resource-id` (from Compose `testTag`). Never hard-code pixel coordinates — always resolve element positions from the layout tree or resource-ids.
 - All Compose screens **MUST** have `testTag` modifiers on interactive elements (fields, buttons, switches) using the convention `field_<name>`, `button_<name>`, `switch_<name>`. The root `AppNavigation` has `testTagsAsResourceId = true` so tags appear as `resource-id` in uiautomator.
