@@ -53,7 +53,7 @@ specs/006-activity-section/
 ### Source Code (repository root)
 
 ```text
-app/src/main/kotlin/com/example/aapremote/
+app/src/main/kotlin/io/github/leogallego/ansiblejane/
 ├── model/
 │   ├── Schedule.kt                    # NEW: Schedule + ScheduleSummaryFields
 │   └── EdaRuleAudit.kt               # NEW: EDA rule audit event

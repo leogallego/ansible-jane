@@ -53,7 +53,7 @@ specs/002-nav-ui-modernize/
 ### Source Code (repository root)
 
 ```text
-app/src/main/kotlin/com/example/aapremote/
+app/src/main/kotlin/io/github/leogallego/ansiblejane/
 ├── navigation/
 │   ├── AppNavigation.kt          # MODIFY: add Settings route, MainScreen as post-auth dest
 │   └── MainNavigation.kt         # CREATE: tab-level NavHost with back stacks

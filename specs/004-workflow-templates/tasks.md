@@ -31,11 +31,11 @@
 
 **Purpose**: Create all data models and API endpoints needed across user stories
 
-- [X] T001 [P] Create WorkflowJobTemplate model (with WorkflowTemplateSummaryFields) in app/src/main/kotlin/com/example/aapremote/model/WorkflowJobTemplate.kt
-- [X] T002 [P] Create WorkflowJob model (with WorkflowJobSummaryFields, WorkflowJobTemplateRef) in app/src/main/kotlin/com/example/aapremote/model/WorkflowJob.kt
-- [X] T003 [P] Create WorkflowNode model (with WorkflowNodeSummaryFields, WorkflowNodeJob) in app/src/main/kotlin/com/example/aapremote/model/WorkflowNode.kt
-- [X] T004 [P] Create WorkflowLaunchResponse model in app/src/main/kotlin/com/example/aapremote/model/WorkflowLaunchResponse.kt
-- [X] T005 Add workflow API endpoints (getWorkflowJobTemplates, launchWorkflowJob, getWorkflowJob, getWorkflowNodes) to app/src/main/kotlin/com/example/aapremote/network/AapApiService.kt
+- [X] T001 [P] Create WorkflowJobTemplate model (with WorkflowTemplateSummaryFields) in app/src/main/kotlin/io/github/leogallego/ansiblejane/model/WorkflowJobTemplate.kt
+- [X] T002 [P] Create WorkflowJob model (with WorkflowJobSummaryFields, WorkflowJobTemplateRef) in app/src/main/kotlin/io/github/leogallego/ansiblejane/model/WorkflowJob.kt
+- [X] T003 [P] Create WorkflowNode model (with WorkflowNodeSummaryFields, WorkflowNodeJob) in app/src/main/kotlin/io/github/leogallego/ansiblejane/model/WorkflowNode.kt
+- [X] T004 [P] Create WorkflowLaunchResponse model in app/src/main/kotlin/io/github/leogallego/ansiblejane/model/WorkflowLaunchResponse.kt
+- [X] T005 Add workflow API endpoints (getWorkflowJobTemplates, launchWorkflowJob, getWorkflowJob, getWorkflowNodes) to app/src/main/kotlin/io/github/leogallego/ansiblejane/network/AapApiService.kt
 
 **Note**: T005 depends on T001-T004 completing first (return types reference the new models). T001-T004 are parallel.
 
@@ -47,9 +47,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T006 Create WorkflowRepository with getWorkflowTemplates, launchWorkflow, getWorkflowJobStatus, pollWorkflowJobStatus, and getWorkflowNodes methods in app/src/main/kotlin/com/example/aapremote/data/WorkflowRepository.kt
-- [X] T007 Register WorkflowRepository in Koin dataModule in app/src/main/kotlin/com/example/aapremote/data/DataModule.kt
-- [X] T008 Add WORKFLOW_JOB_STATUS route (with workflowJobId argument) to app/src/main/kotlin/com/example/aapremote/navigation/AppNavigation.kt
+- [X] T006 Create WorkflowRepository with getWorkflowTemplates, launchWorkflow, getWorkflowJobStatus, pollWorkflowJobStatus, and getWorkflowNodes methods in app/src/main/kotlin/io/github/leogallego/ansiblejane/data/WorkflowRepository.kt
+- [X] T007 Register WorkflowRepository in Koin dataModule in app/src/main/kotlin/io/github/leogallego/ansiblejane/data/DataModule.kt
+- [X] T008 Add WORKFLOW_JOB_STATUS route (with workflowJobId argument) to app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/AppNavigation.kt
 
 **Checkpoint**: Foundation ready — user story implementation can begin
 
@@ -63,13 +63,13 @@
 
 ### Implementation for User Story 1
 
-- [X] T009 [P] [US1] Create WorkflowTemplatesUiState sealed interface (Idle, Loading, Success with templates/availableLabels/hasMore/isLoadingMore, Error) in app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowTemplatesUiState.kt
-- [X] T010 [P] [US1] Create WorkflowTemplateListItem composable (ElevatedCard with name, description, label chips — mirrors TemplateListItem) in app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowTemplateListItem.kt
-- [X] T011 [US1] Create WorkflowTemplatesViewModel with loadTemplates and loadMore methods, StateFlow<WorkflowTemplatesUiState> in app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowTemplatesViewModel.kt
-- [X] T012 [US1] Register WorkflowTemplatesViewModel in Koin presentationModule in app/src/main/kotlin/com/example/aapremote/presentation/PresentationModule.kt
-- [X] T013 [US1] Create WorkflowTemplateListScreen composable (LazyColumn with SkeletonCard loading, pagination via derivedStateOf, empty state) in app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowTemplateListScreen.kt
-- [X] T014 [US1] Mark "Workflow Templates" segment as isImplemented=true in app/src/main/kotlin/com/example/aapremote/ui/main/TabDefinitions.kt
-- [X] T015 [US1] Route "Workflow Templates" segment to WorkflowTemplateListScreen in app/src/main/kotlin/com/example/aapremote/navigation/MainNavigation.kt
+- [X] T009 [P] [US1] Create WorkflowTemplatesUiState sealed interface (Idle, Loading, Success with templates/availableLabels/hasMore/isLoadingMore, Error) in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowTemplatesUiState.kt
+- [X] T010 [P] [US1] Create WorkflowTemplateListItem composable (ElevatedCard with name, description, label chips — mirrors TemplateListItem) in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowTemplateListItem.kt
+- [X] T011 [US1] Create WorkflowTemplatesViewModel with loadTemplates and loadMore methods, StateFlow<WorkflowTemplatesUiState> in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowTemplatesViewModel.kt
+- [X] T012 [US1] Register WorkflowTemplatesViewModel in Koin presentationModule in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/PresentationModule.kt
+- [X] T013 [US1] Create WorkflowTemplateListScreen composable (LazyColumn with SkeletonCard loading, pagination via derivedStateOf, empty state) in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowTemplateListScreen.kt
+- [X] T014 [US1] Mark "Workflow Templates" segment as isImplemented=true in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/TabDefinitions.kt
+- [X] T015 [US1] Route "Workflow Templates" segment to WorkflowTemplateListScreen in app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/MainNavigation.kt
 
 **Checkpoint**: Workflow templates list is browsable with pagination. MVP complete.
 
@@ -85,8 +85,8 @@
 
 ### Implementation for User Story 2
 
-- [X] T016 [US2] Add search (with 300ms debounce) and filterByLabel methods to WorkflowTemplatesViewModel in app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowTemplatesViewModel.kt
-- [X] T017 [US2] Add SearchBar and LabelChips components to WorkflowTemplateListScreen in app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowTemplateListScreen.kt
+- [X] T016 [US2] Add search (with 300ms debounce) and filterByLabel methods to WorkflowTemplatesViewModel in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowTemplatesViewModel.kt
+- [X] T017 [US2] Add SearchBar and LabelChips components to WorkflowTemplateListScreen in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowTemplateListScreen.kt
 
 **Note**: T016 and T017 touch different files and can run in parallel, but T017 depends on T016's search/filterByLabel methods being available for the ViewModel call. Safer to run sequentially.
 
@@ -104,11 +104,11 @@
 
 ### Implementation for User Story 3
 
-- [X] T018 [US3] Add LaunchState sealed interface and requestLaunch/confirmLaunch/cancelLaunch/resetLaunchState methods to WorkflowTemplatesViewModel in app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowTemplatesViewModel.kt
-- [X] T019 [US3] Add launch button to WorkflowTemplateListItem (show only when userCapabilities.start is true) in app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowTemplateListItem.kt
-- [X] T020 [US3] Add launch dialogs (LaunchConfirmDialog, ExtraVarsDialog), launch state handling, and onNavigateToWorkflowJobStatus callback to WorkflowTemplateListScreen in app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowTemplateListScreen.kt
-- [X] T021 [US3] Wire WORKFLOW_JOB_STATUS route to WorkflowJobStatusScreen (placeholder initially) and update onNavigateToWorkflowJobStatus in navigation in app/src/main/kotlin/com/example/aapremote/navigation/AppNavigation.kt
-- [X] T031 [US3] Add error snackbar for workflow template launch failures in WorkflowTemplateListScreen in app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowTemplateListScreen.kt
+- [X] T018 [US3] Add LaunchState sealed interface and requestLaunch/confirmLaunch/cancelLaunch/resetLaunchState methods to WorkflowTemplatesViewModel in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowTemplatesViewModel.kt
+- [X] T019 [US3] Add launch button to WorkflowTemplateListItem (show only when userCapabilities.start is true) in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowTemplateListItem.kt
+- [X] T020 [US3] Add launch dialogs (LaunchConfirmDialog, ExtraVarsDialog), launch state handling, and onNavigateToWorkflowJobStatus callback to WorkflowTemplateListScreen in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowTemplateListScreen.kt
+- [X] T021 [US3] Wire WORKFLOW_JOB_STATUS route to WorkflowJobStatusScreen (placeholder initially) and update onNavigateToWorkflowJobStatus in navigation in app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/AppNavigation.kt
+- [X] T031 [US3] Add error snackbar for workflow template launch failures in WorkflowTemplateListScreen in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowTemplateListScreen.kt
 
 **Checkpoint**: Full launch flow works — template → dialog → confirm → navigates to status route. Launch errors display snackbar.
 
@@ -124,12 +124,12 @@
 
 ### Implementation for User Story 4
 
-- [X] T022 [P] [US4] Create WorkflowJobStatusUiState sealed interface (Idle, Loading, Active with workflowJob/nodes, Completed with workflowJob/nodes, Error) in app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowJobStatusUiState.kt
-- [X] T023 [P] [US4] Create WorkflowNodeItem composable (Row with node name and JobStatusBadge) in app/src/main/kotlin/com/example/aapremote/ui/components/WorkflowNodeItem.kt
-- [X] T024 [US4] Create WorkflowJobStatusViewModel with pollWorkflowJob (5s interval, fetches job + nodes in parallel), retry, and stopPolling methods in app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowJobStatusViewModel.kt
-- [X] T025 [US4] Register WorkflowJobStatusViewModel in Koin presentationModule in app/src/main/kotlin/com/example/aapremote/presentation/PresentationModule.kt
-- [X] T026 [US4] Create WorkflowJobStatusScreen composable (job name, status badge, template name, start/finish/elapsed times, sub-jobs LazyColumn with WorkflowNodeItem, back navigation) in app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowJobStatusScreen.kt
-- [X] T027 [US4] Replace placeholder in WORKFLOW_JOB_STATUS route with actual WorkflowJobStatusScreen in app/src/main/kotlin/com/example/aapremote/navigation/AppNavigation.kt
+- [X] T022 [P] [US4] Create WorkflowJobStatusUiState sealed interface (Idle, Loading, Active with workflowJob/nodes, Completed with workflowJob/nodes, Error) in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowJobStatusUiState.kt
+- [X] T023 [P] [US4] Create WorkflowNodeItem composable (Row with node name and JobStatusBadge) in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/WorkflowNodeItem.kt
+- [X] T024 [US4] Create WorkflowJobStatusViewModel with pollWorkflowJob (5s interval, fetches job + nodes in parallel), retry, and stopPolling methods in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowJobStatusViewModel.kt
+- [X] T025 [US4] Register WorkflowJobStatusViewModel in Koin presentationModule in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/PresentationModule.kt
+- [X] T026 [US4] Create WorkflowJobStatusScreen composable (job name, status badge, template name, start/finish/elapsed times, sub-jobs LazyColumn with WorkflowNodeItem, back navigation) in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowJobStatusScreen.kt
+- [X] T027 [US4] Replace placeholder in WORKFLOW_JOB_STATUS route with actual WorkflowJobStatusScreen in app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/AppNavigation.kt
 
 **Checkpoint**: Full workflow job monitoring works with auto-polling and sub-job display.
 
@@ -145,8 +145,8 @@
 
 ### Implementation for User Story 5
 
-- [X] T028 [US5] Add refresh method to WorkflowTemplatesViewModel in app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowTemplatesViewModel.kt
-- [X] T029 [US5] Wrap list content in PullToRefreshBox with isRefreshing state tracking in WorkflowTemplateListScreen in app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowTemplateListScreen.kt
+- [X] T028 [US5] Add refresh method to WorkflowTemplatesViewModel in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowTemplatesViewModel.kt
+- [X] T029 [US5] Wrap list content in PullToRefreshBox with isRefreshing state tracking in WorkflowTemplateListScreen in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowTemplateListScreen.kt
 
 **Checkpoint**: Pull-to-refresh works on workflow templates list.
 
@@ -157,7 +157,7 @@
 **Purpose**: Final integration, error handling, and consistency checks
 
 - [X] T030 Verify workflow jobs appear in Activity > Jobs list (AAP /api/v2/jobs/ should include them) — manual verification. If workflow jobs do not appear, check whether the jobs repository filters by type and update the API query to include workflow job types.
-- [X] T032 Add retry option on WorkflowJobStatusScreen error state in app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowJobStatusScreen.kt
+- [X] T032 Add retry option on WorkflowJobStatusScreen error state in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowJobStatusScreen.kt
 - [X] T033 Run quickstart.md validation — verify all 5 integration scenarios work end-to-end
 
 ---

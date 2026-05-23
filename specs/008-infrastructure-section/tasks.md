@@ -27,13 +27,13 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete.
 
-- [X] T001 [P] Create Inventory data model with InventorySummaryFields, OrganizationSummary (include created, modified, variables fields for bottom sheet) in `app/src/main/kotlin/com/example/aapremote/model/Inventory.kt`
-- [X] T002 [P] Create Host data model with HostSummaryFields, InventorySummary, GroupsSummary, GroupSummary, HostFacts, JobHostSummary, JobHostSummaryFields (include created, modified, last_job fields) in `app/src/main/kotlin/com/example/aapremote/model/Host.kt`
-- [X] T003 Add inventory and host API endpoints to `app/src/main/kotlin/com/example/aapremote/network/AapApiService.kt`: getInventories(), getInventory(), getInventoryHosts(), getHosts(), getHostFacts(), getHostJobSummaries()
-- [X] T004 [P] Create InventoryRepository with getInventories() and getInventory() in `app/src/main/kotlin/com/example/aapremote/data/InventoryRepository.kt`
-- [X] T005 [P] Create HostRepository with getAllHosts(), getInventoryHosts(), searchHosts(), getHostFacts(), getHostJobSummaries() in `app/src/main/kotlin/com/example/aapremote/data/HostRepository.kt`
-- [X] T006 Register InventoryRepository, HostRepository in `app/src/main/kotlin/com/example/aapremote/di/DataModule.kt`
-- [X] T007 Create HostDetailSheet composable with ModalBottomSheet showing host name, last successful run, inventory, created, last modified, and variables; expand-to-full-screen loads and displays facts (ansible_facts), groups, and jobs run in `app/src/main/kotlin/com/example/aapremote/ui/hosts/HostDetailSheet.kt` (shared by US1 and US2)
+- [X] T001 [P] Create Inventory data model with InventorySummaryFields, OrganizationSummary (include created, modified, variables fields for bottom sheet) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/model/Inventory.kt`
+- [X] T002 [P] Create Host data model with HostSummaryFields, InventorySummary, GroupsSummary, GroupSummary, HostFacts, JobHostSummary, JobHostSummaryFields (include created, modified, last_job fields) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/model/Host.kt`
+- [X] T003 Add inventory and host API endpoints to `app/src/main/kotlin/io/github/leogallego/ansiblejane/network/AapApiService.kt`: getInventories(), getInventory(), getInventoryHosts(), getHosts(), getHostFacts(), getHostJobSummaries()
+- [X] T004 [P] Create InventoryRepository with getInventories() and getInventory() in `app/src/main/kotlin/io/github/leogallego/ansiblejane/data/InventoryRepository.kt`
+- [X] T005 [P] Create HostRepository with getAllHosts(), getInventoryHosts(), searchHosts(), getHostFacts(), getHostJobSummaries() in `app/src/main/kotlin/io/github/leogallego/ansiblejane/data/HostRepository.kt`
+- [X] T006 Register InventoryRepository, HostRepository in `app/src/main/kotlin/io/github/leogallego/ansiblejane/di/DataModule.kt`
+- [X] T007 Create HostDetailSheet composable with ModalBottomSheet showing host name, last successful run, inventory, created, last modified, and variables; expand-to-full-screen loads and displays facts (ansible_facts), groups, and jobs run in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/hosts/HostDetailSheet.kt` (shared by US1 and US2)
 
 **Checkpoint**: Data layer and shared components complete — user story work can begin.
 
@@ -47,15 +47,15 @@
 
 ### Implementation for User Story 1
 
-- [X] T008 [P] [US1] Create InventoriesUiState sealed interface (Loading, Success, Error, Empty) in `app/src/main/kotlin/com/example/aapremote/presentation/inventory/InventoriesUiState.kt`
-- [X] T009 [P] [US1] Create InventoryHostsUiState sealed interface (Loading, Success, Error, Empty) for the expanded inventory hosts view in `app/src/main/kotlin/com/example/aapremote/presentation/hosts/InventoryHostsUiState.kt`
-- [X] T010 [US1] Create InventoriesViewModel with inventory list, pagination, and refresh in `app/src/main/kotlin/com/example/aapremote/presentation/inventory/InventoriesViewModel.kt`
-- [X] T011 [US1] Create InventoryHostsViewModel with hosts-within-inventory list, pagination, and search (debounced) for the expanded view in `app/src/main/kotlin/com/example/aapremote/presentation/hosts/InventoryHostsViewModel.kt`
-- [X] T012 [US1] Register InventoriesViewModel and InventoryHostsViewModel in `app/src/main/kotlin/com/example/aapremote/di/PresentationModule.kt`
-- [X] T013 [US1] Create InventoriesScreen composable with LazyColumn, pull-to-refresh, infinite scroll, and skeleton loading in `app/src/main/kotlin/com/example/aapremote/ui/inventory/InventoriesScreen.kt`
-- [X] T014 [US1] Create InventoryDetailSheet composable with ModalBottomSheet showing inventory details (name, type, organization, total hosts, created, modified, variables) and expand-to-full-screen with hosts list showing group badges; tapping a host opens shared HostDetailSheet (T007) in `app/src/main/kotlin/com/example/aapremote/ui/inventory/InventoryDetailSheet.kt`
-- [X] T015 [US1] Mark Inventories segment as isImplemented=true in `app/src/main/kotlin/com/example/aapremote/ui/main/TabDefinitions.kt`
-- [X] T016 [US1] Wire InventoriesScreen into TabContent for Infrastructure > Inventories in `app/src/main/kotlin/com/example/aapremote/navigation/MainNavigation.kt`
+- [X] T008 [P] [US1] Create InventoriesUiState sealed interface (Loading, Success, Error, Empty) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/inventory/InventoriesUiState.kt`
+- [X] T009 [P] [US1] Create InventoryHostsUiState sealed interface (Loading, Success, Error, Empty) for the expanded inventory hosts view in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/hosts/InventoryHostsUiState.kt`
+- [X] T010 [US1] Create InventoriesViewModel with inventory list, pagination, and refresh in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/inventory/InventoriesViewModel.kt`
+- [X] T011 [US1] Create InventoryHostsViewModel with hosts-within-inventory list, pagination, and search (debounced) for the expanded view in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/hosts/InventoryHostsViewModel.kt`
+- [X] T012 [US1] Register InventoriesViewModel and InventoryHostsViewModel in `app/src/main/kotlin/io/github/leogallego/ansiblejane/di/PresentationModule.kt`
+- [X] T013 [US1] Create InventoriesScreen composable with LazyColumn, pull-to-refresh, infinite scroll, and skeleton loading in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/inventory/InventoriesScreen.kt`
+- [X] T014 [US1] Create InventoryDetailSheet composable with ModalBottomSheet showing inventory details (name, type, organization, total hosts, created, modified, variables) and expand-to-full-screen with hosts list showing group badges; tapping a host opens shared HostDetailSheet (T007) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/inventory/InventoryDetailSheet.kt`
+- [X] T015 [US1] Mark Inventories segment as isImplemented=true in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/TabDefinitions.kt`
+- [X] T016 [US1] Wire InventoriesScreen into TabContent for Infrastructure > Inventories in `app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/MainNavigation.kt`
 
 **Checkpoint**: Inventories list is functional. Users can browse inventories, view details in bottom sheet, and expand to see hosts. MVP complete.
 
@@ -69,12 +69,12 @@
 
 ### Implementation for User Story 2
 
-- [X] T017 [P] [US2] Create HostsUiState sealed interface (Loading, Success, Error, Empty) in `app/src/main/kotlin/com/example/aapremote/presentation/hosts/HostsUiState.kt`
-- [X] T018 [US2] Create HostsViewModel with all-hosts list, pagination, search (debounced), and refresh in `app/src/main/kotlin/com/example/aapremote/presentation/hosts/HostsViewModel.kt`
-- [X] T019 [US2] Register HostsViewModel in `app/src/main/kotlin/com/example/aapremote/di/PresentationModule.kt`
-- [X] T020 [US2] Create HostsScreen composable with LazyColumn, search bar, host cards showing hostname/description/inventory label, pull-to-refresh, infinite scroll, and skeleton loading; tapping a host opens shared HostDetailSheet (T007) in `app/src/main/kotlin/com/example/aapremote/ui/hosts/HostsScreen.kt`
-- [X] T021 [US2] Mark Hosts segment as isImplemented=true in `app/src/main/kotlin/com/example/aapremote/ui/main/TabDefinitions.kt`
-- [X] T022 [US2] Wire HostsScreen into TabContent for Infrastructure > Hosts in `app/src/main/kotlin/com/example/aapremote/navigation/MainNavigation.kt`
+- [X] T017 [P] [US2] Create HostsUiState sealed interface (Loading, Success, Error, Empty) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/hosts/HostsUiState.kt`
+- [X] T018 [US2] Create HostsViewModel with all-hosts list, pagination, search (debounced), and refresh in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/hosts/HostsViewModel.kt`
+- [X] T019 [US2] Register HostsViewModel in `app/src/main/kotlin/io/github/leogallego/ansiblejane/di/PresentationModule.kt`
+- [X] T020 [US2] Create HostsScreen composable with LazyColumn, search bar, host cards showing hostname/description/inventory label, pull-to-refresh, infinite scroll, and skeleton loading; tapping a host opens shared HostDetailSheet (T007) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/hosts/HostsScreen.kt`
+- [X] T021 [US2] Mark Hosts segment as isImplemented=true in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/TabDefinitions.kt`
+- [X] T022 [US2] Wire HostsScreen into TabContent for Infrastructure > Hosts in `app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/MainNavigation.kt`
 
 **Checkpoint**: Standalone Hosts screen is functional. Users can browse all hosts, search, and view details.
 
@@ -84,8 +84,8 @@
 
 **Purpose**: Final integration checks, cleanup, and descoping.
 
-- [X] T023 Remove Projects segment from Infrastructure tab in `app/src/main/kotlin/com/example/aapremote/ui/main/TabDefinitions.kt` (descoped to separate future tab)
-- [X] T024 Verify all Infrastructure placeholder screens are replaced — confirm no PlaceholderScreen remains for Inventories and Hosts segments in `app/src/main/kotlin/com/example/aapremote/navigation/MainNavigation.kt`
+- [X] T023 Remove Projects segment from Infrastructure tab in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/TabDefinitions.kt` (descoped to separate future tab)
+- [X] T024 Verify all Infrastructure placeholder screens are replaced — confirm no PlaceholderScreen remains for Inventories and Hosts segments in `app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/MainNavigation.kt`
 - [ ] T025 Run quickstart.md validation scenarios (requires live AAP instance — manual testing) end-to-end against a live AAP 2.5+ instance
 
 ---

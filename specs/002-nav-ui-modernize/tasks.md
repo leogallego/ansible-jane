@@ -15,7 +15,7 @@
 
 ## Path Conventions
 
-- **Base path**: `app/src/main/kotlin/com/example/aapremote/`
+- **Base path**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/`
 - Paths below are relative to the base path unless prefixed with `app/`
 
 ## Phase Mapping (plan.md → tasks.md)
@@ -33,7 +33,7 @@
 
 **Purpose**: Create package directories for new UI sections
 
-- [x] T001 Create package directories: `ui/main/`, `ui/settings/`, `ui/components/` (if not existing) under `app/src/main/kotlin/com/example/aapremote/`
+- [x] T001 Create package directories: `ui/main/`, `ui/settings/`, `ui/components/` (if not existing) under `app/src/main/kotlin/io/github/leogallego/ansiblejane/`
 
 ---
 
@@ -43,9 +43,9 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [x] T002 Define `TopLevelTab` sealed class/enum and `Segment` data class in `app/src/main/kotlin/com/example/aapremote/ui/main/TabDefinitions.kt` — includes route, label, icon, selectedIcon, and segments list per the data model and navigation contract
-- [x] T003 [P] Create reusable `PlaceholderScreen` composable in `app/src/main/kotlin/com/example/aapremote/ui/components/PlaceholderScreen.kt` — accepts title and optional description, displays centered icon + "Coming Soon" message (FR-008)
-- [x] T004 [P] Create `Modifier.shimmer()` extension in `app/src/main/kotlin/com/example/aapremote/ui/components/ShimmerModifier.kt` — uses `InfiniteTransition` + `Brush.linearGradient` per R-003
+- [x] T002 Define `TopLevelTab` sealed class/enum and `Segment` data class in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/TabDefinitions.kt` — includes route, label, icon, selectedIcon, and segments list per the data model and navigation contract
+- [x] T003 [P] Create reusable `PlaceholderScreen` composable in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/PlaceholderScreen.kt` — accepts title and optional description, displays centered icon + "Coming Soon" message (FR-008)
+- [x] T004 [P] Create `Modifier.shimmer()` extension in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/ShimmerModifier.kt` — uses `InfiniteTransition` + `Brush.linearGradient` per R-003
 
 **Checkpoint**: Foundation ready — shared components available for all user stories
 
@@ -59,11 +59,11 @@
 
 ### Implementation
 
-- [x] T005 [US1] Create `MainScreen` composable in `app/src/main/kotlin/com/example/aapremote/ui/main/MainScreen.kt` — root `Scaffold` with `TopAppBar` (app title, bell icon with no-op handler, gear icon with no-op handler) and `NavigationBar` with 3 `NavigationBarItem`s, segmented button row via `SingleChoiceSegmentedButtonRow`, content area showing selected segment's screen. Bell and gear click handlers wired in T019 and T011 respectively (FR-001, FR-002, FR-009)
-- [x] T006 [US1] Create tab-level navigation in `app/src/main/kotlin/com/example/aapremote/navigation/MainNavigation.kt` — `NavHost` with `saveState`/`restoreState` for independent back stacks per tab, wire existing TemplateListScreen and RecentJobsScreen to their correct segments, PlaceholderScreen for unimplemented segments. State preservation across config changes handled by saveState/restoreState (FR-003, FR-004, FR-005, FR-006, FR-007, FR-008, FR-017, FR-019)
-- [x] T007 [US1] Modify `app/src/main/kotlin/com/example/aapremote/navigation/AppNavigation.kt` — replace `TEMPLATES` as post-auth destination with `MainScreen`, add `SETTINGS` route, update job status navigation to work within tab context. Bottom nav must NOT be visible on auth screen (FR-016, FR-017)
-- [x] T008 [US1] Modify `app/src/main/kotlin/com/example/aapremote/ui/templates/TemplateListScreen.kt` — remove `TopAppBar` (now provided by MainScreen), preserve existing list/search/filter functionality within the tab content area
-- [x] T009 [US1] Modify `app/src/main/kotlin/com/example/aapremote/ui/jobs/RecentJobsScreen.kt` — remove `TopAppBar` (now provided by MainScreen), keep existing list content within the tab content area
+- [x] T005 [US1] Create `MainScreen` composable in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/MainScreen.kt` — root `Scaffold` with `TopAppBar` (app title, bell icon with no-op handler, gear icon with no-op handler) and `NavigationBar` with 3 `NavigationBarItem`s, segmented button row via `SingleChoiceSegmentedButtonRow`, content area showing selected segment's screen. Bell and gear click handlers wired in T019 and T011 respectively (FR-001, FR-002, FR-009)
+- [x] T006 [US1] Create tab-level navigation in `app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/MainNavigation.kt` — `NavHost` with `saveState`/`restoreState` for independent back stacks per tab, wire existing TemplateListScreen and RecentJobsScreen to their correct segments, PlaceholderScreen for unimplemented segments. State preservation across config changes handled by saveState/restoreState (FR-003, FR-004, FR-005, FR-006, FR-007, FR-008, FR-017, FR-019)
+- [x] T007 [US1] Modify `app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/AppNavigation.kt` — replace `TEMPLATES` as post-auth destination with `MainScreen`, add `SETTINGS` route, update job status navigation to work within tab context. Bottom nav must NOT be visible on auth screen (FR-016, FR-017)
+- [x] T008 [US1] Modify `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/templates/TemplateListScreen.kt` — remove `TopAppBar` (now provided by MainScreen), preserve existing list/search/filter functionality within the tab content area
+- [x] T009 [US1] Modify `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/jobs/RecentJobsScreen.kt` — remove `TopAppBar` (now provided by MainScreen), keep existing list content within the tab content area
 
 **Checkpoint**: All 3 tabs visible with segments, existing screens work in their new locations, back stacks preserved, rotation preserves tab + segment selection. This is the MVP — stop and validate.
 
@@ -77,9 +77,9 @@
 
 ### Implementation
 
-- [x] T010 [US8] Create `SettingsScreen` composable in `app/src/main/kotlin/com/example/aapremote/ui/settings/SettingsScreen.kt` — display connected server URL, logout button, back navigation via callback lambdas. No ViewModel needed per R-006 — screen is stateless with callback lambdas (FR-018, FR-020)
-- [x] T011 [US8] Wire Settings route in `app/src/main/kotlin/com/example/aapremote/navigation/AppNavigation.kt` — gear icon navigates to `settings` route, SettingsScreen composable receives serverUrl, onLogout, onNavigateBack
-- [x] T012 [US8] Remove logout icon/button from `app/src/main/kotlin/com/example/aapremote/ui/templates/TemplateListScreen.kt` — logout action moved to Settings screen
+- [x] T010 [US8] Create `SettingsScreen` composable in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/settings/SettingsScreen.kt` — display connected server URL, logout button, back navigation via callback lambdas. No ViewModel needed per R-006 — screen is stateless with callback lambdas (FR-018, FR-020)
+- [x] T011 [US8] Wire Settings route in `app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/AppNavigation.kt` — gear icon navigates to `settings` route, SettingsScreen composable receives serverUrl, onLogout, onNavigateBack
+- [x] T012 [US8] Remove logout icon/button from `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/templates/TemplateListScreen.kt` — logout action moved to Settings screen
 
 **Checkpoint**: Settings accessible from gear icon, server URL visible, logout functional, back returns to previous tab
 
@@ -93,7 +93,7 @@
 
 ### Implementation
 
-- [x] T013 [US3] Modify `app/src/main/kotlin/com/example/aapremote/ui/templates/TemplateListItem.kt` — upgrade to `ElevatedCard` or `Card` with `tonalElevation`, use `titleMedium` for template name, `bodySmall` for description, 16dp padding, `AssistChip`-style label chips (FR-011)
+- [x] T013 [US3] Modify `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/templates/TemplateListItem.kt` — upgrade to `ElevatedCard` or `Card` with `tonalElevation`, use `titleMedium` for template name, `bodySmall` for description, 16dp padding, `AssistChip`-style label chips (FR-011)
 
 **Checkpoint**: Template cards display with improved design, labels render as chips
 
@@ -107,11 +107,11 @@
 
 ### Implementation
 
-- [x] T014 [P] [US4] Create `SkeletonCard` composable in `app/src/main/kotlin/com/example/aapremote/ui/components/SkeletonCard.kt` — placeholder card with shimmer matching `TemplateListItem` layout dimensions (name placeholder, description placeholder, chip placeholders) using `Modifier.shimmer()` from T004 (FR-012)
-- [x] T015 [P] [US5] Add `refresh()` method to `app/src/main/kotlin/com/example/aapremote/presentation/templates/TemplatesViewModel.kt` — resets pagination state and reloads templates from API
-- [x] T016 [P] [US5] Add `refresh()` method to `app/src/main/kotlin/com/example/aapremote/presentation/jobs/RecentJobsViewModel.kt` — resets state and reloads recent jobs from API
-- [x] T017 [US4] [US5] Modify `app/src/main/kotlin/com/example/aapremote/ui/templates/TemplateListScreen.kt` — replace `CircularProgressIndicator` with `LazyColumn` of `SkeletonCard`s during loading state, wrap content in `PullToRefreshBox` calling ViewModel's `refresh()` (FR-012, FR-013, R-004)
-- [x] T018 [US4] [US5] Modify `app/src/main/kotlin/com/example/aapremote/ui/jobs/RecentJobsScreen.kt` — same skeleton loading + `PullToRefreshBox` treatment as T017 (FR-012, FR-013)
+- [x] T014 [P] [US4] Create `SkeletonCard` composable in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/SkeletonCard.kt` — placeholder card with shimmer matching `TemplateListItem` layout dimensions (name placeholder, description placeholder, chip placeholders) using `Modifier.shimmer()` from T004 (FR-012)
+- [x] T015 [P] [US5] Add `refresh()` method to `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/templates/TemplatesViewModel.kt` — resets pagination state and reloads templates from API
+- [x] T016 [P] [US5] Add `refresh()` method to `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/jobs/RecentJobsViewModel.kt` — resets state and reloads recent jobs from API
+- [x] T017 [US4] [US5] Modify `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/templates/TemplateListScreen.kt` — replace `CircularProgressIndicator` with `LazyColumn` of `SkeletonCard`s during loading state, wrap content in `PullToRefreshBox` calling ViewModel's `refresh()` (FR-012, FR-013, R-004)
+- [x] T018 [US4] [US5] Modify `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/jobs/RecentJobsScreen.kt` — same skeleton loading + `PullToRefreshBox` treatment as T017 (FR-012, FR-013)
 
 **Checkpoint**: All list screens show skeleton loaders instead of spinners, pull-to-refresh works on templates and jobs lists, error handling preserves existing data
 
@@ -125,9 +125,9 @@
 
 ### Implementation
 
-- [x] T019 [P] [US6] Add bell icon tap handler in `app/src/main/kotlin/com/example/aapremote/ui/main/MainScreen.kt` — show snackbar "Notifications coming soon" using `SnackbarHostState` (FR-010)
-- [x] T020 [P] [US7] Add transition animations in `app/src/main/kotlin/com/example/aapremote/navigation/AppNavigation.kt` — `enterTransition`/`exitTransition` with `slideInHorizontally`/`slideOutHorizontally` for detail screens (job status, settings), `fadeIn`/`fadeOut` for tab-level transitions (FR-014, FR-015, R-005)
-- [x] T021 [US7] Add segment switch animation in `app/src/main/kotlin/com/example/aapremote/ui/main/MainScreen.kt` — `Crossfade` for segment content switching within tabs (FR-014)
+- [x] T019 [P] [US6] Add bell icon tap handler in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/MainScreen.kt` — show snackbar "Notifications coming soon" using `SnackbarHostState` (FR-010)
+- [x] T020 [P] [US7] Add transition animations in `app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/AppNavigation.kt` — `enterTransition`/`exitTransition` with `slideInHorizontally`/`slideOutHorizontally` for detail screens (job status, settings), `fadeIn`/`fadeOut` for tab-level transitions (FR-014, FR-015, R-005)
+- [x] T021 [US7] Add segment switch animation in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/MainScreen.kt` — `Crossfade` for segment content switching within tabs (FR-014)
 
 **Checkpoint**: Bell snackbar works, tab switches crossfade, detail/settings screens slide in/out
 
@@ -140,7 +140,7 @@
 - [x] T022 Verify empty state handling on all list screens — display "No items" message instead of blank screen or perpetual skeleton (edge case from spec)
 - [x] T023 Verify configuration change (rotation) preserves selected tab, selected segment, and scroll position (FR-017, edge case from spec)
 - [x] T024 Run full manual test checklist from `specs/002-nav-ui-modernize/quickstart.md` — validate all 9 test scenarios
-- [x] T025 Verify `app/src/main/kotlin/com/example/aapremote/ui/jobs/JobStatusScreen.kt` retains its own `TopAppBar` and works as detail overlay with slide transitions within the tab navigation context
+- [x] T025 Verify `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/jobs/JobStatusScreen.kt` retains its own `TopAppBar` and works as detail overlay with slide transitions within the tab navigation context
 
 ---
 

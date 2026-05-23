@@ -49,7 +49,7 @@ specs/004-workflow-templates/
 ### Source Code (repository root)
 
 ```text
-app/src/main/kotlin/com/example/aapremote/
+app/src/main/kotlin/io/github/leogallego/ansiblejane/
 ├── model/
 │   ├── WorkflowJobTemplate.kt      # NEW — data class for workflow templates
 │   ├── WorkflowJob.kt              # NEW — data class for workflow jobs

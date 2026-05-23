@@ -19,13 +19,13 @@
 
 **Purpose**: Create the new shared components that multiple user stories depend on
 
-- [x] T001 [P] Create AppError sealed class with from(Throwable) factory and ErrorDetail data class in `app/src/main/kotlin/com/example/aapremote/model/AppError.kt`
-- [x] T002 [P] Create Modifier.pressScale() extension function with InteractionSource-based press detection and spring animation in `app/src/main/kotlin/com/example/aapremote/ui/components/PressScaleModifier.kt`
-- [x] T003 [P] Create AapIcons object with Status, Error, Navigation, and Action icon groups in `app/src/main/kotlin/com/example/aapremote/ui/icons/AapIcons.kt`
-- [x] T004 [P] Create StatusColors data class and LocalStatusColors CompositionLocal in `app/src/main/kotlin/com/example/aapremote/ui/theme/StatusColors.kt`
-- [x] T005 [P] Create Flow.asResult() extension for wrapping repository suspend calls into Loading/Success/Error flow in `app/src/main/kotlin/com/example/aapremote/data/ResultExtensions.kt`
-- [x] T006 Update AapRemoteTheme to provide StatusColors via CompositionLocalProvider and add AapRemoteTheme.statusColors accessor in `app/src/main/kotlin/com/example/aapremote/ui/theme/Theme.kt`
-- [x] T007 Remove top-level Status* color constants from Color.kt and update any remaining direct references in `app/src/main/kotlin/com/example/aapremote/ui/theme/Color.kt`
+- [x] T001 [P] Create AppError sealed class with from(Throwable) factory and ErrorDetail data class in `app/src/main/kotlin/io/github/leogallego/ansiblejane/model/AppError.kt`
+- [x] T002 [P] Create Modifier.pressScale() extension function with InteractionSource-based press detection and spring animation in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/PressScaleModifier.kt`
+- [x] T003 [P] Create AapIcons object with Status, Error, Navigation, and Action icon groups in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/icons/AapIcons.kt`
+- [x] T004 [P] Create StatusColors data class and LocalStatusColors CompositionLocal in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/theme/StatusColors.kt`
+- [x] T005 [P] Create Flow.asResult() extension for wrapping repository suspend calls into Loading/Success/Error flow in `app/src/main/kotlin/io/github/leogallego/ansiblejane/data/ResultExtensions.kt`
+- [x] T006 Update AapRemoteTheme to provide StatusColors via CompositionLocalProvider and add AapRemoteTheme.statusColors accessor in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/theme/Theme.kt`
+- [x] T007 Remove top-level Status* color constants from Color.kt and update any remaining direct references in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/theme/Color.kt`
 
 ---
 
@@ -37,37 +37,37 @@
 
 ### Batch 1: Repositories (propagate raw exceptions)
 
-- [x] T008 [P] Update TemplateRepository to propagate raw exceptions instead of wrapping in generic Exception(message) in `app/src/main/kotlin/com/example/aapremote/data/TemplateRepository.kt`
-- [x] T009 [P] Update WorkflowRepository to propagate raw exceptions in `app/src/main/kotlin/com/example/aapremote/data/WorkflowRepository.kt`
-- [x] T010 [P] Update JobRepository to propagate raw exceptions in `app/src/main/kotlin/com/example/aapremote/data/JobRepository.kt`
-- [x] T011 [P] Update ScheduleRepository to propagate raw exceptions in `app/src/main/kotlin/com/example/aapremote/data/ScheduleRepository.kt`
-- [x] T012 [P] Update EdaAuditRepository to propagate raw exceptions in `app/src/main/kotlin/com/example/aapremote/data/EdaAuditRepository.kt`
-- [x] T013 [P] Update AuthRepository to propagate raw exceptions in `app/src/main/kotlin/com/example/aapremote/data/AuthRepository.kt`
+- [x] T008 [P] Update TemplateRepository to propagate raw exceptions instead of wrapping in generic Exception(message) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/data/TemplateRepository.kt`
+- [x] T009 [P] Update WorkflowRepository to propagate raw exceptions in `app/src/main/kotlin/io/github/leogallego/ansiblejane/data/WorkflowRepository.kt`
+- [x] T010 [P] Update JobRepository to propagate raw exceptions in `app/src/main/kotlin/io/github/leogallego/ansiblejane/data/JobRepository.kt`
+- [x] T011 [P] Update ScheduleRepository to propagate raw exceptions in `app/src/main/kotlin/io/github/leogallego/ansiblejane/data/ScheduleRepository.kt`
+- [x] T012 [P] Update EdaAuditRepository to propagate raw exceptions in `app/src/main/kotlin/io/github/leogallego/ansiblejane/data/EdaAuditRepository.kt`
+- [x] T013 [P] Update AuthRepository to propagate raw exceptions in `app/src/main/kotlin/io/github/leogallego/ansiblejane/data/AuthRepository.kt`
 
 ### Batch 2: UiState definitions (String → AppError)
 
-- [x] T014 [P] Update TemplatesUiState.Error and LaunchState.LaunchError from String to AppError in `app/src/main/kotlin/com/example/aapremote/presentation/templates/TemplatesUiState.kt`
-- [x] T015 [P] Update WorkflowTemplatesUiState.Error and WorkflowLaunchState.LaunchError from String to AppError in `app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowTemplatesUiState.kt`
-- [x] T016 [P] Update WorkflowJobStatusUiState.Error from String to AppError in `app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowJobStatusUiState.kt`
-- [x] T017 [P] Update JobStatusUiState.Error and RecentJobsUiState.Error from String to AppError in `app/src/main/kotlin/com/example/aapremote/presentation/jobs/JobUiState.kt`
-- [x] T018 [P] Update SchedulesUiState.Error from String to AppError in `app/src/main/kotlin/com/example/aapremote/presentation/schedules/SchedulesUiState.kt`
-- [x] T019 [P] Update EdaAuditUiState.Error from String to AppError in `app/src/main/kotlin/com/example/aapremote/presentation/eda/EdaAuditUiState.kt`
-- [x] T020 [P] Update AuthUiState.Error from String to AppError in `app/src/main/kotlin/com/example/aapremote/presentation/auth/AuthUiState.kt`
+- [x] T014 [P] Update TemplatesUiState.Error and LaunchState.LaunchError from String to AppError in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/templates/TemplatesUiState.kt`
+- [x] T015 [P] Update WorkflowTemplatesUiState.Error and WorkflowLaunchState.LaunchError from String to AppError in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowTemplatesUiState.kt`
+- [x] T016 [P] Update WorkflowJobStatusUiState.Error from String to AppError in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowJobStatusUiState.kt`
+- [x] T017 [P] Update JobStatusUiState.Error and RecentJobsUiState.Error from String to AppError in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/jobs/JobUiState.kt`
+- [x] T018 [P] Update SchedulesUiState.Error from String to AppError in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/schedules/SchedulesUiState.kt`
+- [x] T019 [P] Update EdaAuditUiState.Error from String to AppError in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/eda/EdaAuditUiState.kt`
+- [x] T020 [P] Update AuthUiState.Error from String to AppError in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/auth/AuthUiState.kt`
 
 ### Batch 3: ViewModels (use asResult() + AppError.from())
 
-- [x] T021 Update TemplatesViewModel to use asResult() and AppError.from(throwable) when mapping errors in `app/src/main/kotlin/com/example/aapremote/presentation/templates/TemplatesViewModel.kt`
-- [x] T022 [P] Update WorkflowTemplatesViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowTemplatesViewModel.kt`
-- [x] T023 [P] Update JobStatusViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/com/example/aapremote/presentation/jobs/JobStatusViewModel.kt`
-- [x] T024 [P] Update RecentJobsViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/com/example/aapremote/presentation/jobs/RecentJobsViewModel.kt`
-- [x] T025 [P] Update SchedulesViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/com/example/aapremote/presentation/schedules/SchedulesViewModel.kt`
-- [x] T026 [P] Update EdaAuditViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/com/example/aapremote/presentation/eda/EdaAuditViewModel.kt`
-- [x] T027 [P] Update AuthViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/com/example/aapremote/presentation/auth/AuthViewModel.kt`
-- [x] T027b [P] Update WorkflowJobStatusViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/com/example/aapremote/presentation/workflows/WorkflowJobStatusViewModel.kt`
+- [x] T021 Update TemplatesViewModel to use asResult() and AppError.from(throwable) when mapping errors in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/templates/TemplatesViewModel.kt`
+- [x] T022 [P] Update WorkflowTemplatesViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowTemplatesViewModel.kt`
+- [x] T023 [P] Update JobStatusViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/jobs/JobStatusViewModel.kt`
+- [x] T024 [P] Update RecentJobsViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/jobs/RecentJobsViewModel.kt`
+- [x] T025 [P] Update SchedulesViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/schedules/SchedulesViewModel.kt`
+- [x] T026 [P] Update EdaAuditViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/eda/EdaAuditViewModel.kt`
+- [x] T027 [P] Update AuthViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/auth/AuthViewModel.kt`
+- [x] T027b [P] Update WorkflowJobStatusViewModel to use asResult() and AppError.from(throwable) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/workflows/WorkflowJobStatusViewModel.kt`
 
 ### Batch 4: Migrate icon/color references
 
-- [x] T028 Update JobStatusBadge to use AapIcons.Status.* and AapRemoteTheme.statusColors.* instead of inline icon/color references in `app/src/main/kotlin/com/example/aapremote/ui/components/JobStatusBadge.kt`
+- [x] T028 Update JobStatusBadge to use AapIcons.Status.* and AapRemoteTheme.statusColors.* instead of inline icon/color references in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/JobStatusBadge.kt`
 
 **Checkpoint**: All repositories propagate raw exceptions, all UiState Error variants use AppError, all ViewModels use asResult() + AppError.from(), icons and status colors use centralized registries. App will not compile yet — screens still reference old Error(message) pattern.
 
@@ -81,10 +81,10 @@
 
 ### Implementation for User Story 1
 
-- [x] T029 [P] [US1] Apply Modifier.pressScale() to ElevatedCard in `app/src/main/kotlin/com/example/aapremote/ui/templates/TemplateListItem.kt`
-- [x] T030 [P] [US1] Apply Modifier.pressScale() to ElevatedCard in `app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowTemplateListItem.kt`
-- [x] T031 [P] [US1] Apply Modifier.pressScale() to Card (RecentJobItem) in `app/src/main/kotlin/com/example/aapremote/ui/jobs/RecentJobsScreen.kt`
-- [x] T032 [P] [US1] Apply Modifier.pressScale() to Card (EdaAuditItem) in `app/src/main/kotlin/com/example/aapremote/ui/eda/EdaAuditScreen.kt`
+- [x] T029 [P] [US1] Apply Modifier.pressScale() to ElevatedCard in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/templates/TemplateListItem.kt`
+- [x] T030 [P] [US1] Apply Modifier.pressScale() to ElevatedCard in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowTemplateListItem.kt`
+- [x] T031 [P] [US1] Apply Modifier.pressScale() to Card (RecentJobItem) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/jobs/RecentJobsScreen.kt`
+- [x] T032 [P] [US1] Apply Modifier.pressScale() to Card (EdaAuditItem) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/eda/EdaAuditScreen.kt`
 
 **Checkpoint**: All clickable cards across all list screens respond to press with a visible scale animation
 
@@ -98,15 +98,15 @@
 
 ### Implementation for User Story 2
 
-- [x] T033 [US2] Refactor ErrorMessage composable to accept AppError with typed icon (from AapIcons.Error.*), title, message, expandable detail section, retry button, and AnimatedVisibility entrance (fadeIn + slideInVertically) in `app/src/main/kotlin/com/example/aapremote/ui/components/ErrorMessage.kt`
-- [x] T034 [P] [US2] Update TemplateListScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/com/example/aapremote/ui/templates/TemplateListScreen.kt`
-- [x] T035 [P] [US2] Update WorkflowTemplateListScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowTemplateListScreen.kt`
-- [x] T036 [P] [US2] Update WorkflowJobStatusScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/com/example/aapremote/ui/workflows/WorkflowJobStatusScreen.kt`
-- [x] T037 [P] [US2] Update RecentJobsScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/com/example/aapremote/ui/jobs/RecentJobsScreen.kt`
-- [x] T038 [P] [US2] Update JobStatusScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/com/example/aapremote/ui/jobs/JobStatusScreen.kt`
-- [x] T039 [P] [US2] Update SchedulesScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/com/example/aapremote/ui/schedules/SchedulesScreen.kt`
-- [x] T040 [P] [US2] Update EdaAuditScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/com/example/aapremote/ui/eda/EdaAuditScreen.kt`
-- [x] T041 [P] [US2] Update AuthScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/com/example/aapremote/ui/auth/AuthScreen.kt`
+- [x] T033 [US2] Refactor ErrorMessage composable to accept AppError with typed icon (from AapIcons.Error.*), title, message, expandable detail section, retry button, and AnimatedVisibility entrance (fadeIn + slideInVertically) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/ErrorMessage.kt`
+- [x] T034 [P] [US2] Update TemplateListScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/templates/TemplateListScreen.kt`
+- [x] T035 [P] [US2] Update WorkflowTemplateListScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowTemplateListScreen.kt`
+- [x] T036 [P] [US2] Update WorkflowJobStatusScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/workflows/WorkflowJobStatusScreen.kt`
+- [x] T037 [P] [US2] Update RecentJobsScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/jobs/RecentJobsScreen.kt`
+- [x] T038 [P] [US2] Update JobStatusScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/jobs/JobStatusScreen.kt`
+- [x] T039 [P] [US2] Update SchedulesScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/schedules/SchedulesScreen.kt`
+- [x] T040 [P] [US2] Update EdaAuditScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/eda/EdaAuditScreen.kt`
+- [x] T041 [P] [US2] Update AuthScreen to pass AppError to ErrorMessage in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/auth/AuthScreen.kt`
 
 **Checkpoint**: All error states across all screens show typed error display with icons, expandable details, and slide-in entrance. App should now compile and run.
 
@@ -120,9 +120,9 @@
 
 ### Implementation for User Story 3
 
-- [x] T042 [P] [US3] Add spring entrance animation to LaunchConfirmDialog in `app/src/main/kotlin/com/example/aapremote/ui/components/LaunchConfirmDialog.kt`
-- [x] T043 [P] [US3] Add spring entrance animation to ExtraVarsDialog in `app/src/main/kotlin/com/example/aapremote/ui/components/ExtraVarsInput.kt`
-- [x] T044 [P] [US3] Add spring entrance animation to EdaAuditDetailSheet (ModalBottomSheet) in `app/src/main/kotlin/com/example/aapremote/ui/eda/EdaAuditDetailSheet.kt`
+- [x] T042 [P] [US3] Add spring entrance animation to LaunchConfirmDialog in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/LaunchConfirmDialog.kt`
+- [x] T043 [P] [US3] Add spring entrance animation to ExtraVarsDialog in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/ExtraVarsInput.kt`
+- [x] T044 [P] [US3] Add spring entrance animation to EdaAuditDetailSheet (ModalBottomSheet) in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/eda/EdaAuditDetailSheet.kt`
 
 **Checkpoint**: All dialogs and bottom sheets enter with spring animation
 
@@ -136,7 +136,7 @@
 
 ### Implementation for User Story 4
 
-- [x] T045 [US4] Replace static Text("AAPdroid") title with AnimatedContent keyed on selectedTab.label in `app/src/main/kotlin/com/example/aapremote/ui/main/MainScreen.kt`
+- [x] T045 [US4] Replace static Text("AAPdroid") title with AnimatedContent keyed on selectedTab.label in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/MainScreen.kt`
 
 **Checkpoint**: Tab title transitions are smooth
 
@@ -150,7 +150,7 @@
 
 ### Implementation for User Story 5
 
-- [x] T046 [US5] Add breathing pulse animation (rememberInfiniteTransition, scale 0.96-1.04) to JobStatusBadge when status is RUNNING, with reduce-motion check in `app/src/main/kotlin/com/example/aapremote/ui/components/JobStatusBadge.kt`
+- [x] T046 [US5] Add breathing pulse animation (rememberInfiniteTransition, scale 0.96-1.04) to JobStatusBadge when status is RUNNING, with reduce-motion check in `app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/JobStatusBadge.kt`
 
 **Checkpoint**: Running job status badges pulse, stop on completion
 

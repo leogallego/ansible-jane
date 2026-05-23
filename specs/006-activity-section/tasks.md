@@ -15,7 +15,7 @@
 
 ## Path Conventions
 
-- **Base path**: `app/src/main/kotlin/com/example/aapremote/`
+- **Base path**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/`
 
 ---
 
@@ -23,8 +23,8 @@
 
 **Purpose**: No project initialization needed — existing Android project. This phase covers shared data models used across multiple user stories.
 
-- [X] T001 [P] Create Schedule data model with ScheduleSummaryFields and UnifiedJobTemplateRef in app/src/main/kotlin/com/example/aapremote/model/Schedule.kt
-- [X] T002 [P] Create EdaRuleAudit data model in app/src/main/kotlin/com/example/aapremote/model/EdaRuleAudit.kt
+- [X] T001 [P] Create Schedule data model with ScheduleSummaryFields and UnifiedJobTemplateRef in app/src/main/kotlin/io/github/leogallego/ansiblejane/model/Schedule.kt
+- [X] T002 [P] Create EdaRuleAudit data model in app/src/main/kotlin/io/github/leogallego/ansiblejane/model/EdaRuleAudit.kt
 
 ---
 
@@ -34,11 +34,11 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T003 Create EdaApiService Retrofit interface for EDA /api/eda/v1/ endpoints in app/src/main/kotlin/com/example/aapremote/network/EdaApiService.kt
-- [X] T004 Add getEdaApiService() method to AapApiProvider in app/src/main/kotlin/com/example/aapremote/network/AapApiProvider.kt
-- [X] T005 Register EdaApiService in Koin networkModule in app/src/main/kotlin/com/example/aapremote/network/NetworkModule.kt
-- [X] T006 Add status filter query parameters (status, or__status) to getJobs() in app/src/main/kotlin/com/example/aapremote/network/AapApiService.kt
-- [X] T007 Add getSchedules() and toggleSchedule() endpoints to AapApiService in app/src/main/kotlin/com/example/aapremote/network/AapApiService.kt
+- [X] T003 Create EdaApiService Retrofit interface for EDA /api/eda/v1/ endpoints in app/src/main/kotlin/io/github/leogallego/ansiblejane/network/EdaApiService.kt
+- [X] T004 Add getEdaApiService() method to AapApiProvider in app/src/main/kotlin/io/github/leogallego/ansiblejane/network/AapApiProvider.kt
+- [X] T005 Register EdaApiService in Koin networkModule in app/src/main/kotlin/io/github/leogallego/ansiblejane/network/NetworkModule.kt
+- [X] T006 Add status filter query parameters (status, or__status) to getJobs() in app/src/main/kotlin/io/github/leogallego/ansiblejane/network/AapApiService.kt
+- [X] T007 Add getSchedules() and toggleSchedule() endpoints to AapApiService in app/src/main/kotlin/io/github/leogallego/ansiblejane/network/AapApiService.kt
 
 **Checkpoint**: Network layer ready — user story implementation can now begin
 
@@ -52,11 +52,11 @@
 
 ### Implementation for User Story 1
 
-- [X] T008 [US1] Add status filter parameter to getRecentJobs() in JobRepository in app/src/main/kotlin/com/example/aapremote/data/JobRepository.kt
-- [X] T009 [US1] Add filter state (activeFilters: Set<JobStatus>) and filter methods to RecentJobsViewModel in app/src/main/kotlin/com/example/aapremote/presentation/jobs/RecentJobsViewModel.kt
-- [X] T010 [US1] Add activeFilters field to RecentJobsUiState in app/src/main/kotlin/com/example/aapremote/presentation/jobs/RecentJobsUiState.kt
-- [X] T011 [US1] Create reusable StatusFilterChips composable in app/src/main/kotlin/com/example/aapremote/ui/components/StatusFilterChips.kt
-- [X] T012 [US1] Add filter chips row above job list in RecentJobsScreen in app/src/main/kotlin/com/example/aapremote/ui/jobs/RecentJobsScreen.kt
+- [X] T008 [US1] Add status filter parameter to getRecentJobs() in JobRepository in app/src/main/kotlin/io/github/leogallego/ansiblejane/data/JobRepository.kt
+- [X] T009 [US1] Add filter state (activeFilters: Set<JobStatus>) and filter methods to RecentJobsViewModel in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/jobs/RecentJobsViewModel.kt
+- [X] T010 [US1] Add activeFilters field to RecentJobsUiState in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/jobs/RecentJobsUiState.kt
+- [X] T011 [US1] Create reusable StatusFilterChips composable in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/components/StatusFilterChips.kt
+- [X] T012 [US1] Add filter chips row above job list in RecentJobsScreen in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/jobs/RecentJobsScreen.kt
 
 **Checkpoint**: User Story 1 is fully functional — jobs list with multi-select status filtering works independently
 
@@ -70,14 +70,14 @@
 
 ### Implementation for User Story 2
 
-- [X] T013 [US2] Create ScheduleRepository with getSchedules() and toggleSchedule() in app/src/main/kotlin/com/example/aapremote/data/ScheduleRepository.kt
-- [X] T014 [US2] Register ScheduleRepository in Koin dataModule in app/src/main/kotlin/com/example/aapremote/data/DataModule.kt
-- [X] T015 [P] [US2] Create SchedulesUiState sealed interface in app/src/main/kotlin/com/example/aapremote/presentation/schedules/SchedulesUiState.kt
-- [X] T016 [US2] Create SchedulesViewModel with pagination, pull-to-refresh, and toggle in app/src/main/kotlin/com/example/aapremote/presentation/schedules/SchedulesViewModel.kt
-- [X] T017 [US2] Register SchedulesViewModel in Koin presentationModule in app/src/main/kotlin/com/example/aapremote/presentation/PresentationModule.kt
-- [X] T018 [US2] Create SchedulesScreen composable with list, toggle switch, and pull-to-refresh in app/src/main/kotlin/com/example/aapremote/ui/schedules/SchedulesScreen.kt
-- [X] T019 [US2] Route Schedules segment to SchedulesScreen in MainNavigation in app/src/main/kotlin/com/example/aapremote/navigation/MainNavigation.kt
-- [X] T020 [US2] Mark Schedules segment as isImplemented = true in TabDefinitions in app/src/main/kotlin/com/example/aapremote/ui/main/TabDefinitions.kt
+- [X] T013 [US2] Create ScheduleRepository with getSchedules() and toggleSchedule() in app/src/main/kotlin/io/github/leogallego/ansiblejane/data/ScheduleRepository.kt
+- [X] T014 [US2] Register ScheduleRepository in Koin dataModule in app/src/main/kotlin/io/github/leogallego/ansiblejane/data/DataModule.kt
+- [X] T015 [P] [US2] Create SchedulesUiState sealed interface in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/schedules/SchedulesUiState.kt
+- [X] T016 [US2] Create SchedulesViewModel with pagination, pull-to-refresh, and toggle in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/schedules/SchedulesViewModel.kt
+- [X] T017 [US2] Register SchedulesViewModel in Koin presentationModule in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/PresentationModule.kt
+- [X] T018 [US2] Create SchedulesScreen composable with list, toggle switch, and pull-to-refresh in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/schedules/SchedulesScreen.kt
+- [X] T019 [US2] Route Schedules segment to SchedulesScreen in MainNavigation in app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/MainNavigation.kt
+- [X] T020 [US2] Mark Schedules segment as isImplemented = true in TabDefinitions in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/TabDefinitions.kt
 
 **Checkpoint**: User Story 2 is fully functional — schedules list with toggle works independently
 
@@ -91,15 +91,15 @@
 
 ### Implementation for User Story 3
 
-- [X] T021 [US3] Create EdaAuditRepository with getAuditRules() in app/src/main/kotlin/com/example/aapremote/data/EdaAuditRepository.kt
-- [X] T022 [US3] Register EdaAuditRepository in Koin dataModule in app/src/main/kotlin/com/example/aapremote/data/DataModule.kt
-- [X] T023 [P] [US3] Create EdaAuditUiState sealed interface in app/src/main/kotlin/com/example/aapremote/presentation/eda/EdaAuditUiState.kt
-- [X] T024 [US3] Create EdaAuditViewModel with pagination and pull-to-refresh in app/src/main/kotlin/com/example/aapremote/presentation/eda/EdaAuditViewModel.kt
-- [X] T025 [US3] Register EdaAuditViewModel in Koin presentationModule in app/src/main/kotlin/com/example/aapremote/presentation/PresentationModule.kt
-- [X] T026 [P] [US3] Create EdaAuditDetailSheet bottom sheet composable in app/src/main/kotlin/com/example/aapremote/ui/eda/EdaAuditDetailSheet.kt
-- [X] T027 [US3] Create EdaAuditScreen composable with list, detail sheet, and pull-to-refresh in app/src/main/kotlin/com/example/aapremote/ui/eda/EdaAuditScreen.kt
-- [X] T028 [US3] Route EDA Audit segment to EdaAuditScreen in MainNavigation in app/src/main/kotlin/com/example/aapremote/navigation/MainNavigation.kt
-- [X] T029 [US3] Mark EDA Audit segment as isImplemented = true in TabDefinitions in app/src/main/kotlin/com/example/aapremote/ui/main/TabDefinitions.kt
+- [X] T021 [US3] Create EdaAuditRepository with getAuditRules() in app/src/main/kotlin/io/github/leogallego/ansiblejane/data/EdaAuditRepository.kt
+- [X] T022 [US3] Register EdaAuditRepository in Koin dataModule in app/src/main/kotlin/io/github/leogallego/ansiblejane/data/DataModule.kt
+- [X] T023 [P] [US3] Create EdaAuditUiState sealed interface in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/eda/EdaAuditUiState.kt
+- [X] T024 [US3] Create EdaAuditViewModel with pagination and pull-to-refresh in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/eda/EdaAuditViewModel.kt
+- [X] T025 [US3] Register EdaAuditViewModel in Koin presentationModule in app/src/main/kotlin/io/github/leogallego/ansiblejane/presentation/PresentationModule.kt
+- [X] T026 [P] [US3] Create EdaAuditDetailSheet bottom sheet composable in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/eda/EdaAuditDetailSheet.kt
+- [X] T027 [US3] Create EdaAuditScreen composable with list, detail sheet, and pull-to-refresh in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/eda/EdaAuditScreen.kt
+- [X] T028 [US3] Route EDA Audit segment to EdaAuditScreen in MainNavigation in app/src/main/kotlin/io/github/leogallego/ansiblejane/navigation/MainNavigation.kt
+- [X] T029 [US3] Mark EDA Audit segment as isImplemented = true in TabDefinitions in app/src/main/kotlin/io/github/leogallego/ansiblejane/ui/main/TabDefinitions.kt
 
 **Checkpoint**: User Story 3 is fully functional — EDA audit list with detail sheet works independently, graceful EDA unavailability handling
 
