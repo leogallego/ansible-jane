@@ -48,7 +48,7 @@ jobs:
       - name: Rename APK
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          mv app/build/outputs/apk/release/app-release.apk "aapdroid-${VERSION}.apk"
+          mv app/build/outputs/apk/release/app-release.apk "ansible-jane-${VERSION}.apk"
 
       - name: Extract changelog
         run: |
@@ -64,4 +64,4 @@ jobs:
         with:
           name: Release ${{ github.ref_name }}
           body_path: changelog.txt
-          files: aapdroid-*.apk
+          files: ansible-jane-*.apk

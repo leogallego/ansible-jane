@@ -8,8 +8,8 @@ A lightweight Android app for managing [Ansible Automation Platform (AAP)](https
 
 ## Install
 
-- **F-Droid** - add this repo to your F-Droid client: `https://leogallego.github.io/aapdroid/fdroid/repo`
-- **GitHub Releases** - download the latest APK from [Releases](https://github.com/leogallego/aapdroid/releases/latest)
+- **F-Droid** - add this repo to your F-Droid client: `https://leogallego.github.io/ansible-jane/fdroid/repo`
+- **GitHub Releases** - download the latest APK from [Releases](https://github.com/leogallego/ansible-jane/releases/latest)
 - **Obtainium** - point [Obtainium](https://github.com/ImranR98/Obtainium) at this repo for automatic updates
 
 ## Features
