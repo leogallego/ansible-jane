@@ -149,9 +149,9 @@ private fun ActiveChatContent(
 
     val imeVisible = WindowInsets.isImeVisible
     val messageCount = state.messages.size
-    val hasStreamingSection = state.isGenerating
-    val totalItems = messageCount + (if (hasStreamingSection) 1 else 0) +
-        (if (messageCount == 0 && !hasStreamingSection) 1 else 0)
+    val totalItems = messageCount +
+        (if (state.isGenerating) 1 else 0) +
+        (if (messageCount == 0 && !state.isGenerating) 1 else 0)
 
     LaunchedEffect(messageCount, state.isGenerating) {
         if (totalItems > 0) {
@@ -169,10 +169,16 @@ private fun ActiveChatContent(
         focusRequester.requestFocus()
     }
 
-    Column(modifier = modifier.imePadding()) {
-        if (state.connections.isNotEmpty()) {
+    val mcpStatusText = remember(state.connections) {
+        if (state.connections.isEmpty()) null
+        else {
             val connected = state.connections.count { it.value is McpConnectionState.Connected }
-            val total = state.connections.size
+            "${connected}/${state.connections.size} MCP servers connected"
+        }
+    }
+
+    Column(modifier = modifier.imePadding()) {
+        mcpStatusText?.let { statusText ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -180,7 +186,7 @@ private fun ActiveChatContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "$connected/$total MCP servers connected",
+                    text = statusText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

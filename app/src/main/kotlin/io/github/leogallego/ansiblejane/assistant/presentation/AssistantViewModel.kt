@@ -21,6 +21,8 @@ import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -78,7 +80,7 @@ class AssistantViewModel(
                         mcpServerManager.connectAll(instance)
                         _uiState.update {
                             AssistantUiState.Active(
-                                messages = repository.getHistory(),
+                                messages = repository.getHistory().toImmutableList(),
                                 connections = mcpServerManager.connections.value
                             )
                         }
@@ -107,11 +109,11 @@ class AssistantViewModel(
             _uiState.update { current ->
                 if (current is AssistantUiState.Active) {
                     current.copy(
-                        messages = current.messages + ChatMessage(
+                        messages = (current.messages + ChatMessage(
                             role = Role.ASSISTANT,
                             content = "Please configure an LLM provider in settings first.",
                             source = ResponseSource.LLM
-                        )
+                        )).toImmutableList()
                     )
                 } else current
             }
@@ -122,7 +124,7 @@ class AssistantViewModel(
         repository.addMessage(userMessage)
 
         updateState { copy(
-            messages = repository.getHistory(),
+            messages = repository.getHistory().toImmutableList(),
             isGenerating = true
         ) }
 
@@ -175,7 +177,7 @@ class AssistantViewModel(
             }
             val guidanceMsg = ChatMessage(role = Role.ASSISTANT, content = content, source = ResponseSource.LLM)
             repository.addMessage(guidanceMsg)
-            updateState { copy(messages = repository.getHistory(), isGenerating = false) }
+            updateState { copy(messages = repository.getHistory().toImmutableList(), isGenerating = false) }
             return
         }
 
@@ -246,7 +248,7 @@ class AssistantViewModel(
                             repository.addMessage(finalMsg)
                             updateState {
                                 copy(
-                                    messages = repository.getHistory(),
+                                    messages = repository.getHistory().toImmutableList(),
                                     isGenerating = false,
                                     streamingText = null
                                 )
@@ -260,7 +262,7 @@ class AssistantViewModel(
                             repository.addMessage(errorMsg)
                             updateState {
                                 copy(
-                                    messages = repository.getHistory(),
+                                    messages = repository.getHistory().toImmutableList(),
                                     isGenerating = false,
                                     streamingText = null
                                 )
@@ -273,7 +275,7 @@ class AssistantViewModel(
 
     fun clearHistory() {
         repository.clearHistory()
-        updateState { copy(messages = emptyList()) }
+        updateState { copy(messages = persistentListOf()) }
     }
 
     private fun getOrCreateProvider(
