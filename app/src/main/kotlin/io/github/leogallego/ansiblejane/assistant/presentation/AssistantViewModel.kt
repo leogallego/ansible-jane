@@ -55,6 +55,9 @@ class AssistantViewModel(
     private val _llmConfig = MutableStateFlow<LlmProviderConfig?>(null)
     val llmConfig: StateFlow<LlmProviderConfig?> = _llmConfig.asStateFlow()
 
+    private val _savedConfigs = MutableStateFlow<Map<String, LlmProviderConfig>>(emptyMap())
+    val savedConfigs: StateFlow<Map<String, LlmProviderConfig>> = _savedConfigs.asStateFlow()
+
     private val _fetchedModels = MutableStateFlow<List<String>>(emptyList())
     val fetchedModels: StateFlow<List<String>> = _fetchedModels.asStateFlow()
 
@@ -65,7 +68,10 @@ class AssistantViewModel(
         Log.d(TAG, "INIT: ${localTools.size} local tools: ${localTools.map { it.spec.name }}")
 
         viewModelScope.launch {
+            val configs = repository.loadAllLlmConfigs()
+            _savedConfigs.value = configs
             _llmConfig.value = repository.loadLlmConfig()
+                ?: configs.values.firstOrNull()
         }
 
         viewModelScope.launch {
@@ -283,6 +289,14 @@ class AssistantViewModel(
         cachedProviderKey = null
         viewModelScope.launch {
             repository.saveLlmConfig(config)
+            _savedConfigs.value = repository.loadAllLlmConfigs()
+        }
+    }
+
+    fun updateAllLlmConfigs(configs: Map<String, LlmProviderConfig>) {
+        viewModelScope.launch {
+            repository.saveAllLlmConfigs(configs)
+            _savedConfigs.value = configs
         }
     }
 

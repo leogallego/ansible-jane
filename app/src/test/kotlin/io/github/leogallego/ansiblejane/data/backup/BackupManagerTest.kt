@@ -126,10 +126,10 @@ class BackupManagerTest {
     }
 
     @Test
-    fun `envelope version is set to 1`() {
+    fun `envelope version is set to 2`() {
         val exported = manager.exportBackup("pass", testInstances)
         val envelope = manager.importBackup(exported, "pass")
-        assertEquals(1, envelope.version)
+        assertEquals(2, envelope.version)
     }
 
     @Test

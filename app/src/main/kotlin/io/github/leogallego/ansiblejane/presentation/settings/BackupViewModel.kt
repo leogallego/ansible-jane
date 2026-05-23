@@ -55,7 +55,8 @@ class BackupViewModel(
                     return@launch
                 }
                 val llmConfig = if (includeAssistantConfig) assistantRepository.loadLlmConfig() else null
-                val data = backupManager.exportBackup(password, instances, llmConfig)
+                val allConfigs = if (includeAssistantConfig) assistantRepository.loadAllLlmConfigs() else null
+                val data = backupManager.exportBackup(password, instances, llmConfig, allConfigs)
                 _uiState.value = BackupUiState.ExportReady(data)
             } catch (e: Exception) {
                 _uiState.value = BackupUiState.Error("Export failed: ${e.message}")
@@ -140,11 +141,18 @@ class BackupViewModel(
                     imported++
                 }
 
-                envelope.llmConfig?.let { config ->
-                    assistantRepository.saveLlmConfig(config)
+                if (!envelope.llmConfigs.isNullOrEmpty()) {
+                    assistantRepository.saveAllLlmConfigs(envelope.llmConfigs)
+                    val activeConfig = envelope.activeProvider?.let { envelope.llmConfigs[it] }
+                        ?: envelope.llmConfigs.values.firstOrNull()
+                    activeConfig?.let { assistantRepository.saveLlmConfig(it) }
+                } else {
+                    envelope.llmConfig?.let { config ->
+                        assistantRepository.saveLlmConfig(config)
+                    }
                 }
 
-                val llmNote = if (envelope.llmConfig != null) " + LLM config" else ""
+                val llmNote = if (!envelope.llmConfigs.isNullOrEmpty() || envelope.llmConfig != null) " + LLM config" else ""
                 pendingEnvelope = null
                 _uiState.value = BackupUiState.Success("Imported $imported instance(s)$llmNote")
             } catch (e: Exception) {

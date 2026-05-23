@@ -17,12 +17,18 @@ class BackupManager {
     fun exportBackup(
         password: String,
         instances: List<AapInstance>,
-        llmConfig: LlmProviderConfig? = null
+        llmConfig: LlmProviderConfig? = null,
+        llmConfigs: Map<String, LlmProviderConfig>? = null
     ): ByteArray {
+        val activeProvider = if (llmConfig != null && llmConfig is LlmProviderConfig.OpenAiCompatible) {
+            io.github.leogallego.ansiblejane.assistant.data.KnownProvider.fromUrl(llmConfig.url).name
+        } else null
         val envelope = BackupEnvelope(
             createdAt = System.currentTimeMillis(),
             instances = instances.map { it.toBackupInstance() },
-            llmConfig = llmConfig
+            llmConfig = llmConfig,
+            llmConfigs = llmConfigs,
+            activeProvider = activeProvider
         )
         val plaintext = json.encodeToString(BackupEnvelope.serializer(), envelope)
         return encrypt(plaintext.toByteArray(Charsets.UTF_8), password)
