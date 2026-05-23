@@ -64,6 +64,7 @@ fun AssistantSettingsSheet(
     mcpServers: List<McpServerConfig>,
     connections: Map<String, McpConnectionState>,
     currentLlmConfig: LlmProviderConfig?,
+    savedConfigs: Map<String, LlmProviderConfig>,
     onToggleMcp: (Boolean) -> Unit,
     onAddMcpServer: (url: String, label: String) -> Unit,
     onRemoveMcpServer: (url: String) -> Unit,
@@ -73,6 +74,7 @@ fun AssistantSettingsSheet(
     onFetchModels: (url: String, apiKey: String?) -> Unit,
     onClearFetchedModels: () -> Unit,
     onSaveLlmConfig: (LlmProviderConfig) -> Unit,
+    onSaveAllConfigs: (Map<String, LlmProviderConfig>) -> Unit,
     onClearHistory: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -89,10 +91,17 @@ fun AssistantSettingsSheet(
     var llmApiKey by remember { mutableStateOf(savedConfig?.apiKey ?: "") }
 
     var providerState by remember {
-        mutableStateOf<Map<KnownProvider, Pair<String, String>>>(
-            if (savedConfig != null) mapOf(initialProvider to (savedConfig.model to (savedConfig.apiKey ?: "")))
-            else emptyMap()
-        )
+        val initial = mutableMapOf<KnownProvider, Pair<String, String>>()
+        for ((key, config) in savedConfigs) {
+            val provider = try { KnownProvider.valueOf(key) } catch (_: Exception) { continue }
+            if (config is LlmProviderConfig.OpenAiCompatible) {
+                initial[provider] = config.model to (config.apiKey ?: "")
+            }
+        }
+        if (savedConfig != null && initialProvider !in initial) {
+            initial[initialProvider] = savedConfig.model to (savedConfig.apiKey ?: "")
+        }
+        mutableStateOf<Map<KnownProvider, Pair<String, String>>>(initial)
     }
 
     var tokenMode by remember { mutableStateOf(savedConfig?.tokenSavingMode ?: TokenSavingMode.STANDARD) }
@@ -288,11 +297,24 @@ fun AssistantSettingsSheet(
                             onClick = {
                                 if (selectedProvider != provider) {
                                     providerState = providerState + (selectedProvider to (llmModel to llmApiKey))
+
+                                    val effectiveUrl = if (selectedProvider.urlEditable) llmUrl
+                                        else selectedProvider.baseUrl
+                                    val currentConfig = LlmProviderConfig.OpenAiCompatible(
+                                        url = effectiveUrl.trimEnd('/'),
+                                        model = llmModel,
+                                        apiKey = llmApiKey.ifBlank { null },
+                                        tokenSavingMode = tokenMode
+                                    )
+                                    onSaveAllConfigs(savedConfigs + (selectedProvider.name to currentConfig))
+
                                     selectedProvider = provider
-                                    llmUrl = provider.baseUrl
+                                    val restoredConfig = savedConfigs[provider.name] as? LlmProviderConfig.OpenAiCompatible
+                                    llmUrl = restoredConfig?.url ?: provider.baseUrl
                                     val restored = providerState[provider]
-                                    llmModel = restored?.first ?: ""
-                                    llmApiKey = restored?.second ?: ""
+                                    llmModel = restored?.first ?: restoredConfig?.model ?: ""
+                                    llmApiKey = restored?.second ?: restoredConfig?.apiKey ?: ""
+                                    tokenMode = restoredConfig?.tokenSavingMode ?: TokenSavingMode.STANDARD
                                     onClearFetchedModels()
                                 }
                                 providerExpanded = false

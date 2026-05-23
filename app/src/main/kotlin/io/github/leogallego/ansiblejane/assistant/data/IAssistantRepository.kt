@@ -8,4 +8,6 @@ interface IAssistantRepository {
     fun clearHistory()
     suspend fun saveLlmConfig(config: LlmProviderConfig)
     suspend fun loadLlmConfig(): LlmProviderConfig?
+    suspend fun saveAllLlmConfigs(configs: Map<String, LlmProviderConfig>)
+    suspend fun loadAllLlmConfigs(): Map<String, LlmProviderConfig>
 }

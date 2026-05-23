@@ -6,10 +6,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BackupEnvelope(
-    val version: Int = 1,
+    val version: Int = 2,
     val createdAt: Long,
     val instances: List<BackupInstance>,
-    val llmConfig: LlmProviderConfig? = null
+    val llmConfig: LlmProviderConfig? = null,
+    val llmConfigs: Map<String, LlmProviderConfig>? = null,
+    val activeProvider: String? = null
 )
 
 @Serializable
