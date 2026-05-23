@@ -64,6 +64,8 @@ class SettingsViewModel(
                 val preservedActiveConfig = (current as? SettingsUiState.Ready)?.activeConfig ?: activeConfig
                 val preservedActiveKey = (current as? SettingsUiState.Ready)?.activeProviderKey ?: initialActiveKey
                 val preservedDetails = (current as? SettingsUiState.Ready)?.selectedInstanceForDetails
+                val preservedThemeMode = (current as? SettingsUiState.Ready)?.themeMode
+                    ?: io.github.leogallego.ansiblejane.ui.components.ThemeMode.SYSTEM
 
                 SettingsUiState.Ready(
                     currentTab = preservedTab,
@@ -72,6 +74,7 @@ class SettingsViewModel(
                     selectedInstanceForDetails = preservedDetails,
                     timezoneId = timezone,
                     timeFormat = timeFormat,
+                    themeMode = preservedThemeMode,
                     savedConfigs = preservedSavedConfigs,
                     activeConfig = preservedActiveConfig,
                     activeProviderKey = preservedActiveKey,
