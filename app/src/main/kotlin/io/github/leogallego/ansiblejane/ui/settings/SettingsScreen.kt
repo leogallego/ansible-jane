@@ -130,8 +130,6 @@ private fun SettingsContent(
                 onTimezoneSelected = onTimezoneSelected,
                 onTimeFormatSelected = onTimeFormatSelected,
                 onThemeModeSelected = onThemeModeSelected,
-                onClearHistory = onClearHistory,
-                onLogout = onLogout,
                 modifier = Modifier.weight(1f)
             )
             SettingsTab.Instances -> InstancesTab(
@@ -143,6 +141,7 @@ private fun SettingsContent(
                 onShowDetails = onShowDetails,
                 onDismissDetails = onDismissDetails,
                 onAddInstance = onAddInstance,
+                onLogout = onLogout,
                 modifier = Modifier.weight(1f)
             )
             SettingsTab.Agent -> AgentTab(
@@ -155,6 +154,7 @@ private fun SettingsContent(
                 onClearFetchedModels = onClearFetchedModels,
                 onSaveProviderConfig = onSaveProviderConfig,
                 onSwitchActiveProvider = onSwitchActiveProvider,
+                onClearHistory = onClearHistory,
                 modifier = Modifier.weight(1f)
             )
             SettingsTab.Tools -> ToolsTab(

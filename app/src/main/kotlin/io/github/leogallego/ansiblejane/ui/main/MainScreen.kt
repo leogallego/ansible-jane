@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -58,8 +59,8 @@ fun MainScreen(
     val activeProviderKey by assistantRepository.activeProviderKeyFlow.collectAsStateWithLifecycle(null)
 
     val tabs = TopLevelTab.entries
-    val janeTabIndex = tabs.indexOfFirst { it is TopLevelTab.Assistant }.coerceAtLeast(0)
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(janeTabIndex) }
+    val activityTabIndex = tabs.indexOfFirst { it is TopLevelTab.Activity }.coerceAtLeast(0)
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(activityTabIndex) }
     val selectedTab = tabs[selectedTabIndex]
 
     val defaultSegmentIndex = selectedTab.segments.indexOfFirst { it.isDefault }.coerceAtLeast(0)
@@ -154,7 +155,8 @@ fun MainScreen(
                 }
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Column(
             modifier = Modifier
