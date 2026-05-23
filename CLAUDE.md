@@ -45,7 +45,7 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 
 ## AI Assistant Architecture
 
-The AI assistant (`assistant/` package) provides natural-language interaction with AAP via tool-use LLMs.
+The AI assistant (`assistant/` package) provides natural-language interaction with AAP via tool-use LLMs. Full pipeline flow with component responsibilities is documented in `docs/tool-pipeline-architecture.md`.
 
 ### Tool System
 
