@@ -51,8 +51,9 @@ fun MainScreen(
     val tokenManager: TokenManager = koinInject()
     val activeInstance by tokenManager.activeInstance.collectAsStateWithLifecycle()
 
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     val tabs = TopLevelTab.entries
+    val janeTabIndex = tabs.indexOfFirst { it is TopLevelTab.Assistant }.coerceAtLeast(0)
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(janeTabIndex) }
     val selectedTab = tabs[selectedTabIndex]
 
     val defaultSegmentIndex = selectedTab.segments.indexOfFirst { it.isDefault }.coerceAtLeast(0)
