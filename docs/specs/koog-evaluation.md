@@ -1,7 +1,7 @@
 # Koog Evaluation — Full Findings
 
 **Date:** 2026-05-09
-**Issue:** [#56](https://github.com/leogallego/aapdroid/issues/56)
+**Issue:** [#56](https://github.com/leogallego/ansible-jane/issues/56)
 **Framework:** [Koog](https://github.com/JetBrains/koog) by JetBrains (Apache 2.0, 4.1K stars)
 **Version analyzed:** Commit `24f6695` (May 2026), updated for release 0.8.0 (April 2026)
 

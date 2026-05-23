@@ -417,7 +417,7 @@ private fun AboutSection() {
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable {
                     context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/leogallego/aapdroid"))
+                        Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/leogallego/ansible-jane"))
                     )
                 }
             )

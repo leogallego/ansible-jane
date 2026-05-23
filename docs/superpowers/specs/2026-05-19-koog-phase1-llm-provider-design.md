@@ -1,7 +1,7 @@
 # Koog Phase 1: Replace LLM Provider with Koog Client
 
 **Date:** 2026-05-19
-**Issue:** [#56](https://github.com/leogallego/aapdroid/issues/56)
+**Issue:** [#56](https://github.com/leogallego/ansible-jane/issues/56)
 **Branch:** TBD (feature branch off main)
 **Prerequisites:** All met — Kotlin 2.3.21, R8 enabled, OkHttp 5.3.2 (PR #65), Compose BOM 2026.05.00
 
