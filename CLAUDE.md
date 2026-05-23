@@ -93,6 +93,10 @@ See `skills/README.md` for sources and licenses.
 
 - **MUST** create all temporary files and directories inside the project directory (e.g., `.tmp/`). NEVER use `/tmp`, `$TMPDIR`, or any system temp directory. Clean up temp files when done.
 
+## Reference Projects
+
+- **Kai 9000** — source code is available at `tmp/Kai/`. When the user refers to "Kai", look at this directory for architecture, UI patterns, and implementation reference. It's a KMP project; main code is in `tmp/Kai/composeApp/src/commonMain/`.
+
 ## Android Device Testing
 
 - **MUST** invoke the `android-cli` skill (via Skill tool) before ANY emulator or device interaction — deploying, starting/stopping emulators, capturing screenshots, inspecting layouts, or running apps. Never use `adb` directly for tasks the `android` CLI covers. If the skill is not loaded yet in this session, load it before proceeding.
