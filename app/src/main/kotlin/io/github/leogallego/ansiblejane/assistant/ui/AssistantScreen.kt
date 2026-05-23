@@ -36,7 +36,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -149,16 +148,12 @@ private fun ActiveChatContent(
     }
 
     val imeVisible = WindowInsets.isImeVisible
-    val totalItems by remember {
-        derivedStateOf {
-            val msgCount = state.messages.size
-            val streaming = if (state.isGenerating) 1 else 0
-            val empty = if (msgCount == 0 && !state.isGenerating) 1 else 0
-            msgCount + streaming + empty
-        }
-    }
+    val messageCount = state.messages.size
+    val totalItems = messageCount +
+        (if (state.isGenerating) 1 else 0) +
+        (if (messageCount == 0 && !state.isGenerating) 1 else 0)
 
-    LaunchedEffect(state.messages.size, state.isGenerating) {
+    LaunchedEffect(messageCount, state.isGenerating) {
         if (totalItems > 0) {
             listState.animateScrollToItem(totalItems - 1)
         }
@@ -174,13 +169,11 @@ private fun ActiveChatContent(
         focusRequester.requestFocus()
     }
 
-    val mcpStatusText by remember(state.connections) {
-        derivedStateOf {
-            if (state.connections.isEmpty()) null
-            else {
-                val connected = state.connections.count { it.value is McpConnectionState.Connected }
-                "${connected}/${state.connections.size} MCP servers connected"
-            }
+    val mcpStatusText = remember(state.connections) {
+        if (state.connections.isEmpty()) null
+        else {
+            val connected = state.connections.count { it.value is McpConnectionState.Connected }
+            "${connected}/${state.connections.size} MCP servers connected"
         }
     }
 
