@@ -4,12 +4,17 @@ import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeAssistantRepository : IAssistantRepository {
     private val messages = mutableListOf<ChatMessage>()
     var savedConfig: LlmProviderConfig? = null
     var allConfigs = mutableMapOf<String, LlmProviderConfig>()
     var activeProvider: String? = null
+
+    private val _activeConfigFlow = MutableStateFlow<LlmProviderConfig?>(null)
+    override val activeConfigFlow: Flow<LlmProviderConfig?> = _activeConfigFlow
 
     override fun addMessage(message: ChatMessage) {
         messages.add(message)
@@ -28,6 +33,7 @@ class FakeAssistantRepository : IAssistantRepository {
         allConfigs[providerKey] = config
         activeProvider = providerKey
         savedConfig = config
+        _activeConfigFlow.value = config
     }
 
     override suspend fun loadLlmConfig(): LlmProviderConfig? {

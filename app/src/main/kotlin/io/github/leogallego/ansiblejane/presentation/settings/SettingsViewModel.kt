@@ -2,51 +2,94 @@ package io.github.leogallego.ansiblejane.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
+import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
+import io.github.leogallego.ansiblejane.assistant.data.ModelFetcher
+import io.github.leogallego.ansiblejane.assistant.presentation.ModelFetchState
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
-import io.github.leogallego.ansiblejane.model.AapInstance
+import io.github.leogallego.ansiblejane.model.McpServerConfig
+import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
 import java.time.ZoneId
 
 class SettingsViewModel(
     private val tokenManager: ITokenManager,
     private val apiProvider: IAapApiProvider,
-    private val userPreferences: IUserPreferencesRepository
+    private val userPreferences: IUserPreferencesRepository,
+    private val assistantRepository: IAssistantRepository,
+    private val mcpServerManager: McpServerManager,
+    private val httpClient: OkHttpClient,
+    private val json: Json
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Idle)
+    private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
+            val configs = assistantRepository.loadAllLlmConfigs()
+            val activeConfig = assistantRepository.loadLlmConfig()
+
             combine(
                 tokenManager.instances,
                 tokenManager.activeInstance,
                 userPreferences.timezoneId,
-                userPreferences.timeFormat
-            ) { instances, active, timezone, timeFormat ->
+                userPreferences.timeFormat,
+                mcpServerManager.connections
+            ) { instances, active, timezone, timeFormat, connections ->
                 DateFormatter.zoneOverride = timezone?.let {
                     try { ZoneId.of(it) } catch (_: Exception) { null }
                 }
                 DateFormatter.timeFormat = timeFormat
-                SettingsUiState.Success(
+
+                val current = _uiState.value
+                val preservedTab = (current as? SettingsUiState.Ready)?.currentTab ?: SettingsTab.General
+                val preservedFetchedModels = (current as? SettingsUiState.Ready)?.fetchedModels ?: emptyList()
+                val preservedModelFetchState = (current as? SettingsUiState.Ready)?.modelFetchState ?: ModelFetchState.Idle
+                val preservedSavedConfigs = (current as? SettingsUiState.Ready)?.savedConfigs ?: configs
+                val preservedActiveConfig = (current as? SettingsUiState.Ready)?.activeConfig ?: activeConfig
+                val preservedDetails = (current as? SettingsUiState.Ready)?.selectedInstanceForDetails
+
+                SettingsUiState.Ready(
+                    currentTab = preservedTab,
                     instances = instances,
                     selectedInstance = active,
+                    selectedInstanceForDetails = preservedDetails,
                     timezoneId = timezone,
-                    timeFormat = timeFormat
+                    timeFormat = timeFormat,
+                    savedConfigs = preservedSavedConfigs,
+                    activeConfig = preservedActiveConfig,
+                    fetchedModels = preservedFetchedModels,
+                    modelFetchState = preservedModelFetchState,
+                    mcpEnabled = active?.mcpEnabled ?: false,
+                    mcpServers = active?.mcpServerUrls ?: emptyList(),
+                    connections = connections
                 )
             }.collect { state ->
                 _uiState.value = state
             }
         }
     }
+
+    // --- Tab ---
+
+    fun selectTab(tab: SettingsTab) {
+        updateReady { copy(currentTab = tab) }
+    }
+
+    // --- Instances ---
 
     fun switchInstance(instanceId: String) {
         viewModelScope.launch {
@@ -63,18 +106,17 @@ class SettingsViewModel(
 
     fun showInstanceDetails(instanceId: String) {
         val current = _uiState.value
-        if (current is SettingsUiState.Success) {
+        if (current is SettingsUiState.Ready) {
             val instance = current.instances.find { it.id == instanceId }
             _uiState.value = current.copy(selectedInstanceForDetails = instance)
         }
     }
 
     fun dismissDetails() {
-        val current = _uiState.value
-        if (current is SettingsUiState.Success) {
-            _uiState.value = current.copy(selectedInstanceForDetails = null)
-        }
+        updateReady { copy(selectedInstanceForDetails = null) }
     }
+
+    // --- General (Display) ---
 
     fun setTimezone(zoneId: String?) {
         viewModelScope.launch {
@@ -85,6 +127,118 @@ class SettingsViewModel(
     fun setTimeFormat(format: TimeFormat) {
         viewModelScope.launch {
             userPreferences.setTimeFormat(format)
+        }
+    }
+
+    // --- Agent (LLM Config) ---
+
+    fun updateLlmConfig(config: LlmProviderConfig) {
+        viewModelScope.launch {
+            assistantRepository.saveLlmConfig(config)
+            val configs = assistantRepository.loadAllLlmConfigs()
+            updateReady { copy(activeConfig = config, savedConfigs = configs) }
+        }
+    }
+
+    fun updateAllLlmConfigs(configs: Map<String, LlmProviderConfig>) {
+        viewModelScope.launch {
+            assistantRepository.saveAllLlmConfigs(configs)
+            updateReady { copy(savedConfigs = configs) }
+        }
+    }
+
+    fun fetchAvailableModels(baseUrl: String, apiKey: String?) {
+        viewModelScope.launch {
+            updateReady { copy(modelFetchState = ModelFetchState.Loading) }
+            val fetcher = ModelFetcher(buildLlmClient(), json)
+            when (val result = fetcher.fetchModels(baseUrl, apiKey)) {
+                is ModelFetcher.Result.Success -> {
+                    updateReady {
+                        copy(
+                            fetchedModels = result.models,
+                            modelFetchState = ModelFetchState.Success(result.models.size)
+                        )
+                    }
+                }
+                is ModelFetcher.Result.Error -> {
+                    updateReady { copy(modelFetchState = ModelFetchState.Error(result.message)) }
+                }
+            }
+        }
+    }
+
+    fun clearFetchedModels() {
+        updateReady { copy(fetchedModels = emptyList(), modelFetchState = ModelFetchState.Idle) }
+    }
+
+    // --- Tools (MCP) ---
+
+    fun toggleMcpEnabled(enabled: Boolean) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val servers = if (enabled && instance.mcpServerUrls.isNullOrEmpty()) {
+                val base = "${instance.baseUrl.trimEnd('/')}:8448"
+                listOf(
+                    McpServerConfig(url = "$base/mcp", label = "aap", isAutoDetected = true, readOnly = true)
+                )
+            } else {
+                instance.mcpServerUrls
+            }
+            tokenManager.updateMcpConfig(instance.id, enabled, if (enabled) servers else null)
+        }
+    }
+
+    fun addMcpServer(url: String, label: String) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
+            current.add(McpServerConfig(url = url.trimEnd('/'), label = label))
+            tokenManager.updateMcpConfig(instance.id, true, current)
+        }
+    }
+
+    fun removeMcpServer(url: String) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val updated = instance.mcpServerUrls?.filter { it.url != url }
+            val enabled = !updated.isNullOrEmpty()
+            tokenManager.updateMcpConfig(instance.id, enabled, updated)
+        }
+    }
+
+    fun toggleServerReadOnly(url: String, readOnly: Boolean) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val updated = instance.mcpServerUrls?.map {
+                if (it.url == url) it.copy(readOnly = readOnly) else it
+            }
+            tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
+        }
+    }
+
+    // --- Chat History ---
+
+    fun clearHistory() {
+        assistantRepository.clearHistory()
+    }
+
+    // --- Private helpers ---
+
+    private fun buildLlmClient(): OkHttpClient {
+        val instance = tokenManager.activeInstance.value
+        val builder = httpClient.newBuilder()
+        if (instance?.trustSelfSigned == true) {
+            val tm = CertTrustManager.createTrustAllManager()
+            builder.sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
+            builder.hostnameVerifier { _, _ -> true }
+        }
+        return builder.build()
+    }
+
+    private inline fun updateReady(crossinline transform: SettingsUiState.Ready.() -> SettingsUiState.Ready) {
+        _uiState.update { current ->
+            if (current is SettingsUiState.Ready) current.transform()
+            else current
         }
     }
 }

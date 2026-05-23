@@ -9,6 +9,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.MapSerializer
@@ -89,4 +91,20 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
             emptyMap()
         }
     }
+
+    override val activeConfigFlow: Flow<LlmProviderConfig?> =
+        context.assistantDataStore.data.map { prefs ->
+            val key = prefs[KEY_ACTIVE_PROVIDER] ?: return@map null
+            val mapJson = prefs[KEY_LLM_CONFIGS] ?: return@map null
+            try {
+                val configs = json.decodeFromString(
+                    MapSerializer(String.serializer(), LlmProviderConfig.serializer()),
+                    mapJson
+                )
+                configs[key]
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to deserialize active config from flow", e)
+                null
+            }
+        }.distinctUntilChanged()
 }

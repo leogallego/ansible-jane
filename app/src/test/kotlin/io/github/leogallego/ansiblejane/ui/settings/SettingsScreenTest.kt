@@ -9,11 +9,15 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import io.github.leogallego.ansiblejane.MainDispatcherRule
 import io.github.leogallego.ansiblejane.fakes.FakeAapApiProvider
+import io.github.leogallego.ansiblejane.fakes.FakeAssistantRepository
 import io.github.leogallego.ansiblejane.fakes.FakeTokenManager
 import io.github.leogallego.ansiblejane.fakes.FakeUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.AapInstance
+import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
 import io.github.leogallego.ansiblejane.testKoinModule
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -34,6 +38,12 @@ class SettingsScreenTest {
     private val fakeTokenManager = FakeTokenManager()
     private val fakeApiProvider = FakeAapApiProvider()
     private val fakeUserPreferences = FakeUserPreferencesRepository()
+    private val fakeAssistantRepo = FakeAssistantRepository()
+    private val json = Json { ignoreUnknownKeys = true }
+    private val mcpServerManager = McpServerManager(
+        httpClientFactory = { OkHttpClient() },
+        json = json
+    )
 
     @After
     fun tearDown() {
@@ -60,7 +70,15 @@ class SettingsScreenTest {
         onAddInstance: () -> Unit = {}
     ) {
         startKoin { modules(testKoinModule(tokenManager = fakeTokenManager)) }
-        val viewModel = SettingsViewModel(fakeTokenManager, fakeApiProvider, fakeUserPreferences)
+        val viewModel = SettingsViewModel(
+            tokenManager = fakeTokenManager,
+            apiProvider = fakeApiProvider,
+            userPreferences = fakeUserPreferences,
+            assistantRepository = fakeAssistantRepo,
+            mcpServerManager = mcpServerManager,
+            httpClient = OkHttpClient(),
+            json = json
+        )
         composeTestRule.setContent {
             MaterialTheme {
                 SettingsScreen(
@@ -75,24 +93,30 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `displays instance list`() {
+    fun `displays instance list on Instances tab`() {
         fakeTokenManager.setInstances(listOf(instance1, instance2))
         setUpScreen()
+
+        composeTestRule.onNodeWithText("Instances").performClick()
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Production").assertIsDisplayed()
         composeTestRule.onNodeWithText("Staging").assertIsDisplayed()
     }
 
     @Test
-    fun `shows Add Instance button`() {
+    fun `shows Add Instance button on Instances tab`() {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
+
+        composeTestRule.onNodeWithText("Instances").performClick()
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Add Instance").assertIsDisplayed()
     }
 
     @Test
-    fun `shows Logout All button`() {
+    fun `shows Logout All button on General tab`() {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
 
@@ -120,7 +144,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `about section shows app name`() {
+    fun `about section shows app name on General tab`() {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
 
@@ -128,7 +152,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `backup restore section visible`() {
+    fun `backup restore section visible on General tab`() {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
 
@@ -136,10 +160,46 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `active instance shows Active pill`() {
+    fun `active instance shows Active pill on Instances tab`() {
         fakeTokenManager.setInstances(listOf(instance1, instance2))
         setUpScreen()
 
+        composeTestRule.onNodeWithText("Instances").performClick()
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("Active").assertIsDisplayed()
+    }
+
+    @Test
+    fun `tab selector shows all four tabs`() {
+        fakeTokenManager.setInstances(listOf(instance1))
+        setUpScreen()
+
+        composeTestRule.onNodeWithText("General").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Instances").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Agent").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Tools").assertIsDisplayed()
+    }
+
+    @Test
+    fun `Agent tab shows LLM Provider section`() {
+        fakeTokenManager.setInstances(listOf(instance1))
+        setUpScreen()
+
+        composeTestRule.onNodeWithText("Agent").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("LLM Provider").assertIsDisplayed()
+    }
+
+    @Test
+    fun `Tools tab shows MCP Servers section`() {
+        fakeTokenManager.setInstances(listOf(instance1))
+        setUpScreen()
+
+        composeTestRule.onNodeWithText("Tools").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("MCP Servers").assertIsDisplayed()
     }
 }

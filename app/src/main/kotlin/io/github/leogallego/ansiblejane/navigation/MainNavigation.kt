@@ -18,7 +18,8 @@ fun TabContent(
     tab: TopLevelTab,
     segment: Segment,
     onNavigateToJobStatus: (Int) -> Unit,
-    onNavigateToWorkflowJobStatus: (Int) -> Unit = {}
+    onNavigateToWorkflowJobStatus: (Int) -> Unit = {},
+    onNavigateToSettings: () -> Unit = {}
 ) {
     if (!segment.isImplemented) {
         PlaceholderScreen(title = segment.label)
@@ -55,7 +56,7 @@ fun TabContent(
             }
         }
         is TopLevelTab.Assistant -> {
-            AssistantScreen()
+            AssistantScreen(onNavigateToSettings = onNavigateToSettings)
         }
     }
 }
