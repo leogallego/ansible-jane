@@ -1,0 +1,19 @@
+Ansible Jane is a lightweight Android app for managing your Ansible Automation Platform (AAP) instances on the go.
+
+Jane is an AI assistant that works with the models you choose: local models as small as qwen2.5:7b running on Ollama, or frontier providers like OpenAI-compatible APIs, Google Gemini, and OpenRouter. Jane uses tool-use and MCP to query your AAP instance in natural language.
+
+Features:
+- Browse and launch job templates and workflow templates
+- Monitor job status and workflow execution in real-time
+- Manage inventories and hosts
+- View schedules and EDA audit logs
+- AI assistant (Jane) for natural-language interaction with your AAP instance
+- Bring your own model: local (Ollama, llama.cpp) or cloud (OpenAI-compatible, Gemini, OpenRouter)
+- Multi-instance support with secure token storage
+- Material You (Material 3) design with dark mode support
+
+Requirements:
+- Ansible Automation Platform 2.5+ with Gateway
+- Android 12 (API 31) or higher
+
+Ansible Jane is free and open source software.

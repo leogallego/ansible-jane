@@ -54,7 +54,7 @@ specs/010-ai-assistant-mcp/
 ### Source Code (repository root)
 
 ```text
-app/src/main/kotlin/com/example/aapremote/
+app/src/main/kotlin/io/github/leogallego/ansiblejane/
 ├── network/
 │   ├── mcp/
 │   │   ├── McpClient.kt             # Streamable HTTP MCP client

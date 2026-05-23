@@ -52,7 +52,7 @@ AapInstance (MODIFIED)          McpServerConfig (NEW)
 
 #### AapInstance
 
-**File**: `app/src/main/kotlin/com/example/aapremote/model/AapInstance.kt`
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/model/AapInstance.kt`
 
 | Field | Type | Change | Notes |
 |-------|------|--------|-------|
@@ -73,7 +73,7 @@ AapInstance (MODIFIED)          McpServerConfig (NEW)
 
 #### McpServerConfig
 
-**File**: `app/src/main/kotlin/com/example/aapremote/model/AapInstance.kt` (co-located)
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/model/AapInstance.kt` (co-located)
 
 | Field | Type | Required | Default | Notes |
 |-------|------|----------|---------|-------|
@@ -85,7 +85,7 @@ AapInstance (MODIFIED)          McpServerConfig (NEW)
 
 #### McpTypes (JSON-RPC 2.0)
 
-**File**: `app/src/main/kotlin/com/example/aapremote/network/mcp/McpTypes.kt`
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/network/mcp/McpTypes.kt`
 
 ```kotlin
 @Serializable
@@ -146,7 +146,7 @@ data class McpServerInfo(
 
 #### McpConnectionState
 
-**File**: `app/src/main/kotlin/com/example/aapremote/network/mcp/McpSession.kt`
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/network/mcp/McpSession.kt`
 
 ```kotlin
 sealed interface McpConnectionState {
@@ -165,7 +165,7 @@ sealed interface McpConnectionState {
 
 #### ToolSpec
 
-**File**: `app/src/main/kotlin/com/example/aapremote/assistant/tools/ToolSpec.kt`
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/assistant/tools/ToolSpec.kt`
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -177,7 +177,7 @@ sealed interface McpConnectionState {
 
 #### Tool (interface)
 
-**File**: `app/src/main/kotlin/com/example/aapremote/assistant/tools/ToolSpec.kt` (co-located)
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/assistant/tools/ToolSpec.kt` (co-located)
 
 ```kotlin
 interface Tool {
@@ -188,7 +188,7 @@ interface Tool {
 
 #### ToolResult
 
-**File**: `app/src/main/kotlin/com/example/aapremote/assistant/tools/ToolSpec.kt` (co-located)
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/assistant/tools/ToolSpec.kt` (co-located)
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -214,7 +214,7 @@ enum class ErrorType {
 
 #### LlmProvider (interface)
 
-**File**: `app/src/main/kotlin/com/example/aapremote/assistant/llm/LlmProvider.kt`
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/assistant/llm/LlmProvider.kt`
 
 ```kotlin
 interface LlmProvider {
@@ -227,7 +227,7 @@ interface LlmProvider {
 
 #### StreamEvent (sealed interface)
 
-**File**: `app/src/main/kotlin/com/example/aapremote/assistant/llm/LlmTypes.kt`
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/assistant/llm/LlmTypes.kt`
 
 | Variant | Fields | Notes |
 |---------|--------|-------|
@@ -261,7 +261,7 @@ interface LlmProvider {
 
 #### LlmProviderConfig (sealed interface)
 
-**File**: `app/src/main/kotlin/com/example/aapremote/assistant/data/AssistantConfig.kt`
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/assistant/data/AssistantConfig.kt`
 
 | Variant | Fields |
 |---------|--------|
@@ -277,7 +277,7 @@ interface LlmProvider {
 
 #### ChatMessage
 
-**File**: `app/src/main/kotlin/com/example/aapremote/assistant/engine/ChatMessage.kt`
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/assistant/engine/ChatMessage.kt`
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -299,7 +299,7 @@ enum class Role { USER, ASSISTANT, TOOL, SYSTEM }
 
 #### AssistantUiState (sealed interface)
 
-**File**: `app/src/main/kotlin/com/example/aapremote/assistant/presentation/AssistantUiState.kt`
+**File**: `app/src/main/kotlin/io/github/leogallego/ansiblejane/assistant/presentation/AssistantUiState.kt`
 
 | Variant | Fields | Notes |
 |---------|--------|-------|

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AAP Remote Control — a lightweight Android app that serves as a remote control for Ansible Automation Platform (AAP). Users authenticate with their AAP instance, browse job templates, launch playbooks, and monitor job status from their phone.
+Ansible Jane is a lightweight Android app for managing Ansible Automation Platform (AAP). Users authenticate with their AAP instance, browse job templates, launch playbooks, monitor job status, and interact with Jane, an AI assistant that works with local models (Ollama, llama.cpp) or frontier providers (OpenAI-compatible, Gemini, OpenRouter) through tool-use and MCP.
 
 Full specification is in `idea.md`.
 

@@ -50,7 +50,7 @@ specs/007-ui-polish-animations/
 ### Source Code (repository root)
 
 ```text
-app/src/main/kotlin/com/example/aapremote/
+app/src/main/kotlin/io/github/leogallego/ansiblejane/
 ├── model/
 │   └── AppError.kt                    # NEW: Typed error sealed class
 ├── data/

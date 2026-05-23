@@ -50,7 +50,7 @@ specs/009-multi-instance-support/
 ### Source Code (repository root)
 
 ```text
-app/src/main/kotlin/com/example/aapremote/
+app/src/main/kotlin/io/github/leogallego/ansiblejane/
 ├── model/
 │   └── AapInstance.kt              # NEW — data class for instance
 ├── data/

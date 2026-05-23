@@ -11,7 +11,7 @@
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2)
-- All paths relative to `app/src/main/kotlin/com/example/aapremote/`
+- All paths relative to `app/src/main/kotlin/io/github/leogallego/ansiblejane/`
 
 ---
 

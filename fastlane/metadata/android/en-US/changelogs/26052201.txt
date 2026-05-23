@@ -1,0 +1,4 @@
+- Renamed app to Ansible Jane
+- New application ID: io.github.leogallego.ansiblejane
+- AI assistant renamed to Jane
+- Added F-Droid metadata

@@ -53,7 +53,7 @@ specs/008-infrastructure-section/
 ### Source Code (repository root)
 
 ```text
-app/src/main/kotlin/com/example/aapremote/
+app/src/main/kotlin/io/github/leogallego/ansiblejane/
 ├── model/
 │   ├── Inventory.kt              # NEW — API response model
 │   ├── Host.kt                   # NEW — API response model (includes HostFacts, JobHostSummary)

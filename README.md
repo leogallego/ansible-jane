@@ -1,20 +1,20 @@
-# AAPdroid
+# Ansible Jane
 
-A lightweight Android app for remotely controlling [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Authenticate with your AAP instance, browse job templates, launch playbooks, and monitor job status from your phone.
+A lightweight Android app for managing [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Authenticate with your AAP instance, browse job templates, launch playbooks, monitor job status, and interact with Jane, an AI assistant that works with local models (as small as qwen2.5:7b via Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter) through tool-use and MCP.
 
 > **Disclaimer:** This project is not affiliated with or endorsed by Red Hat or the Ansible project.
 >
-> This is a vibe-coded, spec-driven, AI-assisted developed application. It comes with **no warranties of any kind** — use at your own risk. This project exists purely for research and investigation purposes.
+> This is a vibe-coded, spec-driven, AI-assisted developed application. It comes with **no warranties of any kind** - use at your own risk. This project exists purely for research and investigation purposes.
 
 ## Install
 
-- **F-Droid** — add this repo to your F-Droid client: `https://leogallego.github.io/aapdroid/fdroid/repo`
-- **GitHub Releases** — download the latest APK from [Releases](https://github.com/leogallego/aapdroid/releases/latest)
-- **Obtainium** — point [Obtainium](https://github.com/ImranR98/Obtainium) at this repo for automatic updates
+- **F-Droid** - add this repo to your F-Droid client: `https://leogallego.github.io/aapdroid/fdroid/repo`
+- **GitHub Releases** - download the latest APK from [Releases](https://github.com/leogallego/aapdroid/releases/latest)
+- **Obtainium** - point [Obtainium](https://github.com/ImranR98/Obtainium) at this repo for automatic updates
 
 ## Features
 
-- **Multi-instance support** — connect to multiple AAP instances simultaneously and switch between them
+- **Multi-instance support** - connect to multiple AAP instances simultaneously and switch between them
 - **Connect** to any AAP instance using a Personal Access Token (PAT)
 - **Self-signed certificate** support for lab/dev environments
 - **Auto-detect** AAP API version (2.4 controller vs 2.5+ gateway)
@@ -23,7 +23,10 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 - **Monitor** job status with live polling and stdout output
 - **Monitor** workflow job status with sub-job tracking
 - **Recent jobs** history
-- **Infrastructure** — browse inventories and hosts
+- **Infrastructure** - browse inventories and hosts
+- **Jane AI assistant** - natural-language interaction with your AAP instance using tool-use and MCP
+- **Bring your own model** - local models via Ollama (qwen2.5:7b and up) or cloud providers (OpenAI-compatible, Gemini, OpenRouter)
+- **Schedules and EDA** - view schedules and EDA audit logs
 
 ## Screenshots
 
@@ -63,7 +66,7 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 
 1. Enter your AAP instance URL (e.g., `https://aap.example.com`)
 2. Optionally set an **Alias** (e.g., "Production", "Dev") for easy identification
-3. Enter your Personal Access Token (PAT) — generate one from your AAP user settings under **Tokens**
+3. Enter your Personal Access Token (PAT) - generate one from your AAP user settings under **Tokens**
 4. For lab/dev environments with self-signed certificates, toggle **Allow self-signed certificates**
 5. Tap **Connect**
 
@@ -71,37 +74,37 @@ A lightweight Android app for remotely controlling [Ansible Automation Platform 
 
 You can connect to multiple AAP instances simultaneously:
 
-- **Add** — in Settings, tap **Add Instance** to connect to another AAP instance
-- **Switch** — tap an inactive instance pill to switch; all data refreshes automatically
-- **View details** — tap the active instance pill to see URL, alias, API version, and certificate trust status
-- **Remove** — tap the **x** on any instance pill (with confirmation) to disconnect; if the active instance is removed, the next one is auto-promoted
+- **Add** - in Settings, tap **Add Instance** to connect to another AAP instance
+- **Switch** - tap an inactive instance pill to switch; all data refreshes automatically
+- **View details** - tap the active instance pill to see URL, alias, API version, and certificate trust status
+- **Remove** - tap the **x** on any instance pill (with confirmation) to disconnect; if the active instance is removed, the next one is auto-promoted
 - The **top bar** shows the active instance label (alias or hostname) as a subtitle
 
 ### Browsing Templates
 
 The **Templates** tab has two segments accessible via the segmented buttons at the top:
 
-- **Job Templates** — standard playbook-based templates
-- **Workflow Templates** — multi-step workflow templates
+- **Job Templates** - standard playbook-based templates
+- **Workflow Templates** - multi-step workflow templates
 
 Both segments support:
 
-- **Search** — type in the search bar to filter by name
-- **Label filtering** — tap a label chip to filter by label; tap again to clear
-- **Pagination** — scroll to the bottom to load more templates automatically
-- **Pull-to-refresh** — pull down on the list to reload data from the server (useful when templates are added or modified on the AAP side while the app is open)
+- **Search** - type in the search bar to filter by name
+- **Label filtering** - tap a label chip to filter by label; tap again to clear
+- **Pagination** - scroll to the bottom to load more templates automatically
+- **Pull-to-refresh** - pull down on the list to reload data from the server (useful when templates are added or modified on the AAP side while the app is open)
 
 ### Launching Jobs
 
 1. Tap the play button on a template card (only visible if your user has launch permission)
-2. If the template accepts extra variables, an input dialog appears first — enter valid JSON
+2. If the template accepts extra variables, an input dialog appears first - enter valid JSON
 3. Confirm the launch in the confirmation dialog
 4. The app navigates to the job status screen automatically
 
 ### Monitoring Jobs
 
-- **Job status** — shows job name, status badge, template name, start/finish/elapsed times, and stdout output
-- **Workflow job status** — same details plus a **Sub-Jobs** section listing each workflow node with its status; tap any sub-job to expand it and view its stdout output inline
+- **Job status** - shows job name, status badge, template name, start/finish/elapsed times, and stdout output
+- **Workflow job status** - same details plus a **Sub-Jobs** section listing each workflow node with its status; tap any sub-job to expand it and view its stdout output inline
 - Status auto-updates every 5 seconds while the job is running; polling stops when the job completes
 
 ### Activity Tab
@@ -122,7 +125,7 @@ Access settings via the gear icon in the top bar. Manage connected instances (ad
 - HTTPS-only enforced via network security config
 - No hardcoded URLs or tokens
 - Tokens never stored in plain text
-- Per-instance 401 handling — token expiry on one instance does not affect others
+- Per-instance 401 handling - token expiry on one instance does not affect others
 
 ## License
 

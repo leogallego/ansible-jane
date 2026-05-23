@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.aapremote"
+    namespace = "io.github.leogallego.ansiblejane"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.example.aapremote"
+        applicationId = "io.github.leogallego.ansiblejane"
         minSdk = 31
         targetSdk = 36
         versionCode = 26052201

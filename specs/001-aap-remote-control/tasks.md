@@ -15,7 +15,7 @@
 
 ## Path Conventions
 
-All source paths are under `app/src/main/kotlin/com/example/aapremote/`.
+All source paths are under `app/src/main/kotlin/io/github/leogallego/ansiblejane/`.
 Abbreviated as `src/` below for readability.
 
 ---
@@ -24,7 +24,7 @@ Abbreviated as `src/` below for readability.
 
 **Purpose**: Create project structure, configure dependencies, establish build configuration
 
-- [X] T001 Create Android project with Compose Empty Activity template, Kotlin, API 26 minimum, package `com.example.aapremote`
+- [X] T001 Create Android project with Compose Empty Activity template, Kotlin, API 26 minimum, package `io.github.leogallego.ansiblejane`
 - [X] T002 Configure `app/build.gradle.kts` with all dependencies: Compose BOM + Material 3, Compose Navigation, Retrofit + KotlinX Serialization converter, OkHttp + logging interceptor, Koin (core + compose), DataStore + Tink, Coroutines
 - [X] T003 [P] Create `app/src/main/res/xml/network_security_config.xml` enforcing HTTPS-only (cleartextTrafficPermitted=false) and reference it in AndroidManifest.xml
 - [X] T004 [P] Create directory structure matching plan.md: `src/{network,data,model,presentation/{auth,templates,jobs},ui/{theme,auth,templates,jobs,components},navigation}/`

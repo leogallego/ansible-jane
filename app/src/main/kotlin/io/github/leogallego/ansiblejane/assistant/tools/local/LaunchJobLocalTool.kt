@@ -1,0 +1,31 @@
+package io.github.leogallego.ansiblejane.assistant.tools.local
+
+import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
+import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
+import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import io.github.leogallego.ansiblejane.data.TemplateRepository
+import kotlinx.serialization.json.JsonObject
+
+class LaunchJobLocalTool(
+    private val repository: TemplateRepository
+) : LocalTool(
+    spec = ToolSpec(
+        name = "launch_job",
+        description = "Launch a job template by ID with optional extra variables",
+        parametersSchema = buildToolSchema(
+            Triple("template_id", "integer", "ID of the job template to launch"),
+            Triple("extra_vars", "string", "Extra variables as YAML/JSON string"),
+            required = listOf("template_id")
+        )
+    ),
+    destructive = true
+) {
+    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+        val templateId = args.intArg("template_id")
+            ?: return@executeSafely ToolResult(success = false, data = "template_id is required", errorType = ErrorType.NOT_FOUND)
+        val extraVars = args.stringArg("extra_vars")
+        val jobId = repository.launchJob(templateId, extraVars).getOrThrow()
+        ToolResult(success = true, data = """{"job_id": $jobId, "status": "launched"}""")
+    }
+}

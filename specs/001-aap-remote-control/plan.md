@@ -75,7 +75,7 @@ app/
         │   └── xml/
         │       └── network_security_config.xml
         └── kotlin/
-            └── com/example/aapremote/
+            └── io/github/leogallego/ansiblejane/
                 ├── AapRemoteApp.kt          # Application class (Koin init)
                 ├── MainActivity.kt          # Single ComponentActivity
                 ├── navigation/
@@ -135,7 +135,7 @@ app/
 ```
 
 **Structure Decision**: Standard Android single-module layout with
-feature-based packaging under `com.example.aapremote`. Layers are
+feature-based packaging under `io.github.leogallego.ansiblejane`. Layers are
 separated by top-level packages (`network`, `data`, `model`,
 `presentation`, `ui`). Each layer has its own Koin module.
 
