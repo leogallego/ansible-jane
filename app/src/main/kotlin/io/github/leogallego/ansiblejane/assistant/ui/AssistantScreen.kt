@@ -34,7 +34,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,7 +72,6 @@ fun AssistantScreen(
     viewModel: AssistantViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showSettings by remember { mutableStateOf(false) }
 
     when (val state = uiState) {
         is AssistantUiState.Idle -> {
@@ -109,7 +107,6 @@ fun AssistantScreen(
             ActiveChatContent(
                 state = state,
                 onSendMessage = { viewModel.sendMessage(it) },
-                onOpenSettings = { showSettings = true },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -127,34 +124,6 @@ fun AssistantScreen(
             }
         }
     }
-
-    if (showSettings) {
-        val activeInstance = viewModel.activeInstance
-        val connections = (uiState as? AssistantUiState.Active)?.connections ?: emptyMap()
-        val currentLlmConfig by viewModel.llmConfig.collectAsStateWithLifecycle()
-        val allSavedConfigs by viewModel.savedConfigs.collectAsStateWithLifecycle()
-        val fetchedModels by viewModel.fetchedModels.collectAsStateWithLifecycle()
-        val modelFetchState by viewModel.modelFetchState.collectAsStateWithLifecycle()
-        AssistantSettingsSheet(
-            mcpEnabled = activeInstance?.mcpEnabled ?: false,
-            mcpServers = activeInstance?.mcpServerUrls ?: emptyList(),
-            connections = connections,
-            currentLlmConfig = currentLlmConfig,
-            savedConfigs = allSavedConfigs,
-            onToggleMcp = { viewModel.toggleMcpEnabled(it) },
-            onAddMcpServer = { url, label -> viewModel.addMcpServer(url, label) },
-            onRemoveMcpServer = { viewModel.removeMcpServer(it) },
-            onToggleReadOnly = { url, readOnly -> viewModel.toggleServerReadOnly(url, readOnly) },
-            fetchedModels = fetchedModels,
-            modelFetchState = modelFetchState,
-            onFetchModels = { url, key -> viewModel.fetchAvailableModels(url, key) },
-            onClearFetchedModels = { viewModel.clearFetchedModels() },
-            onSaveLlmConfig = { viewModel.updateLlmConfig(it) },
-            onSaveAllConfigs = { viewModel.updateAllLlmConfigs(it) },
-            onClearHistory = { viewModel.clearHistory() },
-            onDismiss = { showSettings = false }
-        )
-    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -162,7 +131,6 @@ fun AssistantScreen(
 private fun ActiveChatContent(
     state: AssistantUiState.Active,
     onSendMessage: (String) -> Unit,
-    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -209,7 +177,6 @@ private fun ActiveChatContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -217,20 +184,6 @@ private fun ActiveChatContent(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                TextButton(onClick = onOpenSettings, modifier = Modifier.testTag("button_configure")) {
-                    Text("Configure", style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = onOpenSettings, modifier = Modifier.testTag("button_configure_llm")) {
-                    Text("Configure LLM", style = MaterialTheme.typography.bodySmall)
-                }
             }
         }
 

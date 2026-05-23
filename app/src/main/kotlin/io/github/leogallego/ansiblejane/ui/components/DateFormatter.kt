@@ -6,6 +6,19 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
+enum class ThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK;
+
+    val displayName: String
+        get() = when (this) {
+            SYSTEM -> "System"
+            LIGHT -> "Light"
+            DARK -> "Dark"
+        }
+}
+
 enum class TimeFormat {
     SYSTEM,
     HOURS_24,
@@ -13,9 +26,9 @@ enum class TimeFormat {
 
     val displayName: String
         get() = when (this) {
-            SYSTEM -> "System default"
+            SYSTEM -> "System"
             HOURS_24 -> "24-hour"
-            HOURS_12 -> "12-hour (AM/PM)"
+            HOURS_12 -> "12-hour"
         }
 }
 

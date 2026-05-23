@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
-import io.github.leogallego.ansiblejane.assistant.data.ModelFetcher
 import io.github.leogallego.ansiblejane.assistant.data.TokenSavingMode
 import io.github.leogallego.ansiblejane.assistant.engine.ChatEngine
 import io.github.leogallego.ansiblejane.assistant.engine.ChatEvent
@@ -19,8 +18,6 @@ import io.github.leogallego.ansiblejane.assistant.llm.LlmProvider
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.local.ListToolsLocalTool
 import io.github.leogallego.ansiblejane.data.ITokenManager
-import io.github.leogallego.ansiblejane.model.McpServerConfig
-import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 
@@ -31,15 +28,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 
 class AssistantViewModel(
     private val mcpServerManager: McpServerManager,
     private val repository: IAssistantRepository,
     private val tokenManager: ITokenManager,
-    private val httpClient: OkHttpClient,
-    private val json: Json,
     private val localTools: List<LocalTool> = emptyList()
 ) : ViewModel() {
 
@@ -55,23 +48,25 @@ class AssistantViewModel(
     private val _llmConfig = MutableStateFlow<LlmProviderConfig?>(null)
     val llmConfig: StateFlow<LlmProviderConfig?> = _llmConfig.asStateFlow()
 
-    private val _savedConfigs = MutableStateFlow<Map<String, LlmProviderConfig>>(emptyMap())
-    val savedConfigs: StateFlow<Map<String, LlmProviderConfig>> = _savedConfigs.asStateFlow()
-
-    private val _fetchedModels = MutableStateFlow<List<String>>(emptyList())
-    val fetchedModels: StateFlow<List<String>> = _fetchedModels.asStateFlow()
-
-    private val _modelFetchState = MutableStateFlow<ModelFetchState>(ModelFetchState.Idle)
-    val modelFetchState: StateFlow<ModelFetchState> = _modelFetchState.asStateFlow()
-
     init {
         Log.d(TAG, "INIT: ${localTools.size} local tools: ${localTools.map { it.spec.name }}")
 
         viewModelScope.launch {
-            val configs = repository.loadAllLlmConfigs()
-            _savedConfigs.value = configs
-            _llmConfig.value = repository.loadLlmConfig()
-                ?: configs.values.firstOrNull()
+            repository.activeConfigFlow.collect { config ->
+                val oldKey = cachedProviderKey
+                _llmConfig.value = config
+                if (config != null && oldKey != null) {
+                    val newKey = when (config) {
+                        is LlmProviderConfig.OpenAiCompatible ->
+                            "${config.url}|${config.model}|${config.apiKey}"
+                    }
+                    if (newKey != oldKey.substringBeforeLast("|")) {
+                        cachedProvider?.close()
+                        cachedProvider = null
+                        cachedProviderKey = null
+                    }
+                }
+            }
         }
 
         viewModelScope.launch {
@@ -281,100 +276,6 @@ class AssistantViewModel(
         updateState { copy(messages = emptyList()) }
     }
 
-    fun updateLlmConfig(config: LlmProviderConfig) {
-        _llmConfig.value = config
-        generateJob?.cancel()
-        cachedProvider?.close()
-        cachedProvider = null
-        cachedProviderKey = null
-        viewModelScope.launch {
-            repository.saveLlmConfig(config)
-            _savedConfigs.value = repository.loadAllLlmConfigs()
-        }
-    }
-
-    fun updateAllLlmConfigs(configs: Map<String, LlmProviderConfig>) {
-        viewModelScope.launch {
-            repository.saveAllLlmConfigs(configs)
-            _savedConfigs.value = configs
-        }
-    }
-
-    fun fetchAvailableModels(baseUrl: String, apiKey: String?) {
-        viewModelScope.launch {
-            _modelFetchState.value = ModelFetchState.Loading
-            val fetcher = ModelFetcher(buildLlmClient(), json)
-            when (val result = fetcher.fetchModels(baseUrl, apiKey)) {
-                is ModelFetcher.Result.Success -> {
-                    _fetchedModels.value = result.models
-                    _modelFetchState.value = ModelFetchState.Success(result.models.size)
-                }
-                is ModelFetcher.Result.Error -> {
-                    _modelFetchState.value = ModelFetchState.Error(result.message)
-                }
-            }
-        }
-    }
-
-    fun clearFetchedModels() {
-        _fetchedModels.value = emptyList()
-        _modelFetchState.value = ModelFetchState.Idle
-    }
-
-    fun toggleMcpEnabled(enabled: Boolean) {
-        val instance = tokenManager.activeInstance.value ?: return
-        viewModelScope.launch {
-            val servers = if (enabled && instance.mcpServerUrls.isNullOrEmpty()) {
-                val base = "${instance.baseUrl.trimEnd('/')}:8448"
-                listOf(
-                    McpServerConfig(url = "$base/mcp", label = "aap", isAutoDetected = true, readOnly = true)
-                )
-            } else {
-                instance.mcpServerUrls
-            }
-            tokenManager.updateMcpConfig(instance.id, enabled, if (enabled) servers else null)
-        }
-    }
-
-    fun addMcpServer(url: String, label: String) {
-        val instance = tokenManager.activeInstance.value ?: return
-        viewModelScope.launch {
-            val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
-            current.add(McpServerConfig(url = url.trimEnd('/'), label = label))
-            tokenManager.updateMcpConfig(instance.id, true, current)
-        }
-    }
-
-    fun removeMcpServer(url: String) {
-        val instance = tokenManager.activeInstance.value ?: return
-        viewModelScope.launch {
-            val updated = instance.mcpServerUrls?.filter { it.url != url }
-            val enabled = !updated.isNullOrEmpty()
-            tokenManager.updateMcpConfig(instance.id, enabled, updated)
-        }
-    }
-
-    fun updateMcpServer(oldUrl: String, newUrl: String, label: String) {
-        val instance = tokenManager.activeInstance.value ?: return
-        viewModelScope.launch {
-            val updated = instance.mcpServerUrls?.map {
-                if (it.url == oldUrl) it.copy(url = newUrl.trimEnd('/'), label = label, isAutoDetected = false)
-                else it
-            }
-            tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
-        }
-    }
-
-    fun toggleServerReadOnly(url: String, readOnly: Boolean) {
-        val instance = tokenManager.activeInstance.value ?: return
-        viewModelScope.launch {
-            val updated = instance.mcpServerUrls?.map {
-                if (it.url == url) it.copy(readOnly = readOnly) else it
-            }
-            tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
-        }
-    }
-
     private fun getOrCreateProvider(
         config: LlmProviderConfig.OpenAiCompatible,
         trustSelfSigned: Boolean
@@ -392,17 +293,6 @@ class AssistantViewModel(
             cachedProvider = it
             cachedProviderKey = key
         }
-    }
-
-    private fun buildLlmClient(): OkHttpClient {
-        val instance = tokenManager.activeInstance.value
-        val builder = httpClient.newBuilder()
-        if (instance?.trustSelfSigned == true) {
-            val tm = CertTrustManager.createTrustAllManager()
-            builder.sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
-            builder.hostnameVerifier { _, _ -> true }
-        }
-        return builder.build()
     }
 
     override fun onCleared() {

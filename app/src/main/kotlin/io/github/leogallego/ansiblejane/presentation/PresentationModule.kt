@@ -9,7 +9,6 @@ import io.github.leogallego.ansiblejane.presentation.hosts.HostsViewModel
 import io.github.leogallego.ansiblejane.presentation.hosts.InventoryHostsViewModel
 import io.github.leogallego.ansiblejane.presentation.inventory.InventoriesViewModel
 import io.github.leogallego.ansiblejane.presentation.schedules.SchedulesViewModel
-import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
 import io.github.leogallego.ansiblejane.presentation.templates.TemplatesViewModel
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowJobStatusViewModel
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplatesViewModel
@@ -28,6 +27,5 @@ val presentationModule = module {
     viewModelOf(::InventoriesViewModel)
     viewModelOf(::InventoryHostsViewModel)
     viewModelOf(::HostsViewModel)
-    viewModelOf(::SettingsViewModel)
     viewModelOf(::BackupViewModel)
 }

@@ -1,6 +1,7 @@
 package io.github.leogallego.ansiblejane.fakes
 
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
+import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,5 +19,12 @@ class FakeUserPreferencesRepository : IUserPreferencesRepository {
 
     override suspend fun setTimeFormat(format: TimeFormat) {
         _timeFormat.value = format
+    }
+
+    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    override val themeMode: Flow<ThemeMode> = _themeMode
+
+    override suspend fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
     }
 }

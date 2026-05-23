@@ -8,6 +8,7 @@ import io.github.leogallego.ansiblejane.network.AuthInterceptor
 import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.network.networkJson
+import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.core.module.dsl.viewModel
@@ -57,9 +58,19 @@ val assistantModule = module {
             mcpServerManager = get(),
             repository = get(),
             tokenManager = get(),
-            httpClient = get(named("llm")),
-            json = networkJson,
             localTools = getAll<LocalTool>()
+        )
+    }
+
+    viewModel {
+        SettingsViewModel(
+            tokenManager = get(),
+            apiProvider = get(),
+            userPreferences = get(),
+            assistantRepository = get(),
+            mcpServerManager = get(),
+            httpClient = get(named("llm")),
+            json = networkJson
         )
     }
 }
