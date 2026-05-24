@@ -43,7 +43,8 @@ interface AapApiService {
         @Query("page_size") pageSize: Int = 20,
         @Query("page") page: Int = 1,
         @Query("status") status: String? = null,
-        @Query("or__status") orStatus: List<String>? = null
+        @Query("or__status") orStatus: List<String>? = null,
+        @Query("search") search: String? = null
     ): PaginatedResponse<Job>
 
     @GET("schedules/")

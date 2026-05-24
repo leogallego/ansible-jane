@@ -1,7 +1,10 @@
 package io.github.leogallego.ansiblejane.assistant.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -9,17 +12,27 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,64 +52,102 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxLanguage
 import dev.snipme.highlights.model.SyntaxThemes
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun UserBubble(
     message: ChatMessage,
+    onCopy: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    SelectionContainer {
-        Row(modifier = modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-            Spacer(Modifier.weight(1f))
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Row(modifier = modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        Spacer(Modifier.weight(1f))
+        Box {
             Column(
                 modifier = Modifier
+                    .combinedClickable(
+                        onClick = {},
+                        onLongClick = { menuExpanded = true },
+                    )
                     .background(
                         MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
                         RoundedCornerShape(12.dp),
                     )
                     .padding(12.dp)
             ) {
-                Text(
-                    text = message.content,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
+                SelectionContainer {
+                    Text(
+                        text = message.content,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
             }
+            MessageContextMenu(
+                expanded = menuExpanded,
+                onDismiss = { menuExpanded = false },
+                onCopy = onCopy,
+            )
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AssistantMessage(
     content: String,
     source: ResponseSource? = null,
     toolsUsed: List<String> = emptyList(),
+    onCopy: (() -> Unit)? = null,
+    onRegenerate: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isError = content.startsWith("Error:")
+    var menuExpanded by remember { mutableStateOf(false) }
 
     if (isError) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.errorContainer,
-            modifier = modifier
-        ) {
-            Text(
-                text = content,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.padding(12.dp)
+        Box {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.errorContainer,
+                modifier = modifier.combinedClickable(
+                    onClick = {},
+                    onLongClick = { menuExpanded = true },
+                )
+            ) {
+                Text(
+                    text = content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+            MessageContextMenu(
+                expanded = menuExpanded,
+                onDismiss = { menuExpanded = false },
+                onCopy = onCopy,
+                onRegenerate = onRegenerate,
             )
         }
     } else {
-        Column(
+        Box(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = { menuExpanded = true },
+                )
         ) {
-            if (source != null) {
-                SourceBand(source = source, toolsUsed = toolsUsed)
-            }
-            SelectionContainer {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            ) {
+                if (source != null) {
+                    SourceBand(source = source, toolsUsed = toolsUsed)
+                }
+                SelectionContainer {
                 val isDarkTheme = isSystemInDarkTheme()
                 val highlightsBuilder = remember(isDarkTheme) {
                     Highlights.Builder().theme(SyntaxThemes.monokai(darkMode = isDarkTheme))
@@ -159,6 +210,13 @@ fun AssistantMessage(
                     )
                 }
             }
+            }
+            MessageContextMenu(
+                expanded = menuExpanded,
+                onDismiss = { menuExpanded = false },
+                onCopy = onCopy,
+                onRegenerate = onRegenerate,
+            )
         }
     }
 }
@@ -211,5 +269,40 @@ private fun SourceBand(
             thickness = 0.5.dp,
             modifier = Modifier.padding(top = 4.dp),
         )
+    }
+}
+
+@Composable
+private fun MessageContextMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    onCopy: (() -> Unit)? = null,
+    onRegenerate: (() -> Unit)? = null,
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        if (onCopy != null) {
+            DropdownMenuItem(
+                text = { Text("Copy") },
+                onClick = { onCopy(); onDismiss() },
+                leadingIcon = {
+                    Icon(Icons.Default.ContentCopy, contentDescription = null)
+                },
+                modifier = Modifier.testTag("menu_copy"),
+            )
+        }
+        if (onRegenerate != null) {
+            DropdownMenuItem(
+                text = { Text("Regenerate") },
+                onClick = { onRegenerate(); onDismiss() },
+                leadingIcon = {
+                    Icon(Icons.Default.Refresh, contentDescription = null)
+                },
+                modifier = Modifier.testTag("menu_regenerate"),
+            )
+        }
     }
 }

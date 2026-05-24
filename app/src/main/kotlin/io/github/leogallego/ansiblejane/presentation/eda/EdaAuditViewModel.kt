@@ -7,6 +7,7 @@ import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.EdaRuleAudit
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,9 +23,14 @@ class EdaAuditViewModel(
     private val _uiState = MutableStateFlow<EdaAuditUiState>(EdaAuditUiState.Loading)
     val uiState: StateFlow<EdaAuditUiState> = _uiState.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private var currentPage = 1
     private val allAuditRules = mutableListOf<EdaRuleAudit>()
     private var fetchJob: Job? = null
+    private var searchJob: Job? = null
+    private var currentSearch: String? = null
 
     init {
         viewModelScope.launch {
@@ -56,6 +62,19 @@ class EdaAuditViewModel(
         }
     }
 
+    fun search(query: String) {
+        _searchQuery.value = query
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(300)
+            currentSearch = query.ifBlank { null }
+            currentPage = 1
+            allAuditRules.clear()
+            _uiState.value = EdaAuditUiState.Loading
+            fetchAuditRules()
+        }
+    }
+
     fun loadMore() {
         val current = _uiState.value
         if (current is EdaAuditUiState.Success && current.hasMore && !current.isLoadingMore) {
@@ -68,7 +87,7 @@ class EdaAuditViewModel(
     }
 
     private suspend fun fetchAuditRules(append: Boolean = false) {
-        val result = edaAuditRepository.getAuditRules(page = currentPage)
+        val result = edaAuditRepository.getAuditRules(page = currentPage, search = currentSearch)
         result.fold(
             onSuccess = { auditResult ->
                 if (append) {

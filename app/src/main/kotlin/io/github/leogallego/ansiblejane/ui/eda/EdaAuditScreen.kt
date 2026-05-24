@@ -41,6 +41,7 @@ import io.github.leogallego.ansiblejane.presentation.eda.EdaAuditViewModel
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
+import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -95,6 +96,8 @@ fun EdaAuditScreen(
                 }
             }
             is EdaAuditUiState.Success -> {
+                val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+
                 PullToRefreshBox(
                     isRefreshing = isRefreshing,
                     onRefresh = {
@@ -117,27 +120,35 @@ fun EdaAuditScreen(
                             .collect { if (it) viewModel.loadMore() }
                     }
 
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize().testTag("list_eda_audit")
-                    ) {
-                        items(
-                            items = state.auditRules,
-                            key = { it.id }
-                        ) { auditRule ->
-                            EdaAuditItem(
-                                auditRule = auditRule,
-                                onClick = { selectedAuditRule = auditRule }
-                            )
-                        }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        SearchBar(
+                            onSearch = { viewModel.search(it) },
+                            placeholder = "Search audit rules...",
+                            initialQuery = searchQuery,
+                        )
 
-                        if (state.isLoadingMore) {
-                            item {
-                                LinearProgressIndicator(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp)
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize().weight(1f).testTag("list_eda_audit")
+                        ) {
+                            items(
+                                items = state.auditRules,
+                                key = { it.id }
+                            ) { auditRule ->
+                                EdaAuditItem(
+                                    auditRule = auditRule,
+                                    onClick = { selectedAuditRule = auditRule }
                                 )
+                            }
+
+                            if (state.isLoadingMore) {
+                                item {
+                                    LinearProgressIndicator(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    )
+                                }
                             }
                         }
                     }

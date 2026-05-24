@@ -4,6 +4,7 @@ import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
+import io.github.leogallego.ansiblejane.assistant.engine.Role
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -27,6 +28,11 @@ class FakeAssistantRepository : IAssistantRepository {
     }
 
     override fun getHistory(): List<ChatMessage> = messages.toList()
+
+    override fun removeLastAssistantMessage() {
+        val index = messages.indexOfLast { it.role == Role.ASSISTANT }
+        if (index >= 0) messages.removeAt(index)
+    }
 
     override fun clearHistory() {
         messages.clear()

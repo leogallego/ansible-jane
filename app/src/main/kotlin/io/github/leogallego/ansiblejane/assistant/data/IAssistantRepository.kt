@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface IAssistantRepository {
     fun addMessage(message: ChatMessage)
     fun getHistory(): List<ChatMessage>
+    fun removeLastAssistantMessage()
     fun clearHistory()
     suspend fun saveLlmConfig(config: LlmProviderConfig)
     suspend fun loadLlmConfig(): LlmProviderConfig?

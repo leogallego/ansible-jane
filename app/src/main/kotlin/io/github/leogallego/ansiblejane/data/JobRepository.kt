@@ -42,7 +42,8 @@ class JobRepository(private val apiProvider: AapApiProvider) : IJobRepository {
     override suspend fun getRecentJobs(
         page: Int,
         pageSize: Int,
-        statusFilters: Set<JobStatus>
+        statusFilters: Set<JobStatus>,
+        search: String?
     ): Result<RecentJobsResult> {
         return try {
             val orStatus = if (statusFilters.size > 1) {
@@ -60,7 +61,8 @@ class JobRepository(private val apiProvider: AapApiProvider) : IJobRepository {
                 pageSize = pageSize,
                 page = page,
                 status = singleStatus,
-                orStatus = orStatus
+                orStatus = orStatus,
+                search = search
             )
             Result.success(
                 RecentJobsResult(

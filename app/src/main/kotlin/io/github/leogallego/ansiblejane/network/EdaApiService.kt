@@ -12,7 +12,8 @@ interface EdaApiService {
     @GET("audit-rules/")
     suspend fun getAuditRules(
         @Query("page") page: Int = 1,
-        @Query("page_size") pageSize: Int = 20
+        @Query("page_size") pageSize: Int = 20,
+        @Query("search") search: String? = null
     ): PaginatedResponse<EdaRuleAudit>
 
     @GET("audit-rules/{id}/")

@@ -5,11 +5,12 @@ import io.github.leogallego.ansiblejane.network.AapApiProvider
 
 class EdaAuditRepository(private val apiProvider: AapApiProvider) : IEdaAuditRepository {
 
-    override suspend fun getAuditRules(page: Int, pageSize: Int): Result<EdaAuditResult> {
+    override suspend fun getAuditRules(page: Int, pageSize: Int, search: String?): Result<EdaAuditResult> {
         return try {
             val response = apiProvider.getEdaApiService().getAuditRules(
                 page = page,
-                pageSize = pageSize
+                pageSize = pageSize,
+                search = search
             )
             Result.success(
                 EdaAuditResult(

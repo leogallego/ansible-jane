@@ -273,6 +273,19 @@ class AssistantViewModel(
         }
     }
 
+    fun stopGeneration() {
+        generateJob?.cancel()
+        updateState { copy(isGenerating = false, streamingText = null) }
+    }
+
+    fun regenerateLastMessage() {
+        val history = repository.getHistory()
+        val lastUserMsg = history.lastOrNull { it.role == Role.USER } ?: return
+        repository.removeLastAssistantMessage()
+        updateState { copy(messages = repository.getHistory().toImmutableList()) }
+        sendMessage(lastUserMsg.content)
+    }
+
     fun clearHistory() {
         repository.clearHistory()
         updateState { copy(messages = persistentListOf()) }

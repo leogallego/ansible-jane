@@ -7,6 +7,7 @@ import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.Inventory
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,9 +22,14 @@ class InventoriesViewModel(
     private val _uiState = MutableStateFlow<InventoriesUiState>(InventoriesUiState.Loading)
     val uiState: StateFlow<InventoriesUiState> = _uiState.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private var currentPage = 1
     private val allInventories = mutableListOf<Inventory>()
     private var fetchJob: Job? = null
+    private var searchJob: Job? = null
+    private var currentSearch: String? = null
 
     init {
         viewModelScope.launch {
@@ -55,6 +61,19 @@ class InventoriesViewModel(
         }
     }
 
+    fun search(query: String) {
+        _searchQuery.value = query
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(300)
+            currentSearch = query.ifBlank { null }
+            currentPage = 1
+            allInventories.clear()
+            _uiState.value = InventoriesUiState.Loading
+            fetchInventories()
+        }
+    }
+
     fun loadMore() {
         val current = _uiState.value
         if (current is InventoriesUiState.Success && current.hasMore && !current.isLoadingMore) {
@@ -67,7 +86,7 @@ class InventoriesViewModel(
     }
 
     private suspend fun fetchInventories(append: Boolean = false) {
-        val result = inventoryRepository.getInventories(page = currentPage)
+        val result = inventoryRepository.getInventories(page = currentPage, search = currentSearch)
         result.fold(
             onSuccess = { inventoryResult ->
                 if (append) {

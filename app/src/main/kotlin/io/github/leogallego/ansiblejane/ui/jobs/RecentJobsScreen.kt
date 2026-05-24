@@ -41,6 +41,7 @@ import io.github.leogallego.ansiblejane.presentation.jobs.RecentJobsViewModel
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
+import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -84,7 +85,15 @@ fun RecentJobsScreen(
                     },
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+
                     Column(modifier = Modifier.fillMaxSize()) {
+                        SearchBar(
+                            onSearch = { viewModel.search(it) },
+                            placeholder = "Search jobs...",
+                            initialQuery = searchQuery,
+                        )
+
                         StatusFilterChips(
                             activeFilters = state.activeFilters,
                             onToggleFilter = { viewModel.toggleFilter(it) }

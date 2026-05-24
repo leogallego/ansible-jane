@@ -7,6 +7,7 @@ import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.model.JobStatus
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,10 +22,15 @@ class RecentJobsViewModel(
     private val _uiState = MutableStateFlow<RecentJobsUiState>(RecentJobsUiState.Loading)
     val uiState: StateFlow<RecentJobsUiState> = _uiState.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private var currentPage = 1
     private val allJobs = mutableListOf<Job>()
     private var activeFilters = mutableSetOf<JobStatus>()
     private var fetchJob: kotlinx.coroutines.Job? = null
+    private var searchJob: kotlinx.coroutines.Job? = null
+    private var currentSearch: String? = null
 
     init {
         viewModelScope.launch {
@@ -80,6 +86,19 @@ class RecentJobsViewModel(
         }
     }
 
+    fun search(query: String) {
+        _searchQuery.value = query
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(300)
+            currentSearch = query.ifBlank { null }
+            currentPage = 1
+            allJobs.clear()
+            _uiState.value = RecentJobsUiState.Loading
+            fetchJobs()
+        }
+    }
+
     fun getActiveFilters(): Set<JobStatus> = activeFilters.toSet()
 
     fun loadMore() {
@@ -96,7 +115,8 @@ class RecentJobsViewModel(
     private suspend fun fetchJobs(append: Boolean = false) {
         val result = jobRepository.getRecentJobs(
             page = currentPage,
-            statusFilters = activeFilters.toSet()
+            statusFilters = activeFilters.toSet(),
+            search = currentSearch
         )
         result.fold(
             onSuccess = { jobsResult ->
