@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,9 +57,11 @@ fun InstancesTab(
     onShowDetails: (String) -> Unit,
     onDismissDetails: () -> Unit,
     onAddInstance: () -> Unit,
+    onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var instanceToRemove by remember { mutableStateOf<AapInstance?>(null) }
+    var showLogoutConfirm by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -94,6 +97,22 @@ fun InstancesTab(
             )
             Text("Add Instance")
         }
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+        FilledTonalButton(
+            onClick = { showLogoutConfirm = true },
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("button_logout_all")
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                contentDescription = null,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Text("Logout All")
+        }
     }
 
     selectedInstanceForDetails?.let { instance ->
@@ -126,6 +145,27 @@ fun InstancesTab(
             },
             dismissButton = {
                 TextButton(onClick = { instanceToRemove = null }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showLogoutConfirm) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirm = false },
+            title = { Text("Logout All") },
+            text = {
+                Text("Remove all AAP instances and log out? You will need to re-authenticate each instance.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutConfirm = false
+                        onLogout()
+                    }
+                ) { Text("Logout All") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirm = false }) { Text("Cancel") }
             }
         )
     }

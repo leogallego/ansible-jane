@@ -116,22 +116,28 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `shows Logout All button on General tab`() {
+    fun `shows Logout All button on Instances tab`() {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
+
+        composeTestRule.onNodeWithText("Instances").performClick()
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Logout All").performScrollTo().assertIsDisplayed()
     }
 
     @Test
-    fun `logout all shows confirmation dialog`() {
+    fun `logout all shows confirmation dialog on Instances tab`() {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
+
+        composeTestRule.onNodeWithText("Instances").performClick()
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Logout All").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Remove all instances and log out?", substring = true)
+        composeTestRule.onNodeWithText("Remove all AAP instances and log out?", substring = true)
             .assertIsDisplayed()
     }
 

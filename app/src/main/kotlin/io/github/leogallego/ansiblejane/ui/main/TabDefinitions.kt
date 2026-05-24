@@ -54,7 +54,7 @@ sealed class TopLevelTab(
         segments = listOf(
             Segment(label = "Jobs", isDefault = true, isImplemented = true),
             Segment(label = "Schedules", isImplemented = true),
-            Segment(label = "EDA Audit", isImplemented = true)
+            Segment(label = "EDA", isImplemented = true)
         )
     )
 

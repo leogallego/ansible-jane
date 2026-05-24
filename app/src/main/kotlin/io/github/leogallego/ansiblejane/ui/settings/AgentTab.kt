@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,11 +42,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,9 +79,11 @@ fun AgentTab(
     onClearFetchedModels: () -> Unit,
     onSaveProviderConfig: (providerKey: String, LlmProviderConfig) -> Unit,
     onSwitchActiveProvider: (String) -> Unit,
+    onClearHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expandedProvider by remember { mutableStateOf<KnownProvider?>(null) }
+    var showClearHistoryConfirm by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -162,7 +167,39 @@ fun AgentTab(
             }
         }
 
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+        OutlinedButton(
+            onClick = { showClearHistoryConfirm = true },
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("button_clear_history")
+        ) {
+            Text("Clear Chat History")
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
+    }
+
+    if (showClearHistoryConfirm) {
+        AlertDialog(
+            onDismissRequest = { showClearHistoryConfirm = false },
+            title = { Text("Clear Chat History") },
+            text = {
+                Text("This will remove all messages from the assistant chat. This cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showClearHistoryConfirm = false
+                        onClearHistory()
+                    }
+                ) { Text("Clear") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearHistoryConfirm = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 

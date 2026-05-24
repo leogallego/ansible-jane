@@ -43,7 +43,7 @@ fun TabContent(
                     onNavigateToJobStatus = onNavigateToJobStatus
                 )
                 "Schedules" -> SchedulesScreen()
-                "EDA Audit" -> EdaAuditScreen()
+                "EDA" -> EdaAuditScreen()
                 else -> PlaceholderScreen(title = segment.label)
             }
         }

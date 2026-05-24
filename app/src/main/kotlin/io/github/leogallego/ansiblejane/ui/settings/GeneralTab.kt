@@ -15,13 +15,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -30,10 +27,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -59,13 +54,8 @@ fun GeneralTab(
     onTimezoneSelected: (String?) -> Unit,
     onTimeFormatSelected: (TimeFormat) -> Unit,
     onThemeModeSelected: (ThemeMode) -> Unit,
-    onClearHistory: () -> Unit,
-    onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showLogoutConfirm by remember { mutableStateOf(false) }
-    var showClearHistoryConfirm by remember { mutableStateOf(false) }
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -87,76 +77,7 @@ fun GeneralTab(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedButton(
-            onClick = { showClearHistoryConfirm = true },
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("button_clear_history")
-        ) {
-            Text("Clear Chat History")
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         AboutSection()
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        FilledTonalButton(
-            onClick = { showLogoutConfirm = true },
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("button_logout_all")
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                contentDescription = null,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            Text("Logout All")
-        }
-    }
-
-    if (showLogoutConfirm) {
-        AlertDialog(
-            onDismissRequest = { showLogoutConfirm = false },
-            title = { Text("Logout All") },
-            text = {
-                Text("Remove all instances and log out? You will need to re-authenticate each instance.")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutConfirm = false
-                        onLogout()
-                    }
-                ) { Text("Logout All") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutConfirm = false }) { Text("Cancel") }
-            }
-        )
-    }
-
-    if (showClearHistoryConfirm) {
-        AlertDialog(
-            onDismissRequest = { showClearHistoryConfirm = false },
-            title = { Text("Clear Chat History") },
-            text = {
-                Text("This will remove all messages from the assistant chat. This cannot be undone.")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showClearHistoryConfirm = false
-                        onClearHistory()
-                    }
-                ) { Text("Clear") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearHistoryConfirm = false }) { Text("Cancel") }
-            }
-        )
     }
 }
 
