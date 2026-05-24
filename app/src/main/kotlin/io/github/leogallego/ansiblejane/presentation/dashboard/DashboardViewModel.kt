@@ -13,19 +13,12 @@ import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.model.JobStatus
 import io.github.leogallego.ansiblejane.network.AapApiProvider
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -114,29 +107,6 @@ class DashboardViewModel(
             val schedulesDeferred = async {
                 scheduleRepository.getSchedules(pageSize = 5)
             }
-            val pingDeferred = async {
-                try {
-                    apiProvider.getApiService().ping()
-                } catch (_: Exception) {
-                    null
-                }
-            }
-            val configDeferred = async {
-                try {
-                    val configJson = apiProvider.getApiService().getConfig()
-                    val licenseInfo = configJson.jsonObject["license_info"]?.jsonObject
-                    licenseInfo?.get("license_type")?.jsonPrimitive?.content
-                } catch (_: Exception) {
-                    null
-                }
-            }
-            val gatewayVersionDeferred = async {
-                fetchGatewayVersion()
-            }
-            val edaVersionDeferred = async {
-                fetchEdaVersion()
-            }
-
             val activeResult = activeDeferred.await()
             val failedResult = failedDeferred.await()
             val successResult = successDeferred.await()
@@ -163,11 +133,6 @@ class DashboardViewModel(
             val schedules = schedulesDeferred.await().getOrNull()?.schedules
                 ?.filter { it.enabled && it.nextRun != null }
                 ?.take(3) ?: emptyList()
-            val ping = pingDeferred.await()
-            val licenseType = configDeferred.await()
-            val gatewayVersion = gatewayVersionDeferred.await()
-            val edaVersion = edaVersionDeferred.await()
-
             val healthStatus = when {
                 failedData.totalCount >= 4 -> HealthStatus.RED
                 failedData.totalCount >= 1 -> HealthStatus.YELLOW
@@ -190,10 +155,7 @@ class DashboardViewModel(
                 edaActiveRulebooksCount = edaData?.second,
                 jobHistory7d = jobHistory,
                 upcomingSchedules = schedules,
-                controllerVersion = ping?.version,
-                edaVersion = edaVersion,
-                gatewayVersion = gatewayVersion,
-                licenseType = licenseType,
+                instanceInfo = instance?.instanceInfo,
                 instanceUrl = instance?.baseUrl,
                 instanceAlias = instance?.displayLabel,
             )
@@ -243,41 +205,4 @@ class DashboardViewModel(
         }
     }
 
-    private suspend fun fetchGatewayVersion(): String? = withContext(Dispatchers.IO) {
-        try {
-            val instance = tokenManager.activeInstance.value ?: return@withContext null
-            val url = "${instance.baseUrl.trimEnd('/')}/api/gateway/v1/"
-            val client = OkHttpClient.Builder().build()
-            val request = Request.Builder()
-                .url(url)
-                .header("Authorization", "Bearer ${instance.token}")
-                .build()
-            val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: return@withContext null
-            val json = Json { ignoreUnknownKeys = true }
-            val root = json.parseToJsonElement(body).jsonObject
-            root["version"]?.jsonPrimitive?.content
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private suspend fun fetchEdaVersion(): String? = withContext(Dispatchers.IO) {
-        try {
-            val instance = tokenManager.activeInstance.value ?: return@withContext null
-            val url = "${instance.baseUrl.trimEnd('/')}/api/eda/v1/"
-            val client = OkHttpClient.Builder().build()
-            val request = Request.Builder()
-                .url(url)
-                .header("Authorization", "Bearer ${instance.token}")
-                .build()
-            val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: return@withContext null
-            val json = Json { ignoreUnknownKeys = true }
-            val root = json.parseToJsonElement(body).jsonObject
-            root["version"]?.jsonPrimitive?.content
-        } catch (_: Exception) {
-            null
-        }
-    }
 }

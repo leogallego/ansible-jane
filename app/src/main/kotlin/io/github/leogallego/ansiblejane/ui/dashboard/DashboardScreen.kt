@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.model.Schedule
 import io.github.leogallego.ansiblejane.presentation.dashboard.DashboardUiState
@@ -203,10 +204,7 @@ fun DashboardScreen(
 
                         item(key = "instance_info") {
                             InstanceInfoCard(
-                                controllerVersion = state.controllerVersion,
-                                edaVersion = state.edaVersion,
-                                gatewayVersion = state.gatewayVersion,
-                                licenseType = state.licenseType,
+                                instanceInfo = state.instanceInfo,
                                 healthStatus = state.healthStatus,
                                 instanceUrl = state.instanceUrl,
                                 instanceAlias = state.instanceAlias,
@@ -557,10 +555,7 @@ private fun ScheduleItem(
 
 @Composable
 private fun InstanceInfoCard(
-    controllerVersion: String?,
-    edaVersion: String?,
-    gatewayVersion: String?,
-    licenseType: String?,
+    instanceInfo: InstanceInfo?,
     healthStatus: HealthStatus,
     instanceUrl: String?,
     instanceAlias: String?,
@@ -596,18 +591,24 @@ private fun InstanceInfoCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (licenseType != null) {
-                InfoRow(label = "License", value = licenseType)
-            }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            if (gatewayVersion != null) {
-                InfoRow(label = "Gateway", value = gatewayVersion)
-            }
-            if (controllerVersion != null) {
-                InfoRow(label = "Controller", value = controllerVersion)
-            }
-            if (edaVersion != null) {
-                InfoRow(label = "EDA", value = edaVersion)
+            if (instanceInfo != null) {
+                val platformLabel = when (instanceInfo.platformType) {
+                    "AAP" -> "Red Hat AAP" + (instanceInfo.aapVersion?.let { " $it" } ?: "")
+                    "AWX" -> "AWX (upstream)"
+                    "JEWEL" -> "Jewel (upstream)"
+                    else -> "Unknown"
+                }
+                InfoRow(label = "Platform", value = platformLabel)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                if (instanceInfo.controllerVersion.isNotBlank()) {
+                    InfoRow(label = "Controller", value = instanceInfo.controllerVersion)
+                }
+                if (instanceInfo.gatewayVersion.isNotBlank()) {
+                    InfoRow(label = "Gateway", value = instanceInfo.gatewayVersion)
+                }
+                if (instanceInfo.edaVersion.isNotBlank()) {
+                    InfoRow(label = "EDA", value = instanceInfo.edaVersion)
+                }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {

@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.presentation.dashboard
 
 import androidx.compose.runtime.Immutable
 import io.github.leogallego.ansiblejane.model.AppError
+import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.model.Schedule
 
@@ -31,10 +32,7 @@ sealed interface DashboardUiState {
         val edaActiveRulebooksCount: Int? = null,
         val jobHistory7d: List<DayJobStats> = emptyList(),
         val upcomingSchedules: List<Schedule> = emptyList(),
-        val controllerVersion: String? = null,
-        val edaVersion: String? = null,
-        val gatewayVersion: String? = null,
-        val licenseType: String? = null,
+        val instanceInfo: InstanceInfo? = null,
         val instanceUrl: String? = null,
         val instanceAlias: String? = null,
     ) : DashboardUiState
