@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,6 +50,8 @@ import kotlinx.coroutines.launch
 import io.github.leogallego.ansiblejane.data.HostRepository
 import io.github.leogallego.ansiblejane.model.Host
 import io.github.leogallego.ansiblejane.model.JobHostSummary
+import io.github.leogallego.ansiblejane.ui.components.DetailRow
+import io.github.leogallego.ansiblejane.ui.components.DetailSheetHeader
 import kotlinx.serialization.json.JsonElement
 import org.koin.compose.koinInject
 
@@ -97,22 +98,7 @@ private fun HostDetailCompact(
             .padding(horizontal = 24.dp)
             .padding(bottom = 32.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = host.name,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            IconButton(onClick = onExpand) {
-                Icon(Icons.Default.OpenInFull, contentDescription = "Expand to full screen")
-            }
-        }
+        DetailSheetHeader(title = host.name, onExpand = onExpand)
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
@@ -369,21 +355,3 @@ private fun JobHostSummaryItem(
     }
 }
 
-@Composable
-private fun DetailRow(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.padding(vertical = 4.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}

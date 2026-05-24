@@ -18,16 +18,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -35,13 +32,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,9 +47,14 @@ import io.github.leogallego.ansiblejane.model.Host
 import io.github.leogallego.ansiblejane.model.Inventory
 import io.github.leogallego.ansiblejane.presentation.hosts.InventoryHostsUiState
 import io.github.leogallego.ansiblejane.presentation.hosts.InventoryHostsViewModel
+import io.github.leogallego.ansiblejane.ui.components.DetailRow
+import io.github.leogallego.ansiblejane.ui.components.DetailSheetHeader
+import io.github.leogallego.ansiblejane.ui.components.EmptyState
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
+import io.github.leogallego.ansiblejane.ui.components.LoadMoreIndicator
+import io.github.leogallego.ansiblejane.ui.components.LoadingList
+import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
-import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import io.github.leogallego.ansiblejane.ui.components.pressScale
 import io.github.leogallego.ansiblejane.ui.hosts.HostDetailSheet
 import org.koin.compose.viewmodel.koinViewModel
@@ -102,22 +102,7 @@ private fun InventoryDetailCompact(
             .padding(horizontal = 24.dp)
             .padding(bottom = 32.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = inventory.name,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            IconButton(onClick = onExpand) {
-                Icon(Icons.Default.OpenInFull, contentDescription = "Expand to full screen")
-            }
-        }
+        DetailSheetHeader(title = inventory.name, onExpand = onExpand)
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
@@ -187,9 +172,7 @@ private fun InventoryHostsFullScreen(
 
         when (val state = uiState) {
             is InventoryHostsUiState.Loading -> {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(5) { SkeletonCard() }
-                }
+                LoadingList()
             }
             is InventoryHostsUiState.Error -> {
                 Box(
@@ -203,31 +186,16 @@ private fun InventoryHostsFullScreen(
                 }
             }
             is InventoryHostsUiState.Empty -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = state.message,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                EmptyState(message = state.message)
             }
             is InventoryHostsUiState.Success -> {
                 val listState = rememberLazyListState()
 
-                val shouldLoadMore by remember {
-                    derivedStateOf {
-                        val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                        lastVisibleItem >= state.hosts.size - 3
-                    }
-                }
-
-                LaunchedEffect(shouldLoadMore) {
-                    snapshotFlow { shouldLoadMore }
-                        .collect { if (it) viewModel.loadMore() }
-                }
+                PaginationEffect(
+                    listState = listState,
+                    itemCount = state.hosts.size,
+                    onLoadMore = { viewModel.loadMore() }
+                )
 
                 LazyColumn(
                     state = listState,
@@ -246,13 +214,7 @@ private fun InventoryHostsFullScreen(
                     }
 
                     if (state.isLoadingMore) {
-                        item {
-                            LinearProgressIndicator(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            )
-                        }
+                        item { LoadMoreIndicator() }
                     }
 
                     item { Spacer(modifier = Modifier.height(32.dp)) }
@@ -335,21 +297,3 @@ private fun HostItem(
     }
 }
 
-@Composable
-private fun DetailRow(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.padding(vertical = 4.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
