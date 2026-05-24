@@ -15,20 +15,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import io.github.leogallego.ansiblejane.ui.components.StatusFilterChips
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import io.github.leogallego.ansiblejane.ui.components.pressScale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -39,10 +34,15 @@ import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.presentation.jobs.RecentJobsUiState
 import io.github.leogallego.ansiblejane.presentation.jobs.RecentJobsViewModel
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
+import io.github.leogallego.ansiblejane.ui.components.EmptyState
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
+import io.github.leogallego.ansiblejane.ui.components.LoadMoreIndicator
+import io.github.leogallego.ansiblejane.ui.components.LoadingList
+import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
-import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
+import io.github.leogallego.ansiblejane.ui.components.StatusFilterChips
+import io.github.leogallego.ansiblejane.ui.components.pressScale
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,9 +65,7 @@ fun RecentJobsScreen(
     ) {
         when (val state = uiState) {
             is RecentJobsUiState.Loading -> {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(5) { SkeletonCard() }
-                }
+                LoadingList()
             }
             is RecentJobsUiState.Error -> {
                 ErrorMessage(
@@ -100,36 +98,22 @@ fun RecentJobsScreen(
                         )
 
                         if (state.jobs.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .weight(1f),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = if (state.activeFilters.isNotEmpty()) {
-                                        "No jobs match the selected filters"
-                                    } else {
-                                        "No recent jobs"
-                                    },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            EmptyState(
+                                message = if (state.activeFilters.isNotEmpty()) {
+                                    "No jobs match the selected filters"
+                                } else {
+                                    "No recent jobs"
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
                         } else {
                             val listState = rememberLazyListState()
 
-                            val shouldLoadMore by remember {
-                                derivedStateOf {
-                                    val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                                    lastVisibleItem >= state.jobs.size - 3
-                                }
-                            }
-
-                            LaunchedEffect(shouldLoadMore) {
-                                snapshotFlow { shouldLoadMore }
-                                    .collect { if (it) viewModel.loadMore() }
-                            }
+                            PaginationEffect(
+                                listState = listState,
+                                itemCount = state.jobs.size,
+                                onLoadMore = { viewModel.loadMore() }
+                            )
 
                             LazyColumn(
                                 state = listState,
@@ -149,13 +133,7 @@ fun RecentJobsScreen(
                                 }
 
                                 if (state.isLoadingMore) {
-                                    item {
-                                        LinearProgressIndicator(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp)
-                                        )
-                                    }
+                                    item { LoadMoreIndicator() }
                                 }
                             }
                         }

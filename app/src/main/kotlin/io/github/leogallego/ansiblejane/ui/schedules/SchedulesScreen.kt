@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -24,25 +23,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.model.Schedule
-import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.presentation.schedules.SchedulesUiState
 import io.github.leogallego.ansiblejane.presentation.schedules.SchedulesViewModel
+import io.github.leogallego.ansiblejane.ui.components.DateFormatter
+import io.github.leogallego.ansiblejane.ui.components.EmptyState
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
-import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
+import io.github.leogallego.ansiblejane.ui.components.LoadMoreIndicator
+import io.github.leogallego.ansiblejane.ui.components.LoadingList
+import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,9 +68,7 @@ fun SchedulesScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         when (val state = uiState) {
             is SchedulesUiState.Loading -> {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(5) { SkeletonCard() }
-                }
+                LoadingList()
             }
             is SchedulesUiState.Error -> {
                 ErrorMessage(
@@ -90,30 +87,15 @@ fun SchedulesScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     if (state.schedules.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No schedules configured",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        EmptyState(message = "No schedules configured")
                     } else {
                         val listState = rememberLazyListState()
 
-                        val shouldLoadMore by remember {
-                            derivedStateOf {
-                                val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                                lastVisibleItem >= state.schedules.size - 3
-                            }
-                        }
-
-                        LaunchedEffect(shouldLoadMore) {
-                            snapshotFlow { shouldLoadMore }
-                                .collect { if (it) viewModel.loadMore() }
-                        }
+                        PaginationEffect(
+                            listState = listState,
+                            itemCount = state.schedules.size,
+                            onLoadMore = { viewModel.loadMore() }
+                        )
 
                         LazyColumn(
                             state = listState,
@@ -130,13 +112,7 @@ fun SchedulesScreen(
                             }
 
                             if (state.isLoadingMore) {
-                                item {
-                                    LinearProgressIndicator(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
-                                    )
-                                }
+                                item { LoadMoreIndicator() }
                             }
                         }
                     }
@@ -198,11 +174,11 @@ private fun ScheduleItem(
                 checked = schedule.enabled,
                 onCheckedChange = { onToggle() },
                 colors = SwitchDefaults.colors(
-                    checkedTrackColor = Color(0xFF4CAF50),
-                    checkedThumbColor = Color.White,
-                    uncheckedTrackColor = Color(0xFFF44336),
-                    uncheckedThumbColor = Color.White,
-                    uncheckedBorderColor = Color(0xFFF44336)
+                    checkedTrackColor = MaterialTheme.colorScheme.tertiary,
+                    checkedThumbColor = MaterialTheme.colorScheme.onTertiary,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.error,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onError,
+                    uncheckedBorderColor = MaterialTheme.colorScheme.error
                 ),
                 modifier = Modifier.testTag("switch_schedule_${schedule.id}")
             )

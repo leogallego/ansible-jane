@@ -3,22 +3,16 @@ package io.github.leogallego.ansiblejane.ui.templates
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,18 +20,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.model.Label
 import io.github.leogallego.ansiblejane.presentation.templates.LaunchState
 import io.github.leogallego.ansiblejane.presentation.templates.TemplatesUiState
 import io.github.leogallego.ansiblejane.presentation.templates.TemplatesViewModel
+import io.github.leogallego.ansiblejane.ui.components.EmptyState
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.ExtraVarsDialog
 import io.github.leogallego.ansiblejane.ui.components.LabelChips
 import io.github.leogallego.ansiblejane.ui.components.LaunchConfirmDialog
+import io.github.leogallego.ansiblejane.ui.components.LoadMoreIndicator
+import io.github.leogallego.ansiblejane.ui.components.LoadingList
+import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
-import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,9 +97,7 @@ fun TemplateListScreen(
 
             when (val state = uiState) {
                 is TemplatesUiState.Idle, is TemplatesUiState.Loading -> {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(5) { SkeletonCard() }
-                    }
+                    LoadingList()
                 }
                 is TemplatesUiState.Error -> {
                     ErrorMessage(
@@ -131,31 +125,16 @@ fun TemplateListScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         if (state.templates.isEmpty()) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "No templates available",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            EmptyState(message = "No templates available")
                         } else {
                             val listState = rememberLazyListState()
 
-                            // Load more when reaching the end
                             if (state.hasMore) {
-                                val shouldLoadMore by remember {
-                                    derivedStateOf {
-                                        val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                                        state.templates.size > 3 && lastVisibleItem >= state.templates.size - 3
-                                    }
-                                }
-
-                                LaunchedEffect(shouldLoadMore) {
-                                    if (shouldLoadMore) viewModel.loadMore()
-                                }
+                                PaginationEffect(
+                                    listState = listState,
+                                    itemCount = state.templates.size,
+                                    onLoadMore = { viewModel.loadMore() }
+                                )
                             }
 
                             LazyColumn(
@@ -173,13 +152,7 @@ fun TemplateListScreen(
                                 }
 
                                 if (state.isLoadingMore) {
-                                    item {
-                                        LinearProgressIndicator(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp)
-                                        )
-                                    }
+                                    item { LoadMoreIndicator() }
                                 }
                             }
                         }

@@ -17,18 +17,15 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -38,9 +35,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.model.Inventory
 import io.github.leogallego.ansiblejane.presentation.inventory.InventoriesUiState
 import io.github.leogallego.ansiblejane.presentation.inventory.InventoriesViewModel
+import io.github.leogallego.ansiblejane.ui.components.EmptyState
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
+import io.github.leogallego.ansiblejane.ui.components.LoadMoreIndicator
+import io.github.leogallego.ansiblejane.ui.components.LoadingList
+import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
-import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import io.github.leogallego.ansiblejane.ui.components.pressScale
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -62,9 +62,7 @@ fun InventoriesScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         when (val state = uiState) {
             is InventoriesUiState.Loading -> {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(5) { SkeletonCard() }
-                }
+                LoadingList()
             }
             is InventoriesUiState.Error -> {
                 ErrorMessage(
@@ -82,16 +80,7 @@ fun InventoriesScreen(
                     },
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = state.message,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    EmptyState(message = state.message)
                 }
             }
             is InventoriesUiState.Success -> {
@@ -107,17 +96,11 @@ fun InventoriesScreen(
                 ) {
                     val listState = rememberLazyListState()
 
-                    val shouldLoadMore by remember {
-                        derivedStateOf {
-                            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                            lastVisibleItem >= state.inventories.size - 3
-                        }
-                    }
-
-                    LaunchedEffect(shouldLoadMore) {
-                        snapshotFlow { shouldLoadMore }
-                            .collect { if (it) viewModel.loadMore() }
-                    }
+                    PaginationEffect(
+                        listState = listState,
+                        itemCount = state.inventories.size,
+                        onLoadMore = { viewModel.loadMore() }
+                    )
 
                     Column(modifier = Modifier.fillMaxSize()) {
                         SearchBar(
@@ -141,13 +124,7 @@ fun InventoriesScreen(
                         }
 
                         if (state.isLoadingMore) {
-                            item {
-                                LinearProgressIndicator(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp)
-                                )
-                            }
+                            item { LoadMoreIndicator() }
                         }
                     }
                     }
