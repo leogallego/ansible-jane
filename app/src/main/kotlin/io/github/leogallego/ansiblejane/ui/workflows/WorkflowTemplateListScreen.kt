@@ -149,7 +149,8 @@ fun WorkflowTemplateListScreen(
                                     TemplateCard(
                                         template = template,
                                         onClick = { onNavigateToTemplateDetail(template.id, template.name) },
-                                        onLaunch = { viewModel.requestLaunch(template) }
+                                        onLaunch = { viewModel.requestLaunch(template) },
+                                        testTagPrefix = "button"
                                     )
                                 }
 

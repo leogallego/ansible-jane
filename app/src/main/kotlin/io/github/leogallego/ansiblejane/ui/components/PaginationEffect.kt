@@ -6,7 +6,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 
 @Composable
 fun PaginationEffect(
@@ -23,7 +22,6 @@ fun PaginationEffect(
     }
 
     LaunchedEffect(shouldLoadMore) {
-        snapshotFlow { shouldLoadMore }
-            .collect { if (it) onLoadMore() }
+        if (shouldLoadMore) onLoadMore()
     }
 }
