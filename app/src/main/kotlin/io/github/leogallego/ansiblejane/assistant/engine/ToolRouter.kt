@@ -21,10 +21,14 @@ class ToolRouter {
             keywords = setOf(
                 "host", "hosts", "group", "groups", "inventory", "inventories",
                 "infrastructure", "facts", "gather", "info", "server", "servers",
-                "machine", "machines", "asset", "assets"
+                "machine", "machines", "asset", "assets", "source", "sources",
+                "label", "labels", "tag", "tags", "summary", "summaries"
             ),
-            resourcePrefixes = setOf("hosts", "groups", "inventories", "constructed_inventories", "inventory_sources"),
-            localToolNames = setOf("list_inventories", "list_hosts", "get_host_facts")
+            resourcePrefixes = setOf("hosts", "groups", "inventories", "constructed_inventories", "inventory_sources", "labels"),
+            localToolNames = setOf(
+                "list_inventories", "list_hosts", "get_host_facts", "get_host_job_summaries",
+                "list_groups", "list_inventory_sources", "list_labels"
+            )
         ),
         JOBS(
             keywords = setOf(
@@ -32,13 +36,15 @@ class ToolRouter {
                 "schedule", "schedules", "workflow", "playbook", "jt", "wfjt",
                 "output", "stdout", "running", "failed", "started", "task",
                 "tasks", "command", "error", "errors", "failure", "status",
-                "playbooks", "workflows", "execution", "executions"
+                "playbooks", "workflows", "execution", "executions",
+                "survey", "node", "nodes", "prompt", "variable", "variables"
             ),
-            resourcePrefixes = setOf("jobs", "job_templates", "workflow_jobs", "workflow_job_templates", "workflow_job_nodes", "schedules", "ad_hoc_commands"),
+            resourcePrefixes = setOf("jobs", "job_templates", "workflow_jobs", "workflow_job_templates", "workflow_job_nodes", "workflow_job_template_nodes", "schedules", "ad_hoc_commands"),
             localToolNames = setOf(
                 "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
                 "list_workflow_templates", "launch_workflow", "get_workflow_job",
-                "list_schedules", "toggle_schedule"
+                "list_schedules", "toggle_schedule",
+                "list_workflow_nodes", "get_survey_spec"
             )
         ),
         MONITORING(
@@ -57,19 +63,25 @@ class ToolRouter {
                 "user", "users", "team", "teams", "organization", "organizations",
                 "org", "role", "roles", "permission", "permissions", "member",
                 "members", "people", "admin", "admins", "token", "tokens",
-                "application", "applications", "app", "apps", "access", "rbac"
+                "application", "applications", "app", "apps", "access", "rbac",
+                "definition", "definitions", "oauth"
             ),
-            resourcePrefixes = setOf("users", "teams", "organizations", "roles", "tokens", "applications"),
-            localToolNames = emptySet()
+            resourcePrefixes = setOf("users", "teams", "organizations", "roles", "role_definitions", "tokens", "applications"),
+            localToolNames = setOf(
+                "list_organizations", "list_users", "list_teams",
+                "list_roles", "list_role_definitions",
+                "list_applications", "list_tokens"
+            )
         ),
         SECURITY(
             keywords = setOf(
                 "credential", "credentials", "secret", "secrets", "security",
                 "compliance", "policy", "certificate", "creds", "vault",
-                "password", "passwords", "key", "keys", "cert", "certs"
+                "password", "passwords", "key", "keys", "cert", "certs",
+                "type", "types"
             ),
             resourcePrefixes = setOf("credentials", "credential_types", "credential_input_sources"),
-            localToolNames = setOf("list_credentials", "get_credential")
+            localToolNames = setOf("list_credentials", "get_credential", "list_credential_types")
         ),
         CONFIGURATION(
             keywords = setOf(
@@ -77,10 +89,13 @@ class ToolRouter {
                 "notifications", "label", "labels", "project", "projects",
                 "execution", "environment", "environments", "config", "ee",
                 "ees", "scm", "repo", "repos", "repository", "alert", "alerts",
-                "tag", "tags"
+                "tag", "tags", "license", "subscription", "version"
             ),
-            resourcePrefixes = setOf("settings", "notification_templates", "notifications", "labels", "execution_environments", "projects"),
-            localToolNames = setOf("list_projects", "get_project", "list_execution_environments")
+            resourcePrefixes = setOf("settings", "notification_templates", "notifications", "labels", "execution_environments", "projects", "config"),
+            localToolNames = setOf(
+                "list_projects", "get_project", "list_execution_environments",
+                "list_notification_templates", "get_settings", "get_config"
+            )
         ),
         EDA(
             keywords = setOf(
@@ -89,8 +104,13 @@ class ToolRouter {
                 "stream", "streams", "decision", "driven", "rulebooks",
                 "activations", "events", "environment"
             ),
-            resourcePrefixes = setOf("audit_rules", "activations", "decision_environments", "rulebooks", "event_streams"),
-            localToolNames = setOf("list_eda_audit_rules", "list_eda_activations", "get_eda_activation")
+            resourcePrefixes = setOf("audit_rules", "activations", "decision_environments", "rulebooks", "event_streams", "eda_credentials", "eda_credential_types", "eda_projects", "eda_users"),
+            localToolNames = setOf(
+                "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
+                "list_eda_rulebooks", "list_eda_decision_environments",
+                "list_eda_projects", "list_eda_credentials", "list_eda_credential_types",
+                "list_eda_event_streams", "list_eda_users"
+            )
         );
 
         val stemmedKeywords: Set<String> by lazy {
@@ -128,6 +148,30 @@ class ToolRouter {
             "list_execution_environments" to setOf("controller.execution_environments_list"),
             "list_eda_activations" to setOf("eda.activations_list"),
             "get_eda_activation" to setOf("eda.activations_read"),
+            "list_organizations" to setOf("controller.organizations_list"),
+            "list_users" to setOf("controller.users_list"),
+            "list_teams" to setOf("controller.teams_list"),
+            "list_roles" to setOf("controller.roles_list"),
+            "list_role_definitions" to setOf("controller.role_definitions_list"),
+            "list_groups" to setOf("controller.groups_list"),
+            "list_inventory_sources" to setOf("controller.inventory_sources_list"),
+            "list_labels" to setOf("controller.labels_list"),
+            "get_host_job_summaries" to setOf("controller.hosts_job_host_summaries_list"),
+            "list_credential_types" to setOf("controller.credential_types_list"),
+            "list_notification_templates" to setOf("controller.notification_templates_list"),
+            "list_applications" to setOf("controller.applications_list"),
+            "list_tokens" to setOf("controller.tokens_list"),
+            "get_settings" to setOf("controller.settings_list"),
+            "get_config" to setOf("controller.config_read"),
+            "list_workflow_nodes" to setOf("controller.workflow_job_template_nodes_list"),
+            "get_survey_spec" to setOf("controller.job_templates_survey_spec_read"),
+            "list_eda_rulebooks" to setOf("eda.rulebooks_list"),
+            "list_eda_decision_environments" to setOf("eda.decision_environments_list"),
+            "list_eda_projects" to setOf("eda.projects_list"),
+            "list_eda_credentials" to setOf("eda.credentials_list"),
+            "list_eda_credential_types" to setOf("eda.credential_types_list"),
+            "list_eda_event_streams" to setOf("eda.event_streams_list"),
+            "list_eda_users" to setOf("eda.users_list"),
         )
 
         private val MCP_TOOLS_WITH_LOCAL_OVERLAP: Set<String> =
