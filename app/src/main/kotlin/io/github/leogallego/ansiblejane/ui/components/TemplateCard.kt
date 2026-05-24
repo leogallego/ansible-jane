@@ -1,5 +1,6 @@
-package io.github.leogallego.ansiblejane.ui.templates
+package io.github.leogallego.ansiblejane.ui.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,19 +27,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.github.leogallego.ansiblejane.model.JobTemplate
-import io.github.leogallego.ansiblejane.ui.components.pressScale
+import io.github.leogallego.ansiblejane.model.LaunchableTemplate
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TemplateListItem(
-    template: JobTemplate,
+fun TemplateCard(
+    template: LaunchableTemplate,
+    onClick: () -> Unit,
     onLaunch: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    testTagPrefix: String = ""
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     ElevatedCard(
-        onClick = onLaunch,
+        onClick = onClick,
         interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
@@ -71,14 +72,13 @@ fun TemplateListItem(
                     )
                 }
 
-                val labels = template.summaryFields.labels.results
-                if (labels.isNotEmpty()) {
+                if (template.labels.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        labels.forEach { label ->
+                        template.labels.forEach { label ->
                             SuggestionChip(
                                 onClick = {},
                                 label = {
@@ -94,10 +94,15 @@ fun TemplateListItem(
                 }
             }
 
-            if (template.summaryFields.userCapabilities.start) {
+            if (template.canStart) {
+                val launchTag = if (testTagPrefix.isNotEmpty()) {
+                    Modifier.testTag("${testTagPrefix}_launch_${template.id}")
+                } else {
+                    Modifier
+                }
                 IconButton(
                     onClick = onLaunch,
-                    modifier = Modifier.size(48.dp).testTag("button_launch_${template.id}")
+                    modifier = Modifier.size(48.dp).then(launchTag)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,

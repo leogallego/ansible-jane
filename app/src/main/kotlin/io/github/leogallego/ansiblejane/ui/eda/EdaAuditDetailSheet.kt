@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.model.EdaRuleAudit
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
+import io.github.leogallego.ansiblejane.ui.components.DetailRow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,21 +64,3 @@ fun EdaAuditDetailSheet(
     }
 }
 
-@Composable
-private fun DetailRow(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.padding(vertical = 4.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}

@@ -35,6 +35,7 @@ import io.github.leogallego.ansiblejane.model.WorkflowNode
 import io.github.leogallego.ansiblejane.presentation.workflows.NodeStdoutState
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowJobStatusUiState
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowJobStatusViewModel
+import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 import org.koin.compose.viewmodel.koinViewModel
@@ -162,15 +163,15 @@ private fun WorkflowJobDetailContent(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     workflowJob.started?.let { started ->
-                        DetailRow("Started", started)
+                        DetailRowHorizontal("Started", started)
                     }
                     workflowJob.finished?.let { finished ->
-                        DetailRow("Finished", finished)
+                        DetailRowHorizontal("Finished", finished)
                     }
                     workflowJob.elapsed?.let { elapsed ->
-                        DetailRow("Elapsed", String.format("%.1f seconds", elapsed))
+                        DetailRowHorizontal("Elapsed", String.format("%.1f seconds", elapsed))
                     }
-                    DetailRow("Job ID", "#${workflowJob.id}")
+                    DetailRowHorizontal("Job ID", "#${workflowJob.id}")
                 }
             }
         }
@@ -206,22 +207,3 @@ private fun WorkflowJobDetailContent(
     }
 }
 
-@Composable
-private fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}

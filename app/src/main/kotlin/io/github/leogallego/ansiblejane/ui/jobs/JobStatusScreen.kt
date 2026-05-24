@@ -37,6 +37,7 @@ import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.presentation.jobs.JobStatusUiState
 import io.github.leogallego.ansiblejane.presentation.jobs.JobStatusViewModel
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
+import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 import org.koin.compose.viewmodel.koinViewModel
@@ -140,15 +141,15 @@ private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null
                 Spacer(modifier = Modifier.height(8.dp))
 
                 job.started?.let { started ->
-                    DetailRow("Started", DateFormatter.formatDateTime(started))
+                    DetailRowHorizontal("Started", DateFormatter.formatDateTime(started))
                 }
                 job.finished?.let { finished ->
-                    DetailRow("Finished", DateFormatter.formatDateTime(finished))
+                    DetailRowHorizontal("Finished", DateFormatter.formatDateTime(finished))
                 }
                 job.elapsed?.let { elapsed ->
-                    DetailRow("Elapsed", String.format("%.1f seconds", elapsed))
+                    DetailRowHorizontal("Elapsed", String.format("%.1f seconds", elapsed))
                 }
-                DetailRow("Job ID", "#${job.id}")
+                DetailRowHorizontal("Job ID", "#${job.id}")
             }
         }
 
@@ -180,22 +181,3 @@ private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null
     }
 }
 
-@Composable
-private fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
