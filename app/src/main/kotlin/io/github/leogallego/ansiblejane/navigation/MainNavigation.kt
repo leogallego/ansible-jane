@@ -31,7 +31,7 @@ fun TabContent(
                 "Job Templates" -> TemplateListScreen(
                     onNavigateToJobStatus = onNavigateToJobStatus
                 )
-                "Workflow Templates" -> WorkflowTemplateListScreen(
+                "Workflows" -> WorkflowTemplateListScreen(
                     onNavigateToWorkflowJobStatus = onNavigateToWorkflowJobStatus
                 )
                 else -> PlaceholderScreen(title = segment.label)
