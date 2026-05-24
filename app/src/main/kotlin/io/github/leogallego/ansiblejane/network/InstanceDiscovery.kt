@@ -75,11 +75,9 @@ class InstanceDiscovery(private val json: Json) {
     }
 
     private fun derivePlatformType(hasGateway: Boolean, hasLicense: Boolean): PlatformType = when {
-        hasGateway && hasLicense -> PlatformType.AAP
-        hasGateway && !hasLicense -> PlatformType.JEWEL
-        !hasGateway && !hasLicense -> PlatformType.AWX
-        !hasGateway && hasLicense -> PlatformType.AAP
-        else -> PlatformType.UNKNOWN
+        hasLicense -> PlatformType.AAP
+        hasGateway -> PlatformType.JEWEL
+        else -> PlatformType.AWX
     }
 
     private fun deriveAapVersion(controllerVersion: String, platformType: PlatformType): String? {
