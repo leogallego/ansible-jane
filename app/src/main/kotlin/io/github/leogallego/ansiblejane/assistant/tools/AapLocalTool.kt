@@ -6,12 +6,16 @@ import ai.koog.agents.core.tools.ToolParameterDescriptor
 import ai.koog.agents.core.tools.ToolParameterType
 import ai.koog.serialization.TypeToken
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 
 @Serializable
 class EmptyArgs
@@ -27,8 +31,16 @@ abstract class AapLocalTool<TArgs : Any>(
     override val spec: ToolSpec by lazy { descriptorToSpec(descriptor) }
 
     override suspend fun execute(args: JsonObject): ToolResult = try {
-        val typedArgs = bridgeJson.decodeFromJsonElement(argsSerializer, args)
+        val sanitized = sanitizeNullSentinels(args)
+        val typedArgs = bridgeJson.decodeFromJsonElement(argsSerializer, sanitized)
         ToolResult(success = true, data = execute(typedArgs))
+    } catch (e: MissingFieldException) {
+        val fields = e.missingFields.joinToString(", ")
+        ToolResult(
+            success = false,
+            data = "$fields required but missing",
+            errorType = ErrorType.NOT_FOUND
+        )
     } catch (e: Exception) {
         ToolResult(
             success = false,
@@ -38,6 +50,10 @@ abstract class AapLocalTool<TArgs : Any>(
     }
 
     companion object {
+        private val NULL_SENTINELS = setOf(
+            "<nil>", "null", "none", "nil", "", "undefined", "N/A"
+        )
+
         val bridgeJson = Json {
             ignoreUnknownKeys = true
             isLenient = true
@@ -45,8 +61,20 @@ abstract class AapLocalTool<TArgs : Any>(
             explicitNulls = false
         }
 
+        private fun sanitizeNullSentinels(args: JsonObject): JsonObject {
+            val sanitized = mutableMapOf<String, JsonElement>()
+            for ((key, value) in args) {
+                if (value is JsonPrimitive && value.contentOrNull in NULL_SENTINELS) {
+                    sanitized[key] = JsonNull
+                } else {
+                    sanitized[key] = value
+                }
+            }
+            return JsonObject(sanitized)
+        }
+
         fun descriptorToSpec(descriptor: ToolDescriptor): ToolSpec {
-            val properties = mutableMapOf<String, kotlinx.serialization.json.JsonElement>()
+            val properties = mutableMapOf<String, JsonElement>()
             val requiredNames = mutableListOf<String>()
 
             for (param in descriptor.requiredParameters) {
@@ -73,8 +101,19 @@ abstract class AapLocalTool<TArgs : Any>(
             )
         }
 
+        private fun resolveType(type: ToolParameterType): ToolParameterType = when (type) {
+            is ToolParameterType.AnyOf -> {
+                type.types
+                    .map { it.type }
+                    .firstOrNull { it !is ToolParameterType.Null }
+                    ?: ToolParameterType.String
+            }
+            else -> type
+        }
+
         private fun paramToSchema(param: ToolParameterDescriptor): JsonObject = buildJsonObject {
-            val typeStr = when (param.type) {
+            val resolved = resolveType(param.type)
+            val typeStr = when (resolved) {
                 is ToolParameterType.Integer -> "integer"
                 is ToolParameterType.Float -> "number"
                 is ToolParameterType.Boolean -> "boolean"
@@ -84,10 +123,9 @@ abstract class AapLocalTool<TArgs : Any>(
             }
             put("type", JsonPrimitive(typeStr))
             put("description", JsonPrimitive(param.description))
-            if (param.type is ToolParameterType.Enum) {
-                val entries = (param.type as ToolParameterType.Enum).entries
+            if (resolved is ToolParameterType.Enum) {
                 put("enum", buildJsonArray {
-                    entries.forEach { add(JsonPrimitive(it)) }
+                    resolved.entries.forEach { add(JsonPrimitive(it)) }
                 })
             }
         }
