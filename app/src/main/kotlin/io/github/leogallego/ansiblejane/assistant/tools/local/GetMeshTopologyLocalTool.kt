@@ -1,22 +1,18 @@
 package io.github.leogallego.ansiblejane.assistant.tools.local
 
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import ai.koog.serialization.typeToken
+import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.EmptyArgs
 import io.github.leogallego.ansiblejane.data.InfrastructureRepository
-import kotlinx.serialization.json.JsonObject
 
 class GetMeshTopologyLocalTool(
     private val repository: InfrastructureRepository
-) : LocalTool(
-    spec = ToolSpec(
-        name = "get_mesh_topology",
-        description = "Get the automation mesh topology — nodes, connections, and link status",
-        parametersSchema = buildToolSchema()
-    )
+) : AapLocalTool<EmptyArgs>(
+    typeToken<EmptyArgs>(), EmptyArgs.serializer(),
+    "get_mesh_topology", "Get the automation mesh topology — nodes, connections, and link status"
 ) {
-    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+    override suspend fun execute(args: EmptyArgs): String {
         val topology = repository.getMeshTopology().getOrThrow()
-        ToolResult(success = true, data = topology.toString())
+        return topology.toString()
     }
 }

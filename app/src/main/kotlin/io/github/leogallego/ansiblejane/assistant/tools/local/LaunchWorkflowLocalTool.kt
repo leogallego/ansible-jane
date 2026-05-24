@@ -1,31 +1,32 @@
 package io.github.leogallego.ansiblejane.assistant.tools.local
 
-import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import ai.koog.agents.core.tools.annotations.LLMDescription
+import ai.koog.serialization.typeToken
+import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.WorkflowRepository
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 class LaunchWorkflowLocalTool(
     private val repository: WorkflowRepository
-) : LocalTool(
-    spec = ToolSpec(
-        name = "launch_workflow",
-        description = "Launch a workflow job template by ID with optional extra variables",
-        parametersSchema = buildToolSchema(
-            Triple("template_id", "integer", "ID of the workflow template to launch"),
-            Triple("extra_vars", "string", "Extra variables as YAML/JSON string"),
-            required = listOf("template_id")
-        )
-    ),
+) : AapLocalTool<LaunchWorkflowLocalTool.Args>(
+    typeToken<Args>(), Args.serializer(),
+    name = "launch_workflow",
+    description = "Launch a workflow job template by ID with optional extra variables",
     destructive = true
 ) {
-    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
-        val templateId = args.intArg("template_id")
-            ?: return@executeSafely ToolResult(success = false, data = "template_id is required", errorType = ErrorType.NOT_FOUND)
-        val extraVars = args.stringArg("extra_vars")
-        val jobId = repository.launchWorkflow(templateId, extraVars).getOrThrow()
-        ToolResult(success = true, data = """{"workflow_job_id": $jobId, "status": "launched"}""")
+    @Serializable
+    data class Args(
+        @property:LLMDescription("ID of the workflow template to launch")
+        @SerialName("template_id")
+        val templateId: Int,
+        @property:LLMDescription("Extra variables as YAML/JSON string")
+        @SerialName("extra_vars")
+        val extraVars: String? = null
+    )
+
+    override suspend fun execute(args: Args): String {
+        val jobId = repository.launchWorkflow(args.templateId, args.extraVars).getOrThrow()
+        return """{"workflow_job_id": $jobId, "status": "launched"}"""
     }
 }

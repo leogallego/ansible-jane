@@ -1,37 +1,33 @@
 package io.github.leogallego.ansiblejane.assistant.tools.local
 
-import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import ai.koog.agents.core.tools.annotations.LLMDescription
+import ai.koog.serialization.typeToken
+import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.WorkflowRepository
 import io.github.leogallego.ansiblejane.network.networkJson
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.JsonObject
 
 class GetWorkflowJobLocalTool(
     private val repository: WorkflowRepository
-) : LocalTool(
-    spec = ToolSpec(
-        name = "get_workflow_job",
-        description = "Get status of a workflow job by ID, including its node details",
-        parametersSchema = buildToolSchema(
-            Triple("workflow_job_id", "integer", "ID of the workflow job"),
-            required = listOf("workflow_job_id")
-        )
-    )
+) : AapLocalTool<GetWorkflowJobLocalTool.Args>(
+    typeToken<Args>(), Args.serializer(),
+    "get_workflow_job", "Get status of a workflow job by ID, including its node details"
 ) {
-    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
-        val jobId = args.intArg("workflow_job_id")
-            ?: return@executeSafely ToolResult(success = false, data = "workflow_job_id is required", errorType = ErrorType.NOT_FOUND)
-        val job = repository.getWorkflowJobStatus(jobId).getOrThrow()
-        val nodes = repository.getWorkflowNodes(jobId).getOrElse { emptyList() }
-        ToolResult(
-            success = true,
-            data = networkJson.encodeToString(mapOf(
-                "workflow_job" to networkJson.encodeToString(job),
-                "nodes" to networkJson.encodeToString(nodes)
-            ))
-        )
+    @Serializable
+    data class Args(
+        @SerialName("workflow_job_id")
+        @property:LLMDescription("ID of the workflow job")
+        val workflowJobId: Int
+    )
+
+    override suspend fun execute(args: Args): String {
+        val job = repository.getWorkflowJobStatus(args.workflowJobId).getOrThrow()
+        val nodes = repository.getWorkflowNodes(args.workflowJobId).getOrElse { emptyList() }
+        return networkJson.encodeToString(mapOf(
+            "workflow_job" to networkJson.encodeToString(job),
+            "nodes" to networkJson.encodeToString(nodes)
+        ))
     }
 }

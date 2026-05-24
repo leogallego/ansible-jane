@@ -22,10 +22,9 @@ class ToolRouterTest {
         override suspend fun execute(args: JsonObject) = ToolResult(success = true)
     }
 
-    private fun localTool(name: String, destructive: Boolean = false) = object : LocalTool(
-        spec = ToolSpec(name, "Local: $name", JsonObject(emptyMap())),
-        destructive = destructive
-    ) {
+    private fun localTool(name: String, destructive: Boolean = false) = object : LocalTool {
+        override val spec = ToolSpec(name, "Local: $name", JsonObject(emptyMap()))
+        override val destructive = destructive
         override suspend fun execute(args: JsonObject) = ToolResult(success = true)
     }
 

@@ -1,22 +1,18 @@
 package io.github.leogallego.ansiblejane.assistant.tools.local
 
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import ai.koog.serialization.typeToken
+import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.EmptyArgs
 import io.github.leogallego.ansiblejane.data.ControllerReadOnlyRepository
-import kotlinx.serialization.json.JsonObject
 
 class GetConfigLocalTool(
     private val repository: ControllerReadOnlyRepository
-) : LocalTool(
-    spec = ToolSpec(
-        name = "get_config",
-        description = "Get AAP configuration including license info, version, and platform details",
-        parametersSchema = buildToolSchema()
-    )
+) : AapLocalTool<EmptyArgs>(
+    typeToken<EmptyArgs>(), EmptyArgs.serializer(),
+    "get_config", "Get AAP configuration including license info, version, and platform details"
 ) {
-    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+    override suspend fun execute(args: EmptyArgs): String {
         val config = repository.getConfig().getOrThrow()
-        ToolResult(success = true, data = config.toString())
+        return config.toString()
     }
 }
