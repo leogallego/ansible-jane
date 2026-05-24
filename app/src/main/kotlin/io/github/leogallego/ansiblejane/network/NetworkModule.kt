@@ -31,4 +31,6 @@ val networkModule = module {
     }
 
     factory { ApiVersionDetector(get()) }
+
+    single { InstanceDiscovery(networkJson) }
 }

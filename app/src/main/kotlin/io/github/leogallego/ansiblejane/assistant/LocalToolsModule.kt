@@ -58,6 +58,15 @@ val localToolsModule = module {
     single { ListApplicationsLocalTool(get()) } bind LocalTool::class
     single { ListTokensLocalTool(get()) } bind LocalTool::class
 
+    // Platform / Gateway
+    single { ListPlatformOrganizationsLocalTool(get(), get()) } bind LocalTool::class
+    single { ListPlatformUsersLocalTool(get(), get()) } bind LocalTool::class
+    single { ListPlatformTeamsLocalTool(get(), get()) } bind LocalTool::class
+    single { ListPlatformRoleDefinitionsLocalTool(get(), get()) } bind LocalTool::class
+    single { ListAuthenticatorsLocalTool(get(), get()) } bind LocalTool::class
+    single { ListPlatformServicesLocalTool(get(), get()) } bind LocalTool::class
+    single { ListServiceClustersLocalTool(get(), get()) } bind LocalTool::class
+
     // EDA
     single { ListEdaAuditRulesLocalTool(get()) } bind LocalTool::class
     single { ListEdaActivationsLocalTool(get()) } bind LocalTool::class

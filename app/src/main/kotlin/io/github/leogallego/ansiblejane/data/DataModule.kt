@@ -11,7 +11,7 @@ val dataModule = module {
     single { UserPreferencesRepository(androidContext()) } bind IUserPreferencesRepository::class
     single { BackupManager() }
     single { ConnectivityObserver(androidContext()) }
-    single { AuthRepository(get(), get()) } bind IAuthRepository::class
+    single { AuthRepository(get(), get(), get()) } bind IAuthRepository::class
     single { TemplateRepository(get<AapApiProvider>()) } bind ITemplateRepository::class
     single { JobRepository(get<AapApiProvider>()) } bind IJobRepository::class
     single { WorkflowRepository(get<AapApiProvider>()) } bind IWorkflowRepository::class
@@ -25,4 +25,5 @@ val dataModule = module {
     single { EdaActivationRepository(get<AapApiProvider>()) } bind IEdaActivationRepository::class
     single { ControllerReadOnlyRepository(get<AapApiProvider>()) }
     single { EdaReadOnlyRepository(get<AapApiProvider>()) }
+    single { PlatformRepository(get<AapApiProvider>()) }
 }

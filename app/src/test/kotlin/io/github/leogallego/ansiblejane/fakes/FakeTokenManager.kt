@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.fakes
 
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.model.AapInstance
+import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.ApiVersion
 import kotlinx.coroutines.flow.Flow
@@ -75,6 +76,20 @@ class FakeTokenManager : ITokenManager {
         alias: String?,
         existingId: String?
     ): String = saveInstance(baseUrl, token, alias, apiVersion, trustSelfSigned, certFingerprint, existingId)
+
+    override suspend fun updateInstanceInfo(
+        instanceId: String,
+        instanceInfo: InstanceInfo
+    ) {
+        _instances.value = _instances.value.map {
+            if (it.id == instanceId) it.copy(instanceInfo = instanceInfo) else it
+        }
+        _activeInstance.value?.let { active ->
+            if (active.id == instanceId) {
+                _activeInstance.value = _instances.value.find { it.id == instanceId }
+            }
+        }
+    }
 
     override suspend fun updateMcpConfig(
         instanceId: String,

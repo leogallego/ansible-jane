@@ -943,4 +943,88 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("show me all of the")
         assertFalse(result.categoryMatched)
     }
+
+    // --- Platform category tests ---
+
+    @Test
+    fun `SHOULD select platform tools WHEN query mentions gateway`() {
+        val tools = listOf(
+            localTool("list_platform_organizations"),
+            localTool("list_platform_users"),
+            localTool("list_platform_services"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show gateway services").tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_platform_services" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD select platform tools WHEN query mentions authenticators`() {
+        val tools = listOf(
+            localTool("list_authenticators"),
+            localTool("list_platform_organizations"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("list authenticators").tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_authenticators" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD select platform tools WHEN query mentions platform`() {
+        val tools = listOf(
+            localTool("list_platform_organizations"),
+            localTool("list_platform_users"),
+            localTool("list_platform_teams"),
+            localTool("list_platform_role_definitions"),
+            localTool("list_authenticators"),
+            localTool("list_platform_services"),
+            localTool("list_service_clusters"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show platform services").tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_platform_services" in names)
+        assertTrue("list_service_clusters" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD auto-disable platform MCP overlaps WHEN local tools registered`() {
+        val localTools = listOf(
+            localTool("list_platform_organizations"),
+            localTool("list_authenticators"),
+            localTool("list_platform_services")
+        )
+        router.registerLocalTools(localTools)
+
+        assertFalse(router.isToolEnabled("gateway.organizations_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("gateway.authenticators_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("gateway.services_list", ToolSource.MCP))
+        assertTrue(router.isToolEnabled("gateway.teams_list", ToolSource.MCP))
+    }
+
+    @Test
+    fun `SHOULD select platform tools WHEN query mentions SSO`() {
+        val tools = listOf(
+            localTool("list_authenticators"),
+            localTool("list_platform_services"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show sso providers").tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_authenticators" in names)
+        assertFalse("list_hosts" in names)
+    }
 }
