@@ -16,6 +16,7 @@ class GeminiLlmProviderTest {
         val ex = KoogHttpClientException(statusCode = 401, message = "Unauthorized")
         val mapped = provider.mapException(ex)
         assertTrue(mapped is LlmAuthException)
+        assertTrue(mapped.message!!.contains("Authentication failed"))
     }
 
     @Test
@@ -23,6 +24,7 @@ class GeminiLlmProviderTest {
         val ex = KoogHttpClientException(statusCode = 403, message = "Forbidden")
         val mapped = provider.mapException(ex)
         assertTrue(mapped is LlmAuthException)
+        assertTrue(mapped.message!!.contains("Authentication failed"))
     }
 
     @Test
@@ -30,6 +32,7 @@ class GeminiLlmProviderTest {
         val ex = KoogHttpClientException(statusCode = 429, message = "Rate limited")
         val mapped = provider.mapException(ex)
         assertTrue(mapped is LlmRateLimitException)
+        assertTrue(mapped.message!!.contains("Rate limited"))
     }
 
     @Test
@@ -42,6 +45,20 @@ class GeminiLlmProviderTest {
     @Test
     fun `SHOULD throw LlmServerException WHEN KoogHttpClientException with 502`() {
         val ex = KoogHttpClientException(statusCode = 502, message = "Bad gateway")
+        val mapped = provider.mapException(ex)
+        assertTrue(mapped is LlmServerException)
+    }
+
+    @Test
+    fun `SHOULD throw LlmServerException WHEN KoogHttpClientException with 503`() {
+        val ex = KoogHttpClientException(statusCode = 503, message = "Service unavailable")
+        val mapped = provider.mapException(ex)
+        assertTrue(mapped is LlmServerException)
+    }
+
+    @Test
+    fun `SHOULD throw LlmServerException WHEN KoogHttpClientException with 504`() {
+        val ex = KoogHttpClientException(statusCode = 504, message = "Gateway timeout")
         val mapped = provider.mapException(ex)
         assertTrue(mapped is LlmServerException)
     }
@@ -81,6 +98,14 @@ class GeminiLlmProviderTest {
         val ex = LLMClientException("google", "LLM error", inner)
         val mapped = provider.mapException(ex)
         assertTrue(mapped is LlmAuthException)
+    }
+
+    @Test
+    fun `SHOULD unwrap LLMClientException WHEN cause is SocketTimeoutException`() {
+        val inner = SocketTimeoutException("Request timed out")
+        val ex = LLMClientException("google", "LLM timeout", inner)
+        val mapped = provider.mapException(ex)
+        assertTrue(mapped is LlmTimeoutException)
     }
 
     @Test
