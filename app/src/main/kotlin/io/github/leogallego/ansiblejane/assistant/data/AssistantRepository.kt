@@ -11,6 +11,9 @@ import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.engine.Role
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -26,6 +29,8 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
 
     private val messages = mutableListOf<ChatMessage>()
     private val json = Json { ignoreUnknownKeys = true }
+    private val _onHistoryCleared = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    override val onHistoryCleared: SharedFlow<Unit> = _onHistoryCleared.asSharedFlow()
 
     private companion object {
         private const val TAG = "AssistantRepository"
@@ -50,6 +55,7 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
 
     override fun clearHistory() {
         messages.clear()
+        _onHistoryCleared.tryEmit(Unit)
     }
 
     override suspend fun saveLlmConfig(config: LlmProviderConfig) {

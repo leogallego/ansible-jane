@@ -6,13 +6,19 @@ import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.engine.Role
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class FakeAssistantRepository : IAssistantRepository {
     private val messages = mutableListOf<ChatMessage>()
     var savedConfig: LlmProviderConfig? = null
     var allConfigs = mutableMapOf<String, LlmProviderConfig>()
     var activeProvider: String? = null
+
+    private val _onHistoryCleared = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    override val onHistoryCleared: SharedFlow<Unit> = _onHistoryCleared.asSharedFlow()
 
     private val _activeConfigFlow = MutableStateFlow<LlmProviderConfig?>(null)
     override val activeConfigFlow: Flow<LlmProviderConfig?> = _activeConfigFlow
@@ -36,6 +42,7 @@ class FakeAssistantRepository : IAssistantRepository {
 
     override fun clearHistory() {
         messages.clear()
+        _onHistoryCleared.tryEmit(Unit)
     }
 
     override suspend fun saveLlmConfig(config: LlmProviderConfig) {

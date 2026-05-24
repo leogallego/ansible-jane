@@ -2,12 +2,14 @@ package io.github.leogallego.ansiblejane.assistant.data
 
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 
 interface IAssistantRepository {
     fun addMessage(message: ChatMessage)
     fun getHistory(): List<ChatMessage>
     fun removeLastAssistantMessage()
     fun clearHistory()
+    val onHistoryCleared: SharedFlow<Unit>
     suspend fun saveLlmConfig(config: LlmProviderConfig)
     suspend fun loadLlmConfig(): LlmProviderConfig?
     suspend fun saveAllLlmConfigs(configs: Map<String, LlmProviderConfig>)
