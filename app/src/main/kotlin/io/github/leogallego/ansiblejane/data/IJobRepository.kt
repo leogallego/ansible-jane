@@ -11,6 +11,7 @@ interface IJobRepository {
     suspend fun getRecentJobs(
         page: Int = 1,
         pageSize: Int = 20,
-        statusFilters: Set<JobStatus> = emptySet()
+        statusFilters: Set<JobStatus> = emptySet(),
+        search: String? = null
     ): Result<RecentJobsResult>
 }

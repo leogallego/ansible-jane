@@ -26,13 +26,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,6 +61,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -107,6 +114,8 @@ fun AssistantScreen(
             ActiveChatContent(
                 state = state,
                 onSendMessage = { viewModel.sendMessage(it) },
+                onStopGeneration = { viewModel.stopGeneration() },
+                onRegenerateLastMessage = { viewModel.regenerateLastMessage() },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -131,6 +140,8 @@ fun AssistantScreen(
 private fun ActiveChatContent(
     state: AssistantUiState.Active,
     onSendMessage: (String) -> Unit,
+    onStopGeneration: () -> Unit,
+    onRegenerateLastMessage: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -193,6 +204,11 @@ private fun ActiveChatContent(
             }
         }
 
+        val clipboardManager = LocalClipboardManager.current
+        val lastAssistantId = remember(state.messages) {
+            state.messages.lastOrNull { it.role == Role.ASSISTANT }?.id
+        }
+
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -228,12 +244,25 @@ private fun ActiveChatContent(
                 key = { it.id },
                 contentType = { it.role }
             ) { message ->
+                val isLastAssistant = message.role == Role.ASSISTANT &&
+                    message.id == lastAssistantId &&
+                    !state.isGenerating
                 when (message.role) {
-                    Role.USER -> UserBubble(message = message)
+                    Role.USER -> UserBubble(
+                        message = message,
+                        onCopy = {
+                            clipboardManager.setText(AnnotatedString(message.content))
+                        },
+                    )
                     Role.ASSISTANT -> AssistantMessage(
                         content = message.content,
                         source = message.source,
-                        toolsUsed = message.toolsUsed
+                        toolsUsed = message.toolsUsed,
+                        onCopy = {
+                            clipboardManager.setText(AnnotatedString(message.content))
+                        },
+                        onRegenerate = if (isLastAssistant) onRegenerateLastMessage
+                            else null,
                     )
                     else -> AssistantMessage(content = message.content)
                 }
@@ -246,50 +275,64 @@ private fun ActiveChatContent(
             }
         }
 
-        Row(
+        OutlinedTextField(
+            value = inputText,
+            onValueChange = { inputText = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = inputText,
-                onValueChange = { inputText = it },
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag("field_assistant_input")
-                    .focusRequester(focusRequester)
-                    .onPreviewKeyEvent {
-                        if (it.type == KeyEventType.KeyUp &&
-                            it.key == Key.Enter &&
-                            it.isCtrlPressed
-                        ) {
-                            submit()
-                            true
-                        } else false
-                    },
-                placeholder = { Text("Ask a question...") },
-                maxLines = 3,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { submit() }),
-            )
-
-            IconButton(
-                onClick = { submit() },
-                modifier = Modifier.testTag("button_send"),
-                enabled = inputText.text.isNotBlank() && !state.isGenerating
-            ) {
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .testTag("field_assistant_input")
+                .focusRequester(focusRequester)
+                .onPreviewKeyEvent {
+                    if (it.type == KeyEventType.KeyUp &&
+                        it.key == Key.Enter &&
+                        it.isCtrlPressed
+                    ) {
+                        submit()
+                        true
+                    } else false
+                },
+            placeholder = { Text("Ask a question...") },
+            maxLines = 3,
+            shape = RoundedCornerShape(28.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            ),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+            keyboardActions = KeyboardActions(onSend = { submit() }),
+            trailingIcon = {
                 if (state.isGenerating) {
-                    CircularProgressIndicator(modifier = Modifier.padding(4.dp))
+                    FilledIconButton(
+                        onClick = onStopGeneration,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .testTag("button_stop"),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                        ),
+                    ) {
+                        Icon(
+                            Icons.Default.Stop,
+                            contentDescription = "Stop generation",
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 } else {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send"
-                    )
+                    IconButton(
+                        onClick = { submit() },
+                        modifier = Modifier.testTag("button_send"),
+                        enabled = inputText.text.isNotBlank(),
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Send",
+                        )
+                    }
                 }
-            }
-        }
+            },
+        )
     }
 }
 

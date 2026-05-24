@@ -1,5 +1,5 @@
 package io.github.leogallego.ansiblejane.data
 
 interface IEdaAuditRepository {
-    suspend fun getAuditRules(page: Int = 1, pageSize: Int = 20): Result<EdaAuditResult>
+    suspend fun getAuditRules(page: Int = 1, pageSize: Int = 20, search: String? = null): Result<EdaAuditResult>
 }

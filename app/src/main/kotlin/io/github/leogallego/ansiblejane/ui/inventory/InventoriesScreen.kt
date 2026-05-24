@@ -39,6 +39,7 @@ import io.github.leogallego.ansiblejane.model.Inventory
 import io.github.leogallego.ansiblejane.presentation.inventory.InventoriesUiState
 import io.github.leogallego.ansiblejane.presentation.inventory.InventoriesViewModel
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
+import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import io.github.leogallego.ansiblejane.ui.components.pressScale
 import org.koin.compose.viewmodel.koinViewModel
@@ -94,6 +95,8 @@ fun InventoriesScreen(
                 }
             }
             is InventoriesUiState.Success -> {
+                val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+
                 PullToRefreshBox(
                     isRefreshing = isRefreshing,
                     onRefresh = {
@@ -116,9 +119,16 @@ fun InventoriesScreen(
                             .collect { if (it) viewModel.loadMore() }
                     }
 
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        SearchBar(
+                            onSearch = { viewModel.search(it) },
+                            placeholder = "Search inventories...",
+                            initialQuery = searchQuery,
+                        )
+
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize().testTag("list_inventories")
+                        modifier = Modifier.fillMaxSize().weight(1f).testTag("list_inventories")
                     ) {
                         items(
                             items = state.inventories,
@@ -139,6 +149,7 @@ fun InventoriesScreen(
                                 )
                             }
                         }
+                    }
                     }
                 }
             }

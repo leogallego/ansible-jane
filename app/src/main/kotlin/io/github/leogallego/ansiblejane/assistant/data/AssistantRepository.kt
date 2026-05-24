@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
+import io.github.leogallego.ansiblejane.assistant.engine.Role
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -41,6 +42,11 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
     }
 
     override fun getHistory(): List<ChatMessage> = messages.toList()
+
+    override fun removeLastAssistantMessage() {
+        val index = messages.indexOfLast { it.role == Role.ASSISTANT }
+        if (index >= 0) messages.removeAt(index)
+    }
 
     override fun clearHistory() {
         messages.clear()
