@@ -1,6 +1,6 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
-import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.MessagePart
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
@@ -22,7 +22,7 @@ class ToolExecutor(
 ) {
     private val resultCache = mutableMapOf<String, Pair<Long, ToolResult>>()
 
-    suspend fun execute(toolCall: Message.Tool.Call): ToolResult {
+    suspend fun execute(toolCall: MessagePart.Tool.Call): ToolResult {
         val tool = tools.find { it.spec.name == toolCall.tool }
             ?: run {
                 Log.w(TAG, "EXEC: tool '${toolCall.tool}' not found in ${tools.size} registered tools")
@@ -33,7 +33,7 @@ class ToolExecutor(
                 )
             }
 
-        val cacheKey = "${toolCall.tool}:${toolCall.content.hashCode()}"
+        val cacheKey = "${toolCall.tool}:${toolCall.args.hashCode()}"
         val cached = resultCache[cacheKey]
         if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
             Log.d(TAG, "EXEC: cache hit for ${toolCall.tool}")
@@ -41,13 +41,13 @@ class ToolExecutor(
         }
 
         val argsJson = try {
-            val parsed = json.parseToJsonElement(toolCall.content)
+            val parsed = json.parseToJsonElement(toolCall.args)
             if (parsed is JsonObject) parsed else JsonObject(emptyMap())
         } catch (_: Exception) {
             JsonObject(emptyMap())
         }
 
-        Log.d(TAG, "EXEC: ${toolCall.tool}(${toolCall.content.take(200)})")
+        Log.d(TAG, "EXEC: ${toolCall.tool}(${toolCall.args.take(200)})")
         val startMs = System.currentTimeMillis()
         val result = try {
             withTimeout(30_000L) {

@@ -1,14 +1,15 @@
 package io.github.leogallego.ansiblejane.assistant.llm
 
 import ai.koog.agents.core.tools.ToolDescriptor
-import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.Prompt
+import ai.koog.http.client.KoogHttpClientException
+import ai.koog.http.client.ktor.KtorKoogHttpClient
+import ai.koog.prompt.executor.clients.LLMClientException
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.LLMProvider as KoogLLMProvider
 import ai.koog.prompt.streaming.StreamFrame
-import ai.koog.http.client.KoogHttpClientException
-import ai.koog.prompt.executor.clients.LLMClientException
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +22,10 @@ class GeminiLlmProvider(
     modelId: String
 ) : LlmProvider {
 
-    private val client = GoogleLLMClient(apiKey = apiKey)
+    private val client = GoogleLLMClient(
+        apiKey = apiKey,
+        httpClientFactory = KtorKoogHttpClient.Factory()
+    )
 
     private val model = LLModel(
         provider = KoogLLMProvider.Google,

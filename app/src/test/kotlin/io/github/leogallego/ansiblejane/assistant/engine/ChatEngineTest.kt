@@ -1,7 +1,7 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
 import ai.koog.agents.core.tools.ToolDescriptor
-import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.Prompt
 import ai.koog.prompt.streaming.StreamFrame
 import app.cash.turbine.test
 import io.github.leogallego.ansiblejane.assistant.llm.LlmProvider
