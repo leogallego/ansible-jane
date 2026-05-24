@@ -59,8 +59,8 @@ fun MainScreen(
     val activeProviderKey by assistantRepository.activeProviderKeyFlow.collectAsStateWithLifecycle(null)
 
     val tabs = TopLevelTab.entries
-    val activityTabIndex = tabs.indexOfFirst { it is TopLevelTab.Activity }.coerceAtLeast(0)
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(activityTabIndex) }
+    val dashboardTabIndex = tabs.indexOfFirst { it is TopLevelTab.Dashboard }.coerceAtLeast(0)
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(dashboardTabIndex) }
     val selectedTab = tabs[selectedTabIndex]
 
     val defaultSegmentIndex = selectedTab.segments.indexOfFirst { it.isDefault }.coerceAtLeast(0)

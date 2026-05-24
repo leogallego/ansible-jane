@@ -43,7 +43,8 @@ class JobRepository(private val apiProvider: AapApiProvider) : IJobRepository {
         page: Int,
         pageSize: Int,
         statusFilters: Set<JobStatus>,
-        search: String?
+        search: String?,
+        createdAfter: String?
     ): Result<RecentJobsResult> {
         return try {
             val orStatus = if (statusFilters.size > 1) {
@@ -62,7 +63,8 @@ class JobRepository(private val apiProvider: AapApiProvider) : IJobRepository {
                 page = page,
                 status = singleStatus,
                 orStatus = orStatus,
-                search = search
+                search = search,
+                createdAfter = createdAfter
             )
             Result.success(
                 RecentJobsResult(

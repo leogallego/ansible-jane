@@ -34,7 +34,7 @@ class FakeJobRepository : IJobRepository {
         return Result.success(jobStdout)
     }
 
-    override suspend fun getRecentJobs(page: Int, pageSize: Int, statusFilters: Set<JobStatus>, search: String?): Result<RecentJobsResult> {
+    override suspend fun getRecentJobs(page: Int, pageSize: Int, statusFilters: Set<JobStatus>, search: String?, createdAfter: String?): Result<RecentJobsResult> {
         lastRequestedPage = page
         if (shouldFail) return Result.failure(failureException)
         return Result.success(RecentJobsResult(jobs, hasMore = hasMore, totalCount = jobs.size))

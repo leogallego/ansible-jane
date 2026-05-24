@@ -2,10 +2,12 @@ package io.github.leogallego.ansiblejane.ui.main
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assistant
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.outlined.Assistant
+import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.History
@@ -24,6 +26,16 @@ sealed class TopLevelTab(
     val selectedIcon: ImageVector,
     val segments: List<Segment>
 ) {
+    data object Dashboard : TopLevelTab(
+        route = "main/dashboard",
+        label = "Dashboard",
+        icon = Icons.Outlined.Dashboard,
+        selectedIcon = Icons.Filled.Dashboard,
+        segments = listOf(
+            Segment(label = "Overview", isDefault = true, isImplemented = true)
+        )
+    )
+
     data object Templates : TopLevelTab(
         route = "main/templates",
         label = "Templates",
@@ -69,6 +81,6 @@ sealed class TopLevelTab(
     )
 
     companion object {
-        val entries: List<TopLevelTab> = listOf(Templates, Infrastructure, Activity, Assistant)
+        val entries: List<TopLevelTab> = listOf(Dashboard, Templates, Infrastructure, Activity, Assistant)
     }
 }
