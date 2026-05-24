@@ -41,7 +41,7 @@ class DashboardViewModel(
     init {
         viewModelScope.launch {
             tokenManager.activeInstance
-                .distinctUntilChangedBy { it?.id }
+                .distinctUntilChangedBy { Pair(it?.id, it?.instanceInfo) }
                 .collect { instance ->
                     if (instance != null) loadDashboard()
                 }
