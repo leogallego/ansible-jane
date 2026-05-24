@@ -23,4 +23,6 @@ val dataModule = module {
     single { CredentialRepository(get<AapApiProvider>()) } bind ICredentialRepository::class
     single { ProjectRepository(get<AapApiProvider>()) } bind IProjectRepository::class
     single { EdaActivationRepository(get<AapApiProvider>()) } bind IEdaActivationRepository::class
+    single { ControllerReadOnlyRepository(get<AapApiProvider>()) }
+    single { EdaReadOnlyRepository(get<AapApiProvider>()) }
 }

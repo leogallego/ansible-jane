@@ -1,36 +1,12 @@
 package io.github.leogallego.ansiblejane.assistant
 
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.GetHostFactsLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.GetJobLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.GetJobStdoutLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.GetWorkflowJobLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.LaunchJobLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.LaunchWorkflowLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.GetCredentialLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.GetEdaActivationLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.GetInstanceLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.GetMeshTopologyLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.GetProjectLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListCredentialsLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListEdaActivationsLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListEdaAuditRulesLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListExecutionEnvironmentsLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListHostsLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListInstanceGroupsLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListInstancesLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListInventoriesLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListJobTemplatesLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListJobsLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListProjectsLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListSchedulesLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ListWorkflowTemplatesLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.PingLocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.local.ToggleScheduleLocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.local.*
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val localToolsModule = module {
+    // Jobs & Templates
     single { ListJobTemplatesLocalTool(get()) } bind LocalTool::class
     single { LaunchJobLocalTool(get()) } bind LocalTool::class
     single { GetJobLocalTool(get()) } bind LocalTool::class
@@ -39,22 +15,58 @@ val localToolsModule = module {
     single { ListWorkflowTemplatesLocalTool(get()) } bind LocalTool::class
     single { LaunchWorkflowLocalTool(get()) } bind LocalTool::class
     single { GetWorkflowJobLocalTool(get()) } bind LocalTool::class
+    single { ListSchedulesLocalTool(get()) } bind LocalTool::class
+    single { ToggleScheduleLocalTool(get()) } bind LocalTool::class
+    single { ListWorkflowNodesLocalTool(get()) } bind LocalTool::class
+    single { GetSurveySpecLocalTool(get()) } bind LocalTool::class
+
+    // Inventory
     single { ListInventoriesLocalTool(get()) } bind LocalTool::class
     single { ListHostsLocalTool(get()) } bind LocalTool::class
     single { GetHostFactsLocalTool(get()) } bind LocalTool::class
-    single { ListSchedulesLocalTool(get()) } bind LocalTool::class
-    single { ToggleScheduleLocalTool(get()) } bind LocalTool::class
-    single { ListEdaAuditRulesLocalTool(get()) } bind LocalTool::class
+    single { GetHostJobSummariesLocalTool(get()) } bind LocalTool::class
+    single { ListGroupsLocalTool(get()) } bind LocalTool::class
+    single { ListInventorySourcesLocalTool(get()) } bind LocalTool::class
+    single { ListLabelsLocalTool(get()) } bind LocalTool::class
+
+    // Infrastructure & Monitoring
     single { ListInstancesLocalTool(get()) } bind LocalTool::class
     single { GetInstanceLocalTool(get()) } bind LocalTool::class
     single { ListInstanceGroupsLocalTool(get()) } bind LocalTool::class
     single { PingLocalTool(get()) } bind LocalTool::class
     single { GetMeshTopologyLocalTool(get()) } bind LocalTool::class
+
+    // Security & Credentials
     single { ListCredentialsLocalTool(get()) } bind LocalTool::class
     single { GetCredentialLocalTool(get()) } bind LocalTool::class
+    single { ListCredentialTypesLocalTool(get()) } bind LocalTool::class
+
+    // Configuration
     single { ListProjectsLocalTool(get()) } bind LocalTool::class
     single { GetProjectLocalTool(get()) } bind LocalTool::class
     single { ListExecutionEnvironmentsLocalTool(get()) } bind LocalTool::class
+    single { ListNotificationTemplatesLocalTool(get()) } bind LocalTool::class
+    single { GetSettingsLocalTool(get()) } bind LocalTool::class
+    single { GetConfigLocalTool(get()) } bind LocalTool::class
+
+    // RBAC / Admin
+    single { ListOrganizationsLocalTool(get()) } bind LocalTool::class
+    single { ListUsersLocalTool(get()) } bind LocalTool::class
+    single { ListTeamsLocalTool(get()) } bind LocalTool::class
+    single { ListRolesLocalTool(get()) } bind LocalTool::class
+    single { ListRoleDefinitionsLocalTool(get()) } bind LocalTool::class
+    single { ListApplicationsLocalTool(get()) } bind LocalTool::class
+    single { ListTokensLocalTool(get()) } bind LocalTool::class
+
+    // EDA
+    single { ListEdaAuditRulesLocalTool(get()) } bind LocalTool::class
     single { ListEdaActivationsLocalTool(get()) } bind LocalTool::class
     single { GetEdaActivationLocalTool(get()) } bind LocalTool::class
+    single { ListEdaRulebooksLocalTool(get()) } bind LocalTool::class
+    single { ListEdaDecisionEnvironmentsLocalTool(get()) } bind LocalTool::class
+    single { ListEdaProjectsLocalTool(get()) } bind LocalTool::class
+    single { ListEdaCredentialsLocalTool(get()) } bind LocalTool::class
+    single { ListEdaCredentialTypesLocalTool(get()) } bind LocalTool::class
+    single { ListEdaEventStreamsLocalTool(get()) } bind LocalTool::class
+    single { ListEdaUsersLocalTool(get()) } bind LocalTool::class
 }

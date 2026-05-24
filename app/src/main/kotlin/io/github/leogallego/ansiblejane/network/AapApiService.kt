@@ -171,4 +171,113 @@ interface AapApiService {
         @Query("page") page: Int = 1,
         @Query("page_size") pageSize: Int = 25
     ): PaginatedResponse<ExecutionEnvironment>
+
+    @GET("organizations/")
+    suspend fun getOrganizations(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<Organization>
+
+    @GET("users/")
+    suspend fun getUsers(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "username"
+    ): PaginatedResponse<User>
+
+    @GET("teams/")
+    suspend fun getTeams(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<Team>
+
+    @GET("roles/")
+    suspend fun getRoles(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null
+    ): PaginatedResponse<Role>
+
+    @GET("role_definitions/")
+    suspend fun getRoleDefinitions(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null
+    ): PaginatedResponse<RoleDefinition>
+
+    @GET("groups/")
+    suspend fun getGroups(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<Group>
+
+    @GET("inventory_sources/")
+    suspend fun getInventorySources(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<InventorySource>
+
+    @GET("labels/")
+    suspend fun getLabels(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<Label>
+
+    @GET("credential_types/")
+    suspend fun getCredentialTypes(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<CredentialType>
+
+    @GET("notification_templates/")
+    suspend fun getNotificationTemplates(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<NotificationTemplate>
+
+    @GET("applications/")
+    suspend fun getApplications(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("search") search: String? = null,
+        @Query("order_by") orderBy: String = "name"
+    ): PaginatedResponse<Application>
+
+    @GET("tokens/")
+    suspend fun getTokens(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("order_by") orderBy: String = "-created"
+    ): PaginatedResponse<AapToken>
+
+    @GET("settings/")
+    suspend fun getSettings(): kotlinx.serialization.json.JsonElement
+
+    @GET("config/")
+    suspend fun getConfig(): kotlinx.serialization.json.JsonElement
+
+    @GET("workflow_job_template_nodes/")
+    suspend fun getWorkflowJobTemplateNodes(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("workflow_job_template") workflowJobTemplate: Int? = null
+    ): PaginatedResponse<WorkflowJobTemplateNode>
+
+    @GET("job_templates/{id}/survey_spec/")
+    suspend fun getSurveySpec(@Path("id") id: Int): SurveySpec
 }
