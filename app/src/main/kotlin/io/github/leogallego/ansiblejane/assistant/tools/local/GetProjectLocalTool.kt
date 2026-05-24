@@ -1,30 +1,29 @@
 package io.github.leogallego.ansiblejane.assistant.tools.local
 
-import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import ai.koog.agents.core.tools.annotations.LLMDescription
+import ai.koog.serialization.typeToken
+import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.ProjectRepository
 import io.github.leogallego.ansiblejane.network.networkJson
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.JsonObject
 
 class GetProjectLocalTool(
     private val repository: ProjectRepository
-) : LocalTool(
-    spec = ToolSpec(
-        name = "get_project",
-        description = "Get details of a specific project by ID — SCM URL, branch, last sync status",
-        parametersSchema = buildToolSchema(
-            Triple("project_id", "integer", "ID of the project"),
-            required = listOf("project_id")
-        )
-    )
+) : AapLocalTool<GetProjectLocalTool.Args>(
+    typeToken<Args>(), Args.serializer(),
+    "get_project", "Get details of a specific project by ID — SCM URL, branch, last sync status"
 ) {
-    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
-        val projectId = args.intArg("project_id")
-            ?: return@executeSafely ToolResult(success = false, data = "project_id is required", errorType = ErrorType.NOT_FOUND)
-        val project = repository.getProject(projectId).getOrThrow()
-        ToolResult(success = true, data = networkJson.encodeToString(project))
+    @Serializable
+    data class Args(
+        @SerialName("project_id")
+        @property:LLMDescription("ID of the project")
+        val projectId: Int
+    )
+
+    override suspend fun execute(args: Args): String {
+        val project = repository.getProject(args.projectId).getOrThrow()
+        return networkJson.encodeToString(project)
     }
 }

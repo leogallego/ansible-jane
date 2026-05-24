@@ -1,30 +1,29 @@
 package io.github.leogallego.ansiblejane.assistant.tools.local
 
-import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import ai.koog.agents.core.tools.annotations.LLMDescription
+import ai.koog.serialization.typeToken
+import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.CredentialRepository
 import io.github.leogallego.ansiblejane.network.networkJson
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.JsonObject
 
 class GetCredentialLocalTool(
     private val repository: CredentialRepository
-) : LocalTool(
-    spec = ToolSpec(
-        name = "get_credential",
-        description = "Get details of a specific credential by ID (type, organization — no secrets exposed)",
-        parametersSchema = buildToolSchema(
-            Triple("credential_id", "integer", "ID of the credential"),
-            required = listOf("credential_id")
-        )
-    )
+) : AapLocalTool<GetCredentialLocalTool.Args>(
+    typeToken<Args>(), Args.serializer(),
+    "get_credential", "Get details of a specific credential by ID (type, organization — no secrets exposed)"
 ) {
-    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
-        val credentialId = args.intArg("credential_id")
-            ?: return@executeSafely ToolResult(success = false, data = "credential_id is required", errorType = ErrorType.NOT_FOUND)
-        val credential = repository.getCredential(credentialId).getOrThrow()
-        ToolResult(success = true, data = networkJson.encodeToString(credential))
+    @Serializable
+    data class Args(
+        @SerialName("credential_id")
+        @property:LLMDescription("ID of the credential")
+        val credentialId: Int
+    )
+
+    override suspend fun execute(args: Args): String {
+        val credential = repository.getCredential(args.credentialId).getOrThrow()
+        return networkJson.encodeToString(credential)
     }
 }

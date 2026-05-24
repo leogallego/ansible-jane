@@ -1,38 +1,40 @@
 package io.github.leogallego.ansiblejane.assistant.tools.local
 
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import ai.koog.agents.core.tools.annotations.LLMDescription
+import ai.koog.serialization.typeToken
+import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.WorkflowRepository
 import io.github.leogallego.ansiblejane.network.networkJson
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.JsonObject
 
 class ListWorkflowTemplatesLocalTool(
     private val repository: WorkflowRepository
-) : LocalTool(
-    spec = ToolSpec(
-        name = "list_workflow_templates",
-        description = "List workflow job templates with optional search and label filter",
-        parametersSchema = buildToolSchema(
-            Triple("search", "string", "Search term to filter by name"),
-            Triple("labels", "string", "Filter by label name (case-insensitive contains)"),
-            Triple("page", "integer", "Page number (default 1)"),
-        )
-    )
+) : AapLocalTool<ListWorkflowTemplatesLocalTool.Args>(
+    typeToken<Args>(),
+    Args.serializer(),
+    name = "list_workflow_templates",
+    description = "List workflow job templates with optional search and label filter"
 ) {
-    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
+    @Serializable
+    data class Args(
+        @property:LLMDescription("Search term to filter by name")
+        val search: String? = null,
+        @property:LLMDescription("Filter by label name (case-insensitive contains)")
+        val labels: String? = null,
+        @property:LLMDescription("Page number (default 1)")
+        val page: Int = 1,
+    )
+
+    override suspend fun execute(args: Args): String {
         val result = repository.getWorkflowTemplates(
-            page = args.pageArg(),
-            search = args.stringArg("search"),
-            labelFilter = args.stringArg("labels")
+            page = args.page.coerceAtLeast(1),
+            search = args.search,
+            labelFilter = args.labels
         ).getOrThrow()
-        ToolResult(
-            success = true,
-            data = networkJson.encodeToString(mapOf(
-                "count" to result.totalCount.toString(),
-                "templates" to networkJson.encodeToString(result.templates)
-            ))
-        )
+        return networkJson.encodeToString(mapOf(
+            "count" to result.totalCount.toString(),
+            "templates" to networkJson.encodeToString(result.templates)
+        ))
     }
 }

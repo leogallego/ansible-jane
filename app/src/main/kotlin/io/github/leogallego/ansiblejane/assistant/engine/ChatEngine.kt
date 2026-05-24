@@ -76,25 +76,35 @@ class ChatEngine(
                 coroutineContext.ensureActive()
                 val textBuilder = StringBuilder()
                 val pendingToolCalls = mutableMapOf<String, MutableToolCall>()
+                var syntheticIdCounter = 0
 
                 compactHistory(messages, softLimit)
                 trimMessages(messages, contextChars)
                 val prompt = buildPrompt(messages)
 
                 provider.generateStream(prompt, toolDescriptors, maxTokens).collect { frame ->
+                    Log.d(TAG, "FRAME: ${frame::class.simpleName} " +
+                        when (frame) {
+                            is StreamFrame.TextDelta -> "text=${frame.text.take(50)}"
+                            is StreamFrame.ToolCallDelta -> "id=${frame.id} name=${frame.name} content=${frame.content?.take(50)}"
+                            is StreamFrame.ToolCallComplete -> "id=${frame.id} name=${frame.name} content=${frame.content.take(50)}"
+                            is StreamFrame.End -> ""
+                            else -> frame.toString().take(80)
+                        }
+                    )
                     when (frame) {
                         is StreamFrame.TextDelta -> {
                             textBuilder.append(frame.text)
                             emit(ChatEvent.TextDelta(frame.text))
                         }
                         is StreamFrame.ToolCallDelta -> {
-                            val id = frame.id ?: return@collect
+                            val id = frame.id ?: "tool_${syntheticIdCounter}"
                             val tc = pendingToolCalls.getOrPut(id) { MutableToolCall(id) }
                             if (frame.name != null) tc.name = frame.name
                             if (frame.content != null) tc.args.append(frame.content)
                         }
                         is StreamFrame.ToolCallComplete -> {
-                            val id = frame.id ?: return@collect
+                            val id = frame.id ?: "tool_${syntheticIdCounter++}"
                             val tc = pendingToolCalls.getOrPut(id) { MutableToolCall(id) }
                             tc.name = frame.name
                             tc.args.clear()

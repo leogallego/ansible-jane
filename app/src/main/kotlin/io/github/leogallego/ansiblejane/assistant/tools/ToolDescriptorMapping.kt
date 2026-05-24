@@ -23,7 +23,7 @@ fun ToolSpec.toToolDescriptor(): ToolDescriptor {
         val prop = paramValue.jsonObject
         val descriptor = ToolParameterDescriptor(
             name = paramName,
-            description = paramName,
+            description = prop["description"]?.jsonPrimitive?.content ?: paramName,
             type = parseParamType(prop)
         )
         if (paramName in requiredNames) required.add(descriptor) else optional.add(descriptor)
@@ -63,6 +63,7 @@ private fun compactSchema(schema: JsonObject): JsonObject {
             val prop = value.jsonObject
             val compacted = mutableMapOf<String, JsonElement>()
             prop["type"]?.let { compacted["type"] = it }
+            prop["description"]?.let { compacted["description"] = it }
             prop["enum"]?.jsonArray?.let { enumArr ->
                 if (enumArr.size > 8) {
                     compacted["enum"] = JsonArray(enumArr.take(8))

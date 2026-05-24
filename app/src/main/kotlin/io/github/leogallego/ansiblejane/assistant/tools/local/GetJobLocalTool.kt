@@ -1,30 +1,29 @@
 package io.github.leogallego.ansiblejane.assistant.tools.local
 
-import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import ai.koog.agents.core.tools.annotations.LLMDescription
+import ai.koog.serialization.typeToken
+import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.JobRepository
 import io.github.leogallego.ansiblejane.network.networkJson
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.JsonObject
 
 class GetJobLocalTool(
     private val repository: JobRepository
-) : LocalTool(
-    spec = ToolSpec(
-        name = "get_job",
-        description = "Get status and details of a specific job by ID",
-        parametersSchema = buildToolSchema(
-            Triple("job_id", "integer", "ID of the job to retrieve"),
-            required = listOf("job_id")
-        )
-    )
+) : AapLocalTool<GetJobLocalTool.Args>(
+    typeToken<Args>(), Args.serializer(),
+    "get_job", "Get status and details of a specific job by ID"
 ) {
-    override suspend fun execute(args: JsonObject): ToolResult = executeSafely {
-        val jobId = args.intArg("job_id")
-            ?: return@executeSafely ToolResult(success = false, data = "job_id is required", errorType = ErrorType.NOT_FOUND)
-        val job = repository.getJobStatus(jobId).getOrThrow()
-        ToolResult(success = true, data = networkJson.encodeToString(job))
+    @Serializable
+    data class Args(
+        @SerialName("job_id")
+        @property:LLMDescription("ID of the job to retrieve")
+        val jobId: Int
+    )
+
+    override suspend fun execute(args: Args): String {
+        val job = repository.getJobStatus(args.jobId).getOrThrow()
+        return networkJson.encodeToString(job)
     }
 }
