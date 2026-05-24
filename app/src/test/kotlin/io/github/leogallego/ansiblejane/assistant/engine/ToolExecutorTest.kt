@@ -1,7 +1,6 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
-import ai.koog.prompt.message.Message
-import ai.koog.prompt.message.ResponseMetaInfo
+import ai.koog.prompt.message.MessagePart
 import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
@@ -20,8 +19,8 @@ import org.junit.Test
 
 class ToolExecutorTest {
 
-    private fun toolCall(name: String, args: String = "{}"): Message.Tool.Call =
-        Message.Tool.Call(id = "1", tool = name, content = args, metaInfo = ResponseMetaInfo.Empty)
+    private fun toolCall(name: String, args: String = "{}"): MessagePart.Tool.Call =
+        MessagePart.Tool.Call(id = "1", tool = name, args = args)
 
     @Test
     fun `execute dispatches to correct tool by name`() = runTest {

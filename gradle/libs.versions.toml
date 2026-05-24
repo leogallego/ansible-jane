@@ -16,7 +16,8 @@ coroutines = "1.11.0"
 core-ktx = "1.18.0"
 markdownRenderer = "0.41.0"
 ktor = "3.2.2"
-koog = "0.8.0"
+koog = "1.0.0"
+koog-google = "1.0.0-beta"
 robolectric = "4.14.1"
 androidx-test-runner = "1.6.2"
 androidx-test-rules = "1.6.1"
@@ -62,7 +63,8 @@ androidx-test-runner = { group = "androidx.test", name = "runner", version.ref =
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidx-test-rules" }
 screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
 koog-openai-client = { group = "ai.koog", name = "prompt-executor-openai-client", version.ref = "koog" }
-koog-google-client = { group = "ai.koog", name = "prompt-executor-google-client", version.ref = "koog" }
+koog-google-client = { group = "ai.koog", name = "prompt-executor-google-client", version.ref = "koog-google" }
+koog-http-ktor = { group = "ai.koog", name = "http-client-ktor", version.ref = "koog" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 markdown-renderer = { group = "com.mikepenz", name = "multiplatform-markdown-renderer", version.ref = "markdownRenderer" }

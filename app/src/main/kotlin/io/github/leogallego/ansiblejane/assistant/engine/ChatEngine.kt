@@ -1,7 +1,8 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
-import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.Prompt
 import ai.koog.prompt.message.Message
+import ai.koog.prompt.message.MessagePart
 import ai.koog.prompt.message.RequestMetaInfo
 import ai.koog.prompt.message.ResponseMetaInfo
 import ai.koog.prompt.streaming.StreamFrame
@@ -107,11 +108,10 @@ class ChatEngine(
                 val completedCalls = pendingToolCalls.values
                     .filter { it.name != null }
                     .map { tc ->
-                        Message.Tool.Call(
+                        MessagePart.Tool.Call(
                             id = tc.id,
                             tool = tc.name!!,
-                            content = tc.args.toString().ifEmpty { "{}" },
-                            metaInfo = ResponseMetaInfo.Empty
+                            args = tc.args.toString().ifEmpty { "{}" }
                         )
                     }
 
@@ -121,7 +121,7 @@ class ChatEngine(
                     Log.d(TAG, "ITER $iterations: ${completedCalls.size} tool calls: " +
                         "${completedCalls.map { it.tool }}")
                     val currentSignature = completedCalls.map {
-                        "${it.tool}:${it.content.hashCode()}"
+                        "${it.tool}:${it.args.hashCode()}"
                     }
                     toolCallHistory.add(currentSignature)
 
@@ -138,9 +138,9 @@ class ChatEngine(
                         JsonArray.serializer(),
                         JsonArray(completedCalls.map { tc ->
                             JsonObject(mapOf(
-                                "id" to kotlinx.serialization.json.JsonPrimitive(tc.id),
-                                "name" to kotlinx.serialization.json.JsonPrimitive(tc.tool),
-                                "arguments" to kotlinx.serialization.json.JsonPrimitive(tc.content)
+                                "id" to JsonPrimitive(tc.id),
+                                "name" to JsonPrimitive(tc.tool),
+                                "arguments" to JsonPrimitive(tc.args)
                             ))
                         })
                     )
@@ -153,7 +153,7 @@ class ChatEngine(
                     val toolSummaries = mutableListOf<String>()
                     for (toolCall in completedCalls) {
                         val argsJson = try {
-                            json.parseToJsonElement(toolCall.content).jsonObject
+                            json.parseToJsonElement(toolCall.args).jsonObject
                         } catch (_: Exception) {
                             JsonObject(emptyMap())
                         }
@@ -227,7 +227,16 @@ class ChatEngine(
                 ))
                 Role.ASSISTANT -> {
                     if (msg.toolCallsJson != null) {
-                        parseToolCalls(msg.toolCallsJson)
+                        val toolCalls = parseToolCalls(msg.toolCallsJson)
+                        val parts = mutableListOf<MessagePart.ResponsePart>()
+                        if (msg.content.isNotEmpty()) {
+                            parts.add(MessagePart.Text(msg.content))
+                        }
+                        parts.addAll(toolCalls)
+                        listOf(Message.Assistant(
+                            parts = parts,
+                            metaInfo = ResponseMetaInfo.Empty
+                        ))
                     } else {
                         listOf(Message.Assistant(
                             content = msg.content,
@@ -235,10 +244,12 @@ class ChatEngine(
                         ))
                     }
                 }
-                Role.TOOL -> listOf(Message.Tool.Result(
-                    id = msg.toolCallId,
-                    tool = msg.toolName ?: msg.toolCallId ?: "",
-                    content = msg.content,
+                Role.TOOL -> listOf(Message.User(
+                    part = MessagePart.Tool.Result(
+                        id = msg.toolCallId,
+                        tool = msg.toolName ?: msg.toolCallId ?: "",
+                        output = msg.content
+                    ),
                     metaInfo = RequestMetaInfo.Empty
                 ))
             }
@@ -246,17 +257,16 @@ class ChatEngine(
         return Prompt(messages = koogMessages, id = "chat")
     }
 
-    private fun parseToolCalls(toolCallsJson: String): List<Message.Tool.Call> {
+    private fun parseToolCalls(toolCallsJson: String): List<MessagePart.Tool.Call> {
         return try {
             val element = json.parseToJsonElement(toolCallsJson)
             if (element is JsonArray) {
                 element.map { el ->
                     val obj = el.jsonObject
-                    Message.Tool.Call(
+                    MessagePart.Tool.Call(
                         id = obj["id"]?.jsonPrimitive?.content,
                         tool = obj["name"]?.jsonPrimitive?.content ?: "",
-                        content = obj["arguments"]?.jsonPrimitive?.content ?: "{}",
-                        metaInfo = ResponseMetaInfo.Empty
+                        args = obj["arguments"]?.jsonPrimitive?.content ?: "{}"
                     )
                 }
             } else emptyList()

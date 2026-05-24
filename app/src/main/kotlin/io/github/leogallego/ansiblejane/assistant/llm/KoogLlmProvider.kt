@@ -1,20 +1,19 @@
 package io.github.leogallego.ansiblejane.assistant.llm
 
 import ai.koog.agents.core.tools.ToolDescriptor
-import ai.koog.prompt.dsl.Prompt
+import ai.koog.prompt.Prompt
+import ai.koog.http.client.KoogHttpClientException
+import ai.koog.http.client.ktor.KtorKoogHttpClient
+import ai.koog.prompt.executor.clients.LLMClientException
 import ai.koog.prompt.executor.clients.openai.OpenAIClientSettings
 import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.LLMProvider as KoogLLMProvider
-
 import ai.koog.prompt.streaming.StreamFrame
-import ai.koog.http.client.KoogHttpClientException
-import ai.koog.prompt.executor.clients.LLMClientException
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
@@ -40,23 +39,23 @@ class KoogLlmProvider(
             baseUrl = baseUrl,
             chatCompletionsPath = chatPath
         )
-        val httpClient = if (trustSelfSigned) {
+        val factory = if (trustSelfSigned) {
             val tm = CertTrustManager.createTrustAllManager()
-            HttpClient(OkHttp) {
+            KtorKoogHttpClient.Factory(baseClient = HttpClient(OkHttp) {
                 engine {
                     config {
                         sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
                         hostnameVerifier { _, _ -> true }
                     }
                 }
-            }
+            })
         } else {
-            HttpClient(CIO)
+            KtorKoogHttpClient.Factory()
         }
         OpenAILLMClient(
             apiKey = config.apiKey ?: "",
             settings = settings,
-            baseClient = httpClient
+            httpClientFactory = factory
         )
     }
 

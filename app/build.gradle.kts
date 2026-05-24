@@ -108,6 +108,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.koog.openai.client)
     implementation(libs.koog.google.client)
+    implementation(libs.koog.http.ktor)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.okhttp)
 

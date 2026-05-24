@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Koog 1.0.0 declares minSdk 35 but uses no Android 35+ APIs (pure Kotlin/HTTP) -->
+    <uses-sdk tools:overrideLibrary="ai.koog.prompt.executor.openai.client,ai.koog.prompt.executor.openai.client.base,ai.koog.prompt.executor.google.client,ai.koog.prompt.executor.clients,ai.koog.prompt.model,ai.koog.prompt.llm,ai.koog.prompt.structure,ai.koog.prompt.markdown,ai.koog.agents.tools,ai.koog.agents.utils,ai.koog.http.client.core,ai.koog.http.client.ktor,ai.koog.serialization.core,ai.koog.utils" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
