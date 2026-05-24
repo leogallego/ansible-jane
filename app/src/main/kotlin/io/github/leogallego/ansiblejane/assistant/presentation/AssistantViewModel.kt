@@ -72,6 +72,12 @@ class AssistantViewModel(
         }
 
         viewModelScope.launch {
+            repository.onHistoryCleared.collect {
+                updateState { copy(messages = persistentListOf()) }
+            }
+        }
+
+        viewModelScope.launch {
             tokenManager.activeInstance
                 .distinctUntilChangedBy { Triple(it?.id, it?.mcpEnabled, it?.mcpServerUrls) }
                 .collect { instance ->

@@ -13,9 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -72,6 +75,24 @@ fun MainScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var showClearChatConfirm by remember { mutableStateOf(false) }
+
+    if (showClearChatConfirm) {
+        AlertDialog(
+            onDismissRequest = { showClearChatConfirm = false },
+            title = { Text("Clear Chat History") },
+            text = { Text("This will remove all messages from the assistant chat. This cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showClearChatConfirm = false
+                    assistantRepository.clearHistory()
+                }) { Text("Clear") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearChatConfirm = false }) { Text("Cancel") }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -106,6 +127,17 @@ fun MainScreen(
                         },
                         onNavigateToSettings = onNavigateToSettings
                     )
+                    if (selectedTab is TopLevelTab.Assistant) {
+                        IconButton(
+                            onClick = { showClearChatConfirm = true },
+                            modifier = Modifier.testTag("button_clear_chat")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.DeleteSweep,
+                                contentDescription = "Clear chat history"
+                            )
+                        }
+                    }
                     IconButton(
                         onClick = {
                             scope.launch {
