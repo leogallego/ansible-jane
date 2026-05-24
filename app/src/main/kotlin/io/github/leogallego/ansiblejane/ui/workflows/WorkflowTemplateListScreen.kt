@@ -33,6 +33,7 @@ import io.github.leogallego.ansiblejane.ui.components.LoadMoreIndicator
 import io.github.leogallego.ansiblejane.ui.components.LoadingList
 import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
+import io.github.leogallego.ansiblejane.ui.components.TemplateCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -145,7 +146,7 @@ fun WorkflowTemplateListScreen(
                                     items = state.templates,
                                     key = { it.id }
                                 ) { template ->
-                                    WorkflowTemplateListItem(
+                                    TemplateCard(
                                         template = template,
                                         onClick = { onNavigateToTemplateDetail(template.id, template.name) },
                                         onLaunch = { viewModel.requestLaunch(template) }

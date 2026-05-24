@@ -21,7 +21,7 @@ import io.github.leogallego.ansiblejane.model.UserCapabilities
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
-import io.github.leogallego.ansiblejane.ui.templates.TemplateListItem
+import io.github.leogallego.ansiblejane.ui.components.TemplateCard
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 private val sampleTemplates = listOf(
@@ -76,7 +76,7 @@ fun TemplateListLight() {
             SearchBar(onSearch = {})
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(sampleTemplates, key = { it.id }) { template ->
-                    TemplateListItem(template = template, onLaunch = {})
+                    TemplateCard(template = template, onClick = {}, onLaunch = {})
                 }
             }
         }
@@ -95,7 +95,7 @@ fun TemplateListDark() {
             SearchBar(onSearch = {})
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(sampleTemplates, key = { it.id }) { template ->
-                    TemplateListItem(template = template, onLaunch = {})
+                    TemplateCard(template = template, onClick = {}, onLaunch = {})
                 }
             }
         }
@@ -174,7 +174,7 @@ fun TemplateListMediumWidth() {
             SearchBar(onSearch = {})
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(sampleTemplates, key = { it.id }) { template ->
-                    TemplateListItem(template = template, onLaunch = {})
+                    TemplateCard(template = template, onClick = {}, onLaunch = {})
                 }
             }
         }
@@ -193,7 +193,7 @@ fun TemplateListExpandedWidth() {
             SearchBar(onSearch = {})
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(sampleTemplates, key = { it.id }) { template ->
-                    TemplateListItem(template = template, onLaunch = {})
+                    TemplateCard(template = template, onClick = {}, onLaunch = {})
                 }
             }
         }
@@ -212,7 +212,7 @@ fun TemplateListLargeFont() {
             SearchBar(onSearch = {})
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(sampleTemplates.take(2), key = { it.id }) { template ->
-                    TemplateListItem(template = template, onLaunch = {})
+                    TemplateCard(template = template, onClick = {}, onLaunch = {})
                 }
             }
         }

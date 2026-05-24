@@ -34,6 +34,7 @@ import io.github.leogallego.ansiblejane.ui.components.LoadMoreIndicator
 import io.github.leogallego.ansiblejane.ui.components.LoadingList
 import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
+import io.github.leogallego.ansiblejane.ui.components.TemplateCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -145,9 +146,11 @@ fun TemplateListScreen(
                                     items = state.templates,
                                     key = { it.id }
                                 ) { template ->
-                                    TemplateListItem(
+                                    TemplateCard(
                                         template = template,
-                                        onLaunch = { viewModel.requestLaunch(template) }
+                                        onClick = { viewModel.requestLaunch(template) },
+                                        onLaunch = { viewModel.requestLaunch(template) },
+                                        testTagPrefix = "button"
                                     )
                                 }
 

@@ -13,7 +13,7 @@ import io.github.leogallego.ansiblejane.model.JobTemplateSummaryFields
 import io.github.leogallego.ansiblejane.model.Label
 import io.github.leogallego.ansiblejane.model.LabelSummary
 import io.github.leogallego.ansiblejane.model.UserCapabilities
-import io.github.leogallego.ansiblejane.ui.templates.TemplateListItem
+import io.github.leogallego.ansiblejane.ui.components.TemplateCard
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 private val templateWithLabels = JobTemplate(
@@ -53,7 +53,7 @@ private val templateNoLaunch = JobTemplate(
 fun TemplateListItemWithLabelsLight() {
     AnsibleJaneTheme(darkTheme = false, dynamicColor = false) {
         Column(modifier = Modifier.padding(vertical = 4.dp)) {
-            TemplateListItem(template = templateWithLabels, onLaunch = {})
+            TemplateCard(template = templateWithLabels, onClick = {}, onLaunch = {})
         }
     }
 }
@@ -64,7 +64,7 @@ fun TemplateListItemWithLabelsLight() {
 fun TemplateListItemWithLabelsDark() {
     AnsibleJaneTheme(darkTheme = true, dynamicColor = false) {
         Column(modifier = Modifier.padding(vertical = 4.dp)) {
-            TemplateListItem(template = templateWithLabels, onLaunch = {})
+            TemplateCard(template = templateWithLabels, onClick = {}, onLaunch = {})
         }
     }
 }
@@ -78,9 +78,9 @@ fun TemplateListItemVariations() {
             modifier = Modifier.padding(vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            TemplateListItem(template = templateWithLabels, onLaunch = {})
-            TemplateListItem(template = templateNoLabels, onLaunch = {})
-            TemplateListItem(template = templateNoLaunch, onLaunch = {})
+            TemplateCard(template = templateWithLabels, onClick = {}, onLaunch = {})
+            TemplateCard(template = templateNoLabels, onClick = {}, onLaunch = {})
+            TemplateCard(template = templateNoLaunch, onClick = {}, onLaunch = {})
         }
     }
 }
@@ -91,7 +91,7 @@ fun TemplateListItemVariations() {
 fun TemplateListItemLargeFont() {
     AnsibleJaneTheme(darkTheme = false, dynamicColor = false) {
         Column(modifier = Modifier.padding(vertical = 4.dp)) {
-            TemplateListItem(template = templateWithLabels, onLaunch = {})
+            TemplateCard(template = templateWithLabels, onClick = {}, onLaunch = {})
         }
     }
 }

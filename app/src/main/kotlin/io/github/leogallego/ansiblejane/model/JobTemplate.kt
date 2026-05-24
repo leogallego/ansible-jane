@@ -5,14 +5,17 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class JobTemplate(
-    val id: Int,
-    val name: String,
-    val description: String = "",
+    override val id: Int,
+    override val name: String,
+    override val description: String = "",
     @SerialName("ask_variables_on_launch") val askVariablesOnLaunch: Boolean = false,
     val status: String? = null,
     @SerialName("last_job_run") val lastJobRun: String? = null,
     @SerialName("summary_fields") val summaryFields: JobTemplateSummaryFields = JobTemplateSummaryFields()
-)
+) : LaunchableTemplate {
+    override val labels: List<Label> get() = summaryFields.labels.results
+    override val canStart: Boolean get() = summaryFields.userCapabilities.start
+}
 
 @Serializable
 data class JobTemplateSummaryFields(
