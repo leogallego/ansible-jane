@@ -27,6 +27,7 @@ import io.github.leogallego.ansiblejane.ui.jobs.JobStatusScreen
 import io.github.leogallego.ansiblejane.ui.main.MainScreen
 import io.github.leogallego.ansiblejane.ui.settings.SettingsScreen
 import io.github.leogallego.ansiblejane.ui.workflows.WorkflowJobStatusScreen
+import io.github.leogallego.ansiblejane.ui.workflows.WorkflowTemplateDetailScreen
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.compose.koinInject
 import java.net.URLDecoder
@@ -40,10 +41,15 @@ object Routes {
     const val MAIN = "main"
     const val JOB_STATUS = "job_status/{jobId}"
     const val WORKFLOW_JOB_STATUS = "workflow_job_status/{workflowJobId}"
+    const val WORKFLOW_TEMPLATE_DETAIL = "workflow_template_detail/{templateId}/{templateName}"
     const val SETTINGS = "settings"
 
     fun jobStatus(jobId: Int) = "job_status/$jobId"
     fun workflowJobStatus(workflowJobId: Int) = "workflow_job_status/$workflowJobId"
+    fun workflowTemplateDetail(templateId: Int, templateName: String): String {
+        val encoded = URLEncoder.encode(templateName, "UTF-8")
+        return "workflow_template_detail/$templateId/$encoded"
+    }
 
     fun reAuth(instanceId: String, url: String, alias: String?, trustSelfSigned: Boolean): String {
         val encodedUrl = URLEncoder.encode(url, "UTF-8")
@@ -196,6 +202,9 @@ fun AppNavigation(
                     },
                     onNavigateToWorkflowJobStatus = { workflowJobId ->
                         navController.navigate(Routes.workflowJobStatus(workflowJobId))
+                    },
+                    onNavigateToWorkflowTemplateDetail = { templateId, templateName ->
+                        navController.navigate(Routes.workflowTemplateDetail(templateId, templateName))
                     }
                 )
             }
@@ -223,6 +232,22 @@ fun AppNavigation(
             popExitTransition = { slideOutHorizontally { it } }
         ) {
             WorkflowJobStatusScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.WORKFLOW_TEMPLATE_DETAIL,
+            arguments = listOf(
+                navArgument("templateId") { type = NavType.IntType },
+                navArgument("templateName") { type = NavType.StringType; defaultValue = "" }
+            ),
+            enterTransition = { slideInHorizontally { it } },
+            exitTransition = { slideOutHorizontally { -it } },
+            popEnterTransition = { slideInHorizontally { -it } },
+            popExitTransition = { slideOutHorizontally { it } }
+        ) {
+            WorkflowTemplateDetailScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

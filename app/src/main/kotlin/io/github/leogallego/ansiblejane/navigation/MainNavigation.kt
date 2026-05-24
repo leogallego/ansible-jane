@@ -18,7 +18,8 @@ fun TabContent(
     tab: TopLevelTab,
     segment: Segment,
     onNavigateToJobStatus: (Int) -> Unit,
-    onNavigateToWorkflowJobStatus: (Int) -> Unit = {}
+    onNavigateToWorkflowJobStatus: (Int) -> Unit = {},
+    onNavigateToWorkflowTemplateDetail: (Int, String) -> Unit = { _, _ -> }
 ) {
     if (!segment.isImplemented) {
         PlaceholderScreen(title = segment.label)
@@ -32,7 +33,8 @@ fun TabContent(
                     onNavigateToJobStatus = onNavigateToJobStatus
                 )
                 "Workflows" -> WorkflowTemplateListScreen(
-                    onNavigateToWorkflowJobStatus = onNavigateToWorkflowJobStatus
+                    onNavigateToWorkflowJobStatus = onNavigateToWorkflowJobStatus,
+                    onNavigateToTemplateDetail = onNavigateToWorkflowTemplateDetail
                 )
                 else -> PlaceholderScreen(title = segment.label)
             }

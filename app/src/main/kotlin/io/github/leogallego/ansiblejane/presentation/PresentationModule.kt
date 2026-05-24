@@ -11,6 +11,7 @@ import io.github.leogallego.ansiblejane.presentation.inventory.InventoriesViewMo
 import io.github.leogallego.ansiblejane.presentation.schedules.SchedulesViewModel
 import io.github.leogallego.ansiblejane.presentation.templates.TemplatesViewModel
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowJobStatusViewModel
+import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplateDetailViewModel
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplatesViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -22,6 +23,7 @@ val presentationModule = module {
     viewModelOf(::RecentJobsViewModel)
     viewModelOf(::WorkflowTemplatesViewModel)
     viewModelOf(::WorkflowJobStatusViewModel)
+    viewModelOf(::WorkflowTemplateDetailViewModel)
     viewModelOf(::SchedulesViewModel)
     viewModelOf(::EdaAuditViewModel)
     viewModelOf(::InventoriesViewModel)

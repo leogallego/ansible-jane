@@ -33,12 +33,13 @@ import io.github.leogallego.ansiblejane.ui.components.pressScale
 @Composable
 fun WorkflowTemplateListItem(
     template: WorkflowJobTemplate,
+    onClick: () -> Unit = {},
     onLaunch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     ElevatedCard(
-        onClick = onLaunch,
+        onClick = onClick,
         interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()

@@ -43,6 +43,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun WorkflowTemplateListScreen(
     onNavigateToWorkflowJobStatus: (Int) -> Unit,
+    onNavigateToTemplateDetail: (Int, String) -> Unit = { _, _ -> },
     viewModel: WorkflowTemplatesViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -167,6 +168,7 @@ fun WorkflowTemplateListScreen(
                                 ) { template ->
                                     WorkflowTemplateListItem(
                                         template = template,
+                                        onClick = { onNavigateToTemplateDetail(template.id, template.name) },
                                         onLaunch = { viewModel.requestLaunch(template) }
                                     )
                                 }

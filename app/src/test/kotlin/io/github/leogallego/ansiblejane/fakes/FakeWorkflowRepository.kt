@@ -4,6 +4,7 @@ import io.github.leogallego.ansiblejane.data.IWorkflowRepository
 import io.github.leogallego.ansiblejane.data.WorkflowTemplateListResult
 import io.github.leogallego.ansiblejane.model.WorkflowJob
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplate
+import io.github.leogallego.ansiblejane.model.WorkflowJobTemplateNode
 import io.github.leogallego.ansiblejane.model.WorkflowNode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -46,5 +47,12 @@ class FakeWorkflowRepository : IWorkflowRepository {
     override suspend fun getWorkflowNodes(workflowJobId: Int): Result<List<WorkflowNode>> {
         if (shouldFail) return Result.failure(failureException)
         return Result.success(nodes)
+    }
+
+    var templateNodes = listOf<WorkflowJobTemplateNode>()
+
+    override suspend fun getWorkflowTemplateNodes(templateId: Int): Result<List<WorkflowJobTemplateNode>> {
+        if (shouldFail) return Result.failure(failureException)
+        return Result.success(templateNodes)
     }
 }
