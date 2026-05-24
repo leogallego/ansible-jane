@@ -47,11 +47,11 @@ class InstanceDiscoveryTest {
                     path.contains("controller/v2/ping") -> MockResponse().setBody(
                         """{"ha": true, "version": "4.7.9", "active_node": "node1", "install_uuid": "abc", "instances": []}"""
                     )
+                    path.contains("eda/v1/config") -> MockResponse().setBody(
+                        """{"version": "1.1.3", "time_zone": "UTC", "deployment_type": "k8s"}"""
+                    )
                     path.contains("config") -> MockResponse().setBody(
                         """{"version": "4.7.9", "license_info": {"license_type": "enterprise", "valid_key": true}}"""
-                    )
-                    path.contains("eda/v1/users/me") -> MockResponse().setBody(
-                        """{"id": 1, "username": "admin"}"""
                     )
                     path.contains("galaxy") -> MockResponse().setResponseCode(404)
                     else -> MockResponse().setResponseCode(404)
@@ -68,6 +68,7 @@ class InstanceDiscoveryTest {
 
         assertEquals("4.7.9", info.controllerVersion)
         assertEquals("2.6", info.gatewayVersion)
+        assertEquals("1.1.3", info.edaVersion)
         assertEquals("2.6", info.aapVersion)
         assertEquals(PlatformType.AAP.name, info.platformType)
         assertTrue(info.hasComponent(AapComponent.CONTROLLER))
@@ -85,11 +86,11 @@ class InstanceDiscoveryTest {
                     path.contains("v2/ping") -> MockResponse().setBody(
                         """{"ha": false, "version": "24.6.1", "active_node": "awx", "install_uuid": "def", "instances": []}"""
                     )
+                    path.contains("gateway/v1") -> MockResponse().setResponseCode(404)
+                    path.contains("eda/v1") -> MockResponse().setResponseCode(404)
                     path.contains("config") -> MockResponse().setBody(
                         """{"version": "24.6.1", "license_info": {}}"""
                     )
-                    path.contains("gateway/v1") -> MockResponse().setResponseCode(404)
-                    path.contains("eda/v1") -> MockResponse().setResponseCode(404)
                     path.contains("galaxy") -> MockResponse().setResponseCode(404)
                     else -> MockResponse().setResponseCode(404)
                 }
@@ -123,10 +124,10 @@ class InstanceDiscoveryTest {
                     path.contains("controller/v2/ping") -> MockResponse().setBody(
                         """{"ha": false, "version": "4.6.0", "active_node": "node1", "install_uuid": "ghi", "instances": []}"""
                     )
+                    path.contains("eda/v1") -> MockResponse().setResponseCode(404)
                     path.contains("config") -> MockResponse().setBody(
                         """{"version": "4.6.0", "license_info": {"license_type": "open"}}"""
                     )
-                    path.contains("eda/v1") -> MockResponse().setResponseCode(404)
                     path.contains("galaxy") -> MockResponse().setResponseCode(404)
                     else -> MockResponse().setResponseCode(404)
                 }
@@ -181,11 +182,11 @@ class InstanceDiscoveryTest {
                     path.contains("controller/v2/ping") -> MockResponse().setBody(
                         """{"ha": true, "version": "4.7.9", "active_node": "n1", "install_uuid": "x", "instances": []}"""
                     )
+                    path.contains("eda/v1/config") -> MockResponse().setBody(
+                        """{"version": "1.1.3", "time_zone": "UTC", "deployment_type": "k8s"}"""
+                    )
                     path.contains("config") -> MockResponse().setBody(
                         """{"version": "4.7.9", "license_info": {"license_type": "enterprise", "valid_key": true}}"""
-                    )
-                    path.contains("eda/v1/users/me") -> MockResponse().setBody(
-                        """{"id": 1, "username": "admin"}"""
                     )
                     path.contains("galaxy") -> MockResponse().setBody("""{"results": []}""")
                     else -> MockResponse().setResponseCode(404)
@@ -207,5 +208,6 @@ class InstanceDiscoveryTest {
         assertTrue(info.hasComponent(AapComponent.HUB))
         assertEquals("2.6", info.aapVersion)
         assertEquals("4.7.9", info.controllerVersion)
+        assertEquals("1.1.3", info.edaVersion)
     }
 }

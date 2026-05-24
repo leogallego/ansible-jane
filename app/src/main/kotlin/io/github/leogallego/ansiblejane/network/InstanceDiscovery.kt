@@ -34,7 +34,7 @@ class InstanceDiscovery(private val json: Json) {
             val controllerPingDeferred = async { probeVersionEndpoint(httpClient, "$normalizedUrl${apiVersion.prefix}ping/", token) }
             val configDeferred = async { probeConfig(httpClient, normalizedUrl, apiVersion, token) }
             val gatewayPingDeferred = async { probeVersionEndpoint(httpClient, "$normalizedUrl/api/gateway/v1/ping/", token) }
-            val edaDeferred = async { probeVersionEndpoint(httpClient, "$normalizedUrl/api/eda/v1/users/me/", token) }
+            val edaDeferred = async { probeVersionEndpoint(httpClient, "$normalizedUrl/api/eda/v1/config/", token) }
             val hubDeferred = async { probeEndpoint(httpClient, "$normalizedUrl/api/galaxy/_ui/v1/me/", token) }
 
             val controllerPing = controllerPingDeferred.await()
