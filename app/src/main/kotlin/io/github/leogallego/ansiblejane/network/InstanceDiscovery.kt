@@ -51,13 +51,13 @@ class InstanceDiscovery(private val json: Json) {
             if (hasHub) components.add(AapComponent.HUB)
 
             val controllerVersion = controllerPing?.version ?: ""
-            val gatewayVersion = gatewayPing?.version ?: ""
+            val gatewayVersion = gatewayPing?.productVersion
+                ?: gatewayPing?.version ?: ""
             val edaVersion = edaResult?.version ?: ""
             val hasLicense = configResult?.hasLicense ?: false
             val couldReachController = controllerPing != null || configResult != null
 
             val platformType = derivePlatformType(hasGateway, hasLicense, couldReachController)
-            // AAP version comes from gateway ping (authoritative), not derived from controller
             val aapVersion = gatewayVersion.ifBlank { null }
 
             Log.d(TAG, "Discovery: controller=$controllerVersion, gateway=$gatewayVersion, " +
@@ -85,7 +85,10 @@ class InstanceDiscovery(private val json: Json) {
         else -> PlatformType.UNKNOWN
     }
 
-    private data class VersionResult(val version: String)
+    private data class VersionResult(
+        val version: String,
+        val productVersion: String? = null,
+    )
 
     private fun probeVersionEndpoint(
         client: OkHttpClient,
@@ -99,12 +102,13 @@ class InstanceDiscovery(private val json: Json) {
             .build()
         val response = client.newCall(request).execute()
         val body = response.body?.string()
+        val headerVersion = response.header("X-API-Product-Version")
         response.close()
 
         if (response.isSuccessful && body != null) {
             val jsonObj = json.parseToJsonElement(body).jsonObject
             val version = jsonObj["version"]?.jsonPrimitive?.content ?: ""
-            VersionResult(version)
+            VersionResult(version, headerVersion)
         } else {
             null
         }

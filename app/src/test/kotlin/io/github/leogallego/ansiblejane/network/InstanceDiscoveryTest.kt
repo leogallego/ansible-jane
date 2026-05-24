@@ -41,9 +41,9 @@ class InstanceDiscoveryTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
                 return when {
-                    path.contains("gateway/v1/ping") -> MockResponse().setBody(
-                        """{"version": "2.6", "status": "good"}"""
-                    )
+                    path.contains("gateway/v1/ping") -> MockResponse()
+                        .setBody("""{"version": "2.6", "status": "good"}""")
+                        .setHeader("X-API-Product-Version", "2.6.3")
                     path.contains("controller/v2/ping") -> MockResponse().setBody(
                         """{"ha": true, "version": "4.7.9", "active_node": "node1", "install_uuid": "abc", "instances": []}"""
                     )
@@ -67,9 +67,9 @@ class InstanceDiscoveryTest {
         )
 
         assertEquals("4.7.9", info.controllerVersion)
-        assertEquals("2.6", info.gatewayVersion)
+        assertEquals("2.6.3", info.gatewayVersion)
         assertEquals("1.1.3", info.edaVersion)
-        assertEquals("2.6", info.aapVersion)
+        assertEquals("2.6.3", info.aapVersion)
         assertEquals(PlatformType.AAP.name, info.platformType)
         assertTrue(info.hasComponent(AapComponent.CONTROLLER))
         assertTrue(info.hasComponent(AapComponent.GATEWAY))
@@ -176,9 +176,9 @@ class InstanceDiscoveryTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
                 return when {
-                    path.contains("gateway/v1/ping") -> MockResponse().setBody(
-                        """{"version": "2.6", "status": "good"}"""
-                    )
+                    path.contains("gateway/v1/ping") -> MockResponse()
+                        .setBody("""{"version": "2.6", "status": "good"}""")
+                        .setHeader("X-API-Product-Version", "2.6.3")
                     path.contains("controller/v2/ping") -> MockResponse().setBody(
                         """{"ha": true, "version": "4.7.9", "active_node": "n1", "install_uuid": "x", "instances": []}"""
                     )
@@ -206,8 +206,40 @@ class InstanceDiscoveryTest {
         assertTrue(info.hasComponent(AapComponent.GATEWAY))
         assertTrue(info.hasComponent(AapComponent.EDA))
         assertTrue(info.hasComponent(AapComponent.HUB))
-        assertEquals("2.6", info.aapVersion)
+        assertEquals("2.6.3", info.aapVersion)
         assertEquals("4.7.9", info.controllerVersion)
         assertEquals("1.1.3", info.edaVersion)
+    }
+
+    @Test
+    fun `falls back to body version when header is missing`() = runTest {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val path = request.path ?: ""
+                return when {
+                    path.contains("gateway/v1/ping") -> MockResponse()
+                        .setBody("""{"version": "2.6", "status": "good"}""")
+                    path.contains("controller/v2/ping") -> MockResponse().setBody(
+                        """{"ha": true, "version": "4.7.9", "active_node": "n1", "install_uuid": "x", "instances": []}"""
+                    )
+                    path.contains("eda/v1") -> MockResponse().setResponseCode(404)
+                    path.contains("config") -> MockResponse().setBody(
+                        """{"version": "4.7.9", "license_info": {"license_type": "enterprise", "valid_key": true}}"""
+                    )
+                    path.contains("galaxy") -> MockResponse().setResponseCode(404)
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+
+        val info = discovery.discover(
+            server.url("/").toString(),
+            "test-token",
+            ApiVersion.CONTROLLER_V2,
+            client
+        )
+
+        assertEquals("2.6", info.gatewayVersion)
+        assertEquals("2.6", info.aapVersion)
     }
 }
