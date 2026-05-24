@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.navigation
 import androidx.compose.runtime.Composable
 import io.github.leogallego.ansiblejane.assistant.ui.AssistantScreen
 import io.github.leogallego.ansiblejane.ui.components.PlaceholderScreen
+import io.github.leogallego.ansiblejane.ui.dashboard.DashboardScreen
 import io.github.leogallego.ansiblejane.ui.hosts.HostsScreen
 import io.github.leogallego.ansiblejane.ui.inventory.InventoriesScreen
 import io.github.leogallego.ansiblejane.ui.jobs.RecentJobsScreen
@@ -27,6 +28,9 @@ fun TabContent(
     }
 
     when (tab) {
+        is TopLevelTab.Dashboard -> {
+            DashboardScreen(onNavigateToJobStatus = onNavigateToJobStatus)
+        }
         is TopLevelTab.Templates -> {
             when (segment.label) {
                 "Job Templates" -> TemplateListScreen(

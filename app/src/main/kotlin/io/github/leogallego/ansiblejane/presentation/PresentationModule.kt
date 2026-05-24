@@ -1,6 +1,7 @@
 package io.github.leogallego.ansiblejane.presentation
 
 import io.github.leogallego.ansiblejane.presentation.auth.AuthViewModel
+import io.github.leogallego.ansiblejane.presentation.dashboard.DashboardViewModel
 import io.github.leogallego.ansiblejane.presentation.settings.BackupViewModel
 import io.github.leogallego.ansiblejane.presentation.jobs.JobStatusViewModel
 import io.github.leogallego.ansiblejane.presentation.jobs.RecentJobsViewModel
@@ -18,6 +19,7 @@ import org.koin.dsl.module
 
 val presentationModule = module {
     viewModelOf(::AuthViewModel)
+    viewModelOf(::DashboardViewModel)
     viewModelOf(::TemplatesViewModel)
     viewModelOf(::JobStatusViewModel)
     viewModelOf(::RecentJobsViewModel)

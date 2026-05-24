@@ -12,6 +12,7 @@ interface IJobRepository {
         page: Int = 1,
         pageSize: Int = 20,
         statusFilters: Set<JobStatus> = emptySet(),
-        search: String? = null
+        search: String? = null,
+        createdAfter: String? = null
     ): Result<RecentJobsResult>
 }
