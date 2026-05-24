@@ -19,14 +19,6 @@ class InstanceDiscovery(private val json: Json) {
 
     companion object {
         private const val TAG = "InstanceDiscovery"
-
-        // Controller version → AAP version mapping
-        // Controller 4.5.x → AAP 2.5, Controller 4.6.x → AAP 2.6, etc.
-        private val CONTROLLER_TO_AAP_VERSION = mapOf(
-            "4.5" to "2.5",
-            "4.6" to "2.6",
-            "4.7" to "2.7"
-        )
     }
 
     suspend fun discover(
@@ -38,36 +30,43 @@ class InstanceDiscovery(private val json: Json) {
         val normalizedUrl = baseUrl.trimEnd('/')
         val components = mutableSetOf(AapComponent.CONTROLLER)
 
-        // Run probes in parallel
         coroutineScope {
-            val pingDeferred = async { probePing(httpClient, normalizedUrl, apiVersion, token) }
+            val controllerPingDeferred = async { probeVersionEndpoint(httpClient, "$normalizedUrl${apiVersion.prefix}ping/", token) }
             val configDeferred = async { probeConfig(httpClient, normalizedUrl, apiVersion, token) }
-            val gatewayDeferred = async { probeEndpoint(httpClient, "$normalizedUrl/api/gateway/v1/", token) }
-            val edaDeferred = async { probeEndpoint(httpClient, "$normalizedUrl/api/eda/v1/users/me/", token) }
+            val gatewayPingDeferred = async { probeVersionEndpoint(httpClient, "$normalizedUrl/api/gateway/v1/ping/", token) }
+            val edaDeferred = async { probeVersionEndpoint(httpClient, "$normalizedUrl/api/eda/v1/users/me/", token) }
             val hubDeferred = async { probeEndpoint(httpClient, "$normalizedUrl/api/galaxy/_ui/v1/me/", token) }
 
-            val pingResult = pingDeferred.await()
+            val controllerPing = controllerPingDeferred.await()
             val configResult = configDeferred.await()
-            val hasGateway = gatewayDeferred.await()
-            val hasEda = edaDeferred.await()
+            val gatewayPing = gatewayPingDeferred.await()
+            val edaResult = edaDeferred.await()
             val hasHub = hubDeferred.await()
+
+            val hasGateway = gatewayPing != null
+            val hasEda = edaResult != null
 
             if (hasGateway) components.add(AapComponent.GATEWAY)
             if (hasEda) components.add(AapComponent.EDA)
             if (hasHub) components.add(AapComponent.HUB)
 
-            val controllerVersion = pingResult?.version ?: ""
+            val controllerVersion = controllerPing?.version ?: ""
+            val gatewayVersion = gatewayPing?.version ?: ""
+            val edaVersion = edaResult?.version ?: ""
             val hasLicense = configResult?.hasLicense ?: false
-            val couldReachController = pingResult != null || configResult != null
+            val couldReachController = controllerPing != null || configResult != null
 
             val platformType = derivePlatformType(hasGateway, hasLicense, couldReachController)
-            val aapVersion = deriveAapVersion(controllerVersion, platformType)
+            // AAP version comes from gateway ping (authoritative), not derived from controller
+            val aapVersion = gatewayVersion.ifBlank { null }
 
-            Log.d(TAG, "Discovery: version=$controllerVersion, platform=$platformType, " +
-                "aap=$aapVersion, components=$components")
+            Log.d(TAG, "Discovery: controller=$controllerVersion, gateway=$gatewayVersion, " +
+                "eda=$edaVersion, platform=$platformType, aap=$aapVersion, components=$components")
 
             InstanceInfo(
                 controllerVersion = controllerVersion,
+                gatewayVersion = gatewayVersion,
+                edaVersion = edaVersion,
                 platformType = platformType.name,
                 aapVersion = aapVersion,
                 components = components.map { it.name }
@@ -86,21 +85,13 @@ class InstanceDiscovery(private val json: Json) {
         else -> PlatformType.UNKNOWN
     }
 
-    private fun deriveAapVersion(controllerVersion: String, platformType: PlatformType): String? {
-        if (platformType != PlatformType.AAP || controllerVersion.isBlank()) return null
-        val majorMinor = controllerVersion.split(".").take(2).joinToString(".")
-        return CONTROLLER_TO_AAP_VERSION[majorMinor]
-    }
+    private data class VersionResult(val version: String)
 
-    private data class PingResult(val version: String)
-
-    private fun probePing(
+    private fun probeVersionEndpoint(
         client: OkHttpClient,
-        baseUrl: String,
-        apiVersion: ApiVersion,
+        url: String,
         token: String
-    ): PingResult? = try {
-        val url = "$baseUrl${apiVersion.prefix}ping/"
+    ): VersionResult? = try {
         val request = Request.Builder()
             .url(url)
             .header("Authorization", "Bearer $token")
@@ -113,12 +104,12 @@ class InstanceDiscovery(private val json: Json) {
         if (response.isSuccessful && body != null) {
             val jsonObj = json.parseToJsonElement(body).jsonObject
             val version = jsonObj["version"]?.jsonPrimitive?.content ?: ""
-            PingResult(version)
+            VersionResult(version)
         } else {
             null
         }
     } catch (e: Exception) {
-        Log.d(TAG, "Ping probe failed: ${e.message}")
+        Log.d(TAG, "Version probe $url failed: ${e.message}")
         null
     }
 

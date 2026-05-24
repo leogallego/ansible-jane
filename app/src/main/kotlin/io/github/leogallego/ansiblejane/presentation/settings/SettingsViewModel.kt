@@ -165,6 +165,8 @@ class SettingsViewModel(
                     instance.baseUrl, instance.token, apiVersion, client
                 )
                 tokenManager.updateInstanceInfo(instanceId, info)
+                val updated = tokenManager.instances.value.find { it.id == instanceId }
+                updateReady { copy(selectedInstanceForDetails = updated) }
             } catch (_: Exception) {
                 // best-effort
             } finally {

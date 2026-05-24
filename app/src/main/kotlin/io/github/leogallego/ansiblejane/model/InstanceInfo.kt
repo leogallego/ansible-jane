@@ -19,6 +19,8 @@ enum class AapComponent {
 @Serializable
 data class InstanceInfo(
     val controllerVersion: String = "",
+    val gatewayVersion: String = "",
+    val edaVersion: String = "",
     val platformType: String = "UNKNOWN",
     val aapVersion: String? = null,
     val components: List<String> = emptyList()

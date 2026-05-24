@@ -47,6 +47,8 @@ class InstanceInfoTest {
     fun `default InstanceInfo has empty values`() {
         val info = InstanceInfo()
         assertEquals("", info.controllerVersion)
+        assertEquals("", info.gatewayVersion)
+        assertEquals("", info.edaVersion)
         assertEquals("UNKNOWN", info.platformType)
         assertNull(info.aapVersion)
         assertTrue(info.components.isEmpty())

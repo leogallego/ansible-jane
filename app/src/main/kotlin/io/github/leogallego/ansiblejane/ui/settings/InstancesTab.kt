@@ -282,29 +282,26 @@ private fun InstanceDetailsBottomSheet(
                     supportingContent = { Text(instance.alias) }
                 )
             }
-            ListItem(
-                headlineContent = { Text("API Version") },
-                supportingContent = { Text(instance.apiVersion) }
-            )
-            ListItem(
-                headlineContent = { Text("Self-Signed Certificate") },
-                supportingContent = {
-                    Text(if (instance.trustSelfSigned) "Trusted" else "Not trusted")
-                }
-            )
+            if (instance.trustSelfSigned) {
+                ListItem(
+                    headlineContent = { Text("Self-Signed Certificate") },
+                    supportingContent = { Text("Trusted") }
+                )
+            }
 
             val info = instance.instanceInfo
             if (info != null) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 ListItem(
-                    headlineContent = { Text("Platform Type") },
+                    headlineContent = { Text("Platform") },
                     supportingContent = {
                         Text(
                             when (info.platformType) {
-                                "AAP" -> "Red Hat AAP" + (info.aapVersion?.let { " $it" } ?: "")
-                                "AWX" -> "AWX (upstream)"
-                                "JEWEL" -> "Jewel (upstream)"
+                                "AAP" -> "Red Hat Ansible Automation Platform" +
+                                    (info.aapVersion?.let { " $it" } ?: "")
+                                "AWX" -> "AWX (upstream controller)"
+                                "JEWEL" -> "Jewel (upstream gateway)"
                                 else -> "Unknown"
                             }
                         )
@@ -312,8 +309,20 @@ private fun InstanceDetailsBottomSheet(
                 )
                 if (info.controllerVersion.isNotBlank()) {
                     ListItem(
-                        headlineContent = { Text("Controller Version") },
+                        headlineContent = { Text("Controller") },
                         supportingContent = { Text(info.controllerVersion) }
+                    )
+                }
+                if (info.gatewayVersion.isNotBlank()) {
+                    ListItem(
+                        headlineContent = { Text("Gateway") },
+                        supportingContent = { Text(info.gatewayVersion) }
+                    )
+                }
+                if (info.edaVersion.isNotBlank()) {
+                    ListItem(
+                        headlineContent = { Text("EDA") },
+                        supportingContent = { Text(info.edaVersion) }
                     )
                 }
                 ListItem(

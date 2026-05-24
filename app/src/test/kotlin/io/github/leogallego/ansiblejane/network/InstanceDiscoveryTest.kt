@@ -41,14 +41,18 @@ class InstanceDiscoveryTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
                 return when {
-                    path.contains("ping") -> MockResponse().setBody(
-                        """{"ha": true, "version": "4.6.1", "active_node": "node1", "install_uuid": "abc", "instances": []}"""
+                    path.contains("gateway/v1/ping") -> MockResponse().setBody(
+                        """{"version": "2.6", "status": "good"}"""
+                    )
+                    path.contains("controller/v2/ping") -> MockResponse().setBody(
+                        """{"ha": true, "version": "4.7.9", "active_node": "node1", "install_uuid": "abc", "instances": []}"""
                     )
                     path.contains("config") -> MockResponse().setBody(
-                        """{"version": "4.6.1", "license_info": {"license_type": "enterprise", "valid_key": true}}"""
+                        """{"version": "4.7.9", "license_info": {"license_type": "enterprise", "valid_key": true}}"""
                     )
-                    path.contains("gateway/v1") -> MockResponse().setBody("{}")
-                    path.contains("eda/v1") -> MockResponse().setBody("{}")
+                    path.contains("eda/v1/users/me") -> MockResponse().setBody(
+                        """{"id": 1, "username": "admin"}"""
+                    )
                     path.contains("galaxy") -> MockResponse().setResponseCode(404)
                     else -> MockResponse().setResponseCode(404)
                 }
@@ -62,9 +66,10 @@ class InstanceDiscoveryTest {
             client
         )
 
-        assertEquals("4.6.1", info.controllerVersion)
-        assertEquals(PlatformType.AAP.name, info.platformType)
+        assertEquals("4.7.9", info.controllerVersion)
+        assertEquals("2.6", info.gatewayVersion)
         assertEquals("2.6", info.aapVersion)
+        assertEquals(PlatformType.AAP.name, info.platformType)
         assertTrue(info.hasComponent(AapComponent.CONTROLLER))
         assertTrue(info.hasComponent(AapComponent.GATEWAY))
         assertTrue(info.hasComponent(AapComponent.EDA))
@@ -77,7 +82,7 @@ class InstanceDiscoveryTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
                 return when {
-                    path.contains("ping") -> MockResponse().setBody(
+                    path.contains("v2/ping") -> MockResponse().setBody(
                         """{"ha": false, "version": "24.6.1", "active_node": "awx", "install_uuid": "def", "instances": []}"""
                     )
                     path.contains("config") -> MockResponse().setBody(
@@ -99,6 +104,7 @@ class InstanceDiscoveryTest {
         )
 
         assertEquals("24.6.1", info.controllerVersion)
+        assertEquals("", info.gatewayVersion)
         assertEquals(PlatformType.AWX.name, info.platformType)
         assertNull(info.aapVersion)
         assertTrue(info.hasComponent(AapComponent.CONTROLLER))
@@ -111,13 +117,15 @@ class InstanceDiscoveryTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
                 return when {
-                    path.contains("ping") -> MockResponse().setBody(
+                    path.contains("gateway/v1/ping") -> MockResponse().setBody(
+                        """{"version": "1.0.0", "status": "good"}"""
+                    )
+                    path.contains("controller/v2/ping") -> MockResponse().setBody(
                         """{"ha": false, "version": "4.6.0", "active_node": "node1", "install_uuid": "ghi", "instances": []}"""
                     )
                     path.contains("config") -> MockResponse().setBody(
                         """{"version": "4.6.0", "license_info": {"license_type": "open"}}"""
                     )
-                    path.contains("gateway/v1") -> MockResponse().setBody("{}")
                     path.contains("eda/v1") -> MockResponse().setResponseCode(404)
                     path.contains("galaxy") -> MockResponse().setResponseCode(404)
                     else -> MockResponse().setResponseCode(404)
@@ -133,6 +141,7 @@ class InstanceDiscoveryTest {
         )
 
         assertEquals(PlatformType.JEWEL.name, info.platformType)
+        assertEquals("1.0.0", info.gatewayVersion)
         assertTrue(info.hasComponent(AapComponent.GATEWAY))
         assertTrue(!info.hasComponent(AapComponent.EDA))
     }
@@ -153,7 +162,9 @@ class InstanceDiscoveryTest {
         )
 
         assertEquals("", info.controllerVersion)
+        assertEquals("", info.gatewayVersion)
         assertEquals(PlatformType.UNKNOWN.name, info.platformType)
+        assertNull(info.aapVersion)
         assertTrue(info.hasComponent(AapComponent.CONTROLLER))
         assertTrue(!info.hasComponent(AapComponent.GATEWAY))
     }
@@ -164,15 +175,19 @@ class InstanceDiscoveryTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
                 return when {
-                    path.contains("ping") -> MockResponse().setBody(
-                        """{"ha": true, "version": "4.6.2", "active_node": "n1", "install_uuid": "x", "instances": []}"""
+                    path.contains("gateway/v1/ping") -> MockResponse().setBody(
+                        """{"version": "2.6", "status": "good"}"""
+                    )
+                    path.contains("controller/v2/ping") -> MockResponse().setBody(
+                        """{"ha": true, "version": "4.7.9", "active_node": "n1", "install_uuid": "x", "instances": []}"""
                     )
                     path.contains("config") -> MockResponse().setBody(
-                        """{"version": "4.6.2", "license_info": {"license_type": "enterprise", "valid_key": true}}"""
+                        """{"version": "4.7.9", "license_info": {"license_type": "enterprise", "valid_key": true}}"""
                     )
-                    path.contains("gateway/v1") -> MockResponse().setBody("{}")
-                    path.contains("eda/v1") -> MockResponse().setBody("{}")
-                    path.contains("galaxy") -> MockResponse().setBody("{}")
+                    path.contains("eda/v1/users/me") -> MockResponse().setBody(
+                        """{"id": 1, "username": "admin"}"""
+                    )
+                    path.contains("galaxy") -> MockResponse().setBody("""{"results": []}""")
                     else -> MockResponse().setResponseCode(404)
                 }
             }
@@ -190,5 +205,7 @@ class InstanceDiscoveryTest {
         assertTrue(info.hasComponent(AapComponent.GATEWAY))
         assertTrue(info.hasComponent(AapComponent.EDA))
         assertTrue(info.hasComponent(AapComponent.HUB))
+        assertEquals("2.6", info.aapVersion)
+        assertEquals("4.7.9", info.controllerVersion)
     }
 }
