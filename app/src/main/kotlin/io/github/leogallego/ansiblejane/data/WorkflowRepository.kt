@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.data
 import io.github.leogallego.ansiblejane.model.LaunchRequest
 import io.github.leogallego.ansiblejane.model.WorkflowJob
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplate
+import io.github.leogallego.ansiblejane.model.WorkflowJobTemplateNode
 import io.github.leogallego.ansiblejane.model.WorkflowNode
 import io.github.leogallego.ansiblejane.network.AapApiProvider
 import kotlinx.coroutines.delay
@@ -68,6 +69,18 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) : IWorkflowRep
     override suspend fun getWorkflowNodes(workflowJobId: Int): Result<List<WorkflowNode>> {
         return try {
             val response = apiProvider.getApiService().getWorkflowNodes(workflowJobId)
+            Result.success(response.results)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getWorkflowTemplateNodes(templateId: Int): Result<List<WorkflowJobTemplateNode>> {
+        return try {
+            val response = apiProvider.getApiService().getWorkflowJobTemplateNodes(
+                pageSize = 200,
+                workflowJobTemplate = templateId
+            )
             Result.success(response.results)
         } catch (e: Exception) {
             Result.failure(e)

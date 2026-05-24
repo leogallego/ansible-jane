@@ -7,7 +7,11 @@ import kotlinx.serialization.Serializable
 data class WorkflowNode(
     val id: Int,
     @SerialName("summary_fields") val summaryFields: WorkflowNodeSummaryFields = WorkflowNodeSummaryFields(),
-    @SerialName("do_not_run") val doNotRun: Boolean = false
+    @SerialName("do_not_run") val doNotRun: Boolean = false,
+    @SerialName("success_nodes") val successNodes: List<Int> = emptyList(),
+    @SerialName("failure_nodes") val failureNodes: List<Int> = emptyList(),
+    @SerialName("always_nodes") val alwaysNodes: List<Int> = emptyList(),
+    @SerialName("all_parents_must_converge") val allParentsMustConverge: Boolean = false
 )
 
 @Serializable
