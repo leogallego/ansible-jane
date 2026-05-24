@@ -58,8 +58,9 @@ class InstanceDiscovery(private val json: Json) {
 
             val controllerVersion = pingResult?.version ?: ""
             val hasLicense = configResult?.hasLicense ?: false
+            val couldReachController = pingResult != null || configResult != null
 
-            val platformType = derivePlatformType(hasGateway, hasLicense)
+            val platformType = derivePlatformType(hasGateway, hasLicense, couldReachController)
             val aapVersion = deriveAapVersion(controllerVersion, platformType)
 
             Log.d(TAG, "Discovery: version=$controllerVersion, platform=$platformType, " +
@@ -74,10 +75,15 @@ class InstanceDiscovery(private val json: Json) {
         }
     }
 
-    private fun derivePlatformType(hasGateway: Boolean, hasLicense: Boolean): PlatformType = when {
+    private fun derivePlatformType(
+        hasGateway: Boolean,
+        hasLicense: Boolean,
+        couldReachController: Boolean
+    ): PlatformType = when {
         hasLicense -> PlatformType.AAP
         hasGateway -> PlatformType.JEWEL
-        else -> PlatformType.AWX
+        couldReachController -> PlatformType.AWX
+        else -> PlatformType.UNKNOWN
     }
 
     private fun deriveAapVersion(controllerVersion: String, platformType: PlatformType): String? {

@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.R
+import io.github.leogallego.ansiblejane.model.AapComponent
 import io.github.leogallego.ansiblejane.model.AapInstance
 
 @Composable
@@ -52,10 +53,12 @@ fun InstancesTab(
     instances: List<AapInstance>,
     selectedInstance: AapInstance?,
     selectedInstanceForDetails: AapInstance?,
+    discoveryRefreshing: Boolean,
     onSwitchInstance: (String) -> Unit,
     onRemoveInstance: (String) -> Unit,
     onShowDetails: (String) -> Unit,
     onDismissDetails: () -> Unit,
+    onRefreshInstanceInfo: (String) -> Unit,
     onAddInstance: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
@@ -118,6 +121,8 @@ fun InstancesTab(
     selectedInstanceForDetails?.let { instance ->
         InstanceDetailsBottomSheet(
             instance = instance,
+            isRefreshing = discoveryRefreshing,
+            onRefresh = { onRefreshInstanceInfo(instance.id) },
             onDismiss = onDismissDetails
         )
     }
@@ -248,6 +253,8 @@ private fun InstanceCard(
 @Composable
 private fun InstanceDetailsBottomSheet(
     instance: AapInstance,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
@@ -284,6 +291,74 @@ private fun InstanceDetailsBottomSheet(
                     Text(if (instance.trustSelfSigned) "Trusted" else "Not trusted")
                 }
             )
+
+            val info = instance.instanceInfo
+            if (info != null) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                ListItem(
+                    headlineContent = { Text("Platform Type") },
+                    supportingContent = {
+                        Text(
+                            when (info.platformType) {
+                                "AAP" -> "Red Hat AAP" + (info.aapVersion?.let { " $it" } ?: "")
+                                "AWX" -> "AWX (upstream)"
+                                "JEWEL" -> "Jewel (upstream)"
+                                else -> "Unknown"
+                            }
+                        )
+                    }
+                )
+                if (info.controllerVersion.isNotBlank()) {
+                    ListItem(
+                        headlineContent = { Text("Controller Version") },
+                        supportingContent = { Text(info.controllerVersion) }
+                    )
+                }
+                ListItem(
+                    headlineContent = { Text("Components") },
+                    supportingContent = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            info.resolvedComponents.forEach { component ->
+                                StatusPill(
+                                    label = component.name.lowercase()
+                                        .replaceFirstChar { it.uppercase() },
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+                        }
+                    }
+                )
+            } else {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                ListItem(
+                    headlineContent = { Text("Instance Info") },
+                    supportingContent = { Text("Not yet discovered") }
+                )
+            }
+
+            FilledTonalButton(
+                onClick = onRefresh,
+                enabled = !isRefreshing,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .testTag("button_refresh_instance_info")
+            ) {
+                if (isRefreshing) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Discovering...")
+                } else {
+                    Text(if (info != null) "Refresh Instance Info" else "Discover Instance Info")
+                }
+            }
         }
     }
 }

@@ -9,8 +9,10 @@ import io.github.leogallego.ansiblejane.assistant.presentation.ModelFetchState
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.McpServerConfig
+import io.github.leogallego.ansiblejane.network.ApiVersion
 import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import io.github.leogallego.ansiblejane.network.InstanceDiscovery
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
@@ -31,6 +33,7 @@ class SettingsViewModel(
     private val userPreferences: IUserPreferencesRepository,
     private val assistantRepository: IAssistantRepository,
     private val mcpServerManager: McpServerManager,
+    private val instanceDiscovery: InstanceDiscovery,
     private val httpClient: OkHttpClient,
     private val json: Json
 ) : ViewModel() {
@@ -145,6 +148,39 @@ class SettingsViewModel(
 
     fun dismissDetails() {
         updateReady { copy(selectedInstanceForDetails = null) }
+    }
+
+    fun refreshInstanceInfo(instanceId: String) {
+        val instance = tokenManager.instances.value.find { it.id == instanceId } ?: return
+        viewModelScope.launch {
+            updateReady { copy(discoveryRefreshing = true) }
+            try {
+                val client = buildDiscoveryClient(instance)
+                val apiVersion = try {
+                    ApiVersion.valueOf(instance.apiVersion)
+                } catch (_: Exception) {
+                    ApiVersion.CONTROLLER_V2
+                }
+                val info = instanceDiscovery.discover(
+                    instance.baseUrl, instance.token, apiVersion, client
+                )
+                tokenManager.updateInstanceInfo(instanceId, info)
+            } catch (_: Exception) {
+                // best-effort
+            } finally {
+                updateReady { copy(discoveryRefreshing = false) }
+            }
+        }
+    }
+
+    private fun buildDiscoveryClient(instance: io.github.leogallego.ansiblejane.model.AapInstance): OkHttpClient {
+        val builder = httpClient.newBuilder()
+        if (instance.trustSelfSigned) {
+            val tm = CertTrustManager.createTrustAllManager()
+            builder.sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
+            builder.hostnameVerifier { _, _ -> true }
+        }
+        return builder.build()
     }
 
     // --- General (Display) ---

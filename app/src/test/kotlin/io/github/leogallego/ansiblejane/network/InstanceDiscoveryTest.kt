@@ -153,6 +153,7 @@ class InstanceDiscoveryTest {
         )
 
         assertEquals("", info.controllerVersion)
+        assertEquals(PlatformType.UNKNOWN.name, info.platformType)
         assertTrue(info.hasComponent(AapComponent.CONTROLLER))
         assertTrue(!info.hasComponent(AapComponent.GATEWAY))
     }

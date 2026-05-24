@@ -9,7 +9,9 @@ import io.github.leogallego.ansiblejane.network.AuthInterceptor
 import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.InstanceDiscovery
 import io.github.leogallego.ansiblejane.network.networkJson
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -51,8 +53,8 @@ class AuthRepository(
             // Evict cached service so it rebuilds with the new token/settings
             apiProvider.evictInstance(instanceId)
 
-            // Discover instance capabilities (version, components, platform type)
-            runDiscovery(instanceId, baseUrl, token, apiVersion, client)
+            // Discover instance capabilities in background (version, components, platform type)
+            launchDiscovery(instanceId, baseUrl, token, apiVersion, client)
 
             Result.success(user)
         } catch (e: Exception) {
@@ -90,8 +92,8 @@ class AuthRepository(
                 // Evict cached service so it rebuilds with the new token
                 apiProvider.evictInstance(instanceId)
 
-                // Re-discover instance capabilities
-                runDiscovery(instanceId, instance.baseUrl, newToken, apiVersion, client)
+                // Re-discover instance capabilities in background
+                launchDiscovery(instanceId, instance.baseUrl, newToken, apiVersion, client)
 
                 Result.success(user)
             } catch (e: Exception) {
@@ -130,18 +132,20 @@ class AuthRepository(
 
     override fun isLoggedIn() = tokenManager.isLoggedIn
 
-    private suspend fun runDiscovery(
+    private fun launchDiscovery(
         instanceId: String,
         baseUrl: String,
         token: String,
         apiVersion: ApiVersion,
         client: OkHttpClient
     ) {
-        try {
-            val info = instanceDiscovery.discover(baseUrl, token, apiVersion, client)
-            tokenManager.updateInstanceInfo(instanceId, info)
-        } catch (_: Exception) {
-            // Discovery is best-effort — don't fail the auth flow
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val info = instanceDiscovery.discover(baseUrl, token, apiVersion, client)
+                tokenManager.updateInstanceInfo(instanceId, info)
+            } catch (_: Exception) {
+                // Discovery is best-effort — don't fail the auth flow
+            }
         }
     }
 
