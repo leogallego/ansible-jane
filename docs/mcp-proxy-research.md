@@ -277,6 +277,52 @@ User Query (LLM always configured)
 
 ---
 
+## Round 3: ADK for Kotlin/Android + Official Kotlin MCP SDK (May 2026)
+
+### ADK for Kotlin 0.1.0 — MCP Status
+
+Google's [ADK for Kotlin](https://github.com/google/adk-kotlin) (v0.1.0, released May 21, 2026) includes a full `McpToolset` with connection management, schema conversion, and tool filtering. However, **MCP is currently JVM-only in ADK** — the `libs.mcp` dependency (`io.modelcontextprotocol.sdk:mcp:1.1.2`) is declared only in `jvmMain`, not in `commonJvmAndroidMain` or `androidMain`.
+
+This is a **stale dependency problem, not a design decision.** ADK is pinned to the old monolithic JVM artifact (`mcp:1.1.2`) instead of the current KMP-enabled SDK (`io.modelcontextprotocol:kotlin-sdk-client:0.12.0`). The `google-adk-kotlin-core-android` artifact ships without MCP classes.
+
+### Official Kotlin MCP SDK — Android Support Confirmed
+
+The official [Kotlin MCP SDK](https://github.com/modelcontextprotocol/kotlin-sdk) (maintained by Anthropic + JetBrains) **already supports Android**:
+
+- Issue [#188](https://github.com/modelcontextprotocol/kotlin-sdk/issues/188) ("Support more targets") — **COMPLETED**, lists Android as a client target
+- Issue [#272](https://github.com/modelcontextprotocol/kotlin-sdk/issues/272) ("Duplicate LibVersionKt causing Android build failure") — **FIXED**
+- Current version: **0.12.0** (April 29, 2026)
+- Stack: Kotlin 2.3.21, Ktor, kotlinx-serialization (not OkHttp)
+- KMP targets: JVM, JS, WasmJs, Android, Apple, desktop
+
+### MCP Client Replacement Options
+
+Three options for replacing our custom MCP client (`McpClient.kt` ~260 LOC + `McpTransport.kt` ~300 LOC):
+
+| Option | Artifact | Android? | Transport | Dependencies | Status |
+|--------|----------|----------|-----------|-------------|--------|
+| **Koog agents-mcp** (#74) | `ai.koog:agents-mcp` | Unverified (JVM module) | Wraps official SDK | Koog + official SDK | Blocked on Android verification |
+| **Official Kotlin MCP SDK** | `io.modelcontextprotocol:kotlin-sdk-client:0.12.0` | **Yes** (KMP) | SSE, Streamable HTTP, stdio | Ktor, kotlinx-serialization | Production-ready |
+| **ADK McpToolset** | `com.google.adk:google-adk-kotlin-core:0.1.0` | **No** (JVM-only dep) | SSE, Streamable HTTP, stdio | Old MCP SDK 1.1.2, Gemini-only models | Experimental, will fix dep eventually |
+
+**Recommendation:** The official Kotlin MCP SDK (option 2) is the most viable path. It's KMP-native, supports Android, uses Ktor (aligns with KMP migration #37), and doesn't lock us into Gemini-only models (ADK) or require adopting an entire agent framework (Koog). Our custom `McpTool` wrapper would still be needed to bridge MCP tools into our `Tool` interface.
+
+### ADK Patterns Worth Borrowing
+
+**`@Tool` + KSP codegen** — ADK uses `@Tool` / `@Param` annotations on Kotlin functions + a KSP processor to generate tool schemas at compile time. This eliminates hand-written JSON schemas. Our 26 local tools could adopt this pattern independently of ADK (write our own KSP processor or use ADK's annotations). See tracking issue.
+
+**`McpToolset.tool_filter`** — ADK's McpToolset supports filtering tool subsets from MCP servers. This is equivalent to our `OVERLAP_MAPPING` + read-only enforcement in ToolRouter. Validates our approach.
+
+**Processor pipeline** — ADK's `LlmRequestProcessor` / `LlmResponseProcessor` composable chain validates our Phase 5 middleware pipeline design (#120).
+
+### Tracking
+
+- Issue #74 — MCP client replacement (updated with 3 options)
+- Issue #30 — ADK's ML Kit GenAI for on-device Gemini Nano tier
+- Issue #120 — ADK validates Phase 5 middleware pipeline
+
+---
+
 ## Sources
 
 - [Anthropic Tool Search Tool docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool)
@@ -305,3 +351,6 @@ User Query (LLM always configured)
 - [MediaPipe Text Classifier](https://ai.google.dev/edge/mediapipe/solutions/customization/text_classifier)
 - [Koog](https://github.com/JetBrains/koog)
 - [Kotlin MCP SDK](https://github.com/modelcontextprotocol/kotlin-sdk)
+- [ADK for Kotlin](https://github.com/google/adk-kotlin)
+- [ADK for Kotlin/Android blog post](https://developers.googleblog.com/adk-kotlin-android-building-ai-agents/)
+- [ADK docs](https://adk.dev)
