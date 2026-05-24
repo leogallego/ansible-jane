@@ -113,17 +113,33 @@ private data class GraphNode(
     val alwaysNodes: List<Int>
 )
 
+private val EDGE_PRIORITY = mapOf(
+    ConnectorType.SUCCESS to 0,
+    ConnectorType.ALWAYS to 1,
+    ConnectorType.FAILURE to 2
+)
+
 private fun buildEdges(items: List<GraphNode>): Pair<Set<Int>, Map<Int, ConnectorType>> {
     val childIds = mutableSetOf<Int>()
     val incomingEdge = mutableMapOf<Int, ConnectorType>()
+
+    fun setEdge(childId: Int, type: ConnectorType) {
+        childIds += childId
+        val existing = incomingEdge[childId]
+        if (existing == null || EDGE_PRIORITY.getValue(type) > EDGE_PRIORITY.getValue(existing)) {
+            incomingEdge[childId] = type
+        }
+    }
+
     for (item in items) {
-        for (childId in item.successNodes) { childIds += childId; incomingEdge[childId] = ConnectorType.SUCCESS }
-        for (childId in item.failureNodes) { childIds += childId; incomingEdge[childId] = ConnectorType.FAILURE }
-        for (childId in item.alwaysNodes) { childIds += childId; incomingEdge[childId] = ConnectorType.ALWAYS }
+        for (childId in item.successNodes) setEdge(childId, ConnectorType.SUCCESS)
+        for (childId in item.alwaysNodes) setEdge(childId, ConnectorType.ALWAYS)
+        for (childId in item.failureNodes) setEdge(childId, ConnectorType.FAILURE)
     }
     return childIds to incomingEdge
 }
 
+// AAP prevents cyclic workflows; cycles here produce undefined ordering but no crash.
 private fun topoSort(items: List<GraphNode>): List<Int> {
     val byId = items.associateBy { it.id }
     val (childIds, _) = buildEdges(items)

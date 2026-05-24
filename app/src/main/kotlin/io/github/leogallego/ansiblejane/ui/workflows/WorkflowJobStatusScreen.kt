@@ -189,15 +189,10 @@ private fun WorkflowJobDetailContent(
                 items = orderedNodes,
                 key = { _, item -> item.node.id }
             ) { index, orderedNode ->
-                val node = orderedNode.node
-                val jobId = node.summaryFields.job?.id
-                val hasOutgoing = node.successNodes.isNotEmpty() ||
-                    node.failureNodes.isNotEmpty() ||
-                    node.alwaysNodes.isNotEmpty()
+                val jobId = orderedNode.node.summaryFields.job?.id
 
                 WorkflowNodeCard(
                     orderedNode = orderedNode,
-                    hasOutgoingEdge = hasOutgoing,
                     isExpanded = jobId != null && jobId == expandedNodeId,
                     stdoutState = jobId?.let { nodeStdout[it] },
                     onToggleExpand = jobId?.let { id -> { onToggleNode(id) } }

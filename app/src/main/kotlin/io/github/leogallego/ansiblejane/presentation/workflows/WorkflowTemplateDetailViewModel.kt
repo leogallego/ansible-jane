@@ -46,7 +46,10 @@ class WorkflowTemplateDetailViewModel(
     }
 
     private fun loadNodes() {
-        if (templateId <= 0) return
+        if (templateId <= 0) {
+            _uiState.value = WorkflowTemplateDetailUiState.Error(AppError.Unknown("Invalid workflow template"))
+            return
+        }
         _uiState.value = WorkflowTemplateDetailUiState.Loading
         viewModelScope.launch {
             workflowRepository.getWorkflowTemplateNodes(templateId)

@@ -34,7 +34,6 @@ import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 @Composable
 fun WorkflowNodeCard(
     orderedNode: OrderedNode,
-    hasOutgoingEdge: Boolean,
     isExpanded: Boolean,
     stdoutState: NodeStdoutState?,
     onToggleExpand: (() -> Unit)?,
