@@ -109,7 +109,6 @@ dependencies {
     implementation(libs.koog.openai.client)
     implementation(libs.koog.google.client)
     implementation(libs.koog.http.ktor)
-    implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.okhttp)
 
     implementation(libs.koin.core)

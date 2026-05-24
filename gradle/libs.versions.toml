@@ -65,7 +65,6 @@ screenshot-validation-api = { group = "com.android.tools.screenshot", name = "sc
 koog-openai-client = { group = "ai.koog", name = "prompt-executor-openai-client", version.ref = "koog" }
 koog-google-client = { group = "ai.koog", name = "prompt-executor-google-client", version.ref = "koog-google" }
 koog-http-ktor = { group = "ai.koog", name = "http-client-ktor", version.ref = "koog" }
-ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 markdown-renderer = { group = "com.mikepenz", name = "multiplatform-markdown-renderer", version.ref = "markdownRenderer" }
 markdown-renderer-m3 = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-m3", version.ref = "markdownRenderer" }

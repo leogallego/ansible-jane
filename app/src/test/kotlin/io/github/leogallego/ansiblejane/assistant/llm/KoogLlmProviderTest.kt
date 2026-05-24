@@ -115,7 +115,7 @@ class KoogLlmProviderTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(401)
-                .setBody("""{"error":{"message":"Unauthorized"}}""")
+                .setChunkedBody("""{"error":{"message":"Unauthorized"}}""", 1024)
         )
 
         try {
@@ -131,7 +131,7 @@ class KoogLlmProviderTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(429)
-                .setBody("""{"error":{"message":"Rate limit exceeded"}}""")
+                .setChunkedBody("""{"error":{"message":"Rate limit exceeded"}}""", 1024)
         )
 
         try {
@@ -147,7 +147,7 @@ class KoogLlmProviderTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(500)
-                .setBody("""{"error":{"message":"Internal Server Error"}}""")
+                .setChunkedBody("""{"error":{"message":"Internal Server Error"}}""", 1024)
         )
 
         try {
