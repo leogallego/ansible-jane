@@ -18,6 +18,13 @@ sealed interface WorkflowTemplateDetailUiState {
     data class Error(val error: AppError) : WorkflowTemplateDetailUiState
 }
 
+sealed interface LaunchFromDetailState {
+    data object Idle : LaunchFromDetailState
+    data object Launching : LaunchFromDetailState
+    data class Launched(val workflowJobId: Int) : LaunchFromDetailState
+    data class Failed(val message: String) : LaunchFromDetailState
+}
+
 class WorkflowTemplateDetailViewModel(
     savedStateHandle: SavedStateHandle,
     private val workflowRepository: IWorkflowRepository
@@ -30,6 +37,9 @@ class WorkflowTemplateDetailViewModel(
 
     private val _uiState = MutableStateFlow<WorkflowTemplateDetailUiState>(WorkflowTemplateDetailUiState.Loading)
     val uiState: StateFlow<WorkflowTemplateDetailUiState> = _uiState.asStateFlow()
+
+    private val _launchState = MutableStateFlow<LaunchFromDetailState>(LaunchFromDetailState.Idle)
+    val launchState: StateFlow<LaunchFromDetailState> = _launchState.asStateFlow()
 
     init {
         loadNodes()
@@ -47,6 +57,24 @@ class WorkflowTemplateDetailViewModel(
                     _uiState.value = WorkflowTemplateDetailUiState.Error(AppError.from(e))
                 }
         }
+    }
+
+    fun launch() {
+        if (_launchState.value is LaunchFromDetailState.Launching) return
+        _launchState.value = LaunchFromDetailState.Launching
+        viewModelScope.launch {
+            workflowRepository.launchWorkflow(templateId)
+                .onSuccess { jobId ->
+                    _launchState.value = LaunchFromDetailState.Launched(jobId)
+                }
+                .onFailure { e ->
+                    _launchState.value = LaunchFromDetailState.Failed(e.message ?: "Launch failed")
+                }
+        }
+    }
+
+    fun resetLaunchState() {
+        _launchState.value = LaunchFromDetailState.Idle
     }
 
     fun retry() {

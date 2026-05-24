@@ -248,7 +248,10 @@ fun AppNavigation(
             popExitTransition = { slideOutHorizontally { it } }
         ) {
             WorkflowTemplateDetailScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToWorkflowJobStatus = { workflowJobId ->
+                    navController.navigate(Routes.workflowJobStatus(workflowJobId))
+                }
             )
         }
 
