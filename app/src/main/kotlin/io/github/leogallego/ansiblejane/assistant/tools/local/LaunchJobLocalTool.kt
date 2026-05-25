@@ -13,7 +13,7 @@ class LaunchJobLocalTool(
     typeToken<Args>(), Args.serializer(),
     name = "launch_job",
     description = "Launch a job template by ID with optional extra variables",
-    destructive = true
+    isDestructive = true
 ) {
     @Serializable
     data class Args(

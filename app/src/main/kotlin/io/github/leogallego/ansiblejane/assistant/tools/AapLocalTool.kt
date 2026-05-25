@@ -25,7 +25,7 @@ abstract class AapLocalTool<TArgs : Any>(
     private val argsSerializer: KSerializer<TArgs>,
     name: String,
     description: String,
-    override val destructive: Boolean = false
+    override val isDestructive: Boolean = false
 ) : SimpleTool<TArgs>(argsType, name, description), LocalTool {
 
     override val spec: ToolSpec by lazy { descriptorToSpec(descriptor) }

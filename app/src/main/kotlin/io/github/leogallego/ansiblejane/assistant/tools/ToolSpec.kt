@@ -10,7 +10,18 @@ data class ToolSpec(
 
 interface Tool {
     val spec: ToolSpec
+    val isDestructive: Boolean
+        get() = false
     suspend fun execute(args: JsonObject): ToolResult
+
+    companion object {
+        val WRITE_SUFFIXES = setOf(
+            "_create", "_update", "_delete",
+            "_launch", "_relaunch", "_cancel",
+            "_partial_update", "_approve", "_deny",
+            "_copy", "_sync"
+        )
+    }
 }
 
 data class ToolResult(

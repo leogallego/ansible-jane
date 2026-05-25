@@ -204,10 +204,7 @@ class ToolRouter {
         private val MCP_TOOLS_WITH_LOCAL_OVERLAP: Set<String> =
             OVERLAP_MAPPING.values.flatten().toSet()
 
-        private val WRITE_ACTIONS = setOf(
-            "_create", "_update", "_delete",
-            "_launch", "_relaunch", "_cancel"
-        )
+        private val WRITE_ACTIONS = Tool.WRITE_SUFFIXES
 
         private val STOP_WORDS = setOf(
             "list", "get", "show", "what", "are", "the", "is", "a", "an",
@@ -345,7 +342,7 @@ class ToolRouter {
             var score = overlap * 10
             if (tool.spec.name.contains("list") || tool.spec.name.contains("ping")) score += 3
             if (tool.spec.name.contains("get") || tool.spec.name.contains("read")) score += 1
-            if (overlap > 0 && tool is LocalTool && tool.destructive) score -= 5
+            if (overlap > 0 && tool.isDestructive) score -= 5
             tool to score
         }
         Log.d(TAG, "SCORES: ${scored.map { "${it.first.spec.name}=${it.second}" }}")
