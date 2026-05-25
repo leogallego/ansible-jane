@@ -48,6 +48,8 @@ class ApprovalPollingWorker(
                 }
             }
 
+            // Mark all new IDs as seen regardless of notification delivery outcome.
+            // Tracking only delivered IDs causes infinite retry when permission is denied.
             if (newIds.isNotEmpty()) {
                 approvalTracker.markSeen(newIds)
             }

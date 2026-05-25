@@ -60,7 +60,6 @@ class ChatEngine(
             messages.add(ChatMessage(role = Role.SYSTEM, content = SYSTEM_PROMPT))
             history.filter { it.role == Role.USER || it.role == Role.ASSISTANT }
                 .forEach { messages.add(it) }
-            messages.add(ChatMessage(role = Role.USER, content = userMessage))
 
             val toolDescriptors = tools.map { it.toToolDescriptor() }
             val toolSchemaChars = toolDescriptors.sumOf {

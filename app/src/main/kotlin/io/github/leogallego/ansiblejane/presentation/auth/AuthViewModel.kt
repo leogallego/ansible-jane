@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.presentation.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.leogallego.ansiblejane.data.CredentialStatus
 import io.github.leogallego.ansiblejane.data.IAuthRepository
 import io.github.leogallego.ansiblejane.model.AppError
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,11 +53,10 @@ class AuthViewModel(
     fun checkExistingCredentials() {
         _uiState.value = AuthUiState.Loading
         viewModelScope.launch {
-            val result = authRepository.checkExistingCredentials()
-            _uiState.value = when {
-                result == null -> AuthUiState.Idle
-                result.isSuccess -> AuthUiState.Success(result.getOrThrow().username)
-                else -> AuthUiState.Idle
+            _uiState.value = when (val status = authRepository.checkExistingCredentials()) {
+                is CredentialStatus.Valid -> AuthUiState.Success(status.user.username)
+                is CredentialStatus.NoCredentials -> AuthUiState.Idle
+                is CredentialStatus.ValidationFailed -> AuthUiState.Idle
             }
         }
     }

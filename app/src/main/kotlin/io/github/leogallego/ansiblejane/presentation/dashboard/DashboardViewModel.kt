@@ -38,6 +38,8 @@ class DashboardViewModel(
     private val _uiState = MutableStateFlow<DashboardUiState>(DashboardUiState.Loading)
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
+    private var dashboardJob: kotlinx.coroutines.Job? = null
+
     init {
         viewModelScope.launch {
             tokenManager.activeInstance
@@ -67,8 +69,10 @@ class DashboardViewModel(
     }
 
     private fun loadDashboard() {
+        dashboardJob?.cancel()
         _uiState.value = DashboardUiState.Loading
-        viewModelScope.launch {
+        dashboardJob = viewModelScope.launch {
+            val instance = tokenManager.activeInstance.value ?: return@launch
             val since24h = Instant.now().minus(24, ChronoUnit.HOURS).toString()
             val since7d = Instant.now().minus(7, ChronoUnit.DAYS).toString()
 
@@ -152,8 +156,6 @@ class DashboardViewModel(
                 failedData.totalCount >= 1 -> HealthStatus.YELLOW
                 else -> HealthStatus.GREEN
             }
-
-            val instance = tokenManager.activeInstance.value
 
             _uiState.value = DashboardUiState.Success(
                 activeJobsCount = activeCount,
