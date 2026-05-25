@@ -295,8 +295,8 @@ interface AapApiService {
     ): PaginatedResponse<WorkflowApproval>
 
     @POST("workflow_approvals/{id}/approve/")
-    suspend fun approveWorkflow(@Path("id") id: Int): okhttp3.ResponseBody
+    suspend fun approveWorkflow(@Path("id") id: Int)
 
     @POST("workflow_approvals/{id}/deny/")
-    suspend fun denyWorkflow(@Path("id") id: Int): okhttp3.ResponseBody
+    suspend fun denyWorkflow(@Path("id") id: Int)
 }
