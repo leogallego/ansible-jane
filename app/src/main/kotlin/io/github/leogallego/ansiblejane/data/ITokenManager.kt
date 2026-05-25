@@ -49,4 +49,9 @@ interface ITokenManager {
     )
 
     suspend fun clearCredentials()
+
+    suspend fun saveLlmApiKey(providerKey: String, apiKey: String)
+    suspend fun loadLlmApiKey(providerKey: String): String?
+    suspend fun loadAllLlmApiKeys(): Map<String, String>
+    suspend fun clearLlmApiKeys()
 }
