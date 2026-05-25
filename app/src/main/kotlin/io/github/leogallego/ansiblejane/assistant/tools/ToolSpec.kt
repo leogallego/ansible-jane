@@ -10,6 +10,8 @@ data class ToolSpec(
 
 interface Tool {
     val spec: ToolSpec
+    val destructive: Boolean
+        get() = false
     suspend fun execute(args: JsonObject): ToolResult
 }
 

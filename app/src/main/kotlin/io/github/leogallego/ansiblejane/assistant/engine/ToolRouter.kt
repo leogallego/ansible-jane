@@ -206,7 +206,9 @@ class ToolRouter {
 
         private val WRITE_ACTIONS = setOf(
             "_create", "_update", "_delete",
-            "_launch", "_relaunch", "_cancel"
+            "_launch", "_relaunch", "_cancel",
+            "_partial_update", "_approve", "_deny",
+            "_copy", "_sync"
         )
 
         private val STOP_WORDS = setOf(
