@@ -150,7 +150,7 @@ fun MainScreen(
                     }
                     IconButton(
                         onClick = {
-                            notificationsViewModel.refresh()
+                            notificationsViewModel.refreshIfStale()
                             showNotificationsSheet = true
                         },
                         modifier = Modifier.testTag("button_notifications")
