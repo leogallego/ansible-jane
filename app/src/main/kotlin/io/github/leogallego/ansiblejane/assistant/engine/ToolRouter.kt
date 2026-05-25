@@ -199,6 +199,8 @@ class ToolRouter {
             "security_compliance" to setOf(Category.SECURITY),
             "platform_configuration" to setOf(Category.CONFIGURATION),
             "event_management" to setOf(Category.EDA),
+            "integration" to setOf(Category.CONFIGURATION, Category.SECURITY, Category.USERS),
+            "developer_integration" to setOf(Category.JOBS, Category.MONITORING),
         )
 
         fun stem(word: String): String {

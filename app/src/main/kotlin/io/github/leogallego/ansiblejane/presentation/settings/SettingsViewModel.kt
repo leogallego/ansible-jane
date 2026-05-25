@@ -243,6 +243,14 @@ class SettingsViewModel(
                         url = "$base/event_management/mcp", label = "EDA",
                         isAutoDetected = true, readOnly = true, toolset = "event_management"
                     ),
+                    McpServerConfig(
+                        url = "$base/integration/mcp", label = "Integration",
+                        isAutoDetected = true, readOnly = true, toolset = "integration"
+                    ),
+                    McpServerConfig(
+                        url = "$base/developer_integration/mcp", label = "Developer",
+                        isAutoDetected = true, readOnly = true, toolset = "developer_integration"
+                    ),
                 )
             } else {
                 instance.mcpServerUrls
