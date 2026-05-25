@@ -37,14 +37,16 @@ class ToolRouter {
                 "output", "stdout", "running", "failed", "started", "task",
                 "tasks", "command", "error", "errors", "failure", "status",
                 "playbooks", "workflows", "execution", "executions",
-                "survey", "node", "nodes", "prompt", "variable", "variables"
+                "survey", "node", "nodes", "prompt", "variable", "variables",
+                "approval", "approvals", "approve", "deny", "pending"
             ),
-            resourcePrefixes = setOf("jobs", "job_templates", "workflow_jobs", "workflow_job_templates", "workflow_job_nodes", "workflow_job_template_nodes", "schedules", "ad_hoc_commands"),
+            resourcePrefixes = setOf("jobs", "job_templates", "workflow_jobs", "workflow_job_templates", "workflow_job_nodes", "workflow_job_template_nodes", "schedules", "ad_hoc_commands", "workflow_approvals"),
             localToolNames = setOf(
                 "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
                 "list_workflow_templates", "launch_workflow", "get_workflow_job",
                 "list_schedules", "toggle_schedule",
-                "list_workflow_nodes", "get_survey_spec"
+                "list_workflow_nodes", "get_survey_spec",
+                "list_pending_approvals", "approve_workflow", "deny_workflow"
             )
         ),
         MONITORING(
@@ -178,6 +180,9 @@ class ToolRouter {
             "get_config" to setOf("controller.config_read"),
             "list_workflow_nodes" to setOf("controller.workflow_job_template_nodes_list"),
             "get_survey_spec" to setOf("controller.job_templates_survey_spec_read"),
+            "list_pending_approvals" to setOf("controller.workflow_approvals_list"),
+            "approve_workflow" to setOf("controller.workflow_approvals_approve_create"),
+            "deny_workflow" to setOf("controller.workflow_approvals_deny_create"),
             "list_eda_rulebooks" to setOf("eda.rulebooks_list"),
             "list_eda_decision_environments" to setOf("eda.decision_environments_list"),
             "list_eda_projects" to setOf("eda.projects_list"),

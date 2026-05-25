@@ -282,4 +282,21 @@ interface AapApiService {
 
     @GET("job_templates/{id}/survey_spec/")
     suspend fun getSurveySpec(@Path("id") id: Int): SurveySpec
+
+    @GET("workflow_approvals/{id}/")
+    suspend fun getWorkflowApproval(@Path("id") id: Int): WorkflowApproval
+
+    @GET("workflow_approvals/")
+    suspend fun getWorkflowApprovals(
+        @Query("status") status: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 25,
+        @Query("order_by") orderBy: String = "-created"
+    ): PaginatedResponse<WorkflowApproval>
+
+    @POST("workflow_approvals/{id}/approve/")
+    suspend fun approveWorkflow(@Path("id") id: Int)
+
+    @POST("workflow_approvals/{id}/deny/")
+    suspend fun denyWorkflow(@Path("id") id: Int)
 }

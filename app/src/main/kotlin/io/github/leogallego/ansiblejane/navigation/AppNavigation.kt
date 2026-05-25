@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.data.TokenManager
 import io.github.leogallego.ansiblejane.network.AuthInterceptor
@@ -26,6 +27,7 @@ import io.github.leogallego.ansiblejane.ui.auth.AuthScreen
 import io.github.leogallego.ansiblejane.ui.jobs.JobStatusScreen
 import io.github.leogallego.ansiblejane.ui.main.MainScreen
 import io.github.leogallego.ansiblejane.ui.settings.SettingsScreen
+import io.github.leogallego.ansiblejane.ui.approval.ApprovalDetailScreen
 import io.github.leogallego.ansiblejane.ui.workflows.WorkflowJobStatusScreen
 import io.github.leogallego.ansiblejane.ui.workflows.WorkflowTemplateDetailScreen
 import org.koin.compose.viewmodel.koinViewModel
@@ -42,8 +44,10 @@ object Routes {
     const val JOB_STATUS = "job_status/{jobId}"
     const val WORKFLOW_JOB_STATUS = "workflow_job_status/{workflowJobId}"
     const val WORKFLOW_TEMPLATE_DETAIL = "workflow_template_detail/{templateId}/{templateName}"
+    const val APPROVAL_DETAIL = "approval/{approvalId}"
     const val SETTINGS = "settings"
 
+    fun approvalDetail(approvalId: Int) = "approval/$approvalId"
     fun jobStatus(jobId: Int) = "job_status/$jobId"
     fun workflowJobStatus(workflowJobId: Int) = "workflow_job_status/$workflowJobId"
     fun workflowTemplateDetail(templateId: Int, templateName: String): String {
@@ -252,6 +256,20 @@ fun AppNavigation(
                 onNavigateToWorkflowJobStatus = { workflowJobId ->
                     navController.navigate(Routes.workflowJobStatus(workflowJobId))
                 }
+            )
+        }
+
+        composable(
+            route = Routes.APPROVAL_DETAIL,
+            arguments = listOf(navArgument("approvalId") { type = NavType.IntType }),
+            deepLinks = listOf(navDeepLink { uriPattern = "ansiblejane://approval/{approvalId}" }),
+            enterTransition = { slideInHorizontally { it } },
+            exitTransition = { slideOutHorizontally { -it } },
+            popEnterTransition = { slideInHorizontally { -it } },
+            popExitTransition = { slideOutHorizontally { it } }
+        ) {
+            ApprovalDetailScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

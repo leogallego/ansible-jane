@@ -116,6 +116,8 @@ fun AssistantScreen(
                 onSendMessage = { viewModel.sendMessage(it) },
                 onStopGeneration = { viewModel.stopGeneration() },
                 onRegenerateLastMessage = { viewModel.regenerateLastMessage() },
+                onConfirmApprove = { viewModel.confirmAction(true) },
+                onConfirmDeny = { viewModel.confirmAction(false) },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -142,6 +144,8 @@ private fun ActiveChatContent(
     onSendMessage: (String) -> Unit,
     onStopGeneration: () -> Unit,
     onRegenerateLastMessage: () -> Unit,
+    onConfirmApprove: () -> Unit,
+    onConfirmDeny: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -161,10 +165,11 @@ private fun ActiveChatContent(
     val imeVisible = WindowInsets.isImeVisible
     val messageCount = state.messages.size
     val totalItems = messageCount +
+        (if (state.pendingConfirmation != null) 1 else 0) +
         (if (state.isGenerating) 1 else 0) +
         (if (messageCount == 0 && !state.isGenerating) 1 else 0)
 
-    LaunchedEffect(messageCount, state.isGenerating) {
+    LaunchedEffect(messageCount, state.isGenerating, state.pendingConfirmation) {
         if (totalItems > 0) {
             listState.animateScrollToItem(totalItems - 1)
         }
@@ -265,6 +270,18 @@ private fun ActiveChatContent(
                             else null,
                     )
                     else -> AssistantMessage(content = message.content)
+                }
+            }
+
+            if (state.pendingConfirmation != null) {
+                item(key = "confirmation", contentType = "confirmation") {
+                    ConfirmationCard(
+                        toolName = state.pendingConfirmation.toolName,
+                        description = state.pendingConfirmation.description,
+                        onApprove = onConfirmApprove,
+                        onDeny = onConfirmDeny,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
                 }
             }
 

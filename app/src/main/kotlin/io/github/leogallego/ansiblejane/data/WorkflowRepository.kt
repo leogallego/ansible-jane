@@ -1,6 +1,7 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.LaunchRequest
+import io.github.leogallego.ansiblejane.model.WorkflowApproval
 import io.github.leogallego.ansiblejane.model.WorkflowJob
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplate
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplateNode
@@ -86,10 +87,61 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) : IWorkflowRep
             Result.failure(e)
         }
     }
+
+    override suspend fun getWorkflowApproval(approvalId: Int): Result<WorkflowApproval> {
+        return try {
+            Result.success(apiProvider.getApiService().getWorkflowApproval(approvalId))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getPendingApprovals(page: Int, pageSize: Int): Result<PendingApprovalResult> {
+        return try {
+            val response = apiProvider.getApiService().getWorkflowApprovals(
+                status = "pending",
+                page = page,
+                pageSize = pageSize
+            )
+            Result.success(
+                PendingApprovalResult(
+                    approvals = response.results,
+                    hasMore = response.next != null,
+                    totalCount = response.count
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun approveWorkflow(approvalId: Int): Result<Unit> {
+        return try {
+            apiProvider.getApiService().approveWorkflow(approvalId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun denyWorkflow(approvalId: Int): Result<Unit> {
+        return try {
+            apiProvider.getApiService().denyWorkflow(approvalId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
 data class WorkflowTemplateListResult(
     val templates: List<WorkflowJobTemplate>,
+    val hasMore: Boolean,
+    val totalCount: Int
+)
+
+data class PendingApprovalResult(
+    val approvals: List<WorkflowApproval>,
     val hasMore: Boolean,
     val totalCount: Int
 )

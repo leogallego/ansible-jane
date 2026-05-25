@@ -23,6 +23,7 @@ import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -221,8 +222,21 @@ class AssistantViewModel(
 
             updateState { copy(streamingText = "Thinking...") }
 
-            engine.processMessage(text, repository.getHistory(), toolSpecs, maxTokens, contextChars)
-                .collect { event ->
+            engine.processMessage(
+                text, repository.getHistory(), toolSpecs, maxTokens, contextChars,
+                onConfirmationRequired = { toolName, description, _ ->
+                    val deferred = CompletableDeferred<Boolean>()
+                    val pending = PendingConfirmation(
+                        toolName = toolName,
+                        description = description,
+                        continuation = deferred
+                    )
+                    updateState { copy(pendingConfirmation = pending) }
+                    val result = deferred.await()
+                    updateState { copy(pendingConfirmation = null) }
+                    result
+                }
+            ).collect { event ->
                     when (event) {
                         is ChatEvent.TextDelta -> {
                             textBuilder.append(event.text)
@@ -237,6 +251,9 @@ class AssistantViewModel(
                         is ChatEvent.ToolResult -> {
                             updateState { copy(streamingText = "Processing results...") }
                             textBuilder.clear()
+                        }
+                        is ChatEvent.ConfirmationRequired -> {
+                            updateState { copy(streamingText = "Waiting for confirmation...") }
                         }
                         is ChatEvent.AssistantMessage -> {
                             val responseSource = when {
@@ -279,9 +296,16 @@ class AssistantViewModel(
         }
     }
 
+    fun confirmAction(approved: Boolean) {
+        val current = _uiState.value
+        if (current is AssistantUiState.Active) {
+            current.pendingConfirmation?.continuation?.complete(approved)
+        }
+    }
+
     fun stopGeneration() {
         generateJob?.cancel()
-        updateState { copy(isGenerating = false, streamingText = null) }
+        updateState { copy(isGenerating = false, streamingText = null, pendingConfirmation = null) }
     }
 
     fun regenerateLastMessage() {

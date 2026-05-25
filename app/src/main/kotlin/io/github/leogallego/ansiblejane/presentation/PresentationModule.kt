@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.presentation
 
+import io.github.leogallego.ansiblejane.presentation.approval.ApprovalDetailViewModel
 import io.github.leogallego.ansiblejane.presentation.auth.AuthViewModel
 import io.github.leogallego.ansiblejane.presentation.dashboard.DashboardViewModel
 import io.github.leogallego.ansiblejane.presentation.settings.BackupViewModel
@@ -18,6 +19,7 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val presentationModule = module {
+    viewModelOf(::ApprovalDetailViewModel)
     viewModelOf(::AuthViewModel)
     viewModelOf(::DashboardViewModel)
     viewModelOf(::TemplatesViewModel)
