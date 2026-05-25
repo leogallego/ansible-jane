@@ -179,7 +179,12 @@ fun ToolsTab(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(
-                        onClick = { showAddServer = false },
+                        onClick = {
+                            newServerUrl = ""
+                            newServerLabel = ""
+                            newServerToolset = ""
+                            showAddServer = false
+                        },
                         modifier = Modifier.weight(1f)
                     ) { Text("Cancel") }
                     Button(
