@@ -176,7 +176,7 @@ class ChatEngine(
                         emit(ChatEvent.ToolExecuting(toolCall.tool, argsJson))
 
                         val tool = toolExecutor.findTool(toolCall.tool)
-                        val toolResult = if (tool != null && tool.destructive && onConfirmationRequired != null) {
+                        val toolResult = if (tool != null && tool.isDestructive && onConfirmationRequired != null) {
                             val description = descriptionForConfirmation(toolCall.tool, argsJson)
                             emit(ChatEvent.ConfirmationRequired(toolCall.tool, argsJson, description))
                             val approved = onConfirmationRequired(toolCall.tool, description, argsJson)

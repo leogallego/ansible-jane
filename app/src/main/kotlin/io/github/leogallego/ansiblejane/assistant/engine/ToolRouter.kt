@@ -342,7 +342,7 @@ class ToolRouter {
             var score = overlap * 10
             if (tool.spec.name.contains("list") || tool.spec.name.contains("ping")) score += 3
             if (tool.spec.name.contains("get") || tool.spec.name.contains("read")) score += 1
-            if (overlap > 0 && tool.destructive) score -= 5
+            if (overlap > 0 && tool.isDestructive) score -= 5
             tool to score
         }
         Log.d(TAG, "SCORES: ${scored.map { "${it.first.spec.name}=${it.second}" }}")

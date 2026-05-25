@@ -35,7 +35,7 @@ class ToolExecutor(
                 )
             }
 
-        val isDestructive = tool.destructive
+        val isDestructive = tool.isDestructive
         val cacheKey = "${toolCall.tool}:${toolCall.args.hashCode()}"
         if (!isDestructive) {
             val cached = resultCache[cacheKey]

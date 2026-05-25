@@ -23,7 +23,7 @@ class McpTool(
         private val WRITE_SUFFIXES = Tool.WRITE_SUFFIXES
     }
 
-    override val destructive: Boolean =
+    override val isDestructive: Boolean =
         WRITE_SUFFIXES.any { mcpToolDef.name.endsWith(it) }
 
     override val spec: ToolSpec = ToolSpec(

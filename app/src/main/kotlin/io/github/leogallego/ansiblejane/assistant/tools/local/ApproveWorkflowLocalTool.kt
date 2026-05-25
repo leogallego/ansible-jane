@@ -13,7 +13,7 @@ class ApproveWorkflowLocalTool(
     typeToken<Args>(), Args.serializer(),
     name = "approve_workflow",
     description = "Approve a pending workflow approval step",
-    destructive = true
+    isDestructive = true
 ) {
     @Serializable
     data class Args(

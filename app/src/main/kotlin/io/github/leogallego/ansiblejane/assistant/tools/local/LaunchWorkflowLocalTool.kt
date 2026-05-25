@@ -13,7 +13,7 @@ class LaunchWorkflowLocalTool(
     typeToken<Args>(), Args.serializer(),
     name = "launch_workflow",
     description = "Launch a workflow job template by ID with optional extra variables",
-    destructive = true
+    isDestructive = true
 ) {
     @Serializable
     data class Args(
