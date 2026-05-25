@@ -284,7 +284,11 @@ class SettingsViewModel(
                     isAutoDetected = true, readOnly = true, toolset = "platform_configuration"
                 ),
             )
-            tokenManager.updateMcpConfig(instance.id, true, manualServers + autoDetected)
+            val manualUrls = manualServers.map { it.url }.toSet()
+            tokenManager.updateMcpConfig(
+                instance.id, true,
+                manualServers + autoDetected.filter { it.url !in manualUrls }
+            )
         }
     }
 
