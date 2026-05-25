@@ -8,12 +8,17 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
+private data class ServiceCache(
+    val controller: AapApiService,
+    val eda: EdaApiService? = null,
+    val platform: PlatformApiService? = null
+)
+
 class AapApiProvider(
     private val tokenManager: TokenManager,
     private val json: Json
 ) : IAapApiProvider {
-    // Per-instance service cache: instanceId -> (AapApiService, EdaApiService)
-    private val serviceCache = mutableMapOf<String, Pair<AapApiService, EdaApiService?>>()
+    private val serviceCache = mutableMapOf<String, ServiceCache>()
 
     @Synchronized
     override fun getApiService(): AapApiService {
@@ -21,17 +26,13 @@ class AapApiProvider(
             ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
         val cached = serviceCache[instance.id]
-        if (cached != null) return cached.first
+        if (cached != null) return cached.controller
 
         val client = buildClient(instance.token, instance.trustSelfSigned, instance.id)
-        val apiVersion = try {
-            ApiVersion.valueOf(instance.apiVersion)
-        } catch (_: Exception) {
-            ApiVersion.CONTROLLER_V2
-        }
+        val apiVersion = resolveApiVersion(instance.apiVersion)
         val retrofit = buildRetrofit(client, instance.baseUrl, apiVersion)
         val apiService = retrofit.create(AapApiService::class.java)
-        serviceCache[instance.id] = Pair(apiService, null)
+        serviceCache[instance.id] = ServiceCache(controller = apiService)
         return apiService
     }
 
@@ -41,28 +42,53 @@ class AapApiProvider(
             ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
         val cached = serviceCache[instance.id]
-        if (cached?.second != null) return cached.second!!
+        if (cached?.eda != null) return cached.eda!!
 
         val client = buildClient(instance.token, instance.trustSelfSigned, instance.id)
-        val retrofit = buildEdaRetrofit(client, instance.baseUrl)
+        val retrofit = buildComponentRetrofit(client, instance.baseUrl, "/api/eda/v1/")
         val edaService = retrofit.create(EdaApiService::class.java)
 
-        val existingApi = cached?.first ?: run {
-            val apiVersion = try {
-                ApiVersion.valueOf(instance.apiVersion)
-            } catch (_: Exception) {
-                ApiVersion.CONTROLLER_V2
-            }
+        val controllerService = cached?.controller ?: run {
+            val apiVersion = resolveApiVersion(instance.apiVersion)
             buildRetrofit(client, instance.baseUrl, apiVersion)
                 .create(AapApiService::class.java)
         }
-        serviceCache[instance.id] = Pair(existingApi, edaService)
+        serviceCache[instance.id] = (cached ?: ServiceCache(controller = controllerService))
+            .copy(eda = edaService)
         return edaService
+    }
+
+    @Synchronized
+    override fun getPlatformApiService(): PlatformApiService {
+        val instance = tokenManager.activeInstance.value
+            ?: throw IllegalStateException("No active AAP instance. Please log in first.")
+
+        val cached = serviceCache[instance.id]
+        if (cached?.platform != null) return cached.platform!!
+
+        val client = buildClient(instance.token, instance.trustSelfSigned, instance.id)
+        val retrofit = buildComponentRetrofit(client, instance.baseUrl, "/api/gateway/v1/")
+        val platformService = retrofit.create(PlatformApiService::class.java)
+
+        val controllerService = cached?.controller ?: run {
+            val apiVersion = resolveApiVersion(instance.apiVersion)
+            buildRetrofit(client, instance.baseUrl, apiVersion)
+                .create(AapApiService::class.java)
+        }
+        serviceCache[instance.id] = (cached ?: ServiceCache(controller = controllerService))
+            .copy(platform = platformService)
+        return platformService
     }
 
     @Synchronized
     override fun evictInstance(instanceId: String) {
         serviceCache.remove(instanceId)
+    }
+
+    private fun resolveApiVersion(apiVersionStr: String): ApiVersion = try {
+        ApiVersion.valueOf(apiVersionStr)
+    } catch (_: Exception) {
+        ApiVersion.CONTROLLER_V2
     }
 
     private fun buildClient(token: String, trustSelfSigned: Boolean, instanceId: String): OkHttpClient {
@@ -95,9 +121,9 @@ class AapApiProvider(
             .build()
     }
 
-    private fun buildEdaRetrofit(client: OkHttpClient, baseUrl: String): Retrofit {
+    private fun buildComponentRetrofit(client: OkHttpClient, baseUrl: String, basePath: String): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("${baseUrl.trimEnd('/')}/api/eda/v1/")
+            .baseUrl("${baseUrl.trimEnd('/')}$basePath")
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()

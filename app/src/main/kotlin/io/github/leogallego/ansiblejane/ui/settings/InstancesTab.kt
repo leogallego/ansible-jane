@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.R
+import io.github.leogallego.ansiblejane.model.AapComponent
 import io.github.leogallego.ansiblejane.model.AapInstance
 
 @Composable
@@ -52,10 +53,13 @@ fun InstancesTab(
     instances: List<AapInstance>,
     selectedInstance: AapInstance?,
     selectedInstanceForDetails: AapInstance?,
+    discoveryRefreshing: Boolean,
+    discoveryError: String? = null,
     onSwitchInstance: (String) -> Unit,
     onRemoveInstance: (String) -> Unit,
     onShowDetails: (String) -> Unit,
     onDismissDetails: () -> Unit,
+    onRefreshInstanceInfo: (String) -> Unit,
     onAddInstance: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
@@ -118,6 +122,9 @@ fun InstancesTab(
     selectedInstanceForDetails?.let { instance ->
         InstanceDetailsBottomSheet(
             instance = instance,
+            isRefreshing = discoveryRefreshing,
+            errorMessage = discoveryError,
+            onRefresh = { onRefreshInstanceInfo(instance.id) },
             onDismiss = onDismissDetails
         )
     }
@@ -248,15 +255,19 @@ private fun InstanceCard(
 @Composable
 private fun InstanceDetailsBottomSheet(
     instance: AapInstance,
+    isRefreshing: Boolean,
+    errorMessage: String? = null,
+    onRefresh: () -> Unit,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState()
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(bottom = 32.dp)
         ) {
             Text(
@@ -274,16 +285,102 @@ private fun InstanceDetailsBottomSheet(
                     supportingContent = { Text(instance.alias) }
                 )
             }
-            ListItem(
-                headlineContent = { Text("API Version") },
-                supportingContent = { Text(instance.apiVersion) }
-            )
-            ListItem(
-                headlineContent = { Text("Self-Signed Certificate") },
-                supportingContent = {
-                    Text(if (instance.trustSelfSigned) "Trusted" else "Not trusted")
+            if (instance.trustSelfSigned) {
+                ListItem(
+                    headlineContent = { Text("Self-Signed Certificate") },
+                    supportingContent = { Text("Trusted") }
+                )
+            }
+
+            val info = instance.instanceInfo
+            if (info != null) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                ListItem(
+                    headlineContent = { Text("Platform") },
+                    supportingContent = {
+                        Text(
+                            when (info.platformType) {
+                                "AAP" -> "Red Hat Ansible Automation Platform" +
+                                    (info.aapVersion?.let { " $it" } ?: "")
+                                "AWX" -> "AWX (upstream controller)"
+                                "JEWEL" -> "Jewel (upstream gateway)"
+                                else -> "Unknown"
+                            }
+                        )
+                    }
+                )
+                if (info.controllerVersion.isNotBlank()) {
+                    ListItem(
+                        headlineContent = { Text("Controller") },
+                        supportingContent = { Text(info.controllerVersion) }
+                    )
                 }
-            )
+                if (info.gatewayVersion.isNotBlank()) {
+                    ListItem(
+                        headlineContent = { Text("Gateway") },
+                        supportingContent = { Text(info.gatewayVersion) }
+                    )
+                }
+                if (info.edaVersion.isNotBlank()) {
+                    ListItem(
+                        headlineContent = { Text("EDA") },
+                        supportingContent = { Text(info.edaVersion) }
+                    )
+                }
+                ListItem(
+                    headlineContent = { Text("Components") },
+                    supportingContent = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            info.resolvedComponents.forEach { component ->
+                                StatusPill(
+                                    label = component.name.lowercase()
+                                        .replaceFirstChar { it.uppercase() },
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+                        }
+                    }
+                )
+            } else {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                ListItem(
+                    headlineContent = { Text("Instance Info") },
+                    supportingContent = { Text("Not yet discovered") }
+                )
+            }
+
+            FilledTonalButton(
+                onClick = onRefresh,
+                enabled = !isRefreshing,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .testTag("button_refresh_instance_info")
+            ) {
+                if (isRefreshing) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Discovering...")
+                } else {
+                    Text(if (info != null) "Refresh Instance Info" else "Discover Instance Info")
+                }
+            }
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
         }
     }
 }

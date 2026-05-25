@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.fakes
 import io.github.leogallego.ansiblejane.network.AapApiService
 import io.github.leogallego.ansiblejane.network.EdaApiService
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import io.github.leogallego.ansiblejane.network.PlatformApiService
 
 class FakeAapApiProvider : IAapApiProvider {
     val evictedInstances = mutableListOf<String>()
@@ -12,6 +13,10 @@ class FakeAapApiProvider : IAapApiProvider {
     }
 
     override fun getEdaApiService(): EdaApiService {
+        throw UnsupportedOperationException("Use repository fakes instead")
+    }
+
+    override fun getPlatformApiService(): PlatformApiService {
         throw UnsupportedOperationException("Use repository fakes instead")
     }
 

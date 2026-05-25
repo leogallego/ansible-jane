@@ -23,6 +23,8 @@ sealed interface SettingsUiState {
         val instances: List<AapInstance> = emptyList(),
         val selectedInstance: AapInstance? = null,
         val selectedInstanceForDetails: AapInstance? = null,
+        val discoveryRefreshing: Boolean = false,
+        val discoveryError: String? = null,
         // General
         val timezoneId: String? = null,
         val timeFormat: TimeFormat = TimeFormat.SYSTEM,

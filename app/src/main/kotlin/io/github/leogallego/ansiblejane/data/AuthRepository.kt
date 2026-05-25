@@ -7,8 +7,11 @@ import io.github.leogallego.ansiblejane.network.ApiVersion
 import io.github.leogallego.ansiblejane.network.ApiVersionDetector
 import io.github.leogallego.ansiblejane.network.AuthInterceptor
 import io.github.leogallego.ansiblejane.network.CertTrustManager
+import io.github.leogallego.ansiblejane.network.InstanceDiscovery
 import io.github.leogallego.ansiblejane.network.networkJson
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -18,7 +21,8 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class AuthRepository(
     private val tokenManager: ITokenManager,
-    private val apiProvider: IAapApiProvider
+    private val apiProvider: IAapApiProvider,
+    private val instanceDiscovery: InstanceDiscovery
 ) : IAuthRepository {
 
     override suspend fun validateCredentials(
@@ -48,6 +52,9 @@ class AuthRepository(
 
             // Evict cached service so it rebuilds with the new token/settings
             apiProvider.evictInstance(instanceId)
+
+            // Discover instance capabilities in background (version, components, platform type)
+            launchDiscovery(instanceId, baseUrl, token, apiVersion, client)
 
             Result.success(user)
         } catch (e: Exception) {
@@ -85,6 +92,9 @@ class AuthRepository(
                 // Evict cached service so it rebuilds with the new token
                 apiProvider.evictInstance(instanceId)
 
+                // Re-discover instance capabilities in background
+                launchDiscovery(instanceId, instance.baseUrl, newToken, apiVersion, client)
+
                 Result.success(user)
             } catch (e: Exception) {
                 Result.failure(e)
@@ -121,6 +131,23 @@ class AuthRepository(
     }
 
     override fun isLoggedIn() = tokenManager.isLoggedIn
+
+    private fun launchDiscovery(
+        instanceId: String,
+        baseUrl: String,
+        token: String,
+        apiVersion: ApiVersion,
+        client: OkHttpClient
+    ) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val info = instanceDiscovery.discover(baseUrl, token, apiVersion, client)
+                tokenManager.updateInstanceInfo(instanceId, info)
+            } catch (_: Exception) {
+                // Discovery is best-effort — don't fail the auth flow
+            }
+        }
+    }
 
     private fun buildClient(token: String, trustSelfSigned: Boolean): OkHttpClient {
         val builder = OkHttpClient.Builder()

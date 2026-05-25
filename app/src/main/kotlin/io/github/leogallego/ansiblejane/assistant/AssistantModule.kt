@@ -69,6 +69,7 @@ val assistantModule = module {
             userPreferences = get(),
             assistantRepository = get(),
             mcpServerManager = get(),
+            instanceDiscovery = get(),
             httpClient = get(named("llm")),
             json = networkJson
         )

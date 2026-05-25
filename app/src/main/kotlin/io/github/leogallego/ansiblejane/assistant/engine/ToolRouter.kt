@@ -111,6 +111,19 @@ class ToolRouter {
                 "list_eda_projects", "list_eda_credentials", "list_eda_credential_types",
                 "list_eda_event_streams", "list_eda_users"
             )
+        ),
+        PLATFORM(
+            keywords = setOf(
+                "platform", "gateway", "authenticator", "authenticators",
+                "service", "services", "sso", "saml", "ldap",
+                "identity", "authentication", "provider", "providers"
+            ),
+            resourcePrefixes = setOf("organizations", "users", "teams", "role_definitions", "authenticators", "services", "service_clusters"),
+            localToolNames = setOf(
+                "list_platform_organizations", "list_platform_users", "list_platform_teams",
+                "list_platform_role_definitions", "list_authenticators",
+                "list_platform_services", "list_service_clusters"
+            )
         );
 
         val stemmedKeywords: Set<String> by lazy {
@@ -172,6 +185,14 @@ class ToolRouter {
             "list_eda_credential_types" to setOf("eda.credential_types_list"),
             "list_eda_event_streams" to setOf("eda.event_streams_list"),
             "list_eda_users" to setOf("eda.users_list"),
+            // Platform / Gateway
+            "list_platform_organizations" to setOf("gateway.organizations_list"),
+            "list_platform_users" to setOf("gateway.users_list"),
+            "list_platform_teams" to setOf("gateway.teams_list"),
+            "list_platform_role_definitions" to setOf("gateway.role_definitions_list"),
+            "list_authenticators" to setOf("gateway.authenticators_list"),
+            "list_platform_services" to setOf("gateway.services_list"),
+            "list_service_clusters" to setOf("gateway.service_clusters_list"),
         )
 
         private val MCP_TOOLS_WITH_LOCAL_OVERLAP: Set<String> =

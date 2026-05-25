@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import io.github.leogallego.ansiblejane.model.AapInstance
+import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.ApiVersion
 import com.google.crypto.tink.Aead
@@ -40,7 +41,8 @@ data class SerializedInstance(
     val trustSelfSigned: Boolean = false,
     val certFingerprint: String? = null,
     val mcpServerUrls: List<McpServerConfig>? = null,
-    val mcpEnabled: Boolean = false
+    val mcpEnabled: Boolean = false,
+    val instanceInfo: InstanceInfo? = null
 )
 
 @Serializable
@@ -109,7 +111,8 @@ class TokenManager(private val context: Context) : ITokenManager {
             trustSelfSigned = serialized.trustSelfSigned,
             certFingerprint = serialized.certFingerprint,
             mcpServerUrls = serialized.mcpServerUrls,
-            mcpEnabled = serialized.mcpEnabled
+            mcpEnabled = serialized.mcpEnabled,
+            instanceInfo = serialized.instanceInfo
         )
     }
 
@@ -123,7 +126,8 @@ class TokenManager(private val context: Context) : ITokenManager {
             trustSelfSigned = instance.trustSelfSigned,
             certFingerprint = instance.certFingerprint,
             mcpServerUrls = instance.mcpServerUrls,
-            mcpEnabled = instance.mcpEnabled
+            mcpEnabled = instance.mcpEnabled,
+            instanceInfo = instance.instanceInfo
         )
     }
 
@@ -325,6 +329,20 @@ class TokenManager(private val context: Context) : ITokenManager {
             certFingerprint = certFingerprint,
             existingId = existingId
         )
+    }
+
+    override suspend fun updateInstanceInfo(
+        instanceId: String,
+        instanceInfo: InstanceInfo
+    ) {
+        val state = readState()
+        if (state.instances.none { it.id == instanceId }) return
+        val updatedInstances = state.instances.map { serialized ->
+            if (serialized.id == instanceId) {
+                serialized.copy(instanceInfo = instanceInfo)
+            } else serialized
+        }
+        writeState(state.copy(instances = updatedInstances))
     }
 
     override suspend fun updateMcpConfig(

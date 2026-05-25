@@ -22,7 +22,8 @@ data class AapInstance(
     val trustSelfSigned: Boolean = false,
     val certFingerprint: String? = null,
     val mcpServerUrls: List<McpServerConfig>? = null,
-    val mcpEnabled: Boolean = false
+    val mcpEnabled: Boolean = false,
+    val instanceInfo: InstanceInfo? = null
 ) {
     val displayLabel: String
         get() = alias ?: URI(baseUrl).host.orEmpty()

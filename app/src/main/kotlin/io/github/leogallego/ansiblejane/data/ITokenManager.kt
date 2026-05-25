@@ -1,6 +1,7 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.AapInstance
+import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.ApiVersion
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +36,11 @@ interface ITokenManager {
         alias: String? = null,
         existingId: String? = null
     ): String
+
+    suspend fun updateInstanceInfo(
+        instanceId: String,
+        instanceInfo: InstanceInfo
+    )
 
     suspend fun updateMcpConfig(
         instanceId: String,
