@@ -24,7 +24,7 @@ class ToolRouterTest {
 
     private fun localTool(name: String, destructive: Boolean = false) = object : LocalTool {
         override val spec = ToolSpec(name, "Local: $name", JsonObject(emptyMap()))
-        override val destructive = destructive
+        override val isDestructive = destructive
         override suspend fun execute(args: JsonObject) = ToolResult(success = true)
     }
 
@@ -204,8 +204,8 @@ class ToolRouterTest {
         val launchTool = all.first { it.first.spec.name == "launch_job" }.first as LocalTool
         val listTool = all.first { it.first.spec.name == "list_jobs" }.first as LocalTool
 
-        assertTrue(launchTool.destructive)
-        assertFalse(listTool.destructive)
+        assertTrue(launchTool.isDestructive)
+        assertFalse(listTool.isDestructive)
     }
 
     @Test
