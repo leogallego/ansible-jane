@@ -253,11 +253,9 @@ fun MainScreen(
             uiState = notificationsState,
             onDismiss = { showNotificationsSheet = false },
             onRefresh = { notificationsViewModel.refresh() },
-            onApprovalClick = remember {
-                { approvalId: Int ->
-                    showNotificationsSheet = false
-                    onNavigateToApproval(approvalId)
-                }
+            onApprovalClick = { approvalId ->
+                showNotificationsSheet = false
+                onNavigateToApproval(approvalId)
             }
         )
     }

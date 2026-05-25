@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.leogallego.ansiblejane.data.IWorkflowRepository
 import io.github.leogallego.ansiblejane.model.WorkflowApproval
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,9 +40,10 @@ class NotificationsViewModel(
     }
 
     fun refresh() {
-        refreshJob?.cancel()
-        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+        val oldJob = refreshJob
         refreshJob = viewModelScope.launch {
+            oldJob?.cancelAndJoin()
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             workflowRepository.getPendingApprovals(pageSize = 50).fold(
                 onSuccess = { result ->
                     lastFetchTime = System.currentTimeMillis()
