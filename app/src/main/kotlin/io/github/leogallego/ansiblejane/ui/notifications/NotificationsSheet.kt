@@ -119,6 +119,14 @@ fun NotificationsSheet(
                 }
 
                 else -> {
+                    if (uiState.error != null) {
+                        Text(
+                            text = "Refresh failed — showing cached data",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
                     Text(
                         text = "${uiState.pendingCount} pending approval${if (uiState.pendingCount != 1) "s" else ""}",
                         style = MaterialTheme.typography.labelMedium,
