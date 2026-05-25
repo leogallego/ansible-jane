@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.network.mcp
 import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.McpServerConfig
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,8 @@ class McpServerManager(
             }.forEach { deferred ->
                 try {
                     deferred.await()
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (_: Exception) {
                     // Per-server failure isolated — others continue
                 }

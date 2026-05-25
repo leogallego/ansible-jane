@@ -56,14 +56,10 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) : IWorkflowRep
 
     override fun pollWorkflowJobStatus(workflowJobId: Int): Flow<WorkflowJob> = flow {
         while (true) {
-            try {
-                val job = apiProvider.getApiService().getWorkflowJob(workflowJobId)
-                emit(job)
-                if (job.status.isTerminal) break
-                delay(5000)
-            } catch (e: Exception) {
-                throw e
-            }
+            val job = apiProvider.getApiService().getWorkflowJob(workflowJobId)
+            emit(job)
+            if (job.status.isTerminal) break
+            delay(5000)
         }
     }
 

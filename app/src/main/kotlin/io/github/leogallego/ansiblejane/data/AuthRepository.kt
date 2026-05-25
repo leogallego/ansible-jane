@@ -9,8 +9,10 @@ import io.github.leogallego.ansiblejane.network.AuthInterceptor
 import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.InstanceDiscovery
 import io.github.leogallego.ansiblejane.network.networkJson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -143,10 +145,12 @@ class AuthRepository(
         apiVersion: ApiVersion,
         client: OkHttpClient
     ) {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 val info = instanceDiscovery.discover(baseUrl, token, apiVersion, client)
                 tokenManager.updateInstanceInfo(instanceId, info)
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
                 // Discovery is best-effort — don't fail the auth flow
             }
