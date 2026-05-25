@@ -169,7 +169,7 @@ private fun ActiveChatContent(
         (if (state.isGenerating) 1 else 0) +
         (if (messageCount == 0 && !state.isGenerating) 1 else 0)
 
-    LaunchedEffect(messageCount, state.isGenerating) {
+    LaunchedEffect(messageCount, state.isGenerating, state.pendingConfirmation) {
         if (totalItems > 0) {
             listState.animateScrollToItem(totalItems - 1)
         }
