@@ -312,6 +312,7 @@ class AssistantViewModel(
         val history = repository.getHistory()
         val lastUserMsg = history.lastOrNull { it.role == Role.USER } ?: return
         repository.removeLastAssistantMessage()
+        repository.removeLastUserMessage()
         updateState { copy(messages = repository.getHistory().toImmutableList()) }
         sendMessage(lastUserMsg.content)
     }

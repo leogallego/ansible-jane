@@ -69,8 +69,14 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) : IWorkflowRep
 
     override suspend fun getWorkflowNodes(workflowJobId: Int): Result<List<WorkflowNode>> {
         return try {
-            val response = apiProvider.getApiService().getWorkflowNodes(workflowJobId)
-            Result.success(response.results)
+            val all = mutableListOf<WorkflowNode>()
+            var page = 1
+            do {
+                val response = apiProvider.getApiService().getWorkflowNodes(workflowJobId, pageSize = 200)
+                all.addAll(response.results)
+                page++
+            } while (response.next != null)
+            Result.success(all)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -78,11 +84,18 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) : IWorkflowRep
 
     override suspend fun getWorkflowTemplateNodes(templateId: Int): Result<List<WorkflowJobTemplateNode>> {
         return try {
-            val response = apiProvider.getApiService().getWorkflowJobTemplateNodes(
-                pageSize = 200,
-                workflowJobTemplate = templateId
-            )
-            Result.success(response.results)
+            val all = mutableListOf<WorkflowJobTemplateNode>()
+            var page = 1
+            do {
+                val response = apiProvider.getApiService().getWorkflowJobTemplateNodes(
+                    page = page,
+                    pageSize = 200,
+                    workflowJobTemplate = templateId
+                )
+                all.addAll(response.results)
+                page++
+            } while (response.next != null)
+            Result.success(all)
         } catch (e: Exception) {
             Result.failure(e)
         }

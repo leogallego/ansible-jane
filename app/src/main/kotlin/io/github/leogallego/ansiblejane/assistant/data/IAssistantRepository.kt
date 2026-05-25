@@ -8,6 +8,7 @@ interface IAssistantRepository {
     fun addMessage(message: ChatMessage)
     fun getHistory(): List<ChatMessage>
     fun removeLastAssistantMessage()
+    fun removeLastUserMessage()
     fun clearHistory()
     val onHistoryCleared: SharedFlow<Unit>
     suspend fun saveLlmConfig(config: LlmProviderConfig)

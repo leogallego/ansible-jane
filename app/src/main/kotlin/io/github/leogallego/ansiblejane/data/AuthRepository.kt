@@ -102,9 +102,10 @@ class AuthRepository(
             }
         }
 
-    override suspend fun checkExistingCredentials(): Result<User>? = withContext(Dispatchers.IO) {
-        if (!tokenManager.loadCredentials()) return@withContext null
-        val activeInstance = tokenManager.activeInstance.value ?: return@withContext null
+    override suspend fun checkExistingCredentials(): CredentialStatus = withContext(Dispatchers.IO) {
+        if (!tokenManager.loadCredentials()) return@withContext CredentialStatus.NoCredentials
+        val activeInstance = tokenManager.activeInstance.value
+            ?: return@withContext CredentialStatus.NoCredentials
 
         try {
             val client = buildClient(activeInstance.token, activeInstance.trustSelfSigned)
@@ -116,10 +117,12 @@ class AuthRepository(
             val api = buildApi(client, activeInstance.baseUrl, apiVersion)
             val response = api.getMe()
             val user = response.results.firstOrNull()
-                ?: return@withContext Result.failure(Exception("No user data returned"))
-            Result.success(user)
-        } catch (_: Exception) {
-            null
+                ?: return@withContext CredentialStatus.ValidationFailed(
+                    Exception("No user data returned")
+                )
+            CredentialStatus.Valid(user)
+        } catch (e: Exception) {
+            CredentialStatus.ValidationFailed(e)
         }
     }
 

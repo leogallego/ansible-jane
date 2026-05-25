@@ -35,14 +35,14 @@ class ApprovalNotificationManager {
         }
     }
 
-    fun showNotification(context: Context, approval: WorkflowApproval) {
+    fun showNotification(context: Context, approval: WorkflowApproval): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     context,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                return
+                return false
             }
         }
 
@@ -75,5 +75,6 @@ class ApprovalNotificationManager {
             .build()
 
         NotificationManagerCompat.from(context).notify(approval.id, notification)
+        return true
     }
 }
