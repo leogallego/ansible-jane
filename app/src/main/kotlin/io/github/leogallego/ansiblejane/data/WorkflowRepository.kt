@@ -72,7 +72,7 @@ class WorkflowRepository(private val apiProvider: AapApiProvider) : IWorkflowRep
             val all = mutableListOf<WorkflowNode>()
             var page = 1
             do {
-                val response = apiProvider.getApiService().getWorkflowNodes(workflowJobId, pageSize = 200)
+                val response = apiProvider.getApiService().getWorkflowNodes(workflowJobId, page = page, pageSize = 200)
                 all.addAll(response.results)
                 page++
             } while (response.next != null)

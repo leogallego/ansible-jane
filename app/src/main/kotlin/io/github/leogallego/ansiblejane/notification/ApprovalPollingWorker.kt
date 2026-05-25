@@ -42,17 +42,14 @@ class ApprovalPollingWorker(
             val seenIds = approvalTracker.getSeenIds()
             val newIds = pendingIds - seenIds
 
-            val deliveredIds = mutableSetOf<Int>()
             for (approval in pendingApprovals) {
                 if (approval.id in newIds) {
-                    if (notificationManager.showNotification(applicationContext, approval)) {
-                        deliveredIds.add(approval.id)
-                    }
+                    notificationManager.showNotification(applicationContext, approval)
                 }
             }
 
-            if (deliveredIds.isNotEmpty()) {
-                approvalTracker.markSeen(deliveredIds)
+            if (newIds.isNotEmpty()) {
+                approvalTracker.markSeen(newIds)
             }
 
             // Prune IDs that are no longer pending

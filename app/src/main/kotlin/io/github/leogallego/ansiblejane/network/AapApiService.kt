@@ -82,6 +82,7 @@ interface AapApiService {
     @GET("workflow_jobs/{id}/workflow_nodes/")
     suspend fun getWorkflowNodes(
         @Path("id") id: Int,
+        @Query("page") page: Int = 1,
         @Query("page_size") pageSize: Int = 200
     ): PaginatedResponse<WorkflowNode>
 
