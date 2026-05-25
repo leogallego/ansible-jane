@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.assistant.engine
 
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.model.McpServerConfig
@@ -190,6 +191,12 @@ class ToolRouter {
             "any", "been"
         )
 
+        private val TOOLSET_CATEGORY_MAP = mapOf(
+            "job_management" to setOf(Category.JOBS),
+            "inventory_management" to setOf(Category.INVENTORY),
+            "system_monitoring" to setOf(Category.MONITORING),
+        )
+
         fun stem(word: String): String {
             val result = word
                 .removeSuffix("ies").let { if (it != word) "${it}y" else it }
@@ -258,11 +265,18 @@ class ToolRouter {
         }
 
         val filteredMcp = mcpTools.filter { tool ->
-            val resource = tool.spec.name
-                .substringAfter(".")
-                .substringBeforeLast("_")
-            val matchesCategory = resource in matchedPrefixes
             val isEnabled = isToolEnabled(tool.spec.name, ToolSource.MCP)
+
+            val toolToolset = (tool as? McpTool)?.toolset
+            val toolsetCategories = toolToolset?.let { TOOLSET_CATEGORY_MAP[it] }
+            val matchesCategory = if (toolsetCategories != null) {
+                matchedCategories.any { it in toolsetCategories }
+            } else {
+                val resource = tool.spec.name
+                    .substringAfter(".")
+                    .substringBeforeLast("_")
+                resource in matchedPrefixes
+            }
 
             val passesReadOnly = if (readOnlyLabels.isNotEmpty()) {
                 val serverLabel = tool.spec.description

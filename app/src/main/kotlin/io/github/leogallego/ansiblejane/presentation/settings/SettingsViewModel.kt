@@ -215,7 +215,18 @@ class SettingsViewModel(
             val servers = if (enabled && instance.mcpServerUrls.isNullOrEmpty()) {
                 val base = "${instance.baseUrl.trimEnd('/')}:8448"
                 listOf(
-                    McpServerConfig(url = "$base/mcp", label = "aap", isAutoDetected = true, readOnly = true)
+                    McpServerConfig(
+                        url = "$base/job_management/mcp", label = "Jobs",
+                        isAutoDetected = true, readOnly = true, toolset = "job_management"
+                    ),
+                    McpServerConfig(
+                        url = "$base/inventory_management/mcp", label = "Inventory",
+                        isAutoDetected = true, readOnly = true, toolset = "inventory_management"
+                    ),
+                    McpServerConfig(
+                        url = "$base/system_monitoring/mcp", label = "Monitoring",
+                        isAutoDetected = true, readOnly = true, toolset = "system_monitoring"
+                    ),
                 )
             } else {
                 instance.mcpServerUrls
@@ -224,11 +235,11 @@ class SettingsViewModel(
         }
     }
 
-    fun addMcpServer(url: String, label: String) {
+    fun addMcpServer(url: String, label: String, toolset: String? = null) {
         val instance = tokenManager.activeInstance.value ?: return
         viewModelScope.launch {
             val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
-            current.add(McpServerConfig(url = url.trimEnd('/'), label = label))
+            current.add(McpServerConfig(url = url.trimEnd('/'), label = label, toolset = toolset))
             tokenManager.updateMcpConfig(instance.id, true, current)
         }
     }
