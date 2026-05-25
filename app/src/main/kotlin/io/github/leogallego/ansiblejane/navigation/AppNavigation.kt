@@ -196,6 +196,9 @@ fun AppNavigation(
             MainScreen(
                 onNavigateToSettings = {
                     navController.navigate(Routes.SETTINGS)
+                },
+                onNavigateToApproval = { approvalId ->
+                    navController.navigate(Routes.approvalDetail(approvalId))
                 }
             ) { tab, segment ->
                 TabContent(
