@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 
 class McpServerManager(
-    private val httpClientFactory: (AapInstance) -> OkHttpClient,
+    private val httpClientFactory: (AapInstance, McpServerConfig) -> OkHttpClient,
     private val json: Json
 ) {
     private val _connections = MutableStateFlow<Map<String, McpConnectionState>>(emptyMap())
@@ -28,11 +28,10 @@ class McpServerManager(
         val configs = instance.mcpServerUrls?.filter { it.enabled } ?: return
         if (configs.isEmpty()) return
 
-        val httpClient = httpClientFactory(instance)
-
         coroutineScope {
             configs.map { config ->
                 async {
+                    val httpClient = httpClientFactory(instance, config)
                     connectServer(config, httpClient)
                 }
             }.forEach { deferred ->

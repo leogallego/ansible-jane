@@ -4,6 +4,7 @@ import io.github.leogallego.ansiblejane.data.TokenManager
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import io.github.leogallego.ansiblejane.BuildConfig
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -98,7 +99,8 @@ class AapApiProvider(
                 instanceIdProvider = { instanceId }
             ))
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                        else HttpLoggingInterceptor.Level.NONE
             })
 
         if (trustSelfSigned) {
