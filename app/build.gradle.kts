@@ -14,8 +14,8 @@ android {
         applicationId = "io.github.leogallego.ansiblejane"
         minSdk = 31
         targetSdk = 36
-        versionCode = 26052500
-        versionName = "1.6.0"
+        versionCode = 26052501
+        versionName = "0.7.0-alpha.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
