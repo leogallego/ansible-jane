@@ -305,7 +305,7 @@ class AssistantViewModel(
 
     fun stopGeneration() {
         generateJob?.cancel()
-        updateState { copy(isGenerating = false, streamingText = null) }
+        updateState { copy(isGenerating = false, streamingText = null, pendingConfirmation = null) }
     }
 
     fun regenerateLastMessage() {

@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -20,12 +21,7 @@ class ApprovalNotificationManager {
     companion object {
         const val CHANNEL_ID = "workflow_approvals"
         const val CHANNEL_NAME = "Workflow Approvals"
-        const val EXTRA_APPROVAL_ID = "approval_id"
 
-        /**
-         * Creates the notification channel. Safe to call multiple times.
-         * Should be called from Application.onCreate().
-         */
         fun createChannel(context: Context) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -39,12 +35,7 @@ class ApprovalNotificationManager {
         }
     }
 
-    /**
-     * Shows a notification for a pending workflow approval.
-     * Each approval gets a unique notification ID based on its API id.
-     */
     fun showNotification(context: Context, approval: WorkflowApproval) {
-        // Check POST_NOTIFICATIONS permission on Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     context,
@@ -55,8 +46,8 @@ class ApprovalNotificationManager {
             }
         }
 
-        val intent = Intent(context, MainActivity::class.java).apply {
-            putExtra(EXTRA_APPROVAL_ID, approval.id)
+        val deepLinkUri = Uri.parse("ansiblejane://approval/${approval.id}")
+        val intent = Intent(Intent.ACTION_VIEW, deepLinkUri, context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 

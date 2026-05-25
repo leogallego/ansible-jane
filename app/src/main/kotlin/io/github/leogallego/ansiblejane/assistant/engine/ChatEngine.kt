@@ -177,21 +177,17 @@ class ChatEngine(
                         emit(ChatEvent.ToolExecuting(toolCall.tool, argsJson))
 
                         val tool = toolExecutor.findTool(toolCall.tool)
-                        val toolResult = if (tool is LocalTool && tool.destructive) {
+                        val toolResult = if (tool is LocalTool && tool.destructive && onConfirmationRequired != null) {
                             val description = descriptionForConfirmation(toolCall.tool, argsJson)
                             emit(ChatEvent.ConfirmationRequired(toolCall.tool, argsJson, description))
-                            if (onConfirmationRequired != null) {
-                                val approved = onConfirmationRequired(toolCall.tool, description, argsJson)
-                                if (approved) {
-                                    toolExecutor.execute(toolCall)
-                                } else {
-                                    io.github.leogallego.ansiblejane.assistant.tools.ToolResult(
-                                        success = false,
-                                        data = "User declined the action"
-                                    )
-                                }
-                            } else {
+                            val approved = onConfirmationRequired(toolCall.tool, description, argsJson)
+                            if (approved) {
                                 toolExecutor.execute(toolCall)
+                            } else {
+                                io.github.leogallego.ansiblejane.assistant.tools.ToolResult(
+                                    success = false,
+                                    data = "User declined the action"
+                                )
                             }
                         } else {
                             toolExecutor.execute(toolCall)

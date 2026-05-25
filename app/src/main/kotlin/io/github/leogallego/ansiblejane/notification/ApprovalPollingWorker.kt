@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.network.AapApiProvider
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
@@ -20,6 +21,10 @@ class ApprovalPollingWorker(
 
     override suspend fun doWork(): Result {
         return try {
+            val tokenManager: ITokenManager = get()
+            if (tokenManager.activeInstance.value == null) {
+                return Result.success()
+            }
             val apiProvider: AapApiProvider = get()
             val approvalTracker: ApprovalTracker = get()
             val notificationManager: ApprovalNotificationManager = get()

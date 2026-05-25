@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.assistant.engine
 import ai.koog.prompt.message.MessagePart
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
+import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
 import kotlinx.coroutines.TimeoutCancellationException
@@ -35,11 +36,14 @@ class ToolExecutor(
                 )
             }
 
+        val isDestructive = tool is LocalTool && tool.destructive
         val cacheKey = "${toolCall.tool}:${toolCall.args.hashCode()}"
-        val cached = resultCache[cacheKey]
-        if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
-            Log.d(TAG, "EXEC: cache hit for ${toolCall.tool}")
-            return cached.second
+        if (!isDestructive) {
+            val cached = resultCache[cacheKey]
+            if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
+                Log.d(TAG, "EXEC: cache hit for ${toolCall.tool}")
+                return cached.second
+            }
         }
 
         val argsJson = try {
@@ -81,7 +85,7 @@ class ToolExecutor(
             "in ${elapsedMs}ms, result=${rawLen}→${if (cappedLen != rawLen) "${cappedLen}→" else ""}${finalLen} chars")
         Log.d(TAG, "EXEC DATA: ${finalResult.data?.take(500)}")
 
-        if (finalResult.success) {
+        if (finalResult.success && !isDestructive) {
             resultCache[cacheKey] = System.currentTimeMillis() to finalResult
         }
         return finalResult

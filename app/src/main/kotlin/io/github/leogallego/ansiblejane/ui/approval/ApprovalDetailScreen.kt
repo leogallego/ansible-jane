@@ -87,9 +87,11 @@ fun ApprovalDetailScreen(
                 }
 
                 is ApprovalDetailUiState.Ready -> {
+                    val isPending = state.approval.status == "pending"
                     ApprovalDetailContent(
                         approval = state.approval,
                         isActionInProgress = false,
+                        showActions = isPending,
                         onApprove = { showConfirmDialog = "approve" },
                         onDeny = { showConfirmDialog = "deny" }
                     )
@@ -99,6 +101,7 @@ fun ApprovalDetailScreen(
                     ApprovalDetailContent(
                         approval = state.approval,
                         isActionInProgress = true,
+                        showActions = true,
                         onApprove = {},
                         onDeny = {}
                     )
@@ -161,6 +164,7 @@ fun ApprovalDetailScreen(
 private fun ApprovalDetailContent(
     approval: WorkflowApproval,
     isActionInProgress: Boolean,
+    showActions: Boolean,
     onApprove: () -> Unit,
     onDeny: () -> Unit
 ) {
@@ -203,8 +207,13 @@ private fun ApprovalDetailContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Action buttons
-        if (isActionInProgress) {
+        if (!showActions) {
+            Text(
+                text = "This approval has already been ${approval.status}.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else if (isActionInProgress) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center

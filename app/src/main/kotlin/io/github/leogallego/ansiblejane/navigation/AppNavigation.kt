@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.data.TokenManager
 import io.github.leogallego.ansiblejane.network.AuthInterceptor
@@ -261,6 +262,7 @@ fun AppNavigation(
         composable(
             route = Routes.APPROVAL_DETAIL,
             arguments = listOf(navArgument("approvalId") { type = NavType.IntType }),
+            deepLinks = listOf(navDeepLink { uriPattern = "ansiblejane://approval/{approvalId}" }),
             enterTransition = { slideInHorizontally { it } },
             exitTransition = { slideOutHorizontally { -it } },
             popEnterTransition = { slideInHorizontally { -it } },
