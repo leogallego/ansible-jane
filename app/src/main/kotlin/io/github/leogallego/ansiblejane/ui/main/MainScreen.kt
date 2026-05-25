@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,14 +46,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.data.TokenManager
+import io.github.leogallego.ansiblejane.presentation.notifications.NotificationsViewModel
 import io.github.leogallego.ansiblejane.ui.components.ProviderSwitchChip
+import io.github.leogallego.ansiblejane.ui.notifications.NotificationsSheet
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToApproval: (Int) -> Unit = {},
     content: @Composable (TopLevelTab, Segment) -> Unit
 ) {
     val tokenManager: TokenManager = koinInject()
@@ -72,6 +78,10 @@ fun MainScreen(
     }
     val currentSegmentIndex = selectedSegmentIndices[selectedTab.route] ?: defaultSegmentIndex
     val currentSegment = selectedTab.segments[currentSegmentIndex]
+
+    val notificationsViewModel: NotificationsViewModel = koinViewModel()
+    val notificationsState by notificationsViewModel.uiState.collectAsStateWithLifecycle()
+    var showNotificationsSheet by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -140,16 +150,24 @@ fun MainScreen(
                     }
                     IconButton(
                         onClick = {
-                            scope.launch {
-                                snackbarHostState.showSnackbar("Notifications coming soon")
-                            }
+                            notificationsViewModel.refresh()
+                            showNotificationsSheet = true
                         },
                         modifier = Modifier.testTag("button_notifications")
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications"
-                        )
+                        BadgedBox(
+                            badge = {
+                                val count = notificationsState.pendingCount
+                                if (count > 0) {
+                                    Badge { Text(count.toString()) }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Notifications"
+                            )
+                        }
                     }
                     IconButton(
                         onClick = onNavigateToSettings,
@@ -228,5 +246,17 @@ fun MainScreen(
                 content(selectedTab, currentSegment)
             }
         }
+    }
+
+    if (showNotificationsSheet) {
+        NotificationsSheet(
+            uiState = notificationsState,
+            onDismiss = { showNotificationsSheet = false },
+            onRefresh = { notificationsViewModel.refresh() },
+            onApprovalClick = { approvalId ->
+                showNotificationsSheet = false
+                onNavigateToApproval(approvalId)
+            }
+        )
     }
 }
