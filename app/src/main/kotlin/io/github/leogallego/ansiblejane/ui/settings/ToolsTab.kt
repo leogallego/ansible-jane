@@ -45,7 +45,7 @@ fun ToolsTab(
     mcpServers: List<McpServerConfig>,
     connections: Map<String, McpConnectionState>,
     onToggleMcp: (Boolean) -> Unit,
-    onAddMcpServer: (url: String, label: String) -> Unit,
+    onAddMcpServer: (url: String, label: String, toolset: String?) -> Unit,
     onRemoveMcpServer: (url: String) -> Unit,
     onToggleReadOnly: (url: String, readOnly: Boolean) -> Unit,
     modifier: Modifier = Modifier
@@ -53,6 +53,7 @@ fun ToolsTab(
     var showAddServer by remember { mutableStateOf(false) }
     var newServerUrl by remember { mutableStateOf("") }
     var newServerLabel by remember { mutableStateOf("") }
+    var newServerToolset by remember { mutableStateOf("") }
 
     Column(
         modifier = modifier
@@ -101,6 +102,13 @@ fun ToolsTab(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        if (server.toolset != null) {
+                            Text(
+                                "Toolset: ${server.toolset}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
                     }
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -158,19 +166,36 @@ fun ToolsTab(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
+                OutlinedTextField(
+                    value = newServerToolset,
+                    onValueChange = { newServerToolset = it },
+                    label = { Text("Toolset (optional)") },
+                    placeholder = { Text("job_management") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(
-                        onClick = { showAddServer = false },
+                        onClick = {
+                            newServerUrl = ""
+                            newServerLabel = ""
+                            newServerToolset = ""
+                            showAddServer = false
+                        },
                         modifier = Modifier.weight(1f)
                     ) { Text("Cancel") }
                     Button(
                         onClick = {
-                            onAddMcpServer(newServerUrl, newServerLabel)
+                            onAddMcpServer(
+                                newServerUrl, newServerLabel,
+                                newServerToolset.ifBlank { null }
+                            )
                             newServerUrl = ""
                             newServerLabel = ""
+                            newServerToolset = ""
                             showAddServer = false
                         },
                         modifier = Modifier.weight(1f),

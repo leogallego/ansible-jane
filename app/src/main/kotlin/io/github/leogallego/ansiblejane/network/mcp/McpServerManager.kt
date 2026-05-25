@@ -56,7 +56,7 @@ class McpServerManager(
             clients[config.label] = client
 
             val tools = client.tools.value.map { toolDef ->
-                McpTool(client, toolDef, config.label)
+                McpTool(client, toolDef, config.label, config.toolset)
             }
             synchronized(mcpTools) { mcpTools.addAll(tools) }
 

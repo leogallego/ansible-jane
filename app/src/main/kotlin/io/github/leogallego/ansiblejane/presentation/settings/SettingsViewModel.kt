@@ -250,23 +250,49 @@ class SettingsViewModel(
     fun toggleMcpEnabled(enabled: Boolean) {
         val instance = tokenManager.activeInstance.value ?: return
         viewModelScope.launch {
-            val servers = if (enabled && instance.mcpServerUrls.isNullOrEmpty()) {
-                val base = "${instance.baseUrl.trimEnd('/')}:8448"
-                listOf(
-                    McpServerConfig(url = "$base/mcp", label = "aap", isAutoDetected = true, readOnly = true)
-                )
-            } else {
-                instance.mcpServerUrls
+            if (!enabled) {
+                tokenManager.updateMcpConfig(instance.id, false, null)
+                return@launch
             }
-            tokenManager.updateMcpConfig(instance.id, enabled, if (enabled) servers else null)
+            val base = "${instance.baseUrl.trimEnd('/')}:8448"
+            val manualServers = instance.mcpServerUrls
+                ?.filter { !it.isAutoDetected }
+                ?: emptyList()
+            val autoDetected = listOf(
+                McpServerConfig(
+                    url = "$base/job_management/mcp", label = "Jobs",
+                    isAutoDetected = true, readOnly = true, toolset = "job_management"
+                ),
+                McpServerConfig(
+                    url = "$base/inventory_management/mcp", label = "Inventory",
+                    isAutoDetected = true, readOnly = true, toolset = "inventory_management"
+                ),
+                McpServerConfig(
+                    url = "$base/system_monitoring/mcp", label = "Monitoring",
+                    isAutoDetected = true, readOnly = true, toolset = "system_monitoring"
+                ),
+                McpServerConfig(
+                    url = "$base/user_management/mcp", label = "Users",
+                    isAutoDetected = true, readOnly = true, toolset = "user_management"
+                ),
+                McpServerConfig(
+                    url = "$base/security_compliance/mcp", label = "Security",
+                    isAutoDetected = true, readOnly = true, toolset = "security_compliance"
+                ),
+                McpServerConfig(
+                    url = "$base/platform_configuration/mcp", label = "Configuration",
+                    isAutoDetected = true, readOnly = true, toolset = "platform_configuration"
+                ),
+            )
+            tokenManager.updateMcpConfig(instance.id, true, manualServers + autoDetected)
         }
     }
 
-    fun addMcpServer(url: String, label: String) {
+    fun addMcpServer(url: String, label: String, toolset: String? = null) {
         val instance = tokenManager.activeInstance.value ?: return
         viewModelScope.launch {
             val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
-            current.add(McpServerConfig(url = url.trimEnd('/'), label = label))
+            current.add(McpServerConfig(url = url.trimEnd('/'), label = label, toolset = toolset))
             tokenManager.updateMcpConfig(instance.id, true, current)
         }
     }

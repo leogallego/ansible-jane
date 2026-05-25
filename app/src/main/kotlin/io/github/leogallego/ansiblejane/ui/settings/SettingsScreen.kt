@@ -81,7 +81,7 @@ fun SettingsScreen(
                     onFetchModels = { url, key -> viewModel.fetchAvailableModels(url, key) },
                     onClearFetchedModels = { viewModel.clearFetchedModels() },
                     onToggleMcp = { viewModel.toggleMcpEnabled(it) },
-                    onAddMcpServer = { url, label -> viewModel.addMcpServer(url, label) },
+                    onAddMcpServer = { url, label, toolset -> viewModel.addMcpServer(url, label, toolset) },
                     onRemoveMcpServer = { viewModel.removeMcpServer(it) },
                     onToggleReadOnly = { url, readOnly -> viewModel.toggleServerReadOnly(url, readOnly) },
                     modifier = Modifier
@@ -113,7 +113,7 @@ private fun SettingsContent(
     onFetchModels: (String, String?) -> Unit,
     onClearFetchedModels: () -> Unit,
     onToggleMcp: (Boolean) -> Unit,
-    onAddMcpServer: (String, String) -> Unit,
+    onAddMcpServer: (String, String, String?) -> Unit,
     onRemoveMcpServer: (String) -> Unit,
     onToggleReadOnly: (String, Boolean) -> Unit,
     modifier: Modifier = Modifier
