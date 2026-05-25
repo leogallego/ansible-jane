@@ -2,6 +2,8 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.data.backup.BackupManager
 import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.notification.ApprovalNotificationManager
+import io.github.leogallego.ansiblejane.notification.ApprovalTracker
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -10,6 +12,8 @@ val dataModule = module {
     single { TokenManager(androidContext()) } bind ITokenManager::class
     single { UserPreferencesRepository(androidContext()) } bind IUserPreferencesRepository::class
     single { BackupManager() }
+    single { ApprovalTracker(androidContext()) }
+    single { ApprovalNotificationManager() }
     single { ConnectivityObserver(androidContext()) }
     single { AuthRepository(get(), get(), get()) } bind IAuthRepository::class
     single { TemplateRepository(get<AapApiProvider>()) } bind ITemplateRepository::class

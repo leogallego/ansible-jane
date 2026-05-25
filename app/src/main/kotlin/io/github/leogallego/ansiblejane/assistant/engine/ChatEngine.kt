@@ -12,6 +12,7 @@ import io.github.leogallego.ansiblejane.assistant.llm.LlmRateLimitException
 import io.github.leogallego.ansiblejane.assistant.llm.LlmServerException
 import io.github.leogallego.ansiblejane.assistant.llm.LlmTimeoutException
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
+import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
 import io.github.leogallego.ansiblejane.assistant.tools.toToolDescriptor
 import kotlinx.coroutines.CancellationException
@@ -31,6 +32,11 @@ sealed interface ChatEvent {
     data class TextDelta(val text: String) : ChatEvent
     data class ToolExecuting(val toolName: String, val args: JsonObject) : ChatEvent
     data class ToolResult(val toolName: String, val result: io.github.leogallego.ansiblejane.assistant.tools.ToolResult) : ChatEvent
+    data class ConfirmationRequired(
+        val toolName: String,
+        val args: JsonObject,
+        val description: String
+    ) : ChatEvent
     data class AssistantMessage(val fullText: String, val toolCallCount: Int) : ChatEvent
     data class Error(val message: String, val cause: Throwable? = null) : ChatEvent
 }
@@ -47,7 +53,8 @@ class ChatEngine(
         history: List<ChatMessage>,
         tools: List<ToolSpec>,
         maxTokens: Int? = null,
-        contextChars: Int = DEFAULT_CONTEXT_CHARS
+        contextChars: Int = DEFAULT_CONTEXT_CHARS,
+        onConfirmationRequired: (suspend (toolName: String, description: String, args: JsonObject) -> Boolean)? = null
     ): Flow<ChatEvent> = flow {
         try {
             val messages = mutableListOf<ChatMessage>()
@@ -169,7 +176,26 @@ class ChatEngine(
                         }
                         emit(ChatEvent.ToolExecuting(toolCall.tool, argsJson))
 
-                        val toolResult = toolExecutor.execute(toolCall)
+                        val tool = toolExecutor.findTool(toolCall.tool)
+                        val toolResult = if (tool is LocalTool && tool.destructive) {
+                            val description = descriptionForConfirmation(toolCall.tool, argsJson)
+                            emit(ChatEvent.ConfirmationRequired(toolCall.tool, argsJson, description))
+                            if (onConfirmationRequired != null) {
+                                val approved = onConfirmationRequired(toolCall.tool, description, argsJson)
+                                if (approved) {
+                                    toolExecutor.execute(toolCall)
+                                } else {
+                                    io.github.leogallego.ansiblejane.assistant.tools.ToolResult(
+                                        success = false,
+                                        data = "User declined the action"
+                                    )
+                                }
+                            } else {
+                                toolExecutor.execute(toolCall)
+                            }
+                        } else {
+                            toolExecutor.execute(toolCall)
+                        }
                         totalToolCalls++
 
                         emit(ChatEvent.ToolResult(toolCall.tool, toolResult))
@@ -387,6 +413,17 @@ class ChatEngine(
 
         if (keepFrom > systemMessages.size) {
             messages.subList(systemMessages.size, keepFrom).clear()
+        }
+    }
+
+    private fun descriptionForConfirmation(toolName: String, args: JsonObject): String {
+        return when (toolName) {
+            "approve_workflow" -> "Approve workflow approval step #${args["approval_id"]?.jsonPrimitive?.content ?: "?"}"
+            "deny_workflow" -> "Deny workflow approval step #${args["approval_id"]?.jsonPrimitive?.content ?: "?"}"
+            "launch_job" -> "Launch job template #${args["template_id"]?.jsonPrimitive?.content ?: "?"}"
+            "launch_workflow" -> "Launch workflow template #${args["template_id"]?.jsonPrimitive?.content ?: "?"}"
+            "toggle_schedule" -> "Toggle schedule #${args["schedule_id"]?.jsonPrimitive?.content ?: "?"}"
+            else -> "Execute $toolName"
         }
     }
 

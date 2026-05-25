@@ -19,6 +19,9 @@ val localToolsModule = module {
     single { ToggleScheduleLocalTool(get()) } bind LocalTool::class
     single { ListWorkflowNodesLocalTool(get()) } bind LocalTool::class
     single { GetSurveySpecLocalTool(get()) } bind LocalTool::class
+    single { ListPendingApprovalsLocalTool(get()) } bind LocalTool::class
+    single { ApproveWorkflowLocalTool(get()) } bind LocalTool::class
+    single { DenyWorkflowLocalTool(get()) } bind LocalTool::class
 
     // Inventory
     single { ListInventoriesLocalTool(get()) } bind LocalTool::class

@@ -22,6 +22,8 @@ class ToolExecutor(
 ) {
     private val resultCache = mutableMapOf<String, Pair<Long, ToolResult>>()
 
+    fun findTool(name: String): Tool? = tools.find { it.spec.name == name }
+
     suspend fun execute(toolCall: MessagePart.Tool.Call): ToolResult {
         val tool = tools.find { it.spec.name == toolCall.tool }
             ?: run {

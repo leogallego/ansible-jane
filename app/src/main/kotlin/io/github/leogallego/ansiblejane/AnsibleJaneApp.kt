@@ -3,9 +3,14 @@ package io.github.leogallego.ansiblejane
 import android.app.Application
 import io.github.leogallego.ansiblejane.assistant.assistantModule
 import io.github.leogallego.ansiblejane.assistant.localToolsModule
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
 import io.github.leogallego.ansiblejane.data.dataModule
 import io.github.leogallego.ansiblejane.network.networkModule
+import io.github.leogallego.ansiblejane.notification.ApprovalNotificationManager
+import io.github.leogallego.ansiblejane.notification.ApprovalPollingWorker
 import io.github.leogallego.ansiblejane.presentation.presentationModule
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +23,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import java.time.ZoneId
+import java.util.concurrent.TimeUnit
 
 class AnsibleJaneApp : Application() {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -29,6 +35,14 @@ class AnsibleJaneApp : Application() {
             androidContext(this@AnsibleJaneApp)
             modules(networkModule, dataModule, presentationModule, localToolsModule, assistantModule)
         }
+
+        ApprovalNotificationManager.createChannel(this)
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            ApprovalPollingWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            PeriodicWorkRequestBuilder<ApprovalPollingWorker>(15, TimeUnit.MINUTES).build()
+        )
 
         val userPreferences: IUserPreferencesRepository by inject()
         appScope.launch {

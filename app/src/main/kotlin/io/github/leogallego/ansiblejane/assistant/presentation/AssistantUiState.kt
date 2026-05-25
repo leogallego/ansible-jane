@@ -6,6 +6,13 @@ import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CompletableDeferred
+
+data class PendingConfirmation(
+    val toolName: String,
+    val description: String,
+    val continuation: CompletableDeferred<Boolean>
+)
 
 sealed interface AssistantUiState {
     data object Idle : AssistantUiState
@@ -15,7 +22,8 @@ sealed interface AssistantUiState {
         val messages: ImmutableList<ChatMessage> = persistentListOf(),
         val isGenerating: Boolean = false,
         val streamingText: String? = null,
-        val connections: Map<String, McpConnectionState> = emptyMap()
+        val connections: Map<String, McpConnectionState> = emptyMap(),
+        val pendingConfirmation: PendingConfirmation? = null
     ) : AssistantUiState
     data class Error(val error: AppError) : AssistantUiState
 }
