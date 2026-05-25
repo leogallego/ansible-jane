@@ -195,6 +195,9 @@ class ToolRouter {
             "job_management" to setOf(Category.JOBS),
             "inventory_management" to setOf(Category.INVENTORY),
             "system_monitoring" to setOf(Category.MONITORING),
+            "user_management" to setOf(Category.USERS),
+            "security_compliance" to setOf(Category.SECURITY),
+            "platform_configuration" to setOf(Category.CONFIGURATION),
         )
 
         fun stem(word: String): String {

@@ -227,6 +227,18 @@ class SettingsViewModel(
                         url = "$base/system_monitoring/mcp", label = "Monitoring",
                         isAutoDetected = true, readOnly = true, toolset = "system_monitoring"
                     ),
+                    McpServerConfig(
+                        url = "$base/user_management/mcp", label = "Users",
+                        isAutoDetected = true, readOnly = true, toolset = "user_management"
+                    ),
+                    McpServerConfig(
+                        url = "$base/security_compliance/mcp", label = "Security",
+                        isAutoDetected = true, readOnly = true, toolset = "security_compliance"
+                    ),
+                    McpServerConfig(
+                        url = "$base/platform_configuration/mcp", label = "Configuration",
+                        isAutoDetected = true, readOnly = true, toolset = "platform_configuration"
+                    ),
                 )
             } else {
                 instance.mcpServerUrls
