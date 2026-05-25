@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.fakes
 
+import io.github.leogallego.ansiblejane.data.CredentialStatus
 import io.github.leogallego.ansiblejane.data.IAuthRepository
 import io.github.leogallego.ansiblejane.model.User
 import kotlinx.coroutines.flow.Flow
@@ -9,7 +10,7 @@ class FakeAuthRepository : IAuthRepository {
     var validateResult: Result<User>? = null
     var shouldFail = false
     var failureException: Exception = RuntimeException("Test error")
-    var existingCredentialsResult: Result<User>? = null
+    var existingCredentialsResult: CredentialStatus = CredentialStatus.NoCredentials
     private val _isLoggedIn = MutableStateFlow(false)
 
     override suspend fun validateCredentials(
@@ -28,7 +29,7 @@ class FakeAuthRepository : IAuthRepository {
         return validateResult ?: Result.failure(RuntimeException("No result configured"))
     }
 
-    override suspend fun checkExistingCredentials(): Result<User>? {
+    override suspend fun checkExistingCredentials(): CredentialStatus {
         return existingCredentialsResult
     }
 
