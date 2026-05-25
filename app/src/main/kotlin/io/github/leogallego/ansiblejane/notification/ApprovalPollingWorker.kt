@@ -7,6 +7,8 @@ import androidx.work.WorkerParameters
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.network.AapApiProvider
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 
@@ -23,7 +25,10 @@ class ApprovalPollingWorker(
     override suspend fun doWork(): Result {
         return try {
             val tokenManager: ITokenManager = get()
-            if (tokenManager.activeInstance.value == null) {
+            val instance = withTimeoutOrNull(5_000L) {
+                tokenManager.activeInstance.firstOrNull { it != null }
+            }
+            if (instance == null) {
                 return Result.success()
             }
             val apiProvider: AapApiProvider = get()
