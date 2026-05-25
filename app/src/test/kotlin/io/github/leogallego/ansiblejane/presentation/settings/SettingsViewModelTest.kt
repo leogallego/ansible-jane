@@ -52,7 +52,7 @@ class SettingsViewModelTest {
         fakeUserPreferences = FakeUserPreferencesRepository()
         fakeAssistantRepo = FakeAssistantRepository()
         mcpServerManager = McpServerManager(
-            httpClientFactory = { OkHttpClient() },
+            httpClientFactory = { _, _ -> OkHttpClient() },
             json = json
         )
     }

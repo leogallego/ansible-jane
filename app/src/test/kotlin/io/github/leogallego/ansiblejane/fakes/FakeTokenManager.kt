@@ -109,6 +109,21 @@ class FakeTokenManager : ITokenManager {
     override suspend fun clearCredentials() {
         _instances.value = emptyList()
         _activeInstance.value = null
+        clearLlmApiKeys()
+    }
+
+    private val llmApiKeys = mutableMapOf<String, String>()
+
+    override suspend fun saveLlmApiKey(providerKey: String, apiKey: String) {
+        llmApiKeys[providerKey] = apiKey
+    }
+
+    override suspend fun loadLlmApiKey(providerKey: String): String? = llmApiKeys[providerKey]
+
+    override suspend fun loadAllLlmApiKeys(): Map<String, String> = llmApiKeys.toMap()
+
+    override suspend fun clearLlmApiKeys() {
+        llmApiKeys.clear()
     }
 
     fun setInstances(list: List<AapInstance>) {

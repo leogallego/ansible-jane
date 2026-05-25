@@ -412,6 +412,7 @@ class TokenManager(private val context: Context) : ITokenManager {
      * Clear all instances (full logout).
      */
     override suspend fun clearCredentials() {
+        clearLlmApiKeys()
         context.credentialsDataStore.edit { it.clear() }
         _instances.value = emptyList()
         _activeInstance.value = null
