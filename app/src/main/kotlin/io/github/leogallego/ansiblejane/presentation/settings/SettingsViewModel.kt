@@ -251,7 +251,7 @@ class SettingsViewModel(
         val instance = tokenManager.activeInstance.value ?: return
         viewModelScope.launch {
             if (!enabled) {
-                tokenManager.updateMcpConfig(instance.id, false, null)
+                tokenManager.updateMcpConfig(instance.id, false, instance.mcpServerUrls)
                 return@launch
             }
             val base = "${instance.baseUrl.trimEnd('/')}:8448"

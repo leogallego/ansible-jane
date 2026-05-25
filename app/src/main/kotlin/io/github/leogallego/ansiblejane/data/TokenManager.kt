@@ -211,22 +211,30 @@ class TokenManager(private val context: Context) : ITokenManager {
 
         val instanceId = existingId ?: UUID.randomUUID().toString()
 
-        val instance = AapInstance(
-            id = instanceId,
-            baseUrl = baseUrl,
-            token = token,
-            alias = alias?.ifBlank { null },
-            apiVersion = apiVersion.name,
-            trustSelfSigned = trustSelfSigned,
-            certFingerprint = certFingerprint
-        )
-
-        val serialized = toSerialized(instance)
-
         val updatedInstances = if (existingId != null) {
-            state.instances.map { if (it.id == existingId) serialized else it }
+            state.instances.map {
+                if (it.id == existingId) {
+                    it.copy(
+                        encryptedUrl = encrypt(baseUrl),
+                        encryptedToken = encrypt(token),
+                        alias = alias?.ifBlank { null } ?: it.alias,
+                        apiVersion = apiVersion.name,
+                        trustSelfSigned = trustSelfSigned,
+                        certFingerprint = certFingerprint
+                    )
+                } else it
+            }
         } else {
-            state.instances + serialized
+            val instance = AapInstance(
+                id = instanceId,
+                baseUrl = baseUrl,
+                token = token,
+                alias = alias?.ifBlank { null },
+                apiVersion = apiVersion.name,
+                trustSelfSigned = trustSelfSigned,
+                certFingerprint = certFingerprint
+            )
+            state.instances + toSerialized(instance)
         }
 
         val activeId = when {
