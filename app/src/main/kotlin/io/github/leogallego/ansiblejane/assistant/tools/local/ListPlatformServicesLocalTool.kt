@@ -30,7 +30,7 @@ class ListPlatformServicesLocalTool(
 
     override suspend fun execute(args: Args): String {
         val info = tokenManager.activeInstance.value?.instanceInfo
-        if (info == null || !info.hasComponent(AapComponent.GATEWAY)) {
+        if (info != null && !info.hasComponent(AapComponent.GATEWAY)) {
             return """{"error": "Gateway/Platform is not available on this instance"}"""
         }
         val result = repository.getServices(

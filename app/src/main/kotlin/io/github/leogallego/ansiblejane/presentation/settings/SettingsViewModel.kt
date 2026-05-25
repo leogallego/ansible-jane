@@ -153,7 +153,7 @@ class SettingsViewModel(
     fun refreshInstanceInfo(instanceId: String) {
         val instance = tokenManager.instances.value.find { it.id == instanceId } ?: return
         viewModelScope.launch {
-            updateReady { copy(discoveryRefreshing = true) }
+            updateReady { copy(discoveryRefreshing = true, discoveryError = null) }
             try {
                 val client = buildDiscoveryClient(instance)
                 val apiVersion = try {
@@ -167,8 +167,8 @@ class SettingsViewModel(
                 tokenManager.updateInstanceInfo(instanceId, info)
                 val updated = tokenManager.instances.value.find { it.id == instanceId }
                 updateReady { copy(selectedInstanceForDetails = updated) }
-            } catch (_: Exception) {
-                // best-effort
+            } catch (e: Exception) {
+                updateReady { copy(discoveryError = e.message ?: "Discovery failed") }
             } finally {
                 updateReady { copy(discoveryRefreshing = false) }
             }

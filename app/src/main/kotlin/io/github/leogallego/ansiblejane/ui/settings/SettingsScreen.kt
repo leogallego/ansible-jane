@@ -139,6 +139,7 @@ private fun SettingsContent(
                 selectedInstance = state.selectedInstance,
                 selectedInstanceForDetails = state.selectedInstanceForDetails,
                 discoveryRefreshing = state.discoveryRefreshing,
+                discoveryError = state.discoveryError,
                 onSwitchInstance = onSwitchInstance,
                 onRemoveInstance = onRemoveInstance,
                 onShowDetails = onShowDetails,

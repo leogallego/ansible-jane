@@ -336,6 +336,7 @@ class TokenManager(private val context: Context) : ITokenManager {
         instanceInfo: InstanceInfo
     ) {
         val state = readState()
+        if (state.instances.none { it.id == instanceId }) return
         val updatedInstances = state.instances.map { serialized ->
             if (serialized.id == instanceId) {
                 serialized.copy(instanceInfo = instanceInfo)

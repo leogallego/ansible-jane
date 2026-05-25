@@ -54,6 +54,7 @@ fun InstancesTab(
     selectedInstance: AapInstance?,
     selectedInstanceForDetails: AapInstance?,
     discoveryRefreshing: Boolean,
+    discoveryError: String? = null,
     onSwitchInstance: (String) -> Unit,
     onRemoveInstance: (String) -> Unit,
     onShowDetails: (String) -> Unit,
@@ -122,6 +123,7 @@ fun InstancesTab(
         InstanceDetailsBottomSheet(
             instance = instance,
             isRefreshing = discoveryRefreshing,
+            errorMessage = discoveryError,
             onRefresh = { onRefreshInstanceInfo(instance.id) },
             onDismiss = onDismissDetails
         )
@@ -254,6 +256,7 @@ private fun InstanceCard(
 private fun InstanceDetailsBottomSheet(
     instance: AapInstance,
     isRefreshing: Boolean,
+    errorMessage: String? = null,
     onRefresh: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -368,6 +371,15 @@ private fun InstanceDetailsBottomSheet(
                 } else {
                     Text(if (info != null) "Refresh Instance Info" else "Discover Instance Info")
                 }
+            }
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
         }
     }

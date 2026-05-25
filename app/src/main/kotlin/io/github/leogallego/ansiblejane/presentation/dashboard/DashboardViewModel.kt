@@ -41,9 +41,23 @@ class DashboardViewModel(
     init {
         viewModelScope.launch {
             tokenManager.activeInstance
-                .distinctUntilChangedBy { Pair(it?.id, it?.instanceInfo) }
+                .distinctUntilChangedBy { it?.id }
                 .collect { instance ->
                     if (instance != null) loadDashboard()
+                }
+        }
+        viewModelScope.launch {
+            tokenManager.activeInstance
+                .distinctUntilChangedBy { it?.instanceInfo }
+                .collect { instance ->
+                    val current = _uiState.value
+                    if (instance != null && current is DashboardUiState.Success) {
+                        _uiState.value = current.copy(
+                            instanceInfo = instance.instanceInfo,
+                            instanceUrl = instance.baseUrl,
+                            instanceAlias = instance.displayLabel,
+                        )
+                    }
                 }
         }
     }
