@@ -135,10 +135,11 @@ class AuthScreenTest {
     }
 
     @Test
-    fun `cancel button visible in add-instance mode`() {
+    fun `back button and title visible in add-instance mode`() {
         setUpScreen(onCancel = {}, isAddInstance = true)
 
-        composeTestRule.onNodeWithText("Cancel").fetchSemanticsNode()
+        composeTestRule.onNodeWithTag("button_back").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Add Instance").assertIsDisplayed()
     }
 
     @Test
