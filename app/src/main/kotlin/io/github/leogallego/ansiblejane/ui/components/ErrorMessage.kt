@@ -27,10 +27,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.model.AppError
+import io.github.leogallego.ansiblejane.model.ErrorDetail
 import io.github.leogallego.ansiblejane.ui.icons.AapIcons
+import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 @Composable
 fun ErrorMessage(
@@ -87,13 +92,13 @@ fun ErrorMessage(
                         else AapIcons.Action.ExpandMore
                     Icon(
                         imageVector = toggleIcon,
-                        contentDescription = if (showDetails) "Hide details" else "Show details",
+                        contentDescription = stringResource(if (showDetails) R.string.hide_details else R.string.show_details),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (showDetails) "Hide details" else "Show details",
+                        text = stringResource(if (showDetails) R.string.hide_details else R.string.show_details),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -134,9 +139,43 @@ fun ErrorMessage(
             if (onRetry != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = onRetry) {
-                    Text("Retry")
+                    Text(stringResource(R.string.action_retry))
                 }
             }
         }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ErrorMessageNetworkPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        ErrorMessage(error = AppError.Network(), onRetry = {})
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ErrorMessageWithDetailsPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        ErrorMessage(
+            error = AppError.Server(
+                statusCode = 500,
+                detail = ErrorDetail(
+                    statusCode = 500,
+                    url = "https://aap.example.com/api/v2/jobs/",
+                    rawMessage = "Internal Server Error"
+                )
+            ),
+            onRetry = {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ErrorMessageNoRetryPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        ErrorMessage(error = AppError.Auth())
     }
 }

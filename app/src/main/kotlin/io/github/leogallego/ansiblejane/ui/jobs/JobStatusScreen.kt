@@ -12,25 +12,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.model.Job
@@ -38,11 +30,11 @@ import io.github.leogallego.ansiblejane.presentation.jobs.JobStatusUiState
 import io.github.leogallego.ansiblejane.presentation.jobs.JobStatusViewModel
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
+import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JobStatusScreen(
     onNavigateBack: () -> Unit,
@@ -55,23 +47,7 @@ fun JobStatusScreen(
         onDispose { viewModel.stopPolling() }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Job Status") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("button_back")) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+    DetailScaffold(title = "Job Status", onNavigateBack = onNavigateBack) {
             when (val state = uiState) {
                 is JobStatusUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -92,7 +68,6 @@ fun JobStatusScreen(
             }
         }
     }
-}
 
 @Composable
 private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null) {

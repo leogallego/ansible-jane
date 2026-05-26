@@ -6,6 +6,8 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.model.JobStatus
 import io.github.leogallego.ansiblejane.ui.icons.AapIcons
@@ -77,15 +80,31 @@ private data class StatusConfig(val color: Color, val icon: ImageVector, val lab
 
 @Composable
 private fun statusConfig(status: JobStatus): StatusConfig {
-    val colors = AnsibleJaneTheme.statusColors
+    val statusColors = AnsibleJaneTheme.statusColors
+    val scheme = MaterialTheme.colorScheme
     return when (status) {
-        JobStatus.NEW -> StatusConfig(colors.new, AapIcons.Status.New, "New")
-        JobStatus.PENDING -> StatusConfig(colors.pending, AapIcons.Status.Pending, "Pending")
-        JobStatus.WAITING -> StatusConfig(colors.waiting, AapIcons.Status.Waiting, "Waiting")
-        JobStatus.RUNNING -> StatusConfig(colors.running, AapIcons.Status.Running, "Running")
-        JobStatus.SUCCESSFUL -> StatusConfig(colors.successful, AapIcons.Status.Successful, "Successful")
-        JobStatus.FAILED -> StatusConfig(colors.failed, AapIcons.Status.Failed, "Failed")
-        JobStatus.ERROR -> StatusConfig(colors.error, AapIcons.Status.Error, "Error")
-        JobStatus.CANCELED -> StatusConfig(colors.canceled, AapIcons.Status.Canceled, "Canceled")
+        JobStatus.NEW -> StatusConfig(scheme.outline, AapIcons.Status.New, "New")
+        JobStatus.PENDING -> StatusConfig(scheme.outline, AapIcons.Status.Pending, "Pending")
+        JobStatus.WAITING -> StatusConfig(scheme.outline, AapIcons.Status.Waiting, "Waiting")
+        JobStatus.RUNNING -> StatusConfig(statusColors.running, AapIcons.Status.Running, "Running")
+        JobStatus.SUCCESSFUL -> StatusConfig(statusColors.successful, AapIcons.Status.Successful, "Successful")
+        JobStatus.FAILED -> StatusConfig(scheme.error, AapIcons.Status.Failed, "Failed")
+        JobStatus.ERROR -> StatusConfig(scheme.error, AapIcons.Status.Error, "Error")
+        JobStatus.CANCELED -> StatusConfig(scheme.secondary, AapIcons.Status.Canceled, "Canceled")
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun JobStatusBadgePreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            JobStatus.entries.forEach { status ->
+                JobStatusBadge(status = status)
+            }
+        }
     }
 }
