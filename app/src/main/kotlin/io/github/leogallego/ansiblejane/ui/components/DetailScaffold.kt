@@ -46,7 +46,7 @@ fun DetailScaffold(
         },
         floatingActionButton = floatingActionButton,
         snackbarHost = snackbarHost,
-        modifier = modifier
+        modifier = modifier.testTag("scaffold_detail")
     ) { padding ->
         Box(
             modifier = Modifier
