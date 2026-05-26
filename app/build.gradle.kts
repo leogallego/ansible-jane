@@ -140,6 +140,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    implementation("androidx.compose.runtime:runtime-tracing")
+    debugImplementation("androidx.tracing:tracing-perfetto:1.0.1")
+    debugImplementation("androidx.tracing:tracing-perfetto-binary:1.0.1")
+
     screenshotTestImplementation(libs.screenshot.validation.api)
     screenshotTestImplementation(libs.androidx.ui.tooling)
 }
