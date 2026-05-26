@@ -39,6 +39,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,6 +59,7 @@ import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import io.github.leogallego.ansiblejane.ui.components.pressScale
+import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -149,7 +153,7 @@ fun DashboardScreen(
                                     StatCard(
                                         count = state.edaActiveRulebooksCount ?: 0,
                                         label = "Running",
-                                        color = Color(0xFF2E7D32),
+                                        color = AnsibleJaneTheme.statusColors.successfulDim,
                                         modifier = Modifier.weight(1f),
                                     )
                                     StatCard(
@@ -223,7 +227,7 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
         text = title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        modifier = modifier,
+        modifier = modifier.semantics { heading() },
     )
 }
 
@@ -250,7 +254,7 @@ private fun StatsRow(
             label = "Failed 24h",
             color = when (healthStatus) {
                 HealthStatus.GREEN -> MaterialTheme.colorScheme.outline
-                HealthStatus.YELLOW -> Color(0xFFE6A817)
+                HealthStatus.YELLOW -> AnsibleJaneTheme.statusColors.healthDegraded
                 HealthStatus.RED -> MaterialTheme.colorScheme.error
             },
             modifier = Modifier.weight(1f),
@@ -258,7 +262,7 @@ private fun StatsRow(
         StatCard(
             count = successfulCount,
             label = "Passed 24h",
-            color = Color(0xFF2E7D32),
+            color = AnsibleJaneTheme.statusColors.successfulDim,
             modifier = Modifier.weight(1f),
         )
     }
@@ -304,27 +308,28 @@ private fun AllClearCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2E7D32).copy(alpha = 0.08f),
+            containerColor = AnsibleJaneTheme.statusColors.successfulDim.copy(alpha = 0.08f),
         ),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(24.dp)
+                .semantics(mergeDescendants = true) { },
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 Icons.Default.CheckCircle,
                 contentDescription = null,
-                tint = Color(0xFF2E7D32),
+                tint = AnsibleJaneTheme.statusColors.successfulDim,
                 modifier = Modifier.size(24.dp),
             )
             Spacer(Modifier.width(12.dp))
             Text(
                 text = "No recent failures — all clear!",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFF2E7D32),
+                color = AnsibleJaneTheme.statusColors.successfulDim,
             )
         }
     }
@@ -435,9 +440,15 @@ private fun JobHistoryChart(
     days: List<DayJobStats>,
     modifier: Modifier = Modifier
 ) {
-    val successColor = Color(0xFF2E7D32)
-    val failColor = Color(0xFFD32F2F)
+    val successColor = AnsibleJaneTheme.statusColors.successfulDim
+    val failColor = MaterialTheme.colorScheme.error
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val chartDescription = remember(days) {
+        val totalPassed = days.sumOf { it.successful }
+        val totalFailed = days.sumOf { it.failed }
+        "Job activity chart: $totalPassed passed, $totalFailed failed over ${days.size} days"
+    }
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -463,6 +474,7 @@ private fun JobHistoryChart(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
+                    .semantics { contentDescription = chartDescription }
             ) {
                 if (days.isEmpty()) return@Canvas
                 val barGroupWidth = size.width / days.size
@@ -523,7 +535,8 @@ private fun ScheduleItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(12.dp)
+                .semantics(mergeDescendants = true) { },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -561,10 +574,11 @@ private fun InstanceInfoCard(
     instanceAlias: String?,
     modifier: Modifier = Modifier
 ) {
+    val statusColors = AnsibleJaneTheme.statusColors
     val healthColor = when (healthStatus) {
-        HealthStatus.GREEN -> Color(0xFF2E7D32)
-        HealthStatus.YELLOW -> Color(0xFFE6A817)
-        HealthStatus.RED -> Color(0xFFD32F2F)
+        HealthStatus.GREEN -> statusColors.successfulDim
+        HealthStatus.YELLOW -> statusColors.healthDegraded
+        HealthStatus.RED -> MaterialTheme.colorScheme.error
     }
     val healthLabel = when (healthStatus) {
         HealthStatus.GREEN -> "Healthy"
@@ -611,7 +625,12 @@ private fun InstanceInfoCard(
                 }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.semantics(mergeDescendants = true) {
+                    contentDescription = "Health status: $healthLabel"
+                },
+            ) {
                 Canvas(modifier = Modifier.size(10.dp)) {
                     drawCircle(color = healthColor, radius = size.minDimension / 2)
                 }

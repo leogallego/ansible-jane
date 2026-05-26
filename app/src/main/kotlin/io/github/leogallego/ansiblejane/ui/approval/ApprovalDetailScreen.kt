@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material3.AlertDialog
@@ -19,15 +18,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,10 +38,10 @@ import io.github.leogallego.ansiblejane.presentation.approval.ApprovalDetailUiSt
 import io.github.leogallego.ansiblejane.presentation.approval.ApprovalDetailViewModel
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
+import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApprovalDetailScreen(
     onNavigateBack: () -> Unit,
@@ -56,23 +51,7 @@ fun ApprovalDetailScreen(
 
     var showConfirmDialog by remember { mutableStateOf<String?>(null) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Workflow Approval") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+    DetailScaffold(title = "Workflow Approval", onNavigateBack = onNavigateBack) {
             when (val state = uiState) {
                 is ApprovalDetailUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -116,9 +95,7 @@ fun ApprovalDetailScreen(
                 }
             }
         }
-    }
-
-    // Confirmation dialog
+    // Confirmation dialog is intentionally outside DetailScaffold
     showConfirmDialog?.let { action ->
         val approvalName = when (val state = uiState) {
             is ApprovalDetailUiState.Ready -> state.approval.name

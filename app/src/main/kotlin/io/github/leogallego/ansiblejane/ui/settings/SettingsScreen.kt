@@ -9,16 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -30,9 +23,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsTab
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsUiState
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
+import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onLogout: () -> Unit,
@@ -42,24 +35,9 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack, modifier = Modifier.testTag("button_back")) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    DetailScaffold(title = "Settings", onNavigateBack = onNavigateBack) {
         when (val state = uiState) {
             is SettingsUiState.Loading -> {
-                // Could show a loading indicator, but transition is fast
             }
             is SettingsUiState.Ready -> {
                 SettingsContent(
@@ -84,9 +62,7 @@ fun SettingsScreen(
                     onAddMcpServer = { url, label, toolset -> viewModel.addMcpServer(url, label, toolset) },
                     onRemoveMcpServer = { viewModel.removeMcpServer(it) },
                     onToggleReadOnly = { url, readOnly -> viewModel.toggleServerReadOnly(url, readOnly) },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

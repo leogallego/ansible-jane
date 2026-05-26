@@ -9,6 +9,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val LightColorScheme = lightColorScheme(
@@ -60,8 +61,15 @@ fun AnsibleJaneTheme(
         else -> LightColorScheme
     }
 
+    val statusColors = if (darkTheme) StatusColors(
+        successful = Color(0xFF81C784),
+        successfulDim = Color(0xFF4CAF50),
+        running = Color(0xFFFFB74D),
+        healthDegraded = Color(0xFFFFD54F),
+    ) else StatusColors()
+
     CompositionLocalProvider(
-        LocalStatusColors provides StatusColors()
+        LocalStatusColors provides statusColors
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -223,7 +224,7 @@ private fun ProviderCard(
     } else null
 
     val dotColor = when {
-        isActive -> Color(0xFF4CAF50)
+        isActive -> AnsibleJaneTheme.statusColors.successful
         isConfigured -> MaterialTheme.colorScheme.tertiary
         else -> MaterialTheme.colorScheme.outlineVariant
     }
