@@ -11,17 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -36,11 +29,11 @@ import io.github.leogallego.ansiblejane.presentation.workflows.NodeStdoutState
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowJobStatusUiState
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowJobStatusViewModel
 import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
+import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkflowJobStatusScreen(
     onNavigateBack: () -> Unit,
@@ -55,23 +48,7 @@ fun WorkflowJobStatusScreen(
         onDispose { viewModel.stopPolling() }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Workflow Job Status") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+    DetailScaffold(title = "Workflow Job Status", onNavigateBack = onNavigateBack) {
             when (val state = uiState) {
                 is WorkflowJobStatusUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -106,7 +83,6 @@ fun WorkflowJobStatusScreen(
             }
         }
     }
-}
 
 @Composable
 private fun WorkflowJobDetailContent(
