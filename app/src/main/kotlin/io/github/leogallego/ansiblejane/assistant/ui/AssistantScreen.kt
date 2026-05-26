@@ -67,11 +67,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.tooling.preview.Preview
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
+import io.github.leogallego.ansiblejane.assistant.engine.ResponseSource
 import io.github.leogallego.ansiblejane.assistant.engine.Role
 import io.github.leogallego.ansiblejane.assistant.presentation.AssistantUiState
 import io.github.leogallego.ansiblejane.assistant.presentation.AssistantViewModel
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
+import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
+import kotlinx.collections.immutable.persistentListOf
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -400,6 +404,58 @@ private fun StreamingIndicator(
             text = statusText,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Assistant - Empty Chat")
+@Composable
+private fun AssistantEmptyPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        ActiveChatContent(
+            state = AssistantUiState.Active(),
+            onSendMessage = {},
+            onStopGeneration = {},
+            onRegenerateLastMessage = {},
+            onConfirmApprove = {},
+            onConfirmDeny = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Assistant - With Messages")
+@Composable
+private fun AssistantWithMessagesPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        ActiveChatContent(
+            state = AssistantUiState.Active(
+                messages = persistentListOf(
+                    ChatMessage(
+                        role = Role.USER,
+                        content = "What job templates are available?",
+                    ),
+                    ChatMessage(
+                        role = Role.ASSISTANT,
+                        content = "I found 3 job templates:\n\n" +
+                            "1. **Deploy Web Application** - Deploys to production\n" +
+                            "2. **System Health Check** - Runs health checks\n" +
+                            "3. **Patch Management** - Applies security patches",
+                        source = ResponseSource.MIXED,
+                        toolsUsed = listOf("list_job_templates"),
+                    ),
+                    ChatMessage(
+                        role = Role.USER,
+                        content = "Launch the Deploy Web Application template",
+                    ),
+                ),
+                isGenerating = true,
+                streamingText = "Launching job template...",
+            ),
+            onSendMessage = {},
+            onStopGeneration = {},
+            onRegenerateLastMessage = {},
+            onConfirmApprove = {},
+            onConfirmDeny = {},
         )
     }
 }

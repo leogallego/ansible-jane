@@ -55,6 +55,8 @@ import io.github.leogallego.ansiblejane.presentation.dashboard.DashboardViewMode
 import io.github.leogallego.ansiblejane.presentation.dashboard.DayJobStats
 import io.github.leogallego.ansiblejane.presentation.dashboard.HealthStatus
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
+import androidx.compose.ui.tooling.preview.Preview
+import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
@@ -77,6 +79,24 @@ fun DashboardScreen(
         }
     }
 
+    DashboardContent(
+        uiState = uiState,
+        isRefreshing = isRefreshing,
+        onRefresh = { isRefreshing = true; viewModel.refresh() },
+        onRetry = { viewModel.refresh() },
+        onNavigateToJobStatus = onNavigateToJobStatus,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun DashboardContent(
+    uiState: DashboardUiState,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
+    onRetry: () -> Unit = {},
+    onNavigateToJobStatus: (Int) -> Unit = {},
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         when (val state = uiState) {
             is DashboardUiState.Loading -> {
@@ -87,17 +107,14 @@ fun DashboardScreen(
             is DashboardUiState.Error -> {
                 ErrorMessage(
                     error = state.error,
-                    onRetry = { viewModel.refresh() },
+                    onRetry = onRetry,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
             is DashboardUiState.Success -> {
                 PullToRefreshBox(
                     isRefreshing = isRefreshing,
-                    onRefresh = {
-                        isRefreshing = true
-                        viewModel.refresh()
-                    },
+                    onRefresh = onRefresh,
                     modifier = Modifier.fillMaxSize()
                 ) {
                     LazyColumn(
@@ -661,6 +678,60 @@ private fun InfoRow(label: String, value: String, modifier: Modifier = Modifier)
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Dashboard - Loading")
+@Composable
+private fun DashboardLoadingPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        DashboardContent(uiState = DashboardUiState.Loading)
+    }
+}
+
+@Preview(showBackground = true, name = "Dashboard - Error")
+@Composable
+private fun DashboardErrorPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        DashboardContent(uiState = DashboardUiState.Error(AppError.Network()))
+    }
+}
+
+@Preview(showBackground = true, name = "Dashboard - Success")
+@Composable
+private fun DashboardContentPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        DashboardContent(
+            uiState = DashboardUiState.Success(
+                activeJobsCount = 3,
+                failedCount24h = 1,
+                successfulCount24h = 12,
+                recentFailures = emptyList(),
+                healthStatus = HealthStatus.GREEN,
+                inventoryCount = 5,
+                hostCount = 42,
+                templateCount = 18,
+                projectCount = 7,
+                jobHistory7d = listOf(
+                    DayJobStats("Mon", 8, 1),
+                    DayJobStats("Tue", 12, 0),
+                    DayJobStats("Wed", 6, 2),
+                    DayJobStats("Thu", 10, 1),
+                    DayJobStats("Fri", 14, 0),
+                    DayJobStats("Sat", 3, 0),
+                    DayJobStats("Sun", 2, 0),
+                ),
+                instanceInfo = InstanceInfo(
+                    controllerVersion = "4.6.0",
+                    gatewayVersion = "2.6.0",
+                    edaVersion = "1.1.0",
+                    platformType = "AAP",
+                    aapVersion = "2.6",
+                ),
+                instanceUrl = "https://aap.example.com",
+                instanceAlias = "Production AAP",
+            )
         )
     }
 }
