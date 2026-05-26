@@ -150,7 +150,7 @@ fun DashboardScreen(
                                     StatCard(
                                         count = state.edaActiveRulebooksCount ?: 0,
                                         label = "Running",
-                                        color = AnsibleJaneTheme.statusColors.healthGood,
+                                        color = AnsibleJaneTheme.statusColors.successfulDim,
                                         modifier = Modifier.weight(1f),
                                     )
                                     StatCard(
@@ -259,7 +259,7 @@ private fun StatsRow(
         StatCard(
             count = successfulCount,
             label = "Passed 24h",
-            color = AnsibleJaneTheme.statusColors.healthGood,
+            color = AnsibleJaneTheme.statusColors.successfulDim,
             modifier = Modifier.weight(1f),
         )
     }
@@ -305,7 +305,7 @@ private fun AllClearCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = AnsibleJaneTheme.statusColors.healthGood.copy(alpha = 0.08f),
+            containerColor = AnsibleJaneTheme.statusColors.successfulDim.copy(alpha = 0.08f),
         ),
     ) {
         Row(
@@ -318,14 +318,14 @@ private fun AllClearCard(modifier: Modifier = Modifier) {
             Icon(
                 Icons.Default.CheckCircle,
                 contentDescription = null,
-                tint = AnsibleJaneTheme.statusColors.healthGood,
+                tint = AnsibleJaneTheme.statusColors.successfulDim,
                 modifier = Modifier.size(24.dp),
             )
             Spacer(Modifier.width(12.dp))
             Text(
                 text = "No recent failures — all clear!",
                 style = MaterialTheme.typography.bodyLarge,
-                color = AnsibleJaneTheme.statusColors.healthGood,
+                color = AnsibleJaneTheme.statusColors.successfulDim,
             )
         }
     }
@@ -436,8 +436,8 @@ private fun JobHistoryChart(
     days: List<DayJobStats>,
     modifier: Modifier = Modifier
 ) {
-    val successColor = AnsibleJaneTheme.statusColors.healthGood
-    val failColor = AnsibleJaneTheme.statusColors.error
+    val successColor = AnsibleJaneTheme.statusColors.successfulDim
+    val failColor = MaterialTheme.colorScheme.error
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     Card(modifier = modifier.fillMaxWidth()) {
@@ -564,9 +564,9 @@ private fun InstanceInfoCard(
 ) {
     val statusColors = AnsibleJaneTheme.statusColors
     val healthColor = when (healthStatus) {
-        HealthStatus.GREEN -> statusColors.healthGood
+        HealthStatus.GREEN -> statusColors.successfulDim
         HealthStatus.YELLOW -> statusColors.healthDegraded
-        HealthStatus.RED -> statusColors.error
+        HealthStatus.RED -> MaterialTheme.colorScheme.error
     }
     val healthLabel = when (healthStatus) {
         HealthStatus.GREEN -> "Healthy"

@@ -30,11 +30,10 @@ fun ConnectorType.label(): String = when (this) {
 
 @Composable
 fun ConnectorSegment(type: ConnectorType) {
-    val statusColors = AnsibleJaneTheme.statusColors
     val color = when (type) {
-        ConnectorType.SUCCESS -> statusColors.successful
-        ConnectorType.FAILURE -> statusColors.failed
-        ConnectorType.ALWAYS -> statusColors.pending
+        ConnectorType.SUCCESS -> AnsibleJaneTheme.statusColors.successful
+        ConnectorType.FAILURE -> MaterialTheme.colorScheme.error
+        ConnectorType.ALWAYS -> MaterialTheme.colorScheme.outline
     }
     val label = type.label()
 
