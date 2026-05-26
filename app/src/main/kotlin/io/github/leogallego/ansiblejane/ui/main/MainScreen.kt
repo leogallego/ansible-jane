@@ -42,9 +42,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
+import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.data.TokenManager
 import io.github.leogallego.ansiblejane.presentation.notifications.NotificationsViewModel
 import io.github.leogallego.ansiblejane.ui.components.ProviderSwitchChip
@@ -90,16 +92,16 @@ fun MainScreen(
     if (showClearChatConfirm) {
         AlertDialog(
             onDismissRequest = { showClearChatConfirm = false },
-            title = { Text("Clear Chat History") },
-            text = { Text("This will remove all messages from the assistant chat. This cannot be undone.") },
+            title = { Text(stringResource(R.string.clear_chat_title)) },
+            text = { Text(stringResource(R.string.clear_chat_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showClearChatConfirm = false
                     assistantRepository.clearHistory()
-                }) { Text("Clear") }
+                }) { Text(stringResource(R.string.clear_chat_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showClearChatConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showClearChatConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }
@@ -109,12 +111,12 @@ fun MainScreen(
             TopAppBar(
                 title = {
                     AnimatedContent(
-                        targetState = selectedTab.label,
+                        targetState = selectedTab,
                         transitionSpec = { fadeIn() togetherWith fadeOut() },
                         label = "titleCrossfade"
-                    ) { label ->
+                    ) { tab ->
                         Column {
-                            Text(label)
+                            Text(stringResource(tab.labelResId))
                             activeInstance?.let { instance ->
                                 Text(
                                     text = instance.displayLabel,
@@ -144,7 +146,7 @@ fun MainScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.DeleteSweep,
-                                contentDescription = "Clear chat history"
+                                contentDescription = stringResource(R.string.cd_clear_chat)
                             )
                         }
                     }
@@ -165,7 +167,7 @@ fun MainScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
-                                contentDescription = "Notifications"
+                                contentDescription = stringResource(R.string.cd_notifications)
                             )
                         }
                     }
@@ -175,7 +177,7 @@ fun MainScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = stringResource(R.string.cd_settings)
                         )
                     }
                 }
@@ -191,12 +193,12 @@ fun MainScreen(
                         icon = {
                             Icon(
                                 imageVector = if (selectedTabIndex == index) tab.selectedIcon else tab.icon,
-                                contentDescription = tab.label
+                                contentDescription = stringResource(tab.labelResId)
                             )
                         },
                         label = {
                             Text(
-                                tab.label,
+                                stringResource(tab.labelResId),
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
@@ -232,7 +234,7 @@ fun MainScreen(
                                 count = selectedTab.segments.size
                             )
                         ) {
-                            Text(segment.label)
+                            Text(stringResource(segment.labelResId))
                         }
                     }
                 }
