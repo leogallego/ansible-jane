@@ -77,15 +77,16 @@ private data class StatusConfig(val color: Color, val icon: ImageVector, val lab
 
 @Composable
 private fun statusConfig(status: JobStatus): StatusConfig {
-    val colors = AnsibleJaneTheme.statusColors
+    val statusColors = AnsibleJaneTheme.statusColors
+    val scheme = MaterialTheme.colorScheme
     return when (status) {
-        JobStatus.NEW -> StatusConfig(colors.new, AapIcons.Status.New, "New")
-        JobStatus.PENDING -> StatusConfig(colors.pending, AapIcons.Status.Pending, "Pending")
-        JobStatus.WAITING -> StatusConfig(colors.waiting, AapIcons.Status.Waiting, "Waiting")
-        JobStatus.RUNNING -> StatusConfig(colors.running, AapIcons.Status.Running, "Running")
-        JobStatus.SUCCESSFUL -> StatusConfig(colors.successful, AapIcons.Status.Successful, "Successful")
-        JobStatus.FAILED -> StatusConfig(colors.failed, AapIcons.Status.Failed, "Failed")
-        JobStatus.ERROR -> StatusConfig(colors.error, AapIcons.Status.Error, "Error")
-        JobStatus.CANCELED -> StatusConfig(colors.canceled, AapIcons.Status.Canceled, "Canceled")
+        JobStatus.NEW -> StatusConfig(scheme.outline, AapIcons.Status.New, "New")
+        JobStatus.PENDING -> StatusConfig(scheme.outline, AapIcons.Status.Pending, "Pending")
+        JobStatus.WAITING -> StatusConfig(scheme.outline, AapIcons.Status.Waiting, "Waiting")
+        JobStatus.RUNNING -> StatusConfig(statusColors.running, AapIcons.Status.Running, "Running")
+        JobStatus.SUCCESSFUL -> StatusConfig(statusColors.successful, AapIcons.Status.Successful, "Successful")
+        JobStatus.FAILED -> StatusConfig(scheme.error, AapIcons.Status.Failed, "Failed")
+        JobStatus.ERROR -> StatusConfig(scheme.error, AapIcons.Status.Error, "Error")
+        JobStatus.CANCELED -> StatusConfig(scheme.secondary, AapIcons.Status.Canceled, "Canceled")
     }
 }
