@@ -151,7 +151,10 @@ class AssistantViewModel(
             "${queryResult.tools.size} tools selected, mode=$mode")
 
         val noToolsForCategory = queryResult.categoryMatched && queryResult.tools.isEmpty()
-        val generalQueryInToolsOnly = !queryResult.categoryMatched && mode == TokenSavingMode.TOOLS_ONLY
+        val queryWords = text.lowercase().split(Regex("\\W+")).toSet()
+        val isToolDiscoveryQuery = TOOL_DISCOVERY_WORDS.any { it in queryWords }
+        val generalQueryInToolsOnly = !queryResult.categoryMatched &&
+            mode == TokenSavingMode.TOOLS_ONLY && !isToolDiscoveryQuery
 
         if (noToolsForCategory || generalQueryInToolsOnly) {
             Log.d(TAG, "ROUTE: no tools path — noToolsForCategory=$noToolsForCategory, " +
@@ -164,7 +167,8 @@ class AssistantViewModel(
                     "- **Users** — users, teams, organizations, roles\n" +
                     "- **Credentials** — credentials, secrets\n" +
                     "- **Monitoring** — system health, instance status\n" +
-                    "- **Configuration** — projects, settings, notifications"
+                    "- **Configuration** — projects, settings, notifications\n\n" +
+                    "You can also ask \"what tools do you have?\" to see all available tools."
             } else if (!hasMcp) {
                 "I don't have the right tools for that query. This may require an MCP server connection.\n\n" +
                     "I can help with:\n" +
@@ -358,5 +362,8 @@ class AssistantViewModel(
 
     companion object {
         private const val TAG = "AssistantVM"
+        private val TOOL_DISCOVERY_WORDS = setOf(
+            "tools", "tool", "capabilities", "capable", "help", "actions", "functions"
+        )
     }
 }
