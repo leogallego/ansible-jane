@@ -92,12 +92,13 @@ fun DashboardScreen(
 @Composable
 internal fun DashboardContent(
     uiState: DashboardUiState,
+    modifier: Modifier = Modifier,
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
     onRetry: () -> Unit = {},
     onNavigateToJobStatus: (Int) -> Unit = {},
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         when (val state = uiState) {
             is DashboardUiState.Loading -> {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
