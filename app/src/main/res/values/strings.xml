@@ -23,7 +23,7 @@
     <!-- Common actions -->
     <string name="action_retry">Retry</string>
     <string name="action_cancel">Cancel</string>
-    <string name="action_clear">Clear</string>
+
 
     <!-- Shared component text -->
     <string name="show_details">Show details</string>
