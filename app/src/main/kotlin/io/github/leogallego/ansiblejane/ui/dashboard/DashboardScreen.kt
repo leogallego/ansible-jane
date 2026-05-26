@@ -313,7 +313,8 @@ private fun AllClearCard(modifier: Modifier = Modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(24.dp)
+                .semantics(mergeDescendants = true) { },
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -442,9 +443,11 @@ private fun JobHistoryChart(
     val failColor = Color(0xFFD32F2F)
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
 
-    val totalPassed = days.sumOf { it.successful }
-    val totalFailed = days.sumOf { it.failed }
-    val chartDescription = "Job activity chart: $totalPassed passed, $totalFailed failed over ${days.size} days"
+    val chartDescription = remember(days) {
+        val totalPassed = days.sumOf { it.successful }
+        val totalFailed = days.sumOf { it.failed }
+        "Job activity chart: $totalPassed passed, $totalFailed failed over ${days.size} days"
+    }
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -531,7 +534,8 @@ private fun ScheduleItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(12.dp)
+                .semantics(mergeDescendants = true) { },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -619,12 +623,13 @@ private fun InstanceInfoCard(
                 }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Canvas(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .semantics { contentDescription = "Health status: $healthLabel" }
-                ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.semantics(mergeDescendants = true) {
+                    contentDescription = "Health status: $healthLabel"
+                },
+            ) {
+                Canvas(modifier = Modifier.size(10.dp)) {
                     drawCircle(color = healthColor, radius = size.minDimension / 2)
                 }
                 Spacer(Modifier.width(8.dp))
