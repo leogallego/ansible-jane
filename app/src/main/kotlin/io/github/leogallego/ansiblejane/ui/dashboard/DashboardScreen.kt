@@ -39,6 +39,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -223,7 +226,7 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
         text = title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        modifier = modifier,
+        modifier = modifier.semantics { heading() },
     )
 }
 
@@ -439,6 +442,10 @@ private fun JobHistoryChart(
     val failColor = Color(0xFFD32F2F)
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
 
+    val totalPassed = days.sumOf { it.successful }
+    val totalFailed = days.sumOf { it.failed }
+    val chartDescription = "Job activity chart: $totalPassed passed, $totalFailed failed over ${days.size} days"
+
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -463,6 +470,7 @@ private fun JobHistoryChart(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
+                    .semantics { contentDescription = chartDescription }
             ) {
                 if (days.isEmpty()) return@Canvas
                 val barGroupWidth = size.width / days.size
@@ -612,7 +620,11 @@ private fun InstanceInfoCard(
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Canvas(modifier = Modifier.size(10.dp)) {
+                Canvas(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .semantics { contentDescription = "Health status: $healthLabel" }
+                ) {
                     drawCircle(color = healthColor, radius = size.minDimension / 2)
                 }
                 Spacer(Modifier.width(8.dp))
