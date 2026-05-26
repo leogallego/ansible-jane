@@ -10,7 +10,8 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.engine.Role
-import io.github.leogallego.ansiblejane.assistant.ui.ChatBubble
+import io.github.leogallego.ansiblejane.assistant.ui.AssistantMessage
+import io.github.leogallego.ansiblejane.assistant.ui.UserBubble
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 private val userMessage = ChatMessage(
@@ -32,6 +33,14 @@ private val errorMessage = ChatMessage(
     role = Role.ASSISTANT,
     content = "Error: Failed to connect to AAP instance. Please check your credentials."
 )
+
+@Composable
+private fun ChatBubble(message: ChatMessage) {
+    when (message.role) {
+        Role.USER -> UserBubble(message = message)
+        else -> AssistantMessage(content = message.content)
+    }
+}
 
 @PreviewTest
 @Preview(showBackground = true, name = "Chat Conversation - Light")
@@ -70,7 +79,7 @@ fun ChatBubbleConversationDark() {
 @Composable
 fun ChatBubbleError() {
     AnsibleJaneTheme(darkTheme = false, dynamicColor = false) {
-        ChatBubble(message = errorMessage)
+        AssistantMessage(content = errorMessage.content)
     }
 }
 

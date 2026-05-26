@@ -29,7 +29,8 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.engine.Role
-import io.github.leogallego.ansiblejane.assistant.ui.ChatBubble
+import io.github.leogallego.ansiblejane.assistant.ui.AssistantMessage
+import io.github.leogallego.ansiblejane.assistant.ui.UserBubble
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 private val chatMessages = listOf(
@@ -46,6 +47,39 @@ private val chatMessages = listOf(
         content = "Job launched successfully! Job ID: **#142**\nStatus: Running\n\nI'll keep monitoring. Would you like updates on the progress?"
     )
 )
+
+@Composable
+private fun ChatBubble(message: ChatMessage) {
+    when (message.role) {
+        Role.USER -> UserBubble(message = message)
+        else -> AssistantMessage(content = message.content)
+    }
+}
+
+@Composable
+private fun ChatInputBar(enabled: Boolean = true) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            placeholder = { Text("Ask about your AAP...") },
+            modifier = Modifier.weight(1f),
+            singleLine = true,
+            enabled = enabled
+        )
+        IconButton(onClick = {}, enabled = false) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Send,
+                contentDescription = "Send"
+            )
+        }
+    }
+}
 
 @PreviewTest
 @Preview(
@@ -67,27 +101,7 @@ fun AssistantChatLight() {
                     ChatBubble(message = message)
                 }
             }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
-                    placeholder = { Text("Ask about your AAP...") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send"
-                    )
-                }
-            }
+            ChatInputBar()
         }
     }
 }
@@ -112,27 +126,7 @@ fun AssistantChatDark() {
                     ChatBubble(message = message)
                 }
             }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
-                    placeholder = { Text("Ask about your AAP...") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send"
-                    )
-                }
-            }
+            ChatInputBar()
         }
     }
 }
@@ -170,28 +164,7 @@ fun AssistantEmptyState() {
                     }
                 }
             }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
-                    placeholder = { Text("Ask about your AAP...") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    enabled = false
-                )
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send"
-                    )
-                }
-            }
+            ChatInputBar(enabled = false)
         }
     }
 }
@@ -224,28 +197,7 @@ fun AssistantLoading() {
                     }
                 }
             }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
-                    placeholder = { Text("Ask about your AAP...") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    enabled = false
-                )
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send"
-                    )
-                }
-            }
+            ChatInputBar(enabled = false)
         }
     }
 }
@@ -270,27 +222,7 @@ fun AssistantChatLargeFont() {
                     ChatBubble(message = message)
                 }
             }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
-                    placeholder = { Text("Ask about your AAP...") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send"
-                    )
-                }
-            }
+            ChatInputBar()
         }
     }
 }
