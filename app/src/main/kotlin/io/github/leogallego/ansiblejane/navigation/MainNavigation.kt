@@ -1,6 +1,7 @@
 package io.github.leogallego.ansiblejane.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import io.github.leogallego.ansiblejane.assistant.ui.AssistantScreen
 import io.github.leogallego.ansiblejane.ui.components.PlaceholderScreen
 import io.github.leogallego.ansiblejane.ui.dashboard.DashboardScreen
@@ -23,7 +24,7 @@ fun TabContent(
     onNavigateToWorkflowTemplateDetail: (Int, String) -> Unit = { _, _ -> }
 ) {
     if (!segment.isImplemented) {
-        PlaceholderScreen(title = segment.label)
+        PlaceholderScreen(title = stringResource(segment.labelResId))
         return
     }
 
@@ -40,7 +41,7 @@ fun TabContent(
                     onNavigateToWorkflowJobStatus = onNavigateToWorkflowJobStatus,
                     onNavigateToTemplateDetail = onNavigateToWorkflowTemplateDetail
                 )
-                else -> PlaceholderScreen(title = segment.label)
+                else -> PlaceholderScreen(title = stringResource(segment.labelResId))
             }
         }
         is TopLevelTab.Activity -> {
@@ -50,14 +51,14 @@ fun TabContent(
                 )
                 "Schedules" -> SchedulesScreen()
                 "EDA" -> EdaAuditScreen()
-                else -> PlaceholderScreen(title = segment.label)
+                else -> PlaceholderScreen(title = stringResource(segment.labelResId))
             }
         }
         is TopLevelTab.Infrastructure -> {
             when (segment.label) {
                 "Inventories" -> InventoriesScreen()
                 "Hosts" -> HostsScreen()
-                else -> PlaceholderScreen(title = segment.label)
+                else -> PlaceholderScreen(title = stringResource(segment.labelResId))
             }
         }
         is TopLevelTab.Assistant -> {

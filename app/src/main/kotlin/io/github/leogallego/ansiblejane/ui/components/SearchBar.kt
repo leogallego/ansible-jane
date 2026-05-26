@@ -16,7 +16,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.leogallego.ansiblejane.R
 import kotlinx.coroutines.delay
 
 @Composable
@@ -39,11 +41,11 @@ fun SearchBar(
         value = query,
         onValueChange = { hasUserTyped = true; query = it },
         placeholder = { Text(placeholder) },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search)) },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { query = "" }) {
-                    Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.cd_clear_search))
                 }
             }
         },
