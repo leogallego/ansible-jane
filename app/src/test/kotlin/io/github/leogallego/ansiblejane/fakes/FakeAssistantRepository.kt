@@ -40,6 +40,11 @@ class FakeAssistantRepository : IAssistantRepository {
         if (index >= 0) messages.removeAt(index)
     }
 
+    override fun removeLastUserMessage() {
+        val index = messages.indexOfLast { it.role == Role.USER }
+        if (index >= 0) messages.removeAt(index)
+    }
+
     override fun clearHistory() {
         messages.clear()
         _onHistoryCleared.tryEmit(Unit)

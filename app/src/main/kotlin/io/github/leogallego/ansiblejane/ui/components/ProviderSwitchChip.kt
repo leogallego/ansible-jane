@@ -31,8 +31,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
+import io.github.leogallego.ansiblejane.assistant.data.TokenSavingMode
+import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 @Composable
 fun ProviderSwitchChip(
@@ -173,5 +176,39 @@ fun ProviderSwitchChip(
                 )
             }
         }
+    }
+}
+
+private val previewConfig = LlmProviderConfig.OpenAiCompatible(
+    url = "http://localhost:11434/v1",
+    model = "llama3.1:8b",
+    tokenSavingMode = TokenSavingMode.STANDARD
+)
+
+@PreviewLightDark
+@Composable
+private fun ProviderSwitchChipActivePreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        ProviderSwitchChip(
+            activeProviderKey = KnownProvider.OLLAMA.name,
+            activeConfig = previewConfig,
+            savedConfigs = mapOf(KnownProvider.OLLAMA.name to previewConfig),
+            onSwitchProvider = {},
+            onNavigateToSettings = {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ProviderSwitchChipNoLlmPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        ProviderSwitchChip(
+            activeProviderKey = null,
+            activeConfig = null,
+            savedConfigs = emptyMap(),
+            onSwitchProvider = {},
+            onNavigateToSettings = {}
+        )
     }
 }

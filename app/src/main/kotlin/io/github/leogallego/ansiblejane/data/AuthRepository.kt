@@ -9,11 +9,14 @@ import io.github.leogallego.ansiblejane.network.AuthInterceptor
 import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.InstanceDiscovery
 import io.github.leogallego.ansiblejane.network.networkJson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
+import io.github.leogallego.ansiblejane.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -101,9 +104,10 @@ class AuthRepository(
             }
         }
 
-    override suspend fun checkExistingCredentials(): Result<User>? = withContext(Dispatchers.IO) {
-        if (!tokenManager.loadCredentials()) return@withContext null
-        val activeInstance = tokenManager.activeInstance.value ?: return@withContext null
+    override suspend fun checkExistingCredentials(): CredentialStatus = withContext(Dispatchers.IO) {
+        if (!tokenManager.loadCredentials()) return@withContext CredentialStatus.NoCredentials
+        val activeInstance = tokenManager.activeInstance.value
+            ?: return@withContext CredentialStatus.NoCredentials
 
         try {
             val client = buildClient(activeInstance.token, activeInstance.trustSelfSigned)
@@ -115,10 +119,12 @@ class AuthRepository(
             val api = buildApi(client, activeInstance.baseUrl, apiVersion)
             val response = api.getMe()
             val user = response.results.firstOrNull()
-                ?: return@withContext Result.failure(Exception("No user data returned"))
-            Result.success(user)
-        } catch (_: Exception) {
-            null
+                ?: return@withContext CredentialStatus.ValidationFailed(
+                    Exception("No user data returned")
+                )
+            CredentialStatus.Valid(user)
+        } catch (e: Exception) {
+            CredentialStatus.ValidationFailed(e)
         }
     }
 
@@ -139,10 +145,12 @@ class AuthRepository(
         apiVersion: ApiVersion,
         client: OkHttpClient
     ) {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 val info = instanceDiscovery.discover(baseUrl, token, apiVersion, client)
                 tokenManager.updateInstanceInfo(instanceId, info)
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
                 // Discovery is best-effort — don't fail the auth flow
             }
@@ -153,7 +161,8 @@ class AuthRepository(
         val builder = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor { token })
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                        else HttpLoggingInterceptor.Level.NONE
             })
 
         if (trustSelfSigned) {

@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.engine.Role
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
+import io.github.leogallego.ansiblejane.data.ITokenManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -25,7 +26,10 @@ private val Context.assistantDataStore: DataStore<Preferences> by preferencesDat
     name = "assistant_config"
 )
 
-class AssistantRepository(private val context: Context) : IAssistantRepository {
+class AssistantRepository(
+    private val context: Context,
+    private val tokenManager: ITokenManager
+) : IAssistantRepository {
 
     private val messages = mutableListOf<ChatMessage>()
     private val json = Json { ignoreUnknownKeys = true }
@@ -53,6 +57,11 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
         if (index >= 0) messages.removeAt(index)
     }
 
+    override fun removeLastUserMessage() {
+        val index = messages.indexOfLast { it.role == Role.USER }
+        if (index >= 0) messages.removeAt(index)
+    }
+
     override fun clearHistory() {
         messages.clear()
         _onHistoryCleared.tryEmit(Unit)
@@ -62,8 +71,17 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
         val providerKey = when (config) {
             is LlmProviderConfig.OpenAiCompatible -> KnownProvider.fromUrl(config.url).name
         }
-        val allConfigs = loadAllLlmConfigs().toMutableMap()
-        allConfigs[providerKey] = config
+
+        val apiKey = when (config) {
+            is LlmProviderConfig.OpenAiCompatible -> config.apiKey
+        }
+        if (!apiKey.isNullOrBlank()) {
+            tokenManager.saveLlmApiKey(providerKey, apiKey)
+        }
+        val strippedConfig = stripApiKey(config)
+
+        val allConfigs = loadAllLlmConfigsRaw().toMutableMap()
+        allConfigs[providerKey] = strippedConfig
         val mapJson = json.encodeToString(
             MapSerializer(String.serializer(), LlmProviderConfig.serializer()),
             allConfigs
@@ -77,13 +95,23 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
     override suspend fun loadLlmConfig(): LlmProviderConfig? {
         val prefs = context.assistantDataStore.data.first()
         val activeProvider = prefs[KEY_ACTIVE_PROVIDER] ?: return null
-        return loadAllLlmConfigs()[activeProvider]
+        val config = loadAllLlmConfigsRaw()[activeProvider] ?: return null
+        return mergeApiKey(activeProvider, config)
     }
 
     override suspend fun saveAllLlmConfigs(configs: Map<String, LlmProviderConfig>) {
+        for ((key, config) in configs) {
+            val apiKey = when (config) {
+                is LlmProviderConfig.OpenAiCompatible -> config.apiKey
+            }
+            if (!apiKey.isNullOrBlank()) {
+                tokenManager.saveLlmApiKey(key, apiKey)
+            }
+        }
+        val stripped = configs.mapValues { (_, config) -> stripApiKey(config) }
         val mapJson = json.encodeToString(
             MapSerializer(String.serializer(), LlmProviderConfig.serializer()),
-            configs
+            stripped
         )
         context.assistantDataStore.edit { prefs ->
             prefs[KEY_LLM_CONFIGS] = mapJson
@@ -91,6 +119,15 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
     }
 
     override suspend fun loadAllLlmConfigs(): Map<String, LlmProviderConfig> {
+        val raw = loadAllLlmConfigsRaw()
+        val keys = tokenManager.loadAllLlmApiKeys()
+        return raw.mapValues { (providerKey, config) ->
+            val apiKey = keys[providerKey]
+            if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
+        }
+    }
+
+    private suspend fun loadAllLlmConfigsRaw(): Map<String, LlmProviderConfig> {
         val prefs = context.assistantDataStore.data.first()
         val mapJson = prefs[KEY_LLM_CONFIGS] ?: return emptyMap()
         return try {
@@ -104,6 +141,21 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
         }
     }
 
+    private suspend fun mergeApiKey(providerKey: String, config: LlmProviderConfig): LlmProviderConfig {
+        val apiKey = tokenManager.loadLlmApiKey(providerKey)
+        return if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
+    }
+
+    private fun mergeApiKeyValue(config: LlmProviderConfig, apiKey: String): LlmProviderConfig =
+        when (config) {
+            is LlmProviderConfig.OpenAiCompatible -> config.copy(apiKey = apiKey)
+        }
+
+    private fun stripApiKey(config: LlmProviderConfig): LlmProviderConfig =
+        when (config) {
+            is LlmProviderConfig.OpenAiCompatible -> config.copy(apiKey = null)
+        }
+
     override val activeConfigFlow: Flow<LlmProviderConfig?> =
         context.assistantDataStore.data.map { prefs ->
             val key = prefs[KEY_ACTIVE_PROVIDER] ?: return@map null
@@ -113,7 +165,9 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
                     MapSerializer(String.serializer(), LlmProviderConfig.serializer()),
                     mapJson
                 )
-                configs[key]
+                val config = configs[key] ?: return@map null
+                val apiKey = tokenManager.loadLlmApiKey(key)
+                if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to deserialize active config from flow", e)
                 null
@@ -124,10 +178,15 @@ class AssistantRepository(private val context: Context) : IAssistantRepository {
         context.assistantDataStore.data.map { prefs ->
             val mapJson = prefs[KEY_LLM_CONFIGS] ?: return@map emptyMap()
             try {
-                json.decodeFromString(
+                val configs = json.decodeFromString(
                     MapSerializer(String.serializer(), LlmProviderConfig.serializer()),
                     mapJson
                 )
+                val keys = tokenManager.loadAllLlmApiKeys()
+                configs.mapValues { (providerKey, config) ->
+                    val apiKey = keys[providerKey]
+                    if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to deserialize saved configs from flow", e)
                 emptyMap()

@@ -13,7 +13,7 @@ class DenyWorkflowLocalTool(
     typeToken<Args>(), Args.serializer(),
     name = "deny_workflow",
     description = "Deny a pending workflow approval step",
-    destructive = true
+    isDestructive = true
 ) {
     @Serializable
     data class Args(

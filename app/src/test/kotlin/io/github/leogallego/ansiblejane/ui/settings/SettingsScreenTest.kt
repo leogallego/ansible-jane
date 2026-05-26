@@ -41,7 +41,7 @@ class SettingsScreenTest {
     private val fakeAssistantRepo = FakeAssistantRepository()
     private val json = Json { ignoreUnknownKeys = true }
     private val mcpServerManager = McpServerManager(
-        httpClientFactory = { OkHttpClient() },
+        httpClientFactory = { _, _ -> OkHttpClient() },
         json = json
     )
 

@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.nio.charset.StandardCharsets
@@ -85,6 +87,7 @@ class TokenManager(private val context: Context) : ITokenManager {
 
         // Multi-instance key
         val KEY_INSTANCES_JSON = stringPreferencesKey("instances_json")
+        val KEY_LLM_API_KEYS = stringPreferencesKey("llm_api_keys")
     }
 
     private fun encrypt(value: String): String {
@@ -211,22 +214,30 @@ class TokenManager(private val context: Context) : ITokenManager {
 
         val instanceId = existingId ?: UUID.randomUUID().toString()
 
-        val instance = AapInstance(
-            id = instanceId,
-            baseUrl = baseUrl,
-            token = token,
-            alias = alias?.ifBlank { null },
-            apiVersion = apiVersion.name,
-            trustSelfSigned = trustSelfSigned,
-            certFingerprint = certFingerprint
-        )
-
-        val serialized = toSerialized(instance)
-
         val updatedInstances = if (existingId != null) {
-            state.instances.map { if (it.id == existingId) serialized else it }
+            state.instances.map {
+                if (it.id == existingId) {
+                    it.copy(
+                        encryptedUrl = encrypt(baseUrl),
+                        encryptedToken = encrypt(token),
+                        alias = alias?.ifBlank { null } ?: it.alias,
+                        apiVersion = apiVersion.name,
+                        trustSelfSigned = trustSelfSigned,
+                        certFingerprint = certFingerprint
+                    )
+                } else it
+            }
         } else {
-            state.instances + serialized
+            val instance = AapInstance(
+                id = instanceId,
+                baseUrl = baseUrl,
+                token = token,
+                alias = alias?.ifBlank { null },
+                apiVersion = apiVersion.name,
+                trustSelfSigned = trustSelfSigned,
+                certFingerprint = certFingerprint
+            )
+            state.instances + toSerialized(instance)
         }
 
         val activeId = when {
@@ -359,10 +370,57 @@ class TokenManager(private val context: Context) : ITokenManager {
         writeState(state.copy(instances = updatedInstances))
     }
 
+    private suspend fun readEncryptedLlmApiKeys(): Map<String, String> {
+        val prefs = context.credentialsDataStore.data.first()
+        val keysJson = prefs[KEY_LLM_API_KEYS] ?: return emptyMap()
+        return try {
+            json.decodeFromString(
+                MapSerializer(String.serializer(), String.serializer()),
+                keysJson
+            )
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
+
+    private suspend fun writeEncryptedLlmApiKeys(keys: Map<String, String>) {
+        val keysJson = json.encodeToString(
+            MapSerializer(String.serializer(), String.serializer()),
+            keys
+        )
+        context.credentialsDataStore.edit { prefs ->
+            prefs[KEY_LLM_API_KEYS] = keysJson
+        }
+    }
+
+    override suspend fun saveLlmApiKey(providerKey: String, apiKey: String) {
+        val keys = readEncryptedLlmApiKeys().toMutableMap()
+        keys[providerKey] = encrypt(apiKey)
+        writeEncryptedLlmApiKeys(keys)
+    }
+
+    override suspend fun loadLlmApiKey(providerKey: String): String? {
+        val encrypted = readEncryptedLlmApiKeys()[providerKey] ?: return null
+        return try { decrypt(encrypted) } catch (_: Exception) { null }
+    }
+
+    override suspend fun loadAllLlmApiKeys(): Map<String, String> {
+        return readEncryptedLlmApiKeys().mapNotNull { (key, encrypted) ->
+            try { key to decrypt(encrypted) } catch (_: Exception) { null }
+        }.toMap()
+    }
+
+    override suspend fun clearLlmApiKeys() {
+        context.credentialsDataStore.edit { prefs ->
+            prefs.remove(KEY_LLM_API_KEYS)
+        }
+    }
+
     /**
      * Clear all instances (full logout).
      */
     override suspend fun clearCredentials() {
+        clearLlmApiKeys()
         context.credentialsDataStore.edit { it.clear() }
         _instances.value = emptyList()
         _activeInstance.value = null

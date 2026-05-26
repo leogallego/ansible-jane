@@ -3,7 +3,6 @@ package io.github.leogallego.ansiblejane.assistant.engine
 import ai.koog.prompt.message.MessagePart
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
 import kotlinx.coroutines.TimeoutCancellationException
@@ -36,7 +35,7 @@ class ToolExecutor(
                 )
             }
 
-        val isDestructive = tool is LocalTool && tool.destructive
+        val isDestructive = tool.isDestructive
         val cacheKey = "${toolCall.tool}:${toolCall.args.hashCode()}"
         if (!isDestructive) {
             val cached = resultCache[cacheKey]
@@ -49,8 +48,12 @@ class ToolExecutor(
         val argsJson = try {
             val parsed = json.parseToJsonElement(toolCall.args)
             if (parsed is JsonObject) parsed else JsonObject(emptyMap())
-        } catch (_: Exception) {
-            JsonObject(emptyMap())
+        } catch (e: Exception) {
+            Log.w(TAG, "EXEC: malformed args for ${toolCall.tool}: ${e.message}")
+            return ToolResult(
+                success = false,
+                data = "Invalid tool arguments: ${e.message}"
+            )
         }
 
         Log.d(TAG, "EXEC: ${toolCall.tool}(${toolCall.args.take(200)})")

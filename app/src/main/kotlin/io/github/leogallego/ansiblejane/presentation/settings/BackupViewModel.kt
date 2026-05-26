@@ -101,24 +101,29 @@ class BackupViewModel(
         viewModelScope.launch {
             _uiState.value = BackupUiState.Importing
             try {
-                if (mode == ImportMode.REPLACE) {
-                    tokenManager.clearCredentials()
+                // Validate all import data before mutating state
+                val validatedInstances = envelope.instances.map { inst ->
+                    val apiVersion = try {
+                        ApiVersion.valueOf(inst.apiVersion)
+                    } catch (_: Exception) {
+                        ApiVersion.CONTROLLER_V2
+                    }
+                    inst to apiVersion
                 }
 
                 val existingUrls = tokenManager.instances.value
                     .map { it.baseUrl.trimEnd('/').lowercase() }
                     .toSet()
 
+                // All validation passed — now safe to clear and write
+                if (mode == ImportMode.REPLACE) {
+                    tokenManager.clearCredentials()
+                }
+
                 var imported = 0
-                for (inst in envelope.instances) {
+                for ((inst, apiVersion) in validatedInstances) {
                     val normalizedUrl = inst.baseUrl.trimEnd('/').lowercase()
                     if (mode == ImportMode.MERGE && normalizedUrl in existingUrls) continue
-
-                    val apiVersion = try {
-                        ApiVersion.valueOf(inst.apiVersion)
-                    } catch (_: Exception) {
-                        ApiVersion.CONTROLLER_V2
-                    }
 
                     tokenManager.saveInstance(
                         baseUrl = inst.baseUrl,

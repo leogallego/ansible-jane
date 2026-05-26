@@ -27,7 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import io.github.leogallego.ansiblejane.model.JobTemplate
+import io.github.leogallego.ansiblejane.model.JobTemplateSummaryFields
+import io.github.leogallego.ansiblejane.model.Label
+import io.github.leogallego.ansiblejane.model.LabelSummary
 import io.github.leogallego.ansiblejane.model.LaunchableTemplate
+import io.github.leogallego.ansiblejane.model.UserCapabilities
+import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -112,5 +119,46 @@ fun TemplateCard(
                 }
             }
         }
+    }
+}
+
+private val previewTemplate = JobTemplate(
+    id = 1,
+    name = "Deploy Web Application",
+    description = "Deploys the web application to production servers with rolling updates",
+    summaryFields = JobTemplateSummaryFields(
+        labels = LabelSummary(
+            count = 2,
+            results = listOf(Label(1, "production"), Label(2, "deploy"))
+        ),
+        userCapabilities = UserCapabilities(start = true)
+    )
+)
+
+@PreviewLightDark
+@Composable
+private fun TemplateCardLaunchablePreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        TemplateCard(
+            template = previewTemplate,
+            onClick = {},
+            onLaunch = {}
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun TemplateCardReadOnlyPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        TemplateCard(
+            template = previewTemplate.copy(
+                name = "System Health Check",
+                description = "Runs health checks across all managed hosts",
+                summaryFields = JobTemplateSummaryFields()
+            ),
+            onClick = {},
+            onLaunch = {}
+        )
     }
 }

@@ -12,7 +12,6 @@ import io.github.leogallego.ansiblejane.assistant.llm.LlmRateLimitException
 import io.github.leogallego.ansiblejane.assistant.llm.LlmServerException
 import io.github.leogallego.ansiblejane.assistant.llm.LlmTimeoutException
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
 import io.github.leogallego.ansiblejane.assistant.tools.toToolDescriptor
 import kotlinx.coroutines.CancellationException
@@ -61,7 +60,6 @@ class ChatEngine(
             messages.add(ChatMessage(role = Role.SYSTEM, content = SYSTEM_PROMPT))
             history.filter { it.role == Role.USER || it.role == Role.ASSISTANT }
                 .forEach { messages.add(it) }
-            messages.add(ChatMessage(role = Role.USER, content = userMessage))
 
             val toolDescriptors = tools.map { it.toToolDescriptor() }
             val toolSchemaChars = toolDescriptors.sumOf {
@@ -177,7 +175,7 @@ class ChatEngine(
                         emit(ChatEvent.ToolExecuting(toolCall.tool, argsJson))
 
                         val tool = toolExecutor.findTool(toolCall.tool)
-                        val toolResult = if (tool is LocalTool && tool.destructive && onConfirmationRequired != null) {
+                        val toolResult = if (tool != null && tool.isDestructive && onConfirmationRequired != null) {
                             val description = descriptionForConfirmation(toolCall.tool, argsJson)
                             emit(ChatEvent.ConfirmationRequired(toolCall.tool, argsJson, description))
                             val approved = onConfirmationRequired(toolCall.tool, description, argsJson)

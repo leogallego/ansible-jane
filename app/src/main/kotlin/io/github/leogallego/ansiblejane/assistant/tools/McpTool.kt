@@ -20,7 +20,11 @@ class McpTool(
     companion object {
         const val MAX_PAGE_SIZE = 10
         private const val MAX_DESCRIPTION_CHARS = 300
+        private val WRITE_SUFFIXES = Tool.WRITE_SUFFIXES
     }
+
+    override val isDestructive: Boolean =
+        WRITE_SUFFIXES.any { mcpToolDef.name.endsWith(it) }
 
     override val spec: ToolSpec = ToolSpec(
         name = mcpToolDef.name,

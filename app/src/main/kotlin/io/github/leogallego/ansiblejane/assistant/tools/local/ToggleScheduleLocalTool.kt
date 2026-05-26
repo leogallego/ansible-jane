@@ -15,7 +15,7 @@ class ToggleScheduleLocalTool(
     typeToken<Args>(), Args.serializer(),
     name = "toggle_schedule",
     description = "Enable or disable a schedule by ID",
-    destructive = true
+    isDestructive = true
 ) {
     @Serializable
     data class Args(

@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.presentation.auth
 
 import app.cash.turbine.test
 import io.github.leogallego.ansiblejane.MainDispatcherRule
+import io.github.leogallego.ansiblejane.data.CredentialStatus
 import io.github.leogallego.ansiblejane.fakes.FakeAuthRepository
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.User
@@ -135,7 +136,7 @@ class AuthViewModelTest {
 
     @Test
     fun `checkExistingCredentials with valid result transitions to Success`() = runTest {
-        fakeAuthRepo.existingCredentialsResult = Result.success(testUser)
+        fakeAuthRepo.existingCredentialsResult = CredentialStatus.Valid(testUser)
 
         viewModel.checkExistingCredentials()
 
@@ -146,7 +147,7 @@ class AuthViewModelTest {
 
     @Test
     fun `checkExistingCredentials with null result stays Idle`() = runTest {
-        fakeAuthRepo.existingCredentialsResult = null
+        fakeAuthRepo.existingCredentialsResult = CredentialStatus.NoCredentials
 
         viewModel.checkExistingCredentials()
 
@@ -156,7 +157,7 @@ class AuthViewModelTest {
     @Test
     fun `checkExistingCredentials with failure returns to Idle`() = runTest {
         fakeAuthRepo.existingCredentialsResult =
-            Result.failure(RuntimeException("Token expired"))
+            CredentialStatus.ValidationFailed(RuntimeException("Token expired"))
 
         viewModel.checkExistingCredentials()
 

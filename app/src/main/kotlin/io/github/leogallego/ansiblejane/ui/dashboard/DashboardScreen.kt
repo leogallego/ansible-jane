@@ -39,6 +39,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,10 +55,13 @@ import io.github.leogallego.ansiblejane.presentation.dashboard.DashboardViewMode
 import io.github.leogallego.ansiblejane.presentation.dashboard.DayJobStats
 import io.github.leogallego.ansiblejane.presentation.dashboard.HealthStatus
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import io.github.leogallego.ansiblejane.ui.components.pressScale
+import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +79,26 @@ fun DashboardScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    DashboardContent(
+        uiState = uiState,
+        isRefreshing = isRefreshing,
+        onRefresh = { isRefreshing = true; viewModel.refresh() },
+        onRetry = { viewModel.refresh() },
+        onNavigateToJobStatus = onNavigateToJobStatus,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun DashboardContent(
+    uiState: DashboardUiState,
+    modifier: Modifier = Modifier,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
+    onRetry: () -> Unit = {},
+    onNavigateToJobStatus: (Int) -> Unit = {},
+) {
+    Box(modifier = modifier.fillMaxSize()) {
         when (val state = uiState) {
             is DashboardUiState.Loading -> {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -83,17 +108,14 @@ fun DashboardScreen(
             is DashboardUiState.Error -> {
                 ErrorMessage(
                     error = state.error,
-                    onRetry = { viewModel.refresh() },
+                    onRetry = onRetry,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
             is DashboardUiState.Success -> {
                 PullToRefreshBox(
                     isRefreshing = isRefreshing,
-                    onRefresh = {
-                        isRefreshing = true
-                        viewModel.refresh()
-                    },
+                    onRefresh = onRefresh,
                     modifier = Modifier.fillMaxSize()
                 ) {
                     LazyColumn(
@@ -149,7 +171,7 @@ fun DashboardScreen(
                                     StatCard(
                                         count = state.edaActiveRulebooksCount ?: 0,
                                         label = "Running",
-                                        color = Color(0xFF2E7D32),
+                                        color = AnsibleJaneTheme.statusColors.successfulDim,
                                         modifier = Modifier.weight(1f),
                                     )
                                     StatCard(
@@ -223,7 +245,7 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
         text = title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        modifier = modifier,
+        modifier = modifier.semantics { heading() },
     )
 }
 
@@ -250,7 +272,7 @@ private fun StatsRow(
             label = "Failed 24h",
             color = when (healthStatus) {
                 HealthStatus.GREEN -> MaterialTheme.colorScheme.outline
-                HealthStatus.YELLOW -> Color(0xFFE6A817)
+                HealthStatus.YELLOW -> AnsibleJaneTheme.statusColors.healthDegraded
                 HealthStatus.RED -> MaterialTheme.colorScheme.error
             },
             modifier = Modifier.weight(1f),
@@ -258,7 +280,7 @@ private fun StatsRow(
         StatCard(
             count = successfulCount,
             label = "Passed 24h",
-            color = Color(0xFF2E7D32),
+            color = AnsibleJaneTheme.statusColors.successfulDim,
             modifier = Modifier.weight(1f),
         )
     }
@@ -304,27 +326,28 @@ private fun AllClearCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2E7D32).copy(alpha = 0.08f),
+            containerColor = AnsibleJaneTheme.statusColors.successfulDim.copy(alpha = 0.08f),
         ),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(24.dp)
+                .semantics(mergeDescendants = true) { },
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 Icons.Default.CheckCircle,
                 contentDescription = null,
-                tint = Color(0xFF2E7D32),
+                tint = AnsibleJaneTheme.statusColors.successfulDim,
                 modifier = Modifier.size(24.dp),
             )
             Spacer(Modifier.width(12.dp))
             Text(
                 text = "No recent failures — all clear!",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFF2E7D32),
+                color = AnsibleJaneTheme.statusColors.successfulDim,
             )
         }
     }
@@ -435,9 +458,15 @@ private fun JobHistoryChart(
     days: List<DayJobStats>,
     modifier: Modifier = Modifier
 ) {
-    val successColor = Color(0xFF2E7D32)
-    val failColor = Color(0xFFD32F2F)
+    val successColor = AnsibleJaneTheme.statusColors.successfulDim
+    val failColor = MaterialTheme.colorScheme.error
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val chartDescription = remember(days) {
+        val totalPassed = days.sumOf { it.successful }
+        val totalFailed = days.sumOf { it.failed }
+        "Job activity chart: $totalPassed passed, $totalFailed failed over ${days.size} days"
+    }
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -463,6 +492,7 @@ private fun JobHistoryChart(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
+                    .semantics { contentDescription = chartDescription }
             ) {
                 if (days.isEmpty()) return@Canvas
                 val barGroupWidth = size.width / days.size
@@ -523,7 +553,8 @@ private fun ScheduleItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(12.dp)
+                .semantics(mergeDescendants = true) { },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -561,10 +592,11 @@ private fun InstanceInfoCard(
     instanceAlias: String?,
     modifier: Modifier = Modifier
 ) {
+    val statusColors = AnsibleJaneTheme.statusColors
     val healthColor = when (healthStatus) {
-        HealthStatus.GREEN -> Color(0xFF2E7D32)
-        HealthStatus.YELLOW -> Color(0xFFE6A817)
-        HealthStatus.RED -> Color(0xFFD32F2F)
+        HealthStatus.GREEN -> statusColors.successfulDim
+        HealthStatus.YELLOW -> statusColors.healthDegraded
+        HealthStatus.RED -> MaterialTheme.colorScheme.error
     }
     val healthLabel = when (healthStatus) {
         HealthStatus.GREEN -> "Healthy"
@@ -611,7 +643,12 @@ private fun InstanceInfoCard(
                 }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.semantics(mergeDescendants = true) {
+                    contentDescription = "Health status: $healthLabel"
+                },
+            ) {
                 Canvas(modifier = Modifier.size(10.dp)) {
                     drawCircle(color = healthColor, radius = size.minDimension / 2)
                 }
@@ -642,6 +679,60 @@ private fun InfoRow(label: String, value: String, modifier: Modifier = Modifier)
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun DashboardLoadingPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        DashboardContent(uiState = DashboardUiState.Loading)
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun DashboardErrorPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        DashboardContent(uiState = DashboardUiState.Error(AppError.Network()))
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun DashboardContentPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        DashboardContent(
+            uiState = DashboardUiState.Success(
+                activeJobsCount = 3,
+                failedCount24h = 1,
+                successfulCount24h = 12,
+                recentFailures = emptyList(),
+                healthStatus = HealthStatus.GREEN,
+                inventoryCount = 5,
+                hostCount = 42,
+                templateCount = 18,
+                projectCount = 7,
+                jobHistory7d = listOf(
+                    DayJobStats("Mon", 8, 1),
+                    DayJobStats("Tue", 12, 0),
+                    DayJobStats("Wed", 6, 2),
+                    DayJobStats("Thu", 10, 1),
+                    DayJobStats("Fri", 14, 0),
+                    DayJobStats("Sat", 3, 0),
+                    DayJobStats("Sun", 2, 0),
+                ),
+                instanceInfo = InstanceInfo(
+                    controllerVersion = "4.6.0",
+                    gatewayVersion = "2.6.0",
+                    edaVersion = "1.1.0",
+                    platformType = "AAP",
+                    aapVersion = "2.6",
+                ),
+                instanceUrl = "https://aap.example.com",
+                instanceAlias = "Production AAP",
+            )
         )
     }
 }

@@ -9,6 +9,7 @@ import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.network.networkJson
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
+import io.github.leogallego.ansiblejane.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.core.module.dsl.viewModel
@@ -19,16 +20,21 @@ import org.koin.dsl.module
 val assistantModule = module {
     single {
         McpServerManager(
-            httpClientFactory = { instance ->
+            httpClientFactory = { instance, serverConfig ->
                 OkHttpClient.Builder()
-                    .addInterceptor(
-                        AuthInterceptor(
-                            tokenProvider = { instance.token },
-                            instanceIdProvider = { instance.id }
-                        )
-                    )
+                    .apply {
+                        if (serverConfig.useInstanceAuth) {
+                            addInterceptor(
+                                AuthInterceptor(
+                                    tokenProvider = { instance.token },
+                                    instanceIdProvider = { instance.id }
+                                )
+                            )
+                        }
+                    }
                     .addInterceptor(HttpLoggingInterceptor().apply {
-                        level = HttpLoggingInterceptor.Level.BODY
+                        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                                else HttpLoggingInterceptor.Level.NONE
                     })
                     .apply {
                         if (instance.trustSelfSigned) {
@@ -43,12 +49,13 @@ val assistantModule = module {
         )
     }
 
-    single { AssistantRepository(get()) } bind IAssistantRepository::class
+    single { AssistantRepository(get(), get()) } bind IAssistantRepository::class
 
     single(named("llm")) {
         OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                        else HttpLoggingInterceptor.Level.NONE
             })
             .build()
     }

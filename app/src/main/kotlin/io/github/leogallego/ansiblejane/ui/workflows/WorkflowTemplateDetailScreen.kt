@@ -11,20 +11,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,10 +32,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.presentation.workflows.LaunchFromDetailState
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplateDetailUiState
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplateDetailViewModel
+import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkflowTemplateDetailScreen(
     onNavigateBack: () -> Unit,
@@ -65,21 +60,14 @@ fun WorkflowTemplateDetailScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = viewModel.templateName.ifBlank { "Workflow Template" },
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+    DetailScaffold(
+        title = "Workflow Template",
+        onNavigateBack = onNavigateBack,
+        titleContent = {
+            Text(
+                text = viewModel.templateName.ifBlank { "Workflow Template" },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
         floatingActionButton = {
@@ -98,12 +86,7 @@ fun WorkflowTemplateDetailScreen(
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+    ) {
             when (val state = uiState) {
                 is WorkflowTemplateDetailUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -148,7 +131,6 @@ fun WorkflowTemplateDetailScreen(
             }
         }
     }
-}
 
 @Composable
 private fun TemplateNodeCard(orderedNode: OrderedTemplateNode) {

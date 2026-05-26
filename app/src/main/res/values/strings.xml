@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ansible Jane</string>
+
+    <!-- Navigation tabs -->
+    <string name="tab_dashboard">Dashboard</string>
+    <string name="tab_templates">Templates</string>
+    <string name="tab_infrastructure">Infrastructure</string>
+    <string name="tab_activity">Activity</string>
+    <string name="tab_assistant">Jane</string>
+
+    <!-- Tab segments -->
+    <string name="segment_overview">Overview</string>
+    <string name="segment_job_templates">Job Templates</string>
+    <string name="segment_workflows">Workflows</string>
+    <string name="segment_inventories">Inventories</string>
+    <string name="segment_hosts">Hosts</string>
+    <string name="segment_jobs">Jobs</string>
+    <string name="segment_schedules">Schedules</string>
+    <string name="segment_eda">EDA</string>
+    <string name="segment_chat">Chat</string>
+
+    <!-- Common actions -->
+    <string name="action_retry">Retry</string>
+    <string name="action_cancel">Cancel</string>
+
+
+    <!-- Shared component text -->
+    <string name="show_details">Show details</string>
+    <string name="hide_details">Hide details</string>
+    <string name="placeholder_coming_soon">This feature is planned for a future release.</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_clear_search">Clear search</string>
+    <string name="cd_expand_fullscreen">Expand to full screen</string>
+    <string name="cd_clear_chat">Clear chat history</string>
+    <string name="cd_notifications">Notifications</string>
+    <string name="cd_settings">Settings</string>
+
+    <!-- Clear chat dialog -->
+    <string name="clear_chat_title">Clear Chat History</string>
+    <string name="clear_chat_message">This will remove all messages from the assistant chat. This cannot be undone.</string>
+    <string name="clear_chat_confirm">Clear</string>
+</resources>

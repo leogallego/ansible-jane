@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.network.mcp
 import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.McpServerConfig
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +14,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 
 class McpServerManager(
-    private val httpClientFactory: (AapInstance) -> OkHttpClient,
+    private val httpClientFactory: (AapInstance, McpServerConfig) -> OkHttpClient,
     private val json: Json
 ) {
     private val _connections = MutableStateFlow<Map<String, McpConnectionState>>(emptyMap())
@@ -28,16 +29,17 @@ class McpServerManager(
         val configs = instance.mcpServerUrls?.filter { it.enabled } ?: return
         if (configs.isEmpty()) return
 
-        val httpClient = httpClientFactory(instance)
-
         coroutineScope {
             configs.map { config ->
                 async {
+                    val httpClient = httpClientFactory(instance, config)
                     connectServer(config, httpClient)
                 }
             }.forEach { deferred ->
                 try {
                     deferred.await()
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (_: Exception) {
                     // Per-server failure isolated — others continue
                 }

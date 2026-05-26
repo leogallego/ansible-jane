@@ -14,15 +14,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.leogallego.ansiblejane.R
 
 @Composable
 fun PlaceholderScreen(
     title: String,
-    description: String = "This feature is planned for a future release.",
+    description: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val resolvedDescription = description ?: stringResource(R.string.placeholder_coming_soon)
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -42,7 +45,7 @@ fun PlaceholderScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = description,
+            text = resolvedDescription,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
