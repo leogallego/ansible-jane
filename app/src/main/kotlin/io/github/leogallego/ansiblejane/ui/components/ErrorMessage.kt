@@ -30,7 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.ErrorDetail
@@ -146,7 +146,7 @@ fun ErrorMessage(
     }
 }
 
-@Preview(showBackground = true, name = "Error - Network with Retry")
+@PreviewLightDark
 @Composable
 private fun ErrorMessageNetworkPreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -154,7 +154,7 @@ private fun ErrorMessageNetworkPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Error - Server with Details")
+@PreviewLightDark
 @Composable
 private fun ErrorMessageWithDetailsPreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -172,7 +172,7 @@ private fun ErrorMessageWithDetailsPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Error - Auth without Retry")
+@PreviewLightDark
 @Composable
 private fun ErrorMessageNoRetryPreview() {
     AnsibleJaneTheme(dynamicColor = false) {

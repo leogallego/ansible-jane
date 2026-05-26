@@ -55,7 +55,7 @@ import io.github.leogallego.ansiblejane.presentation.dashboard.DashboardViewMode
 import io.github.leogallego.ansiblejane.presentation.dashboard.DayJobStats
 import io.github.leogallego.ansiblejane.presentation.dashboard.HealthStatus
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
@@ -683,7 +683,7 @@ private fun InfoRow(label: String, value: String, modifier: Modifier = Modifier)
     }
 }
 
-@Preview(showBackground = true, name = "Dashboard - Loading")
+@PreviewLightDark
 @Composable
 private fun DashboardLoadingPreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -691,7 +691,7 @@ private fun DashboardLoadingPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Dashboard - Error")
+@PreviewLightDark
 @Composable
 private fun DashboardErrorPreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -699,7 +699,7 @@ private fun DashboardErrorPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Dashboard - Success")
+@PreviewLightDark
 @Composable
 private fun DashboardContentPreview() {
     AnsibleJaneTheme(dynamicColor = false) {

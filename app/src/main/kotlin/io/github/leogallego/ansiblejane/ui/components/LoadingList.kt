@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 @Composable
@@ -17,7 +17,7 @@ fun LoadingList(
     }
 }
 
-@Preview(showBackground = true, name = "Loading List")
+@PreviewLightDark
 @Composable
 private fun LoadingListPreview() {
     AnsibleJaneTheme(dynamicColor = false) {

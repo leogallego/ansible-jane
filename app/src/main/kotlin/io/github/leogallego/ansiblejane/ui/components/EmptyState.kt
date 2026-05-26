@@ -7,7 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 @Composable
@@ -27,7 +27,7 @@ fun EmptyState(
     }
 }
 
-@Preview(showBackground = true, name = "Empty State")
+@PreviewLightDark
 @Composable
 private fun EmptyStatePreview() {
     AnsibleJaneTheme(dynamicColor = false) {

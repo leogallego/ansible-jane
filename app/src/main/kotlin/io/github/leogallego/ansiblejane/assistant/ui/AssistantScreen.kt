@@ -67,7 +67,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.engine.ResponseSource
 import io.github.leogallego.ansiblejane.assistant.engine.Role
@@ -408,7 +408,7 @@ private fun StreamingIndicator(
     }
 }
 
-@Preview(showBackground = true, name = "Assistant - Empty Chat")
+@PreviewLightDark
 @Composable
 private fun AssistantEmptyPreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -423,7 +423,7 @@ private fun AssistantEmptyPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Assistant - With Messages")
+@PreviewLightDark
 @Composable
 private fun AssistantWithMessagesPreview() {
     AnsibleJaneTheme(dynamicColor = false) {

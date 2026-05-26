@@ -21,7 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.model.JobTemplate
 import io.github.leogallego.ansiblejane.model.JobTemplateSummaryFields
 import io.github.leogallego.ansiblejane.model.Label
@@ -217,7 +217,7 @@ private val previewTemplates = listOf(
     ),
 )
 
-@Preview(showBackground = true, name = "Templates - Loading")
+@PreviewLightDark
 @Composable
 private fun TemplateListLoadingPreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -228,7 +228,7 @@ private fun TemplateListLoadingPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Templates - Empty")
+@PreviewLightDark
 @Composable
 private fun TemplateListEmptyPreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -239,7 +239,7 @@ private fun TemplateListEmptyPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Templates - Content")
+@PreviewLightDark
 @Composable
 private fun TemplateListContentPreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -261,7 +261,7 @@ private fun TemplateListContentPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Templates - Error")
+@PreviewLightDark
 @Composable
 private fun TemplateListErrorPreview() {
     AnsibleJaneTheme(dynamicColor = false) {

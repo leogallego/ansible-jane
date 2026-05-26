@@ -31,7 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.assistant.data.TokenSavingMode
@@ -185,7 +185,7 @@ private val previewConfig = LlmProviderConfig.OpenAiCompatible(
     tokenSavingMode = TokenSavingMode.STANDARD
 )
 
-@Preview(showBackground = true, name = "Provider Chip - Active")
+@PreviewLightDark
 @Composable
 private fun ProviderSwitchChipActivePreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -199,7 +199,7 @@ private fun ProviderSwitchChipActivePreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Provider Chip - No LLM")
+@PreviewLightDark
 @Composable
 private fun ProviderSwitchChipNoLlmPreview() {
     AnsibleJaneTheme(dynamicColor = false) {

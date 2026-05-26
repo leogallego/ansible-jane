@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.model.JobTemplate
 import io.github.leogallego.ansiblejane.model.JobTemplateSummaryFields
 import io.github.leogallego.ansiblejane.model.Label
@@ -135,7 +135,7 @@ private val previewTemplate = JobTemplate(
     )
 )
 
-@Preview(showBackground = true, name = "Template Card - Launchable")
+@PreviewLightDark
 @Composable
 private fun TemplateCardLaunchablePreview() {
     AnsibleJaneTheme(dynamicColor = false) {
@@ -147,7 +147,7 @@ private fun TemplateCardLaunchablePreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Template Card - Read Only")
+@PreviewLightDark
 @Composable
 private fun TemplateCardReadOnlyPreview() {
     AnsibleJaneTheme(dynamicColor = false) {
