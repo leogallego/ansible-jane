@@ -11,7 +11,9 @@ data class StatusColors(
     val pending: Color = Color(0xFF9E9E9E),
     val waiting: Color = Color(0xFF9E9E9E),
     val new: Color = Color(0xFF9E9E9E),
-    val canceled: Color = Color(0xFF2196F3)
+    val canceled: Color = Color(0xFF2196F3),
+    val healthGood: Color = Color(0xFF2E7D32),
+    val healthDegraded: Color = Color(0xFFE6A817),
 )
 
 val LocalStatusColors = staticCompositionLocalOf { StatusColors() }

@@ -14,23 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplateNode
 import io.github.leogallego.ansiblejane.model.WorkflowNode
+import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 enum class ConnectorType { SUCCESS, FAILURE, ALWAYS }
-
-private val connectorSuccessColor = Color(0xFF4CAF50)
-private val connectorFailureColor = Color(0xFFF44336)
-private val connectorAlwaysColor = Color(0xFF9E9E9E)
-
-fun ConnectorType.color(): Color = when (this) {
-    ConnectorType.SUCCESS -> connectorSuccessColor
-    ConnectorType.FAILURE -> connectorFailureColor
-    ConnectorType.ALWAYS -> connectorAlwaysColor
-}
 
 fun ConnectorType.label(): String = when (this) {
     ConnectorType.SUCCESS -> "On success"
@@ -40,7 +30,12 @@ fun ConnectorType.label(): String = when (this) {
 
 @Composable
 fun ConnectorSegment(type: ConnectorType) {
-    val color = type.color()
+    val statusColors = AnsibleJaneTheme.statusColors
+    val color = when (type) {
+        ConnectorType.SUCCESS -> statusColors.successful
+        ConnectorType.FAILURE -> statusColors.failed
+        ConnectorType.ALWAYS -> statusColors.pending
+    }
     val label = type.label()
 
     Row(
