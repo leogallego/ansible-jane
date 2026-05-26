@@ -6,6 +6,8 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.model.JobStatus
 import io.github.leogallego.ansiblejane.ui.icons.AapIcons
@@ -88,5 +91,20 @@ private fun statusConfig(status: JobStatus): StatusConfig {
         JobStatus.FAILED -> StatusConfig(scheme.error, AapIcons.Status.Failed, "Failed")
         JobStatus.ERROR -> StatusConfig(scheme.error, AapIcons.Status.Error, "Error")
         JobStatus.CANCELED -> StatusConfig(scheme.secondary, AapIcons.Status.Canceled, "Canceled")
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun JobStatusBadgePreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            JobStatus.entries.forEach { status ->
+                JobStatusBadge(status = status)
+            }
+        }
     }
 }

@@ -21,7 +21,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import io.github.leogallego.ansiblejane.model.JobTemplate
+import io.github.leogallego.ansiblejane.model.JobTemplateSummaryFields
 import io.github.leogallego.ansiblejane.model.Label
+import io.github.leogallego.ansiblejane.model.LabelSummary
+import io.github.leogallego.ansiblejane.model.UserCapabilities
 import io.github.leogallego.ansiblejane.presentation.templates.LaunchState
 import io.github.leogallego.ansiblejane.presentation.templates.TemplatesUiState
 import io.github.leogallego.ansiblejane.presentation.templates.TemplatesViewModel
@@ -35,6 +40,8 @@ import io.github.leogallego.ansiblejane.ui.components.LoadingList
 import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.TemplateCard
+import io.github.leogallego.ansiblejane.model.AppError
+import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -178,5 +185,89 @@ fun TemplateListScreen(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
+    }
+}
+
+private val previewTemplates = listOf(
+    JobTemplate(
+        id = 1,
+        name = "Deploy Web Application",
+        description = "Deploys the web application to production servers",
+        summaryFields = JobTemplateSummaryFields(
+            labels = LabelSummary(2, listOf(Label(1, "production"), Label(2, "deploy"))),
+            userCapabilities = UserCapabilities(start = true)
+        )
+    ),
+    JobTemplate(
+        id = 2,
+        name = "System Health Check",
+        description = "Runs health checks across all managed hosts",
+        summaryFields = JobTemplateSummaryFields(
+            labels = LabelSummary(1, listOf(Label(3, "monitoring"))),
+            userCapabilities = UserCapabilities(start = true)
+        )
+    ),
+    JobTemplate(
+        id = 3,
+        name = "Patch Management",
+        description = "Applies security patches and system updates",
+        summaryFields = JobTemplateSummaryFields(
+            userCapabilities = UserCapabilities(start = false)
+        )
+    ),
+)
+
+@PreviewLightDark
+@Composable
+private fun TemplateListLoadingPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            SearchBar(onSearch = {})
+            LoadingList()
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun TemplateListEmptyPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            SearchBar(onSearch = {})
+            EmptyState(message = "No templates available")
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun TemplateListContentPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            SearchBar(onSearch = {})
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(
+                    items = previewTemplates,
+                    key = { it.id }
+                ) { template ->
+                    TemplateCard(
+                        template = template,
+                        onClick = {},
+                        onLaunch = {}
+                    )
+                }
+            }
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun TemplateListErrorPreview() {
+    AnsibleJaneTheme(dynamicColor = false) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            SearchBar(onSearch = {})
+            ErrorMessage(error = AppError.Network(), onRetry = {})
+        }
     }
 }
