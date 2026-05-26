@@ -65,3 +65,4 @@ jobs:
           name: Release ${{ github.ref_name }}
           body_path: changelog.txt
           files: ansible-jane-*.apk
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
