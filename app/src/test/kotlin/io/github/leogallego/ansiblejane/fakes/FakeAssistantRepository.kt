@@ -16,6 +16,7 @@ class FakeAssistantRepository : IAssistantRepository {
     var savedConfig: LlmProviderConfig? = null
     var allConfigs = mutableMapOf<String, LlmProviderConfig>()
     var activeProvider: String? = null
+    var savedDisabledTools: Set<String> = emptySet()
 
     private val _onHistoryCleared = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     override val onHistoryCleared: SharedFlow<Unit> = _onHistoryCleared.asSharedFlow()
@@ -79,4 +80,10 @@ class FakeAssistantRepository : IAssistantRepository {
         _activeProviderKeyFlow.value = providerKey
         _activeConfigFlow.value = allConfigs[providerKey]
     }
+
+    override suspend fun saveDisabledTools(tools: Set<String>) {
+        savedDisabledTools = tools
+    }
+
+    override suspend fun getDisabledTools(): Set<String> = savedDisabledTools
 }

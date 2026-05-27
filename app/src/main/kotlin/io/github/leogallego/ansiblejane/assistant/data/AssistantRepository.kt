@@ -40,6 +40,7 @@ class AssistantRepository(
         private const val TAG = "AssistantRepository"
         val KEY_LLM_CONFIGS = stringPreferencesKey("llm_configs")
         val KEY_ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
+        val KEY_DISABLED_TOOLS = stringPreferencesKey("disabled_tools")
         const val MAX_MESSAGES = 100
     }
 
@@ -201,6 +202,30 @@ class AssistantRepository(
     override suspend fun switchActiveProvider(providerKey: String) {
         context.assistantDataStore.edit { prefs ->
             prefs[KEY_ACTIVE_PROVIDER] = providerKey
+        }
+    }
+
+    override suspend fun saveDisabledTools(tools: Set<String>) {
+        val encoded = json.encodeToString(
+            kotlinx.serialization.builtins.SetSerializer(String.serializer()),
+            tools
+        )
+        context.assistantDataStore.edit { prefs ->
+            prefs[KEY_DISABLED_TOOLS] = encoded
+        }
+    }
+
+    override suspend fun getDisabledTools(): Set<String> {
+        val prefs = context.assistantDataStore.data.first()
+        val encoded = prefs[KEY_DISABLED_TOOLS] ?: return emptySet()
+        return try {
+            json.decodeFromString(
+                kotlinx.serialization.builtins.SetSerializer(String.serializer()),
+                encoded
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to deserialize disabled tools", e)
+            emptySet()
         }
     }
 }
