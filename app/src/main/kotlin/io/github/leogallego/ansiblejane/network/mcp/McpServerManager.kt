@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.network.mcp
 import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.McpServerConfig
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -20,7 +21,7 @@ class McpServerManager(
     private val _connections = MutableStateFlow<Map<String, McpConnectionState>>(emptyMap())
     val connections: StateFlow<Map<String, McpConnectionState>> = _connections.asStateFlow()
 
-    private val clients = mutableMapOf<String, McpClient>()
+    private val clients = ConcurrentHashMap<String, McpClient>()
     private val mcpTools = mutableListOf<McpTool>()
     private var currentInstance: AapInstance? = null
 
