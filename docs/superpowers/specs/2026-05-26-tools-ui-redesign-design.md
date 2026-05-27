@@ -278,6 +278,160 @@ Following the existing convention (`field_<name>`, `button_<name>`, `switch_<nam
 
 ---
 
+## Testing
+
+Three tiers following existing project patterns: ViewModel unit tests (Turbine), Compose UI tests (Robolectric), and screenshot tests (PreviewTest).
+
+### Tier 1: ViewModel Unit Tests
+
+**File:** `app/src/test/kotlin/.../presentation/settings/SettingsViewModelTest.kt` (extend existing)
+
+Tests to add:
+
+| Test | Asserts |
+|------|---------|
+| `init loads local tools grouped by category` | `localTools` contains all 61 tools, grouped into 8 categories matching ToolRouter |
+| `init loads disabled tools from repository` | Disabled tools from DataStore reflected in `localTools[n].isEnabled == false` |
+| `toggleToolEnabled disables a local tool` | `disabledTools` contains `"LOCAL:list_hosts"`, `localTools` item updated |
+| `toggleToolEnabled enables a previously disabled tool` | `disabledTools` no longer contains the key, item re-enabled |
+| `toggleToolEnabled persists to repository` | `FakeAssistantRepository.savedDisabledTools` matches expected set |
+| `toggleToolEnabled for MCP tool uses MCP prefix` | `disabledTools` contains `"MCP:controller.hosts_list"` |
+| `toggleExpandCategory toggles set membership` | `expandedCategories` contains/removes the category name |
+| `toggleExpandMcpServer toggles set membership` | `expandedMcpServers` contains/removes the server label |
+| `mcpServerTools updates when connections change` | After fake connection emits Connected, `mcpServerTools[label]` populated |
+| `mcpServerTools reflects disabled state` | Disabled MCP tool shows `isEnabled == false` in `mcpServerTools` |
+| `refreshMcpServer triggers reconnectServer` | Verify `McpServerManager.reconnectServer(label)` called |
+
+**File:** `app/src/test/kotlin/.../assistant/engine/ToolRouterTest.kt` (extend existing)
+
+Tests to add:
+
+| Test | Asserts |
+|------|---------|
+| `getCategoryForTool returns correct category for local tools` | `getCategoryForTool("list_hosts")` returns `"INVENTORY"` |
+| `getCategoryForTool returns null for unknown tool` | `getCategoryForTool("nonexistent")` returns `null` |
+| `getCategoryForTool covers all 61 local tools` | Every tool name in every `Category.localToolNames` returns a category |
+
+**File:** `app/src/test/kotlin/.../assistant/presentation/AssistantViewModelTest.kt` (extend or create)
+
+Tests to add:
+
+| Test | Asserts |
+|------|---------|
+| `sendMessage applies disabled tools from repository` | After setting `"LOCAL:list_hosts"` in fake repo, `list_hosts` not in query results |
+| `sendMessage parses SOURCE:name format correctly` | Both `LOCAL:x` and `MCP:y` entries applied to correct ToolSource |
+| `sendMessage with empty disabled set enables all tools` | All tools available when DataStore returns empty set |
+
+### Tier 2: Compose UI Tests
+
+**File:** `app/src/test/kotlin/.../ui/settings/SettingsScreenTest.kt` (extend existing — currently only 1 Tools tab test)
+
+Tests to add:
+
+| Test | Asserts |
+|------|---------|
+| **MCP section** | |
+| `Tools tab shows MCP server cards when enabled` | After enabling MCP with servers, cards with server labels visible |
+| `MCP server card shows status dot and label` | `onNodeWithTag("card_mcp_server_job_management")` exists, label text displayed |
+| `MCP server card expands on click` | Click card → expanded content (Refresh, Remove buttons) visible |
+| `MCP server card collapse hides expanded content` | Click expanded card → buttons disappear |
+| `MCP server enable switch toggles independently` | Click switch → server toggled, card NOT expanded |
+| `expanded MCP card shows per-tool toggles` | When connected with tools, tool names and switches displayed |
+| `MCP tool toggle changes enabled state` | Click tool switch → `onNodeWithTag("switch_mcp_tool_x")` state changes |
+| `Add MCP Server button opens bottom sheet` | Click → name, URL, toolset fields displayed |
+| `Add MCP Server validates required fields` | Add button disabled when name or URL empty |
+| `Remove button removes server from list` | Click Remove → server card disappears |
+| `Refresh button triggers reconnection` | Click Refresh → connection state transitions |
+| `error state shows error message` | Server in Error state → error text displayed in expanded card |
+| `connecting state shows connecting text` | Server in Connecting state → "Connecting..." visible |
+| **Local tools section** | |
+| `Local Tools section shows title and count` | "Local Tools" header and tool count subtitle displayed |
+| `categories collapsed by default` | No individual tool names visible initially |
+| `category header shows name and tool count` | "Jobs" header with count badge visible |
+| `clicking category header expands tool list` | Click "Jobs" → job tool names appear |
+| `clicking expanded category collapses it` | Click again → tool names disappear |
+| `local tool toggle changes enabled state` | Click tool switch → state changes |
+| `disabled tool shows unchecked switch` | Pre-disabled tool renders with switch off |
+| **Cross-cutting** | |
+| `tab navigation to Tools tab shows both sections` | "MCP Servers" and "Local Tools" both visible |
+
+### Tier 3: Screenshot Tests
+
+**File:** `app/src/screenshotTest/kotlin/.../screens/ToolsTabScreenshots.kt` (new)
+
+The existing `SettingsScreenScreenshots.kt` covers the Instances tab only. We need a new file for Tools tab variants using self-contained preview composables (same pattern as existing screenshots):
+
+| Preview | Config | Content |
+|---------|--------|---------|
+| `ToolsTabMcpCollapsed_Light` | 400×900, light | MCP enabled, 3 servers (connected/error/disconnected), all collapsed |
+| `ToolsTabMcpCollapsed_Dark` | 400×900, dark | Same content, dark theme |
+| `ToolsTabMcpExpanded_Light` | 400×1200, light | One server expanded showing 5 tools with toggles |
+| `ToolsTabLocalTools_Light` | 400×1200, light | MCP disabled, local tools section with one category expanded |
+| `ToolsTabLocalTools_Dark` | 400×1200, dark | Same, dark theme |
+| `ToolsTabAddServer_Light` | 400×900, light | ModalBottomSheet open with add server form |
+| `ToolsTabLargeFont` | 400×1200, fontScale=1.5 | Large font with expanded MCP card — verifies text doesn't overflow |
+| `ToolsTabEmpty_Light` | 400×900, light | MCP disabled, no servers — shows only toggle and local tools |
+
+### Tier 4: Test Infrastructure Updates
+
+**FakeAssistantRepository** — add disabled tools support:
+
+```kotlin
+// fakes/FakeAssistantRepository.kt — new fields/methods
+var savedDisabledTools: Set<String> = emptySet()
+
+override suspend fun saveDisabledTools(tools: Set<String>) {
+    savedDisabledTools = tools
+}
+
+override suspend fun getDisabledTools(): Set<String> = savedDisabledTools
+```
+
+**FakeMcpServerManager** (new or extend existing setup):
+
+The existing tests create a real `McpServerManager` with a no-op factory. For the new SettingsViewModel tests that need connection state and per-server tools, we need controllable fakes:
+
+```kotlin
+// Either: add helper methods to control connection state in tests
+// Or: extract an interface and provide a FakeMcpServerManager
+```
+
+Decision: since `McpServerManager` is not behind an interface and the existing tests construct it directly with a no-op factory, the simplest approach is to add `getToolsForServer()` and `reconnectServer()` to the real class (they're simple filtering/delegation) and use the existing construction pattern in tests with manually set connection states.
+
+**TestData.kt** — add tool test fixtures:
+
+```kotlin
+fun testMcpServerConfig(label: String = "test_server", ...) = McpServerConfig(...)
+fun testLocalToolUiState(name: String = "list_hosts", ...) = LocalToolUiState(...)
+```
+
+### Test Coverage Matrix
+
+| Component | Unit | UI | Screenshot | Notes |
+|-----------|------|----|------------|-------|
+| ToolsTab composable | — | 15 tests | 8 previews | Rewritten, needs full coverage |
+| McpServerCard composable | — | 7 tests | 3 previews | New file |
+| AddMcpServerSheet composable | — | 2 tests | 1 preview | New file |
+| LocalToolsSection composable | — | 5 tests | 2 previews | New file |
+| SettingsViewModel (tool methods) | 11 tests | — | — | Extend existing |
+| ToolRouter.getCategoryForTool | 3 tests | — | — | Extend existing |
+| AssistantViewModel (disabled tools) | 3 tests | — | — | Extend or create |
+| AssistantRepository (persistence) | — | — | — | Covered via FakeAssistantRepository in ViewModel tests |
+| McpServerManager (new methods) | — | — | — | Simple filtering, covered via integration in ViewModel tests |
+| StatusColors (new tokens) | — | — | via screenshots | Visual validation only |
+
+### Existing Tests to Update
+
+These existing tests reference the current ToolsTab and will need updates:
+
+| File | Test | Change needed |
+|------|------|---------------|
+| `SettingsScreenTest.kt` | `Tools tab shows MCP Servers section` | Still valid — "MCP Servers" text stays |
+| `SettingsScreenTest.kt` | `All tabs are displayed` | Still valid — Tools tab stays |
+| `SettingsScreenScreenshots.kt` | All 6 variants | Only covers Instances tab — no change needed |
+
+---
+
 ## Out of Scope
 
 - ToolRouter singleton refactor (#120)
