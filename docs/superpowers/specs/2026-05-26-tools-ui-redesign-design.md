@@ -43,11 +43,11 @@ The bottom sheet visibility (`showAddServerDialog`) is transient UI state, kept 
   - **Expanded:** connection status text + error details (if error) + per-tool list with name/description/toggle + read-only switch + Refresh/Remove buttons
 - "Add MCP Server" button opens `ModalBottomSheet` with name, URL, toolset fields
 
-**Status dot colors** (matches Kai):
-- Connected: green `0xFF4CAF50`
-- Connecting: orange `0xFFFF9800`
-- Error: red `0xFFF44336`
-- Disconnected: gray `0xFF9E9E9E`
+**Status dot colors** (via `StatusColors` theme tokens, not hardcoded):
+- Connected: `statusColors.successful` (green, already exists)
+- Connecting: `statusColors.running` (orange, already exists)
+- Error: `statusColors.error` (red, **new** — add to `StatusColors`)
+- Disconnected: `statusColors.disconnected` (gray, **new** — add to `StatusColors`)
 
 ### Local Tools Section (bottom)
 
@@ -126,11 +126,20 @@ data class McpToolUiState(
 3. For each entry in the set, parses `"SOURCE:name"` and calls `toolRouter.setToolEnabled(name, source, false)`
 4. Proceeds with `getToolsForQuery()` as before — disabled tools are filtered out
 
+### MCP server tools (reactive)
+
+`mcpServerTools` is re-derived whenever `mcpServerManager.connections` emits (same flow SettingsViewModel already observes). For each connected server, calls `McpServerManager.getToolsForServer(label)` which filters the already-loaded in-memory tool list (no network call — tools are populated during `connectAll()`). Tool enabled state is derived from the `disabledTools` set.
+
 ### MCP server expand (user action)
 
 1. User taps MCP server card
-2. SettingsViewModel toggles `expandedMcpServers` set
-3. `mcpServerTools` is derived from `McpServerManager.getToolsForServer(label)` which filters the already-loaded in-memory tool list (no network call — tools are populated during `connectAll()`)
+2. SettingsViewModel toggles `expandedMcpServers` set (UI-only, tools already loaded)
+
+### MCP server refresh (user action)
+
+1. User taps "Refresh" in expanded MCP card
+2. SettingsViewModel calls `McpServerManager.reconnectServer(label)` (new method — disconnects and reconnects a single server)
+3. Connection state flow updates → `mcpServerTools` re-derived automatically
 
 ---
 
@@ -156,7 +165,8 @@ data class McpToolUiState(
 | `assistant/presentation/AssistantViewModel.kt` | Read disabled set from repository, apply to per-message ToolRouter after registration |
 | `assistant/engine/ToolRouter.kt` | Add `getCategoryForTool(name): String?` companion function |
 | `assistant/AssistantModule.kt` | Add `localTools = getAll<LocalTool>()` to SettingsViewModel construction |
-| `network/mcp/McpServerManager.kt` | Add `getToolsForServer(label): List<McpTool>` |
+| `network/mcp/McpServerManager.kt` | Add `getToolsForServer(label): List<McpTool>` and `reconnectServer(label)` |
+| `ui/theme/StatusColors.kt` | Add `error` and `disconnected` color tokens |
 
 ## Files Not Touched
 
