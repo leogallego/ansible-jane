@@ -38,6 +38,12 @@ sealed interface SettingsUiState {
         // Tools (MCP)
         val mcpEnabled: Boolean = false,
         val mcpServers: List<McpServerConfig> = emptyList(),
-        val connections: Map<String, McpConnectionState> = emptyMap()
+        val connections: Map<String, McpConnectionState> = emptyMap(),
+        // Tools (Local + expanded state)
+        val localTools: List<LocalToolUiState> = emptyList(),
+        val mcpServerTools: Map<String, List<McpToolUiState>> = emptyMap(),
+        val expandedMcpServers: Set<String> = emptySet(),
+        val expandedCategories: Set<String> = emptySet(),
+        val disabledTools: Set<String> = emptySet()
     ) : SettingsUiState
 }
