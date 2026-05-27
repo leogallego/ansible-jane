@@ -16,6 +16,7 @@ import io.github.leogallego.ansiblejane.assistant.llm.GeminiLlmProvider
 import io.github.leogallego.ansiblejane.assistant.llm.KoogLlmProvider
 import io.github.leogallego.ansiblejane.assistant.llm.LlmProvider
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.assistant.tools.local.ListToolsLocalTool
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
@@ -47,6 +48,8 @@ class AssistantViewModel(
     private var generateJob: Job? = null
     private var cachedProvider: LlmProvider? = null
     private var cachedProviderKey: String? = null
+    @Volatile
+    private var cachedDisabledTools: Set<String> = emptySet()
 
     private val _llmConfig = MutableStateFlow<LlmProviderConfig?>(null)
     val llmConfig: StateFlow<LlmProviderConfig?> = _llmConfig.asStateFlow()
@@ -99,6 +102,10 @@ class AssistantViewModel(
         }
 
         viewModelScope.launch {
+            cachedDisabledTools = repository.getDisabledTools()
+        }
+
+        viewModelScope.launch {
             mcpServerManager.connections.collect { connections ->
                 _uiState.update { current ->
                     if (current is AssistantUiState.Active) current.copy(connections = connections)
@@ -138,87 +145,100 @@ class AssistantViewModel(
         val trustSelfSigned = tokenManager.activeInstance.value?.trustSelfSigned == true
         val provider = getOrCreateProvider(config as LlmProviderConfig.OpenAiCompatible, trustSelfSigned)
 
-        mcpServerManager.refreshConnections()
-        val mcpTools = mcpServerManager.getAllTools()
-        val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
-        val toolRouter = ToolRouter()
-        toolRouter.registerLocalTools(localTools)
-        toolRouter.registerMcpTools(mcpTools)
-        Log.d(TAG, "ROUTE: query=\"$text\", ${localTools.size} local, ${mcpTools.size} mcp tools available")
-        val queryResult = toolRouter.getToolsForQuery(text, serverConfigs)
-        val mode = config.tokenSavingMode
-        Log.d(TAG, "ROUTE: categoryMatched=${queryResult.categoryMatched}, " +
-            "${queryResult.tools.size} tools selected, mode=$mode")
-
-        val noToolsForCategory = queryResult.categoryMatched && queryResult.tools.isEmpty()
-        val queryWords = text.lowercase().split(Regex("\\W+")).toSet()
-        val isToolDiscoveryQuery = TOOL_DISCOVERY_WORDS.any { it in queryWords }
-        val generalQueryInToolsOnly = !queryResult.categoryMatched &&
-            mode == TokenSavingMode.TOOLS_ONLY && !isToolDiscoveryQuery
-
-        if (noToolsForCategory || generalQueryInToolsOnly) {
-            Log.d(TAG, "ROUTE: no tools path — noToolsForCategory=$noToolsForCategory, " +
-                "generalQueryInToolsOnly=$generalQueryInToolsOnly")
-            val hasMcp = mcpServerManager.getAllTools().isNotEmpty()
-            val content = if (generalQueryInToolsOnly) {
-                "I can help you query your AAP instance. Try asking about:\n\n" +
-                    "- **Inventory** — hosts, groups, inventories\n" +
-                    "- **Jobs** — job templates, workflows, schedules\n" +
-                    "- **Users** — users, teams, organizations, roles\n" +
-                    "- **Credentials** — credentials, secrets\n" +
-                    "- **Monitoring** — system health, instance status\n" +
-                    "- **Configuration** — projects, settings, notifications\n\n" +
-                    "You can also ask \"what tools do you have?\" to see all available tools."
-            } else if (!hasMcp) {
-                "I don't have the right tools for that query. This may require an MCP server connection.\n\n" +
-                    "I can help with:\n" +
-                    "- **Inventory** — hosts, groups, inventories\n" +
-                    "- **Jobs** — job templates, workflows, schedules\n" +
-                    "- **Monitoring** — system health, instance status\n" +
-                    "- **Credentials** — credentials, secrets\n" +
-                    "- **Configuration** — projects, execution environments"
-            } else {
-                "I don't have the right tools for that query. Try asking about:\n\n" +
-                    "- **Inventory** — hosts, groups, inventories\n" +
-                    "- **Jobs** — job templates, workflows, schedules\n" +
-                    "- **Users** — users, teams, organizations, roles\n" +
-                    "- **Credentials** — credentials, secrets\n" +
-                    "- **Monitoring** — system health, instance status\n" +
-                    "- **Configuration** — projects, settings, notifications"
-            }
-            val guidanceMsg = ChatMessage(role = Role.ASSISTANT, content = content, source = ResponseSource.LLM)
-            repository.addMessage(guidanceMsg)
-            updateState { copy(messages = repository.getHistory().toImmutableList(), isGenerating = false) }
-            return
-        }
-
-        val mcpLimit = when (mode) {
-            TokenSavingMode.STANDARD -> 10
-            TokenSavingMode.TOKEN_SAVER -> 5
-            TokenSavingMode.TOOLS_ONLY -> 3
-        }
-        val matchedLocal = queryResult.tools.filterIsInstance<LocalTool>()
-        val matchedMcp = queryResult.tools.filter { it !is LocalTool }.take(mcpLimit)
-        val budgetedTools = if (matchedLocal.isEmpty() && matchedMcp.isEmpty()) {
-            val listTool = ListToolsLocalTool { toolRouter.getAllRegisteredTools() }
-            listOf(listTool)
-        } else {
-            matchedLocal + matchedMcp
-        }
-        Log.d(TAG, "BUDGET: ${budgetedTools.size} tools [${budgetedTools.map { it.spec.name }}]" +
-            if (matchedLocal.isEmpty() && matchedMcp.isEmpty()) " (fallback: list_tools)" else "")
-        val toolSpecs = budgetedTools.map { it.spec }
-        val toolExecutor = ToolExecutor(budgetedTools)
-        val engine = ChatEngine(provider, toolExecutor)
-        val maxTokens: Int? = null
-        val contextChars = when (mode) {
-            TokenSavingMode.STANDARD -> 16_000
-            TokenSavingMode.TOKEN_SAVER -> 8_000
-            TokenSavingMode.TOOLS_ONLY -> 4_000
-        }
-
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
+            cachedDisabledTools = repository.getDisabledTools()
+
+            mcpServerManager.refreshConnections()
+            val mcpTools = mcpServerManager.getAllTools()
+            val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
+            val toolRouter = ToolRouter()
+            toolRouter.registerLocalTools(localTools)
+            toolRouter.registerMcpTools(mcpTools)
+
+            for (entry in cachedDisabledTools) {
+                val colonIndex = entry.indexOf(':')
+                if (colonIndex > 0) {
+                    val sourceStr = entry.substring(0, colonIndex)
+                    val toolName = entry.substring(colonIndex + 1)
+                    val source = try { ToolSource.valueOf(sourceStr) } catch (_: Exception) { continue }
+                    toolRouter.setToolEnabled(toolName, source, false)
+                }
+            }
+
+            Log.d(TAG, "ROUTE: query=\"$text\", ${localTools.size} local, ${mcpTools.size} mcp, ${cachedDisabledTools.size} disabled")
+            val queryResult = toolRouter.getToolsForQuery(text, serverConfigs)
+            val mode = config.tokenSavingMode
+            Log.d(TAG, "ROUTE: categoryMatched=${queryResult.categoryMatched}, " +
+                "${queryResult.tools.size} tools selected, mode=$mode")
+
+            val noToolsForCategory = queryResult.categoryMatched && queryResult.tools.isEmpty()
+            val queryWords = text.lowercase().split(Regex("\\W+")).toSet()
+            val isToolDiscoveryQuery = TOOL_DISCOVERY_WORDS.any { it in queryWords }
+            val generalQueryInToolsOnly = !queryResult.categoryMatched &&
+                mode == TokenSavingMode.TOOLS_ONLY && !isToolDiscoveryQuery
+
+            if (noToolsForCategory || generalQueryInToolsOnly) {
+                Log.d(TAG, "ROUTE: no tools path — noToolsForCategory=$noToolsForCategory, " +
+                    "generalQueryInToolsOnly=$generalQueryInToolsOnly")
+                val hasMcp = mcpServerManager.getAllTools().isNotEmpty()
+                val content = if (generalQueryInToolsOnly) {
+                    "I can help you query your AAP instance. Try asking about:\n\n" +
+                        "- **Inventory** — hosts, groups, inventories\n" +
+                        "- **Jobs** — job templates, workflows, schedules\n" +
+                        "- **Users** — users, teams, organizations, roles\n" +
+                        "- **Credentials** — credentials, secrets\n" +
+                        "- **Monitoring** — system health, instance status\n" +
+                        "- **Configuration** — projects, settings, notifications\n\n" +
+                        "You can also ask \"what tools do you have?\" to see all available tools."
+                } else if (!hasMcp) {
+                    "I don't have the right tools for that query. This may require an MCP server connection.\n\n" +
+                        "I can help with:\n" +
+                        "- **Inventory** — hosts, groups, inventories\n" +
+                        "- **Jobs** — job templates, workflows, schedules\n" +
+                        "- **Monitoring** — system health, instance status\n" +
+                        "- **Credentials** — credentials, secrets\n" +
+                        "- **Configuration** — projects, execution environments"
+                } else {
+                    "I don't have the right tools for that query. Try asking about:\n\n" +
+                        "- **Inventory** — hosts, groups, inventories\n" +
+                        "- **Jobs** — job templates, workflows, schedules\n" +
+                        "- **Users** — users, teams, organizations, roles\n" +
+                        "- **Credentials** — credentials, secrets\n" +
+                        "- **Monitoring** — system health, instance status\n" +
+                        "- **Configuration** — projects, settings, notifications"
+                }
+                val guidanceMsg = ChatMessage(role = Role.ASSISTANT, content = content, source = ResponseSource.LLM)
+                repository.addMessage(guidanceMsg)
+                updateState { copy(messages = repository.getHistory().toImmutableList(), isGenerating = false) }
+                return@launch
+            }
+
+            val mcpLimit = when (mode) {
+                TokenSavingMode.STANDARD -> 10
+                TokenSavingMode.TOKEN_SAVER -> 5
+                TokenSavingMode.TOOLS_ONLY -> 3
+            }
+            val matchedLocal = queryResult.tools.filterIsInstance<LocalTool>()
+            val matchedMcp = queryResult.tools.filter { it !is LocalTool }.take(mcpLimit)
+            val budgetedTools = if (matchedLocal.isEmpty() && matchedMcp.isEmpty()) {
+                val listTool = ListToolsLocalTool { toolRouter.getAllRegisteredTools() }
+                listOf(listTool)
+            } else {
+                matchedLocal + matchedMcp
+            }
+            Log.d(TAG, "BUDGET: ${budgetedTools.size} tools [${budgetedTools.map { it.spec.name }}]" +
+                if (matchedLocal.isEmpty() && matchedMcp.isEmpty()) " (fallback: list_tools)" else "")
+            val toolSpecs = budgetedTools.map { it.spec }
+            val toolExecutor = ToolExecutor(budgetedTools)
+            val engine = ChatEngine(provider, toolExecutor)
+            val maxTokens: Int? = null
+            val contextChars = when (mode) {
+                TokenSavingMode.STANDARD -> 16_000
+                TokenSavingMode.TOKEN_SAVER -> 8_000
+                TokenSavingMode.TOOLS_ONLY -> 4_000
+            }
+
             val textBuilder = StringBuilder()
             val usedSources = mutableSetOf<String>()
             val usedToolNames = mutableListOf<String>()
