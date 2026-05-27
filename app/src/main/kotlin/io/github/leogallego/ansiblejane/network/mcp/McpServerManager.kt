@@ -22,8 +22,10 @@ class McpServerManager(
 
     private val clients = mutableMapOf<String, McpClient>()
     private val mcpTools = mutableListOf<McpTool>()
+    private var currentInstance: AapInstance? = null
 
     suspend fun connectAll(instance: AapInstance) {
+        currentInstance = instance
         disconnectAll()
 
         val configs = instance.mcpServerUrls?.filter { it.enabled } ?: return
@@ -82,6 +84,24 @@ class McpServerManager(
     }
 
     fun getAllTools(): List<McpTool> = synchronized(mcpTools) { mcpTools.toList() }
+
+    fun getToolsForServer(label: String): List<McpTool> =
+        synchronized(mcpTools) { mcpTools.filter { it.serverLabel == label } }
+
+    suspend fun reconnectServer(label: String) {
+        val instance = currentInstance ?: return
+        val config = instance.mcpServerUrls?.find { it.label == label } ?: return
+
+        clients[label]?.let { client ->
+            try { client.disconnect() } catch (_: Exception) {}
+            clients.remove(label)
+        }
+        synchronized(mcpTools) { mcpTools.removeAll { it.serverLabel == label } }
+        _connections.update { it + (label to McpConnectionState.Connecting) }
+
+        val httpClient = httpClientFactory(instance, config)
+        connectServer(config, httpClient)
+    }
 
     fun refreshConnections() {
         clients.forEach { (label, client) ->
