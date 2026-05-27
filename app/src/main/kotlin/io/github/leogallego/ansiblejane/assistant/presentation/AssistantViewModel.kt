@@ -48,8 +48,6 @@ class AssistantViewModel(
     private var generateJob: Job? = null
     private var cachedProvider: LlmProvider? = null
     private var cachedProviderKey: String? = null
-    @Volatile
-    private var cachedDisabledTools: Set<String> = emptySet()
 
     private val _llmConfig = MutableStateFlow<LlmProviderConfig?>(null)
     val llmConfig: StateFlow<LlmProviderConfig?> = _llmConfig.asStateFlow()
@@ -102,10 +100,6 @@ class AssistantViewModel(
         }
 
         viewModelScope.launch {
-            cachedDisabledTools = repository.getDisabledTools()
-        }
-
-        viewModelScope.launch {
             mcpServerManager.connections.collect { connections ->
                 _uiState.update { current ->
                     if (current is AssistantUiState.Active) current.copy(connections = connections)
@@ -147,7 +141,7 @@ class AssistantViewModel(
 
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
-            cachedDisabledTools = repository.getDisabledTools()
+            val disabledTools = repository.getDisabledTools()
 
             mcpServerManager.refreshConnections()
             val mcpTools = mcpServerManager.getAllTools()
@@ -156,7 +150,7 @@ class AssistantViewModel(
             toolRouter.registerLocalTools(localTools)
             toolRouter.registerMcpTools(mcpTools)
 
-            for (entry in cachedDisabledTools) {
+            for (entry in disabledTools) {
                 val colonIndex = entry.indexOf(':')
                 if (colonIndex > 0) {
                     val sourceStr = entry.substring(0, colonIndex)
@@ -166,7 +160,7 @@ class AssistantViewModel(
                 }
             }
 
-            Log.d(TAG, "ROUTE: query=\"$text\", ${localTools.size} local, ${mcpTools.size} mcp, ${cachedDisabledTools.size} disabled")
+            Log.d(TAG, "ROUTE: query=\"$text\", ${localTools.size} local, ${mcpTools.size} mcp, ${disabledTools.size} disabled")
             val queryResult = toolRouter.getToolsForQuery(text, serverConfigs)
             val mode = config.tokenSavingMode
             Log.d(TAG, "ROUTE: categoryMatched=${queryResult.categoryMatched}, " +

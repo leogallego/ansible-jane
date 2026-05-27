@@ -32,6 +32,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -80,7 +82,6 @@ fun McpServerCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onToggleExpand() }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -89,9 +90,14 @@ fun McpServerCard(
                         .size(10.dp)
                         .clip(CircleShape)
                         .background(dotColor)
+                        .semantics { contentDescription = statusText }
                 )
                 Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onToggleExpand() }
+                ) {
                     Text(
                         text = server.label,
                         style = MaterialTheme.typography.titleSmall,
@@ -114,6 +120,7 @@ fun McpServerCard(
                     imageVector = if (expanded) Icons.Default.KeyboardArrowUp
                     else Icons.Default.KeyboardArrowDown,
                     contentDescription = if (expanded) "Collapse" else "Expand",
+                    modifier = Modifier.clickable { onToggleExpand() },
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -154,7 +161,8 @@ fun McpServerCard(
                         )
                         Switch(
                             checked = server.readOnly,
-                            onCheckedChange = onToggleReadOnly
+                            onCheckedChange = onToggleReadOnly,
+                            modifier = Modifier.testTag("switch_mcp_readonly_${server.label}")
                         )
                     }
 

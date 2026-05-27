@@ -92,11 +92,13 @@ class McpServerManager(
         val instance = currentInstance ?: return
         val config = instance.mcpServerUrls?.find { it.label == label } ?: return
 
-        clients[label]?.let { client ->
-            try { client.disconnect() } catch (_: Exception) {}
+        synchronized(this) {
+            clients[label]?.let { client ->
+                try { client.disconnect() } catch (_: Exception) {}
+            }
             clients.remove(label)
+            mcpTools.removeAll { it.serverLabel == label }
         }
-        synchronized(mcpTools) { mcpTools.removeAll { it.serverLabel == label } }
         _connections.update { it + (label to McpConnectionState.Connecting) }
 
         val httpClient = httpClientFactory(instance, config)

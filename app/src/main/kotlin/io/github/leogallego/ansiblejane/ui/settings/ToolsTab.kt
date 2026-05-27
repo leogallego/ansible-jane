@@ -49,6 +49,7 @@ fun ToolsTab(
     onAddMcpServer: (url: String, label: String, toolset: String?) -> Unit,
     onRemoveMcpServer: (url: String) -> Unit,
     onToggleReadOnly: (url: String, readOnly: Boolean) -> Unit,
+    onToggleServerEnabled: (url: String, enabled: Boolean) -> Unit,
     onToggleToolEnabled: (name: String, source: ToolSource, enabled: Boolean) -> Unit,
     onToggleExpandMcpServer: (label: String) -> Unit,
     onToggleExpandCategory: (category: String) -> Unit,
@@ -76,9 +77,9 @@ fun ToolsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Enable AAP MCP", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.tools_mcp_enable_label), style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    "Auto-detect at {instance}/{toolset}/mcp",
+                    stringResource(R.string.tools_mcp_auto_detect_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -99,7 +100,7 @@ fun ToolsTab(
                     expanded = server.label in expandedMcpServers,
                     disabledTools = disabledTools,
                     onToggleExpand = { onToggleExpandMcpServer(server.label) },
-                    onToggleEnabled = { onToggleMcp(it) },
+                    onToggleEnabled = { onToggleServerEnabled(server.url, it) },
                     onToggleReadOnly = { onToggleReadOnly(server.url, it) },
                     onToggleTool = { name, enabled ->
                         onToggleToolEnabled(name, ToolSource.MCP, enabled)

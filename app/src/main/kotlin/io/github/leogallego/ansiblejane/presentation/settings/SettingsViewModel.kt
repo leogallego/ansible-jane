@@ -358,6 +358,16 @@ class SettingsViewModel(
         }
     }
 
+    fun toggleServerEnabled(url: String, enabled: Boolean) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val updated = instance.mcpServerUrls?.map {
+                if (it.url == url) it.copy(enabled = enabled) else it
+            }
+            tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
+        }
+    }
+
     fun toggleToolEnabled(toolName: String, source: ToolSource, enabled: Boolean) {
         val key = "${source.name}:$toolName"
         viewModelScope.launch {

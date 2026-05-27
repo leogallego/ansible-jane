@@ -45,6 +45,8 @@
     <string name="clear_chat_confirm">Clear</string>
 
     <!-- Tools tab - MCP -->
+    <string name="tools_mcp_enable_label">Enable AAP MCP</string>
+    <string name="tools_mcp_auto_detect_hint">Auto-detect at {instance}/{toolset}/mcp</string>
     <string name="tools_mcp_servers">MCP Servers</string>
     <string name="tools_mcp_status_connected">Connected</string>
     <string name="tools_mcp_status_connecting">Connecting…</string>
