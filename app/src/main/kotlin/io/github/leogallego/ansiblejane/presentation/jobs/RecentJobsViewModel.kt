@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class RecentJobsViewModel(
@@ -46,7 +47,7 @@ class RecentJobsViewModel(
     fun loadRecentJobs() {
         currentPage = 1
         allJobs.clear()
-        _uiState.value = RecentJobsUiState.Loading
+        _uiState.update { RecentJobsUiState.Loading }
         fetchJob?.cancel()
         fetchJob = viewModelScope.launch {
             fetchJobs()
@@ -70,7 +71,7 @@ class RecentJobsViewModel(
         }
         currentPage = 1
         allJobs.clear()
-        _uiState.value = RecentJobsUiState.Loading
+        _uiState.update { RecentJobsUiState.Loading }
         viewModelScope.launch {
             fetchJobs()
         }
@@ -80,21 +81,21 @@ class RecentJobsViewModel(
         activeFilters.clear()
         currentPage = 1
         allJobs.clear()
-        _uiState.value = RecentJobsUiState.Loading
+        _uiState.update { RecentJobsUiState.Loading }
         viewModelScope.launch {
             fetchJobs()
         }
     }
 
     fun search(query: String) {
-        _searchQuery.value = query
+        _searchQuery.update { query }
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(300)
             currentSearch = query.ifBlank { null }
             currentPage = 1
             allJobs.clear()
-            _uiState.value = RecentJobsUiState.Loading
+            _uiState.update { RecentJobsUiState.Loading }
             fetchJobs()
         }
     }
@@ -105,7 +106,7 @@ class RecentJobsViewModel(
         val current = _uiState.value
         if (current is RecentJobsUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.value = current.copy(isLoadingMore = true)
+            _uiState.update { current.copy(isLoadingMore = true) }
             viewModelScope.launch {
                 fetchJobs(append = true)
             }
@@ -126,14 +127,16 @@ class RecentJobsViewModel(
                     allJobs.clear()
                     allJobs.addAll(jobsResult.jobs)
                 }
-                _uiState.value = RecentJobsUiState.Success(
-                    jobs = allJobs.toList(),
-                    hasMore = jobsResult.hasMore,
-                    activeFilters = activeFilters.toSet()
-                )
+                _uiState.update {
+                    RecentJobsUiState.Success(
+                        jobs = allJobs.toList(),
+                        hasMore = jobsResult.hasMore,
+                        activeFilters = activeFilters.toSet()
+                    )
+                }
             },
             onFailure = { error ->
-                _uiState.value = RecentJobsUiState.Error(AppError.from(error))
+                _uiState.update { RecentJobsUiState.Error(AppError.from(error)) }
             }
         )
     }

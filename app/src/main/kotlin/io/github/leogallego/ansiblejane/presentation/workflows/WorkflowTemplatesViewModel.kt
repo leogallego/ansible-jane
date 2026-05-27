@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class WorkflowTemplatesViewModel(
@@ -50,7 +51,7 @@ class WorkflowTemplatesViewModel(
     fun loadTemplates() {
         currentPage = 1
         allTemplates.clear()
-        _uiState.value = WorkflowTemplatesUiState.Loading
+        _uiState.update { WorkflowTemplatesUiState.Loading }
         fetchJob?.cancel()
         fetchJob = viewModelScope.launch {
             fetchTemplates()
@@ -70,7 +71,7 @@ class WorkflowTemplatesViewModel(
         val current = _uiState.value
         if (current is WorkflowTemplatesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.value = current.copy(isLoadingMore = true)
+            _uiState.update { current.copy(isLoadingMore = true) }
             fetchJob = viewModelScope.launch {
                 fetchTemplates(append = true)
             }
@@ -78,14 +79,14 @@ class WorkflowTemplatesViewModel(
     }
 
     fun search(query: String) {
-        _searchQuery.value = query
+        _searchQuery.update { query }
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(300)
             currentSearch = query.ifBlank { null }
             currentPage = 1
             allTemplates.clear()
-            _uiState.value = WorkflowTemplatesUiState.Loading
+            _uiState.update { WorkflowTemplatesUiState.Loading }
             fetchTemplates()
         }
     }
@@ -94,17 +95,16 @@ class WorkflowTemplatesViewModel(
         currentLabelFilter = label?.name
         currentPage = 1
         allTemplates.clear()
-        _uiState.value = WorkflowTemplatesUiState.Loading
+        _uiState.update { WorkflowTemplatesUiState.Loading }
         viewModelScope.launch {
             fetchTemplates()
         }
     }
 
     fun requestLaunch(template: WorkflowJobTemplate) {
-        _launchState.value = if (template.askVariablesOnLaunch) {
-            WorkflowLaunchState.EnteringVars(template)
-        } else {
-            WorkflowLaunchState.Confirming(template)
+        _launchState.update {
+            if (template.askVariablesOnLaunch) WorkflowLaunchState.EnteringVars(template)
+            else WorkflowLaunchState.Confirming(template)
         }
     }
 
@@ -115,22 +115,24 @@ class WorkflowTemplatesViewModel(
             else -> return
         }
 
-        _launchState.value = WorkflowLaunchState.Launching
+        _launchState.update { WorkflowLaunchState.Launching }
         viewModelScope.launch {
             val result = workflowRepository.launchWorkflow(template.id, extraVars)
-            _launchState.value = result.fold(
-                onSuccess = { workflowJobId -> WorkflowLaunchState.Launched(workflowJobId) },
-                onFailure = { error -> WorkflowLaunchState.LaunchError(AppError.from(error)) }
-            )
+            _launchState.update {
+                result.fold(
+                    onSuccess = { workflowJobId -> WorkflowLaunchState.Launched(workflowJobId) },
+                    onFailure = { error -> WorkflowLaunchState.LaunchError(AppError.from(error)) }
+                )
+            }
         }
     }
 
     fun cancelLaunch() {
-        _launchState.value = WorkflowLaunchState.Idle
+        _launchState.update { WorkflowLaunchState.Idle }
     }
 
     fun resetLaunchState() {
-        _launchState.value = WorkflowLaunchState.Idle
+        _launchState.update { WorkflowLaunchState.Idle }
     }
 
     private suspend fun fetchTemplates(append: Boolean = false) {
@@ -153,14 +155,16 @@ class WorkflowTemplatesViewModel(
                     .distinctBy { it.id }
                     .sortedBy { it.name }
 
-                _uiState.value = WorkflowTemplatesUiState.Success(
-                    templates = allTemplates.toList(),
-                    availableLabels = labels,
-                    hasMore = listResult.hasMore
-                )
+                _uiState.update {
+                    WorkflowTemplatesUiState.Success(
+                        templates = allTemplates.toList(),
+                        availableLabels = labels,
+                        hasMore = listResult.hasMore
+                    )
+                }
             },
             onFailure = { error ->
-                _uiState.value = WorkflowTemplatesUiState.Error(AppError.from(error))
+                _uiState.update { WorkflowTemplatesUiState.Error(AppError.from(error)) }
             }
         )
     }

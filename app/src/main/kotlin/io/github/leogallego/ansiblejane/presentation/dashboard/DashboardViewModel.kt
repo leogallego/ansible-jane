@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -52,13 +53,16 @@ class DashboardViewModel(
             tokenManager.activeInstance
                 .distinctUntilChangedBy { it?.instanceInfo }
                 .collect { instance ->
-                    val current = _uiState.value
-                    if (instance != null && current is DashboardUiState.Success) {
-                        _uiState.value = current.copy(
-                            instanceInfo = instance.instanceInfo,
-                            instanceUrl = instance.baseUrl,
-                            instanceAlias = instance.displayLabel,
-                        )
+                    if (instance != null) {
+                        _uiState.update { current ->
+                            if (current is DashboardUiState.Success) {
+                                current.copy(
+                                    instanceInfo = instance.instanceInfo,
+                                    instanceUrl = instance.baseUrl,
+                                    instanceAlias = instance.displayLabel,
+                                )
+                            } else current
+                        }
                     }
                 }
         }
@@ -70,7 +74,7 @@ class DashboardViewModel(
 
     private fun loadDashboard() {
         dashboardJob?.cancel()
-        _uiState.value = DashboardUiState.Loading
+        _uiState.update { DashboardUiState.Loading }
         dashboardJob = viewModelScope.launch {
             val instance = tokenManager.activeInstance.value ?: return@launch
             val since24h = Instant.now().minus(24, ChronoUnit.HOURS).toString()
@@ -135,7 +139,7 @@ class DashboardViewModel(
             if (firstError != null) {
                 val exception = firstError.exceptionOrNull()
                     ?: IllegalStateException("Unknown dashboard error")
-                _uiState.value = DashboardUiState.Error(AppError.from(exception))
+                _uiState.update { DashboardUiState.Error(AppError.from(exception)) }
                 return@launch
             }
 
@@ -157,24 +161,26 @@ class DashboardViewModel(
                 else -> HealthStatus.GREEN
             }
 
-            _uiState.value = DashboardUiState.Success(
-                activeJobsCount = activeCount,
-                failedCount24h = failedData.totalCount,
-                successfulCount24h = successCount,
-                recentFailures = failedData.jobs,
-                healthStatus = healthStatus,
-                inventoryCount = inventoryCount,
-                hostCount = hostCount,
-                templateCount = templateCount,
-                projectCount = projectCount,
-                edaActivationsCount = edaData?.first,
-                edaActiveRulebooksCount = edaData?.second,
-                jobHistory7d = jobHistory,
-                upcomingSchedules = schedules,
-                instanceInfo = instance?.instanceInfo,
-                instanceUrl = instance?.baseUrl,
-                instanceAlias = instance?.displayLabel,
-            )
+            _uiState.update {
+                DashboardUiState.Success(
+                    activeJobsCount = activeCount,
+                    failedCount24h = failedData.totalCount,
+                    successfulCount24h = successCount,
+                    recentFailures = failedData.jobs,
+                    healthStatus = healthStatus,
+                    inventoryCount = inventoryCount,
+                    hostCount = hostCount,
+                    templateCount = templateCount,
+                    projectCount = projectCount,
+                    edaActivationsCount = edaData?.first,
+                    edaActiveRulebooksCount = edaData?.second,
+                    jobHistory7d = jobHistory,
+                    upcomingSchedules = schedules,
+                    instanceInfo = instance?.instanceInfo,
+                    instanceUrl = instance?.baseUrl,
+                    instanceAlias = instance?.displayLabel,
+                )
+            }
         }
     }
 

@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class InventoryHostsViewModel(
@@ -29,7 +30,7 @@ class InventoryHostsViewModel(
         currentInventoryId = inventoryId
         currentPage = 1
         allHosts.clear()
-        _uiState.value = InventoryHostsUiState.Loading
+        _uiState.update { InventoryHostsUiState.Loading }
         viewModelScope.launch {
             fetchHosts()
         }
@@ -47,7 +48,7 @@ class InventoryHostsViewModel(
         val current = _uiState.value
         if (current is InventoryHostsUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.value = current.copy(isLoadingMore = true)
+            _uiState.update { current.copy(isLoadingMore = true) }
             viewModelScope.launch {
                 fetchHosts(append = true)
             }
@@ -61,7 +62,7 @@ class InventoryHostsViewModel(
             currentSearch = query.ifBlank { null }
             currentPage = 1
             allHosts.clear()
-            _uiState.value = InventoryHostsUiState.Loading
+            _uiState.update { InventoryHostsUiState.Loading }
             fetchHosts()
         }
     }
@@ -80,17 +81,16 @@ class InventoryHostsViewModel(
                     allHosts.clear()
                     allHosts.addAll(hostResult.hosts)
                 }
-                if (allHosts.isEmpty()) {
-                    _uiState.value = InventoryHostsUiState.Empty("No hosts found")
-                } else {
-                    _uiState.value = InventoryHostsUiState.Success(
+                _uiState.update {
+                    if (allHosts.isEmpty()) InventoryHostsUiState.Empty("No hosts found")
+                    else InventoryHostsUiState.Success(
                         hosts = allHosts.toList(),
                         hasMore = hostResult.hasMore
                     )
                 }
             },
             onFailure = { error ->
-                _uiState.value = InventoryHostsUiState.Error(AppError.from(error))
+                _uiState.update { InventoryHostsUiState.Error(AppError.from(error)) }
             }
         )
     }

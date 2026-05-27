@@ -9,6 +9,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class NotificationsUiState(
@@ -43,20 +44,24 @@ class NotificationsViewModel(
         val oldJob = refreshJob
         refreshJob = viewModelScope.launch {
             oldJob?.cancelAndJoin()
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.update { it.copy(isLoading = true, error = null) }
             workflowRepository.getPendingApprovals(pageSize = 50).fold(
                 onSuccess = { result ->
                     lastFetchTime = System.currentTimeMillis()
-                    _uiState.value = NotificationsUiState(
-                        approvals = result.approvals,
-                        isLoading = false,
-                    )
+                    _uiState.update {
+                        NotificationsUiState(
+                            approvals = result.approvals,
+                            isLoading = false,
+                        )
+                    }
                 },
                 onFailure = { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = e.message ?: "Failed to load approvals"
-                    )
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = e.message ?: "Failed to load approvals"
+                        )
+                    }
                 }
             )
         }

@@ -8,6 +8,7 @@ import io.github.leogallego.ansiblejane.model.AppError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
@@ -28,13 +29,13 @@ class AuthViewModel(
         existingInstanceId: String? = null
     ) {
         if (baseUrl.isBlank() || token.isBlank()) {
-            _uiState.value = AuthUiState.Error(
-                AppError.Unknown(message = "URL and token are required")
-            )
+            _uiState.update {
+                AuthUiState.Error(AppError.Unknown(message = "URL and token are required"))
+            }
             return
         }
 
-        _uiState.value = AuthUiState.Loading
+        _uiState.update { AuthUiState.Loading }
         viewModelScope.launch {
             val result = authRepository.validateCredentials(
                 baseUrl = baseUrl,
@@ -43,20 +44,24 @@ class AuthViewModel(
                 alias = alias?.ifBlank { null },
                 existingInstanceId = existingInstanceId
             )
-            _uiState.value = result.fold(
-                onSuccess = { user -> AuthUiState.Success(user.username) },
-                onFailure = { error -> AuthUiState.Error(AppError.from(error)) }
-            )
+            _uiState.update {
+                result.fold(
+                    onSuccess = { user -> AuthUiState.Success(user.username) },
+                    onFailure = { error -> AuthUiState.Error(AppError.from(error)) }
+                )
+            }
         }
     }
 
     fun checkExistingCredentials() {
-        _uiState.value = AuthUiState.Loading
+        _uiState.update { AuthUiState.Loading }
         viewModelScope.launch {
-            _uiState.value = when (val status = authRepository.checkExistingCredentials()) {
-                is CredentialStatus.Valid -> AuthUiState.Success(status.user.username)
-                is CredentialStatus.NoCredentials -> AuthUiState.Idle
-                is CredentialStatus.ValidationFailed -> AuthUiState.Idle
+            _uiState.update {
+                when (val status = authRepository.checkExistingCredentials()) {
+                    is CredentialStatus.Valid -> AuthUiState.Success(status.user.username)
+                    is CredentialStatus.NoCredentials -> AuthUiState.Idle
+                    is CredentialStatus.ValidationFailed -> AuthUiState.Idle
+                }
             }
         }
     }
@@ -64,11 +69,11 @@ class AuthViewModel(
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()
-            _uiState.value = AuthUiState.Idle
+            _uiState.update { AuthUiState.Idle }
         }
     }
 
     fun resetState() {
-        _uiState.value = AuthUiState.Idle
+        _uiState.update { AuthUiState.Idle }
     }
 }

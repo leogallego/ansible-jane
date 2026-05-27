@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
@@ -46,7 +47,7 @@ class EdaAuditViewModel(
     fun loadAuditRules() {
         currentPage = 1
         allAuditRules.clear()
-        _uiState.value = EdaAuditUiState.Loading
+        _uiState.update { EdaAuditUiState.Loading }
         fetchJob?.cancel()
         fetchJob = viewModelScope.launch {
             fetchAuditRules()
@@ -63,14 +64,14 @@ class EdaAuditViewModel(
     }
 
     fun search(query: String) {
-        _searchQuery.value = query
+        _searchQuery.update { query }
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(300)
             currentSearch = query.ifBlank { null }
             currentPage = 1
             allAuditRules.clear()
-            _uiState.value = EdaAuditUiState.Loading
+            _uiState.update { EdaAuditUiState.Loading }
             fetchAuditRules()
         }
     }
@@ -79,7 +80,7 @@ class EdaAuditViewModel(
         val current = _uiState.value
         if (current is EdaAuditUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.value = current.copy(isLoadingMore = true)
+            _uiState.update { current.copy(isLoadingMore = true) }
             fetchJob = viewModelScope.launch {
                 fetchAuditRules(append = true)
             }
@@ -96,22 +97,21 @@ class EdaAuditViewModel(
                     allAuditRules.clear()
                     allAuditRules.addAll(auditResult.auditRules)
                 }
-                if (allAuditRules.isEmpty()) {
-                    _uiState.value = EdaAuditUiState.Empty("No EDA audit events")
-                } else {
-                    _uiState.value = EdaAuditUiState.Success(
+                _uiState.update {
+                    if (allAuditRules.isEmpty()) EdaAuditUiState.Empty("No EDA audit events")
+                    else EdaAuditUiState.Success(
                         auditRules = allAuditRules.toList(),
                         hasMore = auditResult.hasMore
                     )
                 }
             },
             onFailure = { error ->
-                if (error is HttpException && error.code() in listOf(404, 502, 503)) {
-                    _uiState.value = EdaAuditUiState.Empty(
-                        "EDA is not configured on this AAP instance"
-                    )
-                } else {
-                    _uiState.value = EdaAuditUiState.Error(AppError.from(error))
+                _uiState.update {
+                    if (error is HttpException && error.code() in listOf(404, 502, 503)) {
+                        EdaAuditUiState.Empty("EDA is not configured on this AAP instance")
+                    } else {
+                        EdaAuditUiState.Error(AppError.from(error))
+                    }
                 }
             }
         )

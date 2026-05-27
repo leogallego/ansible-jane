@@ -57,7 +57,7 @@ class AssistantViewModel(
         viewModelScope.launch {
             repository.activeConfigFlow.collect { config ->
                 val oldKey = cachedProviderKey
-                _llmConfig.value = config
+                _llmConfig.update { config }
                 if (config != null && oldKey != null) {
                     val newKey = when (config) {
                         is LlmProviderConfig.OpenAiCompatible ->

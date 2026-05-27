@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 sealed interface NodeStdoutState {
@@ -44,14 +45,13 @@ class WorkflowJobStatusViewModel(
         pollingJob = viewModelScope.launch {
             workflowRepository.pollWorkflowJobStatus(workflowJobId)
                 .catch { e ->
-                    _uiState.value = WorkflowJobStatusUiState.Error(AppError.from(e))
+                    _uiState.update { WorkflowJobStatusUiState.Error(AppError.from(e)) }
                 }
                 .collect { workflowJob ->
                     val nodes = workflowRepository.getWorkflowNodes(workflowJobId).getOrDefault(emptyList())
-                    _uiState.value = if (workflowJob.status.isTerminal) {
-                        WorkflowJobStatusUiState.Completed(workflowJob, nodes)
-                    } else {
-                        WorkflowJobStatusUiState.Active(workflowJob, nodes)
+                    _uiState.update {
+                        if (workflowJob.status.isTerminal) WorkflowJobStatusUiState.Completed(workflowJob, nodes)
+                        else WorkflowJobStatusUiState.Active(workflowJob, nodes)
                     }
                 }
         }
@@ -59,9 +59,9 @@ class WorkflowJobStatusViewModel(
 
     fun toggleNodeExpansion(jobId: Int) {
         if (_expandedNodeId.value == jobId) {
-            _expandedNodeId.value = null
+            _expandedNodeId.update { null }
         } else {
-            _expandedNodeId.value = jobId
+            _expandedNodeId.update { jobId }
             if (_nodeStdout.value[jobId] == null) {
                 fetchNodeStdout(jobId)
             }
@@ -69,16 +69,18 @@ class WorkflowJobStatusViewModel(
     }
 
     private fun fetchNodeStdout(jobId: Int) {
-        _nodeStdout.value = _nodeStdout.value + (jobId to NodeStdoutState.Loading)
+        _nodeStdout.update { it + (jobId to NodeStdoutState.Loading) }
         viewModelScope.launch {
             val result = jobRepository.getJobStdout(jobId)
-            _nodeStdout.value = _nodeStdout.value + (jobId to result.fold(
-                onSuccess = { stdout ->
-                    if (stdout.isBlank()) NodeStdoutState.Loaded("No output available")
-                    else NodeStdoutState.Loaded(stdout)
-                },
-                onFailure = { e -> NodeStdoutState.Error(e.message ?: "Failed to load output") }
-            ))
+            _nodeStdout.update { current ->
+                current + (jobId to result.fold(
+                    onSuccess = { stdout ->
+                        if (stdout.isBlank()) NodeStdoutState.Loaded("No output available")
+                        else NodeStdoutState.Loaded(stdout)
+                    },
+                    onFailure = { e -> NodeStdoutState.Error(e.message ?: "Failed to load output") }
+                ))
+            }
         }
     }
 
@@ -88,7 +90,7 @@ class WorkflowJobStatusViewModel(
     }
 
     fun retry() {
-        _uiState.value = WorkflowJobStatusUiState.Loading
+        _uiState.update { WorkflowJobStatusUiState.Loading }
         startPolling()
     }
 

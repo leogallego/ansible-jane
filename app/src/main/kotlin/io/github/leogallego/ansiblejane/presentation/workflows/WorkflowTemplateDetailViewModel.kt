@@ -10,6 +10,7 @@ import java.net.URLDecoder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 sealed interface WorkflowTemplateDetailUiState {
@@ -47,37 +48,37 @@ class WorkflowTemplateDetailViewModel(
 
     private fun loadNodes() {
         if (templateId <= 0) {
-            _uiState.value = WorkflowTemplateDetailUiState.Error(AppError.Unknown("Invalid workflow template"))
+            _uiState.update { WorkflowTemplateDetailUiState.Error(AppError.Unknown("Invalid workflow template")) }
             return
         }
-        _uiState.value = WorkflowTemplateDetailUiState.Loading
+        _uiState.update { WorkflowTemplateDetailUiState.Loading }
         viewModelScope.launch {
             workflowRepository.getWorkflowTemplateNodes(templateId)
                 .onSuccess { nodes ->
-                    _uiState.value = WorkflowTemplateDetailUiState.Success(nodes)
+                    _uiState.update { WorkflowTemplateDetailUiState.Success(nodes) }
                 }
                 .onFailure { e ->
-                    _uiState.value = WorkflowTemplateDetailUiState.Error(AppError.from(e))
+                    _uiState.update { WorkflowTemplateDetailUiState.Error(AppError.from(e)) }
                 }
         }
     }
 
     fun launch() {
         if (_launchState.value is LaunchFromDetailState.Launching) return
-        _launchState.value = LaunchFromDetailState.Launching
+        _launchState.update { LaunchFromDetailState.Launching }
         viewModelScope.launch {
             workflowRepository.launchWorkflow(templateId)
                 .onSuccess { jobId ->
-                    _launchState.value = LaunchFromDetailState.Launched(jobId)
+                    _launchState.update { LaunchFromDetailState.Launched(jobId) }
                 }
                 .onFailure { e ->
-                    _launchState.value = LaunchFromDetailState.Failed(e.message ?: "Launch failed")
+                    _launchState.update { LaunchFromDetailState.Failed(e.message ?: "Launch failed") }
                 }
         }
     }
 
     fun resetLaunchState() {
-        _launchState.value = LaunchFromDetailState.Idle
+        _launchState.update { LaunchFromDetailState.Idle }
     }
 
     fun retry() {
