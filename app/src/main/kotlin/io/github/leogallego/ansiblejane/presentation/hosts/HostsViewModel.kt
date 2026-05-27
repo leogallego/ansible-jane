@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HostsViewModel(
@@ -42,7 +43,7 @@ class HostsViewModel(
     fun loadHosts() {
         currentPage = 1
         allHosts.clear()
-        _uiState.value = HostsUiState.Loading
+        _uiState.update { HostsUiState.Loading }
         fetchJob?.cancel()
         fetchJob = viewModelScope.launch {
             fetchHosts()
@@ -62,7 +63,9 @@ class HostsViewModel(
         val current = _uiState.value
         if (current is HostsUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.value = current.copy(isLoadingMore = true)
+            _uiState.update { state ->
+                (state as? HostsUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             viewModelScope.launch {
                 fetchHosts(append = true)
             }
@@ -76,7 +79,7 @@ class HostsViewModel(
             currentSearch = query.ifBlank { null }
             currentPage = 1
             allHosts.clear()
-            _uiState.value = HostsUiState.Loading
+            _uiState.update { HostsUiState.Loading }
             fetchHosts()
         }
     }
@@ -95,17 +98,16 @@ class HostsViewModel(
                     allHosts = listResult.hosts.toMutableList()
                 }
 
-                if (allHosts.isEmpty()) {
-                    _uiState.value = HostsUiState.Empty("No hosts found")
-                } else {
-                    _uiState.value = HostsUiState.Success(
+                _uiState.update {
+                    if (allHosts.isEmpty()) HostsUiState.Empty("No hosts found")
+                    else HostsUiState.Success(
                         hosts = allHosts.toList(),
                         hasMore = listResult.hasMore
                     )
                 }
             },
             onFailure = { error ->
-                _uiState.value = HostsUiState.Error(AppError.from(error))
+                _uiState.update { HostsUiState.Error(AppError.from(error)) }
             }
         )
     }

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class InventoriesViewModel(
@@ -45,7 +46,7 @@ class InventoriesViewModel(
     fun loadInventories() {
         currentPage = 1
         allInventories.clear()
-        _uiState.value = InventoriesUiState.Loading
+        _uiState.update { InventoriesUiState.Loading }
         fetchJob?.cancel()
         fetchJob = viewModelScope.launch {
             fetchInventories()
@@ -62,14 +63,14 @@ class InventoriesViewModel(
     }
 
     fun search(query: String) {
-        _searchQuery.value = query
+        _searchQuery.update { query }
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(300)
             currentSearch = query.ifBlank { null }
             currentPage = 1
             allInventories.clear()
-            _uiState.value = InventoriesUiState.Loading
+            _uiState.update { InventoriesUiState.Loading }
             fetchInventories()
         }
     }
@@ -78,7 +79,9 @@ class InventoriesViewModel(
         val current = _uiState.value
         if (current is InventoriesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.value = current.copy(isLoadingMore = true)
+            _uiState.update { state ->
+                (state as? InventoriesUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             fetchJob = viewModelScope.launch {
                 fetchInventories(append = true)
             }
@@ -95,17 +98,19 @@ class InventoriesViewModel(
                     allInventories.clear()
                     allInventories.addAll(inventoryResult.inventories)
                 }
-                if (allInventories.isEmpty()) {
-                    _uiState.value = InventoriesUiState.Empty("No inventories found")
-                } else {
-                    _uiState.value = InventoriesUiState.Success(
-                        inventories = allInventories.toList(),
-                        hasMore = inventoryResult.hasMore
-                    )
+                _uiState.update {
+                    if (allInventories.isEmpty()) {
+                        InventoriesUiState.Empty("No inventories found")
+                    } else {
+                        InventoriesUiState.Success(
+                            inventories = allInventories.toList(),
+                            hasMore = inventoryResult.hasMore
+                        )
+                    }
                 }
             },
             onFailure = { error ->
-                _uiState.value = InventoriesUiState.Error(AppError.from(error))
+                _uiState.update { InventoriesUiState.Error(AppError.from(error)) }
             }
         )
     }

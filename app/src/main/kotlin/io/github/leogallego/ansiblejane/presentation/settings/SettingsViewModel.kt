@@ -88,7 +88,7 @@ class SettingsViewModel(
                     connections = connections
                 )
             }.collect { state ->
-                _uiState.value = state
+                _uiState.update { state }
             }
         }
 
@@ -139,10 +139,9 @@ class SettingsViewModel(
     }
 
     fun showInstanceDetails(instanceId: String) {
-        val current = _uiState.value
-        if (current is SettingsUiState.Ready) {
-            val instance = current.instances.find { it.id == instanceId }
-            _uiState.value = current.copy(selectedInstanceForDetails = instance)
+        updateReady {
+            val instance = instances.find { it.id == instanceId }
+            copy(selectedInstanceForDetails = instance)
         }
     }
 

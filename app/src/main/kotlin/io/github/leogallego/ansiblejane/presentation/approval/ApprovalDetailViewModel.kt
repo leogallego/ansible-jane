@@ -9,6 +9,7 @@ import io.github.leogallego.ansiblejane.model.WorkflowApproval
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 sealed interface ApprovalDetailUiState {
@@ -35,20 +36,18 @@ class ApprovalDetailViewModel(
 
     fun loadApproval() {
         if (approvalId <= 0) {
-            _uiState.value = ApprovalDetailUiState.Error(
-                AppError.Unknown("Invalid approval ID")
-            )
+            _uiState.update { ApprovalDetailUiState.Error(AppError.Unknown("Invalid approval ID")) }
             return
         }
 
-        _uiState.value = ApprovalDetailUiState.Loading
+        _uiState.update { ApprovalDetailUiState.Loading }
         viewModelScope.launch {
             workflowRepository.getWorkflowApproval(approvalId).fold(
                 onSuccess = { approval ->
-                    _uiState.value = ApprovalDetailUiState.Ready(approval)
+                    _uiState.update { ApprovalDetailUiState.Ready(approval) }
                 },
                 onFailure = { e ->
-                    _uiState.value = ApprovalDetailUiState.Error(AppError.from(e))
+                    _uiState.update { ApprovalDetailUiState.Error(AppError.from(e)) }
                 }
             )
         }
@@ -61,14 +60,14 @@ class ApprovalDetailViewModel(
             else -> return
         }
 
-        _uiState.value = ApprovalDetailUiState.ActionInProgress(approval, "approve")
+        _uiState.update { ApprovalDetailUiState.ActionInProgress(approval, "approve") }
         viewModelScope.launch {
             workflowRepository.approveWorkflow(approvalId).fold(
                 onSuccess = {
-                    _uiState.value = ApprovalDetailUiState.Completed(approval, "approved")
+                    _uiState.update { ApprovalDetailUiState.Completed(approval, "approved") }
                 },
                 onFailure = { e ->
-                    _uiState.value = ApprovalDetailUiState.Error(AppError.from(e))
+                    _uiState.update { ApprovalDetailUiState.Error(AppError.from(e)) }
                 }
             )
         }
@@ -81,14 +80,14 @@ class ApprovalDetailViewModel(
             else -> return
         }
 
-        _uiState.value = ApprovalDetailUiState.ActionInProgress(approval, "deny")
+        _uiState.update { ApprovalDetailUiState.ActionInProgress(approval, "deny") }
         viewModelScope.launch {
             workflowRepository.denyWorkflow(approvalId).fold(
                 onSuccess = {
-                    _uiState.value = ApprovalDetailUiState.Completed(approval, "denied")
+                    _uiState.update { ApprovalDetailUiState.Completed(approval, "denied") }
                 },
                 onFailure = { e ->
-                    _uiState.value = ApprovalDetailUiState.Error(AppError.from(e))
+                    _uiState.update { ApprovalDetailUiState.Error(AppError.from(e)) }
                 }
             )
         }

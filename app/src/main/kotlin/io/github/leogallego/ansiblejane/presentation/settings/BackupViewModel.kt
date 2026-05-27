@@ -13,6 +13,7 @@ import io.github.leogallego.ansiblejane.network.ApiVersion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class ImportMode { MERGE, REPLACE }
@@ -47,26 +48,26 @@ class BackupViewModel(
 
     fun exportBackup(password: String, includeAssistantConfig: Boolean) {
         viewModelScope.launch {
-            _uiState.value = BackupUiState.Exporting
+            _uiState.update { BackupUiState.Exporting }
             try {
                 val instances = tokenManager.instances.value
                 if (instances.isEmpty()) {
-                    _uiState.value = BackupUiState.Error("No instances to export")
+                    _uiState.update { BackupUiState.Error("No instances to export") }
                     return@launch
                 }
                 val llmConfig = if (includeAssistantConfig) assistantRepository.loadLlmConfig() else null
                 val allConfigs = if (includeAssistantConfig) assistantRepository.loadAllLlmConfigs() else null
                 val data = backupManager.exportBackup(password, instances, llmConfig, allConfigs)
-                _uiState.value = BackupUiState.ExportReady(data)
+                _uiState.update { BackupUiState.ExportReady(data) }
             } catch (e: Exception) {
-                _uiState.value = BackupUiState.Error("Export failed: ${e.message}")
+                _uiState.update { BackupUiState.Error("Export failed: ${e.message}") }
             }
         }
     }
 
     fun startImport(data: ByteArray, password: String) {
         viewModelScope.launch {
-            _uiState.value = BackupUiState.Importing
+            _uiState.update { BackupUiState.Importing }
             try {
                 val envelope = backupManager.importBackup(data, password)
                 val existingUrls = tokenManager.instances.value
@@ -80,18 +81,20 @@ class BackupViewModel(
                 }
 
                 pendingEnvelope = envelope
-                _uiState.value = BackupUiState.ImportPreview(
-                    envelope = envelope,
-                    duplicateCount = duplicates,
-                    newCount = newOnes,
-                    instances = envelope.instances,
-                    llmConfig = envelope.llmConfig,
-                    hasExistingInstances = existingUrls.isNotEmpty()
-                )
+                _uiState.update {
+                    BackupUiState.ImportPreview(
+                        envelope = envelope,
+                        duplicateCount = duplicates,
+                        newCount = newOnes,
+                        instances = envelope.instances,
+                        llmConfig = envelope.llmConfig,
+                        hasExistingInstances = existingUrls.isNotEmpty()
+                    )
+                }
             } catch (e: BackupDecryptionException) {
-                _uiState.value = BackupUiState.Error(e.message ?: "Decryption failed")
+                _uiState.update { BackupUiState.Error(e.message ?: "Decryption failed") }
             } catch (e: Exception) {
-                _uiState.value = BackupUiState.Error("Import failed: ${e.message}")
+                _uiState.update { BackupUiState.Error("Import failed: ${e.message}") }
             }
         }
     }
@@ -99,7 +102,7 @@ class BackupViewModel(
     fun confirmImport(mode: ImportMode) {
         val envelope = pendingEnvelope ?: return
         viewModelScope.launch {
-            _uiState.value = BackupUiState.Importing
+            _uiState.update { BackupUiState.Importing }
             try {
                 // Validate all import data before mutating state
                 val validatedInstances = envelope.instances.map { inst ->
@@ -159,15 +162,15 @@ class BackupViewModel(
 
                 val llmNote = if (!envelope.llmConfigs.isNullOrEmpty() || envelope.llmConfig != null) " + LLM config" else ""
                 pendingEnvelope = null
-                _uiState.value = BackupUiState.Success("Imported $imported instance(s)$llmNote")
+                _uiState.update { BackupUiState.Success("Imported $imported instance(s)$llmNote") }
             } catch (e: Exception) {
-                _uiState.value = BackupUiState.Error("Import failed: ${e.message}")
+                _uiState.update { BackupUiState.Error("Import failed: ${e.message}") }
             }
         }
     }
 
     fun dismiss() {
         pendingEnvelope = null
-        _uiState.value = BackupUiState.Idle
+        _uiState.update { BackupUiState.Idle }
     }
 }

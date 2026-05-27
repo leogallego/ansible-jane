@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TemplatesViewModel(
@@ -50,7 +51,7 @@ class TemplatesViewModel(
     fun loadTemplates() {
         currentPage = 1
         allTemplates.clear()
-        _uiState.value = TemplatesUiState.Loading
+        _uiState.update { TemplatesUiState.Loading }
         fetchJob?.cancel()
         fetchJob = viewModelScope.launch {
             fetchTemplates()
@@ -70,7 +71,9 @@ class TemplatesViewModel(
         val current = _uiState.value
         if (current is TemplatesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.value = current.copy(isLoadingMore = true)
+            _uiState.update { state ->
+                (state as? TemplatesUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             fetchJob = viewModelScope.launch {
                 fetchTemplates(append = true)
             }
@@ -78,14 +81,14 @@ class TemplatesViewModel(
     }
 
     fun search(query: String) {
-        _searchQuery.value = query
+        _searchQuery.update { query }
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(300)
             currentSearch = query.ifBlank { null }
             currentPage = 1
             allTemplates.clear()
-            _uiState.value = TemplatesUiState.Loading
+            _uiState.update { TemplatesUiState.Loading }
             fetchTemplates()
         }
     }
@@ -94,29 +97,28 @@ class TemplatesViewModel(
         currentLabelFilter = label?.name
         currentPage = 1
         allTemplates.clear()
-        _uiState.value = TemplatesUiState.Loading
+        _uiState.update { TemplatesUiState.Loading }
         viewModelScope.launch {
             fetchTemplates()
         }
     }
 
     fun clearFilters() {
-        _searchQuery.value = ""
+        _searchQuery.update { "" }
         currentSearch = null
         currentLabelFilter = null
         currentPage = 1
         allTemplates.clear()
-        _uiState.value = TemplatesUiState.Loading
+        _uiState.update { TemplatesUiState.Loading }
         viewModelScope.launch {
             fetchTemplates()
         }
     }
 
     fun requestLaunch(template: JobTemplate) {
-        _launchState.value = if (template.askVariablesOnLaunch) {
-            LaunchState.EnteringVars(template)
-        } else {
-            LaunchState.Confirming(template)
+        _launchState.update {
+            if (template.askVariablesOnLaunch) LaunchState.EnteringVars(template)
+            else LaunchState.Confirming(template)
         }
     }
 
@@ -127,22 +129,24 @@ class TemplatesViewModel(
             else -> return
         }
 
-        _launchState.value = LaunchState.Launching
+        _launchState.update { LaunchState.Launching }
         viewModelScope.launch {
             val result = templateRepository.launchJob(template.id, extraVars)
-            _launchState.value = result.fold(
-                onSuccess = { jobId -> LaunchState.Launched(jobId) },
-                onFailure = { error -> LaunchState.LaunchError(AppError.from(error)) }
-            )
+            _launchState.update {
+                result.fold(
+                    onSuccess = { jobId -> LaunchState.Launched(jobId) },
+                    onFailure = { error -> LaunchState.LaunchError(AppError.from(error)) }
+                )
+            }
         }
     }
 
     fun cancelLaunch() {
-        _launchState.value = LaunchState.Idle
+        _launchState.update { LaunchState.Idle }
     }
 
     fun resetLaunchState() {
-        _launchState.value = LaunchState.Idle
+        _launchState.update { LaunchState.Idle }
     }
 
     private suspend fun fetchTemplates(append: Boolean = false) {
@@ -165,14 +169,16 @@ class TemplatesViewModel(
                     .distinctBy { it.id }
                     .sortedBy { it.name }
 
-                _uiState.value = TemplatesUiState.Success(
-                    templates = allTemplates.toList(),
-                    availableLabels = labels,
-                    hasMore = listResult.hasMore
-                )
+                _uiState.update {
+                    TemplatesUiState.Success(
+                        templates = allTemplates.toList(),
+                        availableLabels = labels,
+                        hasMore = listResult.hasMore
+                    )
+                }
             },
             onFailure = { error ->
-                _uiState.value = TemplatesUiState.Error(AppError.from(error))
+                _uiState.update { TemplatesUiState.Error(AppError.from(error)) }
             }
         )
     }

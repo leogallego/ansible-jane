@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class JobStatusViewModel(
@@ -30,14 +31,13 @@ class JobStatusViewModel(
         pollingJob = viewModelScope.launch {
             jobRepository.pollJobStatus(jobId)
                 .catch { e ->
-                    _uiState.value = JobStatusUiState.Error(AppError.from(e))
+                    _uiState.update { JobStatusUiState.Error(AppError.from(e)) }
                 }
                 .collect { job ->
                     val stdout = jobRepository.getJobStdout(jobId).getOrNull()
-                    _uiState.value = if (job.status.isTerminal) {
-                        JobStatusUiState.Completed(job, stdout)
-                    } else {
-                        JobStatusUiState.Active(job, stdout)
+                    _uiState.update {
+                        if (job.status.isTerminal) JobStatusUiState.Completed(job, stdout)
+                        else JobStatusUiState.Active(job, stdout)
                     }
                 }
         }
@@ -49,7 +49,7 @@ class JobStatusViewModel(
     }
 
     fun retry() {
-        _uiState.value = JobStatusUiState.Loading
+        _uiState.update { JobStatusUiState.Loading }
         startPolling()
     }
 

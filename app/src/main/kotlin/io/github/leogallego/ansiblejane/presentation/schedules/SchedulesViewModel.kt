@@ -9,6 +9,7 @@ import io.github.leogallego.ansiblejane.model.Schedule
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -45,7 +46,7 @@ class SchedulesViewModel(
     fun loadSchedules() {
         currentPage = 1
         allSchedules.clear()
-        _uiState.value = SchedulesUiState.Loading
+        _uiState.update { SchedulesUiState.Loading }
         fetchJob?.cancel()
         fetchJob = viewModelScope.launch {
             fetchSchedules()
@@ -65,7 +66,9 @@ class SchedulesViewModel(
         val current = _uiState.value
         if (current is SchedulesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.value = current.copy(isLoadingMore = true)
+            _uiState.update { state ->
+                (state as? SchedulesUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             fetchJob = viewModelScope.launch {
                 fetchSchedules(append = true)
             }
@@ -97,9 +100,9 @@ class SchedulesViewModel(
     }
 
     private fun updateSuccessState() {
-        val current = _uiState.value
-        if (current is SchedulesUiState.Success) {
-            _uiState.value = current.copy(schedules = allSchedules.toList())
+        _uiState.update { current ->
+            if (current is SchedulesUiState.Success) current.copy(schedules = allSchedules.toList())
+            else current
         }
     }
 
@@ -113,13 +116,15 @@ class SchedulesViewModel(
                     allSchedules.clear()
                     allSchedules.addAll(schedulesResult.schedules)
                 }
-                _uiState.value = SchedulesUiState.Success(
-                    schedules = allSchedules.toList(),
-                    hasMore = schedulesResult.hasMore
-                )
+                _uiState.update {
+                    SchedulesUiState.Success(
+                        schedules = allSchedules.toList(),
+                        hasMore = schedulesResult.hasMore
+                    )
+                }
             },
             onFailure = { error ->
-                _uiState.value = SchedulesUiState.Error(AppError.from(error))
+                _uiState.update { SchedulesUiState.Error(AppError.from(error)) }
             }
         )
     }
