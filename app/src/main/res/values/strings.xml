@@ -43,4 +43,31 @@
     <string name="clear_chat_title">Clear Chat History</string>
     <string name="clear_chat_message">This will remove all messages from the assistant chat. This cannot be undone.</string>
     <string name="clear_chat_confirm">Clear</string>
+
+    <!-- Tools tab - MCP -->
+    <string name="tools_mcp_servers">MCP Servers</string>
+    <string name="tools_mcp_status_connected">Connected</string>
+    <string name="tools_mcp_status_connecting">Connecting…</string>
+    <string name="tools_mcp_status_error">Connection error</string>
+    <string name="tools_mcp_status_disconnected">Not connected</string>
+    <string name="tools_mcp_no_tools">No tools discovered</string>
+    <string name="tools_mcp_add_server">Add MCP Server</string>
+    <string name="tools_mcp_server_name">Server name</string>
+    <string name="tools_mcp_server_url">Server URL</string>
+    <string name="tools_mcp_server_toolset">Toolset (optional)</string>
+    <string name="tools_mcp_refresh">Refresh</string>
+    <string name="tools_mcp_remove">Remove</string>
+    <string name="tools_mcp_read_only">Read Only</string>
+    <string name="tools_mcp_error_retry">Tap Refresh to retry</string>
+    <!-- Tools tab - Local -->
+    <string name="tools_local_title">Local Tools</string>
+    <string name="tools_local_description">%1$d tools across %2$d categories</string>
+    <string name="tools_category_jobs">Jobs</string>
+    <string name="tools_category_inventory">Inventory</string>
+    <string name="tools_category_monitoring">Monitoring</string>
+    <string name="tools_category_users">Users</string>
+    <string name="tools_category_security">Security</string>
+    <string name="tools_category_configuration">Configuration</string>
+    <string name="tools_category_eda">EDA</string>
+    <string name="tools_category_platform">Platform</string>
 </resources>
