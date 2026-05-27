@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsTab
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsUiState
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
@@ -62,6 +63,10 @@ fun SettingsScreen(
                     onAddMcpServer = { url, label, toolset -> viewModel.addMcpServer(url, label, toolset) },
                     onRemoveMcpServer = { viewModel.removeMcpServer(it) },
                     onToggleReadOnly = { url, readOnly -> viewModel.toggleServerReadOnly(url, readOnly) },
+                    onToggleToolEnabled = { name, source, enabled -> viewModel.toggleToolEnabled(name, source, enabled) },
+                    onToggleExpandMcpServer = { viewModel.toggleExpandMcpServer(it) },
+                    onToggleExpandCategory = { viewModel.toggleExpandCategory(it) },
+                    onRefreshMcpServer = { viewModel.refreshMcpServer(it) },
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -92,6 +97,10 @@ private fun SettingsContent(
     onAddMcpServer: (String, String, String?) -> Unit,
     onRemoveMcpServer: (String) -> Unit,
     onToggleReadOnly: (String, Boolean) -> Unit,
+    onToggleToolEnabled: (String, ToolSource, Boolean) -> Unit,
+    onToggleExpandMcpServer: (String) -> Unit,
+    onToggleExpandCategory: (String) -> Unit,
+    onRefreshMcpServer: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     androidx.compose.foundation.layout.Column(modifier = modifier) {
@@ -142,10 +151,19 @@ private fun SettingsContent(
                 mcpEnabled = state.mcpEnabled,
                 mcpServers = state.mcpServers,
                 connections = state.connections,
+                mcpServerTools = state.mcpServerTools,
+                localTools = state.localTools,
+                expandedMcpServers = state.expandedMcpServers,
+                expandedCategories = state.expandedCategories,
+                disabledTools = state.disabledTools,
                 onToggleMcp = onToggleMcp,
                 onAddMcpServer = onAddMcpServer,
                 onRemoveMcpServer = onRemoveMcpServer,
                 onToggleReadOnly = onToggleReadOnly,
+                onToggleToolEnabled = onToggleToolEnabled,
+                onToggleExpandMcpServer = onToggleExpandMcpServer,
+                onToggleExpandCategory = onToggleExpandCategory,
+                onRefreshMcpServer = onRefreshMcpServer,
                 modifier = Modifier.weight(1f)
             )
         }
