@@ -222,6 +222,22 @@ class SettingsViewModelTest {
     // --- Tool management ---
 
     @Test
+    fun `init SHOULD load pre-existing disabled tools from repository`() = runTest {
+        fakeAssistantRepo.savedDisabledTools = setOf("LOCAL:list_hosts", "MCP:controller.jobs_list")
+        val tools = listOf(fakeLocalTool("list_hosts"), fakeLocalTool("list_inventories"))
+        val viewModel = createViewModel(localTools = tools)
+
+        viewModel.uiState.test {
+            val state = awaitItem() as SettingsUiState.Ready
+            assertEquals(setOf("LOCAL:list_hosts", "MCP:controller.jobs_list"), state.disabledTools)
+            val hostTool = state.localTools.find { it.name == "list_hosts" }
+            assertFalse("list_hosts should be disabled", hostTool?.isEnabled ?: true)
+            val invTool = state.localTools.find { it.name == "list_inventories" }
+            assertTrue("list_inventories should be enabled", invTool?.isEnabled ?: false)
+        }
+    }
+
+    @Test
     fun `toggleToolEnabled SHOULD disable a local tool and persist`() = runTest {
         val viewModel = createViewModel()
         viewModel.uiState.test {
