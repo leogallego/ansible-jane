@@ -1,7 +1,8 @@
 package io.github.leogallego.ansiblejane.ui.settings
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,18 +17,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -42,10 +48,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.R
-import io.github.leogallego.ansiblejane.model.AapComponent
 import io.github.leogallego.ansiblejane.model.AapInstance
 
 @Composable
@@ -55,11 +62,14 @@ fun InstancesTab(
     selectedInstanceForDetails: AapInstance?,
     discoveryRefreshing: Boolean,
     discoveryError: String? = null,
+    instanceEditSaving: Boolean = false,
+    instanceEditError: String? = null,
     onSwitchInstance: (String) -> Unit,
     onRemoveInstance: (String) -> Unit,
     onShowDetails: (String) -> Unit,
     onDismissDetails: () -> Unit,
     onRefreshInstanceInfo: (String) -> Unit,
+    onSaveInstanceEdits: (instanceId: String, url: String, token: String, alias: String?, trustSelfSigned: Boolean) -> Unit,
     onAddInstance: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
@@ -83,6 +93,7 @@ fun InstancesTab(
                     if (isActive) onShowDetails(instance.id)
                     else onSwitchInstance(instance.id)
                 },
+                onLongPress = { onShowDetails(instance.id) },
                 onRemove = { instanceToRemove = instance }
             )
         }
@@ -123,8 +134,13 @@ fun InstancesTab(
         InstanceDetailsBottomSheet(
             instance = instance,
             isRefreshing = discoveryRefreshing,
+            isSaving = instanceEditSaving,
             errorMessage = discoveryError,
+            editError = instanceEditError,
             onRefresh = { onRefreshInstanceInfo(instance.id) },
+            onSave = { url, token, alias, trustSelfSigned ->
+                onSaveInstanceEdits(instance.id, url, token, alias, trustSelfSigned)
+            },
             onDismiss = onDismissDetails
         )
     }
@@ -178,17 +194,22 @@ fun InstancesTab(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun InstanceCard(
     instance: AapInstance,
     isActive: Boolean,
     onTap: () -> Unit,
+    onLongPress: () -> Unit,
     onRemove: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onTap),
+            .combinedClickable(
+                onClick = onTap,
+                onLongClick = onLongPress
+            ),
         colors = CardDefaults.cardColors(
             containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer
             else MaterialTheme.colorScheme.surfaceVariant
@@ -256,10 +277,24 @@ private fun InstanceCard(
 private fun InstanceDetailsBottomSheet(
     instance: AapInstance,
     isRefreshing: Boolean,
+    isSaving: Boolean,
     errorMessage: String? = null,
+    editError: String? = null,
     onRefresh: () -> Unit,
+    onSave: (url: String, token: String, alias: String?, trustSelfSigned: Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
+    var url by remember(instance.id) { mutableStateOf(instance.baseUrl) }
+    var alias by remember(instance.id) { mutableStateOf(instance.alias ?: "") }
+    var token by remember(instance.id) { mutableStateOf(instance.token) }
+    var trustSelfSigned by remember(instance.id) { mutableStateOf(instance.trustSelfSigned) }
+    var tokenVisible by remember { mutableStateOf(false) }
+
+    val hasChanges = url != instance.baseUrl ||
+        alias != (instance.alias ?: "") ||
+        token != instance.token ||
+        trustSelfSigned != instance.trustSelfSigned
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -275,20 +310,109 @@ private fun InstanceDetailsBottomSheet(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
-            ListItem(
-                headlineContent = { Text("URL") },
-                supportingContent = { Text(instance.baseUrl) }
+
+            OutlinedTextField(
+                value = url,
+                onValueChange = { url = it },
+                label = { Text("URL") },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .testTag("field_instance_url")
             )
-            if (instance.alias != null) {
-                ListItem(
-                    headlineContent = { Text("Alias") },
-                    supportingContent = { Text(instance.alias) }
+
+            OutlinedTextField(
+                value = alias,
+                onValueChange = { alias = it },
+                label = { Text("Alias") },
+                placeholder = { Text(instance.hostname) },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .testTag("field_instance_alias")
+            )
+
+            OutlinedTextField(
+                value = token,
+                onValueChange = { token = it },
+                label = { Text("Token") },
+                singleLine = true,
+                visualTransformation = if (tokenVisible) VisualTransformation.None
+                    else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { tokenVisible = !tokenVisible }) {
+                        Icon(
+                            imageVector = if (tokenVisible) Icons.Default.VisibilityOff
+                                else Icons.Default.Visibility,
+                            contentDescription = if (tokenVisible) "Hide token" else "Show token"
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .testTag("field_instance_token")
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Trust self-signed certificate",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "Allow connections to servers with untrusted certificates",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = trustSelfSigned,
+                    onCheckedChange = { trustSelfSigned = it },
+                    modifier = Modifier.testTag("switch_trust_self_signed")
                 )
             }
-            if (instance.trustSelfSigned) {
-                ListItem(
-                    headlineContent = { Text("Self-Signed Certificate") },
-                    supportingContent = { Text("Trusted") }
+
+            FilledTonalButton(
+                onClick = {
+                    onSave(
+                        url.trim(),
+                        token.trim(),
+                        alias.trim().ifBlank { null },
+                        trustSelfSigned
+                    )
+                },
+                enabled = hasChanges && !isSaving && url.isNotBlank() && token.isNotBlank(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .testTag("button_save_instance")
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Saving...")
+                } else {
+                    Text("Save Changes")
+                }
+            }
+
+            if (editError != null) {
+                Text(
+                    text = editError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
 
@@ -362,7 +486,7 @@ private fun InstanceDetailsBottomSheet(
                     .testTag("button_refresh_instance_info")
             ) {
                 if (isRefreshing) {
-                    androidx.compose.material3.CircularProgressIndicator(
+                    CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp
                     )

@@ -48,6 +48,9 @@ fun SettingsScreen(
                     onShowDetails = { viewModel.showInstanceDetails(it) },
                     onDismissDetails = { viewModel.dismissDetails() },
                     onRefreshInstanceInfo = { viewModel.refreshInstanceInfo(it) },
+                    onSaveInstanceEdits = { id, url, token, alias, trust ->
+                        viewModel.saveInstanceEdits(id, url, token, alias, trust)
+                    },
                     onAddInstance = onAddInstance,
                     onTimezoneSelected = { viewModel.setTimezone(it) },
                     onTimeFormatSelected = { viewModel.setTimeFormat(it) },
@@ -78,6 +81,7 @@ private fun SettingsContent(
     onShowDetails: (String) -> Unit,
     onDismissDetails: () -> Unit,
     onRefreshInstanceInfo: (String) -> Unit,
+    onSaveInstanceEdits: (String, String, String, String?, Boolean) -> Unit,
     onAddInstance: () -> Unit,
     onTimezoneSelected: (String?) -> Unit,
     onTimeFormatSelected: (io.github.leogallego.ansiblejane.ui.components.TimeFormat) -> Unit,
@@ -116,11 +120,14 @@ private fun SettingsContent(
                 selectedInstanceForDetails = state.selectedInstanceForDetails,
                 discoveryRefreshing = state.discoveryRefreshing,
                 discoveryError = state.discoveryError,
+                instanceEditSaving = state.instanceEditSaving,
+                instanceEditError = state.instanceEditError,
                 onSwitchInstance = onSwitchInstance,
                 onRemoveInstance = onRemoveInstance,
                 onShowDetails = onShowDetails,
                 onDismissDetails = onDismissDetails,
                 onRefreshInstanceInfo = onRefreshInstanceInfo,
+                onSaveInstanceEdits = onSaveInstanceEdits,
                 onAddInstance = onAddInstance,
                 onLogout = onLogout,
                 modifier = Modifier.weight(1f)

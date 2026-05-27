@@ -146,7 +146,50 @@ class SettingsViewModel(
     }
 
     fun dismissDetails() {
-        updateReady { copy(selectedInstanceForDetails = null) }
+        updateReady { copy(selectedInstanceForDetails = null, instanceEditError = null) }
+    }
+
+    fun saveInstanceEdits(
+        instanceId: String,
+        url: String,
+        token: String,
+        alias: String?,
+        trustSelfSigned: Boolean
+    ) {
+        viewModelScope.launch {
+            updateReady { copy(instanceEditSaving = true, instanceEditError = null) }
+            try {
+                val instance = tokenManager.getInstanceById(instanceId) ?: return@launch
+                val apiVersion = try {
+                    ApiVersion.valueOf(instance.apiVersion)
+                } catch (_: Exception) {
+                    ApiVersion.CONTROLLER_V2
+                }
+                tokenManager.saveInstance(
+                    baseUrl = url,
+                    token = token,
+                    alias = alias,
+                    apiVersion = apiVersion,
+                    trustSelfSigned = trustSelfSigned,
+                    existingId = instanceId
+                )
+                apiProvider.evictInstance(instanceId)
+                val updated = tokenManager.instances.value.find { it.id == instanceId }
+                updateReady {
+                    copy(
+                        selectedInstanceForDetails = updated,
+                        instanceEditSaving = false
+                    )
+                }
+            } catch (e: Exception) {
+                updateReady {
+                    copy(
+                        instanceEditSaving = false,
+                        instanceEditError = e.message ?: "Failed to save changes"
+                    )
+                }
+            }
+        }
     }
 
     fun refreshInstanceInfo(instanceId: String) {
