@@ -290,9 +290,9 @@ private fun InstanceDetailsBottomSheet(
     var trustSelfSigned by remember(instance.id) { mutableStateOf(instance.trustSelfSigned) }
     var tokenVisible by remember { mutableStateOf(false) }
 
-    val hasChanges = url != instance.baseUrl ||
-        alias != (instance.alias ?: "") ||
-        token != instance.token ||
+    val hasChanges = url.trim() != instance.baseUrl ||
+        alias.trim().ifBlank { null } != instance.alias ||
+        token.trim() != instance.token ||
         trustSelfSigned != instance.trustSelfSigned
 
     ModalBottomSheet(

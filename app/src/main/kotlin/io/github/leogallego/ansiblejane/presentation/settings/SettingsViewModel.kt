@@ -159,7 +159,16 @@ class SettingsViewModel(
         viewModelScope.launch {
             updateReady { copy(instanceEditSaving = true, instanceEditError = null) }
             try {
-                val instance = tokenManager.getInstanceById(instanceId) ?: return@launch
+                val instance = tokenManager.getInstanceById(instanceId)
+                if (instance == null) {
+                    updateReady {
+                        copy(
+                            instanceEditSaving = false,
+                            instanceEditError = "Instance not found"
+                        )
+                    }
+                    return@launch
+                }
                 val apiVersion = try {
                     ApiVersion.valueOf(instance.apiVersion)
                 } catch (_: Exception) {
@@ -182,8 +191,10 @@ class SettingsViewModel(
                     )
                 }
             } catch (e: Exception) {
+                val updated = tokenManager.instances.value.find { it.id == instanceId }
                 updateReady {
                     copy(
+                        selectedInstanceForDetails = updated,
                         instanceEditSaving = false,
                         instanceEditError = e.message ?: "Failed to save changes"
                     )
