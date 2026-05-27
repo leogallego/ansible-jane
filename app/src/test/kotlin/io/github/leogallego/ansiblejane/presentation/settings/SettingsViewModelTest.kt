@@ -7,11 +7,17 @@ import io.github.leogallego.ansiblejane.fakes.FakeAssistantRepository
 import io.github.leogallego.ansiblejane.fakes.FakeTokenManager
 import io.github.leogallego.ansiblejane.fakes.FakeUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.AapInstance
+import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
+import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -57,7 +63,13 @@ class SettingsViewModelTest {
         )
     }
 
-    private fun createViewModel() = SettingsViewModel(
+    private fun fakeLocalTool(name: String) = object : LocalTool {
+        override val spec = ToolSpec(name, "Description of $name", JsonObject(emptyMap()))
+        override val isDestructive = false
+        override suspend fun execute(args: JsonObject) = ToolResult(success = true)
+    }
+
+    private fun createViewModel(localTools: List<LocalTool> = emptyList()) = SettingsViewModel(
         tokenManager = fakeTokenManager,
         apiProvider = fakeApiProvider,
         userPreferences = fakeUserPreferences,
@@ -65,7 +77,8 @@ class SettingsViewModelTest {
         mcpServerManager = mcpServerManager,
         instanceDiscovery = io.github.leogallego.ansiblejane.network.InstanceDiscovery(json),
         httpClient = httpClient,
-        json = json
+        json = json,
+        localTools = localTools
     )
 
     @Test
@@ -204,5 +217,67 @@ class SettingsViewModelTest {
         assertTrue(before is SettingsUiState.Ready)
         assertTrue(after is SettingsUiState.Ready)
         assertNull((after as SettingsUiState.Ready).selectedInstanceForDetails)
+    }
+
+    // --- Tool management ---
+
+    @Test
+    fun `toggleToolEnabled SHOULD disable a local tool and persist`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.toggleToolEnabled("list_hosts", ToolSource.LOCAL, false)
+            val state = awaitItem() as SettingsUiState.Ready
+            assertTrue("LOCAL:list_hosts" in state.disabledTools)
+            assertTrue("LOCAL:list_hosts" in fakeAssistantRepo.savedDisabledTools)
+        }
+    }
+
+    @Test
+    fun `toggleToolEnabled SHOULD re-enable a previously disabled tool`() = runTest {
+        fakeAssistantRepo.savedDisabledTools = setOf("LOCAL:list_hosts")
+        val viewModel = createViewModel()
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.toggleToolEnabled("list_hosts", ToolSource.LOCAL, true)
+            val state = awaitItem() as SettingsUiState.Ready
+            assertFalse("LOCAL:list_hosts" in state.disabledTools)
+        }
+    }
+
+    @Test
+    fun `toggleToolEnabled SHOULD use MCP prefix for MCP tools`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.toggleToolEnabled("controller.hosts_list", ToolSource.MCP, false)
+            val state = awaitItem() as SettingsUiState.Ready
+            assertTrue("MCP:controller.hosts_list" in state.disabledTools)
+        }
+    }
+
+    @Test
+    fun `toggleExpandCategory SHOULD toggle category in expandedCategories`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.toggleExpandCategory("JOBS")
+            val expanded = awaitItem() as SettingsUiState.Ready
+            assertTrue("JOBS" in expanded.expandedCategories)
+            viewModel.toggleExpandCategory("JOBS")
+            val collapsed = awaitItem() as SettingsUiState.Ready
+            assertFalse("JOBS" in collapsed.expandedCategories)
+        }
+    }
+
+    @Test
+    fun `toggleExpandMcpServer SHOULD toggle server in expandedMcpServers`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.toggleExpandMcpServer("Jobs")
+            val expanded = awaitItem() as SettingsUiState.Ready
+            assertTrue("Jobs" in expanded.expandedMcpServers)
+        }
     }
 }
