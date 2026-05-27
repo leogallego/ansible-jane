@@ -13,7 +13,11 @@ import io.github.leogallego.ansiblejane.network.ApiVersion
 import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import io.github.leogallego.ansiblejane.network.InstanceDiscovery
+import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
+import io.github.leogallego.ansiblejane.assistant.engine.ToolRouter
+import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +39,8 @@ class SettingsViewModel(
     private val mcpServerManager: McpServerManager,
     private val instanceDiscovery: InstanceDiscovery,
     private val httpClient: OkHttpClient,
-    private val json: Json
+    private val json: Json,
+    private val localTools: List<LocalTool> = emptyList()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
@@ -69,6 +74,22 @@ class SettingsViewModel(
                 val preservedDetails = (current as? SettingsUiState.Ready)?.selectedInstanceForDetails
                 val preservedThemeMode = (current as? SettingsUiState.Ready)?.themeMode
                     ?: io.github.leogallego.ansiblejane.ui.components.ThemeMode.SYSTEM
+                val preservedExpandedMcp = (current as? SettingsUiState.Ready)?.expandedMcpServers ?: emptySet()
+                val preservedExpandedCats = (current as? SettingsUiState.Ready)?.expandedCategories ?: emptySet()
+                val preservedLocalTools = (current as? SettingsUiState.Ready)?.localTools ?: emptyList()
+                val preservedDisabledTools = (current as? SettingsUiState.Ready)?.disabledTools ?: emptySet()
+
+                val mcpServerTools = connections.mapNotNull { (label, state) ->
+                    if (state is McpConnectionState.Connected) {
+                        label to mcpServerManager.getToolsForServer(label).map { tool ->
+                            McpToolUiState(
+                                name = tool.spec.name,
+                                description = tool.spec.description,
+                                isEnabled = "MCP:${tool.spec.name}" !in preservedDisabledTools
+                            )
+                        }
+                    } else null
+                }.toMap()
 
                 SettingsUiState.Ready(
                     currentTab = preservedTab,
@@ -85,7 +106,12 @@ class SettingsViewModel(
                     modelFetchState = preservedModelFetchState,
                     mcpEnabled = active?.mcpEnabled ?: false,
                     mcpServers = active?.mcpServerUrls ?: emptyList(),
-                    connections = connections
+                    connections = connections,
+                    localTools = preservedLocalTools,
+                    mcpServerTools = mcpServerTools,
+                    expandedMcpServers = preservedExpandedMcp,
+                    expandedCategories = preservedExpandedCats,
+                    disabledTools = preservedDisabledTools
                 )
             }.collect { state ->
                 _uiState.update { state }
@@ -114,6 +140,19 @@ class SettingsViewModel(
             assistantRepository.activeConfigFlow.collect { config ->
                 updateReady { copy(activeConfig = config) }
             }
+        }
+
+        viewModelScope.launch {
+            val disabled = assistantRepository.getDisabledTools()
+            val toolUiStates = localTools.map { tool ->
+                LocalToolUiState(
+                    name = tool.spec.name,
+                    description = tool.spec.description,
+                    category = ToolRouter.getCategoryForTool(tool.spec.name) ?: "OTHER",
+                    isEnabled = "LOCAL:${tool.spec.name}" !in disabled
+                )
+            }
+            updateReady { copy(localTools = toolUiStates, disabledTools = disabled) }
         }
     }
 
@@ -316,6 +355,70 @@ class SettingsViewModel(
                 if (it.url == url) it.copy(readOnly = readOnly) else it
             }
             tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
+        }
+    }
+
+    fun toggleServerEnabled(url: String, enabled: Boolean) {
+        val instance = tokenManager.activeInstance.value ?: return
+        viewModelScope.launch {
+            val updated = instance.mcpServerUrls?.map {
+                if (it.url == url) it.copy(enabled = enabled) else it
+            }
+            tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
+        }
+    }
+
+    fun toggleToolEnabled(toolName: String, source: ToolSource, enabled: Boolean) {
+        val key = "${source.name}:$toolName"
+        viewModelScope.launch {
+            val current = (uiState.value as? SettingsUiState.Ready)?.disabledTools ?: emptySet()
+            val updated = if (enabled) current - key else current + key
+            assistantRepository.saveDisabledTools(updated)
+            updateReady {
+                copy(
+                    disabledTools = updated,
+                    localTools = localTools.map {
+                        if (it.name == toolName && source == ToolSource.LOCAL) {
+                            it.copy(isEnabled = enabled)
+                        } else it
+                    },
+                    mcpServerTools = mcpServerTools.mapValues { (_, tools) ->
+                        tools.map {
+                            if (it.name == toolName && source == ToolSource.MCP) {
+                                it.copy(isEnabled = enabled)
+                            } else it
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    fun toggleExpandMcpServer(label: String) {
+        updateReady {
+            val updated = if (label in expandedMcpServers) {
+                expandedMcpServers - label
+            } else {
+                expandedMcpServers + label
+            }
+            copy(expandedMcpServers = updated)
+        }
+    }
+
+    fun toggleExpandCategory(category: String) {
+        updateReady {
+            val updated = if (category in expandedCategories) {
+                expandedCategories - category
+            } else {
+                expandedCategories + category
+            }
+            copy(expandedCategories = updated)
+        }
+    }
+
+    fun refreshMcpServer(label: String) {
+        viewModelScope.launch {
+            mcpServerManager.reconnectServer(label)
         }
     }
 

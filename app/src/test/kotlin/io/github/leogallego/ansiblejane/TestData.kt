@@ -1,6 +1,9 @@
 package io.github.leogallego.ansiblejane
 
 import io.github.leogallego.ansiblejane.model.AapInstance
+import io.github.leogallego.ansiblejane.model.McpServerConfig
+import io.github.leogallego.ansiblejane.presentation.settings.LocalToolUiState
+import io.github.leogallego.ansiblejane.presentation.settings.McpToolUiState
 import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.model.JobStatus
 import io.github.leogallego.ansiblejane.model.JobSummaryFields
@@ -182,4 +185,34 @@ object TestData {
     val sampleHosts = (1..3).map { createHost(it) }
     val sampleSchedules = (1..3).map { createSchedule(it) }
     val sampleEdaRuleAudits = (1..3).map { createEdaRuleAudit(it) }
+
+    fun createMcpServerConfig(
+        url: String = "https://aap.example.com:8448/job_management/mcp",
+        label: String = "Jobs",
+        enabled: Boolean = true,
+        isAutoDetected: Boolean = true,
+        readOnly: Boolean = true,
+        toolset: String? = "job_management"
+    ) = McpServerConfig(
+        url = url, label = label, enabled = enabled,
+        isAutoDetected = isAutoDetected, readOnly = readOnly, toolset = toolset
+    )
+
+    fun createLocalToolUiState(
+        name: String = "list_hosts",
+        description: String = "List all hosts in AAP inventory",
+        category: String = "INVENTORY",
+        isEnabled: Boolean = true
+    ) = LocalToolUiState(
+        name = name, description = description,
+        category = category, isEnabled = isEnabled
+    )
+
+    fun createMcpToolUiState(
+        name: String = "controller.hosts_list",
+        description: String = "List hosts via MCP",
+        isEnabled: Boolean = true
+    ) = McpToolUiState(
+        name = name, description = description, isEnabled = isEnabled
+    )
 }

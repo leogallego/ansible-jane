@@ -9,6 +9,8 @@ import io.github.leogallego.ansiblejane.model.McpServerConfig
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -1026,5 +1028,63 @@ class ToolRouterTest {
 
         assertTrue("list_authenticators" in names)
         assertFalse("list_hosts" in names)
+    }
+
+    // --- getCategoryForTool ---
+
+    @Test
+    fun `getCategoryForTool SHOULD return INVENTORY for list_hosts`() {
+        assertEquals("INVENTORY", ToolRouter.getCategoryForTool("list_hosts"))
+    }
+
+    @Test
+    fun `getCategoryForTool SHOULD return JOBS for launch_job`() {
+        assertEquals("JOBS", ToolRouter.getCategoryForTool("launch_job"))
+    }
+
+    @Test
+    fun `getCategoryForTool SHOULD return EDA for list_eda_activations`() {
+        assertEquals("EDA", ToolRouter.getCategoryForTool("list_eda_activations"))
+    }
+
+    @Test
+    fun `getCategoryForTool SHOULD return PLATFORM for list_platform_users`() {
+        assertEquals("PLATFORM", ToolRouter.getCategoryForTool("list_platform_users"))
+    }
+
+    @Test
+    fun `getCategoryForTool SHOULD return null for unknown tool`() {
+        assertNull(ToolRouter.getCategoryForTool("nonexistent_tool"))
+    }
+
+    @Test
+    fun `getCategoryForTool SHOULD cover all local tool names in all categories`() {
+        val allToolNames = listOf(
+            "list_inventories", "list_hosts", "get_host_facts", "get_host_job_summaries",
+            "list_groups", "list_inventory_sources", "list_labels",
+            "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
+            "list_workflow_templates", "launch_workflow", "get_workflow_job",
+            "list_schedules", "toggle_schedule", "list_workflow_nodes", "get_survey_spec",
+            "list_pending_approvals", "approve_workflow", "deny_workflow",
+            "list_instances", "get_instance", "list_instance_groups", "ping", "get_mesh_topology",
+            "list_credentials", "get_credential", "list_credential_types",
+            "list_projects", "get_project", "list_execution_environments",
+            "list_notification_templates", "get_settings", "get_config",
+            "list_organizations", "list_users", "list_teams",
+            "list_roles", "list_role_definitions", "list_applications", "list_tokens",
+            "list_platform_organizations", "list_platform_users", "list_platform_teams",
+            "list_platform_role_definitions", "list_authenticators",
+            "list_platform_services", "list_service_clusters",
+            "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
+            "list_eda_rulebooks", "list_eda_decision_environments",
+            "list_eda_projects", "list_eda_credentials", "list_eda_credential_types",
+            "list_eda_event_streams", "list_eda_users"
+        )
+        for (name in allToolNames) {
+            assertNotNull(
+                "Tool '$name' should have a category",
+                ToolRouter.getCategoryForTool(name)
+            )
+        }
     }
 }

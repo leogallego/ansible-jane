@@ -226,6 +226,10 @@ class ToolRouter {
             "developer_integration" to setOf(Category.JOBS, Category.MONITORING),
         )
 
+        fun getCategoryForTool(toolName: String): String? {
+            return Category.entries.firstOrNull { toolName in it.localToolNames }?.name
+        }
+
         fun stem(word: String): String {
             val result = word
                 .removeSuffix("ies").let { if (it != word) "${it}y" else it }

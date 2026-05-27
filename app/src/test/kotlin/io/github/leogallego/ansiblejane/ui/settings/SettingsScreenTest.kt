@@ -209,4 +209,15 @@ class SettingsScreenTest {
 
         composeTestRule.onNodeWithText("MCP Servers").assertIsDisplayed()
     }
+
+    @Test
+    fun `Tools tab shows Local Tools section`() {
+        fakeTokenManager.setInstances(listOf(instance1))
+        setUpScreen()
+
+        composeTestRule.onNodeWithText("Tools").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Local Tools").performScrollTo().assertIsDisplayed()
+    }
 }

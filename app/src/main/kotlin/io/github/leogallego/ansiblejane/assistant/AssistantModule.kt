@@ -78,7 +78,8 @@ val assistantModule = module {
             mcpServerManager = get(),
             instanceDiscovery = get(),
             httpClient = get(named("llm")),
-            json = networkJson
+            json = networkJson,
+            localTools = getAll<LocalTool>()
         )
     }
 }
