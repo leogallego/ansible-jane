@@ -66,7 +66,9 @@ class SchedulesViewModel(
         val current = _uiState.value
         if (current is SchedulesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.update { current.copy(isLoadingMore = true) }
+            _uiState.update { state ->
+                (state as? SchedulesUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             fetchJob = viewModelScope.launch {
                 fetchSchedules(append = true)
             }

@@ -71,7 +71,9 @@ class WorkflowTemplatesViewModel(
         val current = _uiState.value
         if (current is WorkflowTemplatesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.update { current.copy(isLoadingMore = true) }
+            _uiState.update { state ->
+                (state as? WorkflowTemplatesUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             fetchJob = viewModelScope.launch {
                 fetchTemplates(append = true)
             }

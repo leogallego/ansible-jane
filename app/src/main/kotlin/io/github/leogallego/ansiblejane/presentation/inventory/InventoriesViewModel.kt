@@ -79,7 +79,9 @@ class InventoriesViewModel(
         val current = _uiState.value
         if (current is InventoriesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.update { current.copy(isLoadingMore = true) }
+            _uiState.update { state ->
+                (state as? InventoriesUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             fetchJob = viewModelScope.launch {
                 fetchInventories(append = true)
             }

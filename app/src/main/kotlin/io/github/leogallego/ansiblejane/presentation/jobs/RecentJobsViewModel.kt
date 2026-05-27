@@ -106,7 +106,9 @@ class RecentJobsViewModel(
         val current = _uiState.value
         if (current is RecentJobsUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.update { current.copy(isLoadingMore = true) }
+            _uiState.update { state ->
+                (state as? RecentJobsUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             viewModelScope.launch {
                 fetchJobs(append = true)
             }

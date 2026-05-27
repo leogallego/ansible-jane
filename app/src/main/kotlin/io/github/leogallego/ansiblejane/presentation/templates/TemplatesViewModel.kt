@@ -71,7 +71,9 @@ class TemplatesViewModel(
         val current = _uiState.value
         if (current is TemplatesUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.update { current.copy(isLoadingMore = true) }
+            _uiState.update { state ->
+                (state as? TemplatesUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             fetchJob = viewModelScope.launch {
                 fetchTemplates(append = true)
             }

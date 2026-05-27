@@ -48,7 +48,9 @@ class InventoryHostsViewModel(
         val current = _uiState.value
         if (current is InventoryHostsUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.update { current.copy(isLoadingMore = true) }
+            _uiState.update { state ->
+                (state as? InventoryHostsUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             viewModelScope.launch {
                 fetchHosts(append = true)
             }

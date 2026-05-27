@@ -80,7 +80,9 @@ class EdaAuditViewModel(
         val current = _uiState.value
         if (current is EdaAuditUiState.Success && current.hasMore && !current.isLoadingMore) {
             currentPage++
-            _uiState.update { current.copy(isLoadingMore = true) }
+            _uiState.update { state ->
+                (state as? EdaAuditUiState.Success)?.copy(isLoadingMore = true) ?: state
+            }
             fetchJob = viewModelScope.launch {
                 fetchAuditRules(append = true)
             }
