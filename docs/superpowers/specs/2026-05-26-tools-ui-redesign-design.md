@@ -39,7 +39,7 @@ The bottom sheet visibility (`showAddServerDialog`) is transient UI state, kept 
 - Section header: "MCP Servers" with subtitle about auto-detection
 - Global MCP toggle (`switch_mcp_enabled`, existing)
 - Per-server expandable card:
-  - **Collapsed:** status dot (colored circle) + server label + URL (single line) + toolset badge (if set) + enable switch + chevron icon
+  - **Collapsed:** status dot (10dp circle) + server label (`titleSmall`) + URL (`bodySmall`, single line, `maxLines = 1`) + toolset badge (if set, `labelSmall` in `tertiaryContainer`) + enable switch + chevron icon (`KeyboardArrowUp`/`KeyboardArrowDown`)
   - **Expanded:** connection status text + error details (if error) + per-tool list with name/description/toggle + read-only switch + Refresh/Remove buttons
 - "Add MCP Server" button opens `ModalBottomSheet` with name, URL, toolset fields
 
@@ -51,11 +51,65 @@ The bottom sheet visibility (`showAddServerDialog`) is transient UI state, kept 
 
 ### Local Tools Section (bottom)
 
-- Section header: "Local Tools" with subtitle showing total count
+- Section header: "Local Tools" (`titleMedium`) with subtitle showing total count (`bodySmall`, `onSurfaceVariant`)
 - 8 collapsible category sections matching ToolRouter categories: Jobs, Inventory, Monitoring, Users, Security, Configuration, EDA, Platform
-- Each category header: category name + tool count (derived from ToolRouter) + expand/collapse chevron
-- Expanded category: single-column list of tool cards with name + description + toggle switch
+- Each category header: clickable `Row` (not a Card — lighter weight, no elevation) with category name (`titleSmall`) + tool count badge (`labelSmall`) + chevron icon
+- Expanded category: single-column list of tool rows with name (`bodyMedium`) + description (`bodySmall`, `onSurfaceVariant`) + toggle switch
 - All categories collapsed by default
+
+---
+
+## Interaction & UX Patterns
+
+### Animation
+
+Follow our established AgentTab pattern (not Kai's — Kai doesn't animate expand/collapse):
+
+- **MCP card expand/collapse:** `AnimatedVisibility` with `expandVertically()` / `shrinkVertically()`. Applied to the expanded content below the header row.
+- **Category section expand/collapse:** Same `AnimatedVisibility` pattern for consistency.
+- **Tool list population:** `Modifier.animateContentSize()` on the MCP card Column to smooth height changes when tools load after connection.
+
+### Click target isolation
+
+The enable Switch on MCP server cards must be isolated from the card's expand/collapse click:
+
+- Card header Row gets `.clickable { onToggleExpand() }`
+- Switch sits inside the Row but `Switch(onCheckedChange = ...)` consumes its own click events — tapping the Switch toggles enable, not expand
+- This matches both Kai's `Card(onClick=...)` + inner Switch pattern and our AgentTab's existing behavior
+- Same isolation for per-tool toggles in expanded content: Switch consumes click, Row area does nothing extra
+
+### Touch targets
+
+- All interactive elements (Switches, IconButtons, clickable Rows) must meet 48dp minimum touch target
+- Remove button: use standard `IconButton` (48dp default), not a sized-down 32dp variant as in current ToolsTab
+- Category headers: full-width clickable Row with 48dp minimum height
+
+### Empty and loading states
+
+**MCP card expanded content by connection state:**
+- `Connecting` → "Connecting..." text in `onSurfaceVariant`
+- `Connected` with tools → tool list with toggles
+- `Connected` with 0 tools → "No tools discovered" text
+- `Error` → error message in `colorScheme.error` + "Tap Refresh to retry" hint
+- `Disconnected` → "Not connected" text
+
+### Accessibility
+
+- Status dot must have a textual equivalent: wrap in `Box` with `Modifier.semantics { contentDescription = "Status: Connected" }`
+- Chevron icon: `contentDescription = if (expanded) "Collapse" else "Expand"` (matches AgentTab)
+- Card: `Modifier.semantics { stateDescription = if (expanded) "Expanded" else "Collapsed" }`
+- Tool toggles: Switch `contentDescription` not needed (Material 3 Switch announces its state automatically), but the Row should be described: `"Toggle tool list_hosts"`
+- Remove button: `contentDescription = "Remove ${server.label}"` (existing pattern)
+
+### Spacing and padding
+
+Follow existing Settings tab patterns:
+- Root Column: 16dp padding, `spacedBy(12.dp)`
+- Card internal padding: 16dp
+- Status dot: 10dp size, 12dp right spacer (matches AgentTab)
+- Section headers: `titleMedium`, 4dp gap to subtitle, 12dp gap to first card
+- Tool rows inside expanded card: `padding(vertical = 4.dp)` per row
+- Divider between MCP and Local sections: `HorizontalDivider` with 8dp vertical margin
 
 ---
 
