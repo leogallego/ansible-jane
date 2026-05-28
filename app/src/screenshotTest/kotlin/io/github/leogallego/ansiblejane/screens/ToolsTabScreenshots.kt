@@ -36,10 +36,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.leogallego.ansiblejane.ui.settings.ToolItemRow
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 private data class McpServerPreview(
@@ -137,18 +137,13 @@ private fun McpServerCardPreview(server: McpServerPreview) {
                 Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
                     HorizontalDivider()
                     server.tools.forEach { tool ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(tool.name, style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(tool.description, style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Switch(checked = tool.enabled, onCheckedChange = {})
-                        }
+                        ToolItemRow(
+                            name = tool.name,
+                            description = tool.description,
+                            isEnabled = tool.enabled,
+                            testTagPrefix = "switch_mcp_tool",
+                            onToggle = {}
+                        )
                     }
                 }
             }
@@ -179,17 +174,13 @@ private fun CategorySectionPreview(category: CategoryPreview) {
         AnimatedVisibility(visible = category.expanded, enter = expandVertically(), exit = shrinkVertically()) {
             Column(modifier = Modifier.padding(start = 8.dp)) {
                 category.tools.forEach { tool ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(tool.name, style = MaterialTheme.typography.bodyMedium)
-                            Text(tool.description, style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Switch(checked = tool.enabled, onCheckedChange = {})
-                    }
+                    ToolItemRow(
+                        name = tool.name,
+                        description = tool.description,
+                        isEnabled = tool.enabled,
+                        testTagPrefix = "switch_local_tool",
+                        onToggle = {}
+                    )
                 }
             }
         }

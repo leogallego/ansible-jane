@@ -49,7 +49,7 @@ fun ToolItemRow(
         Switch(
             checked = isEnabled,
             onCheckedChange = onToggle,
-            modifier = Modifier.testTag("${testTagPrefix}_$name")
+            modifier = Modifier.testTag("${testTagPrefix}_${name.lowercase().replace(Regex("[^a-z0-9_]"), "_")}")
         )
     }
 }
