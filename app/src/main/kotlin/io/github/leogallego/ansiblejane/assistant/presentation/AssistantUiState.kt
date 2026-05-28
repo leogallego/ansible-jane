@@ -23,7 +23,8 @@ sealed interface AssistantUiState {
         val isGenerating: Boolean = false,
         val streamingText: String? = null,
         val connections: Map<String, McpConnectionState> = emptyMap(),
-        val pendingConfirmation: PendingConfirmation? = null
+        val pendingConfirmation: PendingConfirmation? = null,
+        val sessionTokens: Int = 0
     ) : AssistantUiState
     data class Error(val error: AppError) : AssistantUiState
 }
