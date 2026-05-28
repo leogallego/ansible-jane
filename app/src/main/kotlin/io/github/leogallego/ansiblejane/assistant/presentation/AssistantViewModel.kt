@@ -309,6 +309,9 @@ class AssistantViewModel(
                                 )
                             }
                         }
+                        is ChatEvent.TokenUsageReport -> {
+                            // TODO: Task 4 - accumulate session tokens and attach to message
+                        }
                     }
                 }
         }

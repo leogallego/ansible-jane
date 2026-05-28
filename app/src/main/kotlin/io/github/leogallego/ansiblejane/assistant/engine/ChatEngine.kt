@@ -38,6 +38,7 @@ sealed interface ChatEvent {
     ) : ChatEvent
     data class AssistantMessage(val fullText: String, val toolCallCount: Int) : ChatEvent
     data class Error(val message: String, val cause: Throwable? = null) : ChatEvent
+    data class TokenUsageReport(val usage: TokenUsage) : ChatEvent
 }
 
 class ChatEngine(
@@ -75,6 +76,10 @@ class ChatEngine(
             var totalToolCalls = 0
             val toolCallHistory = mutableListOf<List<String>>()
             val softLimit = (contextChars * 0.9).toInt()
+            var accInputTokens = 0
+            var accOutputTokens = 0
+            var accTotalTokens = 0
+            var anyRealUsage = false
 
             loop@ while (iterations < maxIterations) {
                 iterations++
@@ -115,7 +120,15 @@ class ChatEngine(
                             tc.args.clear()
                             tc.args.append(frame.content)
                         }
-                        is StreamFrame.End -> { /* handled after collect */ }
+                        is StreamFrame.End -> {
+                            val meta = frame.metaInfo
+                            if (meta.totalTokensCount != null) {
+                                accInputTokens += meta.inputTokensCount ?: 0
+                                accOutputTokens += meta.outputTokensCount ?: 0
+                                accTotalTokens += meta.totalTokensCount ?: 0
+                                anyRealUsage = true
+                            }
+                        }
                         else -> { /* ReasoningDelta etc — ignore */ }
                     }
                 }
@@ -142,6 +155,8 @@ class ChatEngine(
 
                     if (isRepeatingToolCalls(toolCallHistory)) {
                         Log.w(TAG, "ITER $iterations: repeat detected, stopping")
+                        val usage = buildTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages, responseText)
+                        emit(ChatEvent.TokenUsageReport(usage))
                         emit(ChatEvent.AssistantMessage(
                             (responseText ?: "") + "\n\nStopped: the same tools were being called repeatedly.",
                             totalToolCalls
@@ -215,11 +230,15 @@ class ChatEngine(
                     } else {
                         responseText ?: textBuilder.toString()
                     }
+                    val usage = buildTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages, finalText)
+                    emit(ChatEvent.TokenUsageReport(usage))
                     emit(ChatEvent.AssistantMessage(finalText, totalToolCalls))
                     return@flow
                 }
             }
 
+            val usage = buildTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages, null)
+            emit(ChatEvent.TokenUsageReport(usage))
             emit(ChatEvent.AssistantMessage(
                 "I wasn't able to complete this request within the tool call limit.",
                 totalToolCalls
@@ -407,6 +426,32 @@ class ChatEngine(
 
         if (keepFrom > systemMessages.size) {
             messages.subList(systemMessages.size, keepFrom).clear()
+        }
+    }
+
+    private fun buildTokenUsage(
+        anyRealUsage: Boolean,
+        accInputTokens: Int,
+        accOutputTokens: Int,
+        accTotalTokens: Int,
+        messages: List<ChatMessage>,
+        responseText: String?
+    ): TokenUsage {
+        return if (anyRealUsage) {
+            TokenUsage(
+                inputTokens = accInputTokens,
+                outputTokens = accOutputTokens,
+                totalTokens = accTotalTokens
+            )
+        } else {
+            val totalChars = messages.sumOf { it.content.length } + (responseText?.length ?: 0)
+            val estimated = totalChars / 4
+            TokenUsage(
+                inputTokens = estimated * 2 / 3,
+                outputTokens = estimated / 3,
+                totalTokens = estimated,
+                isEstimated = true
+            )
         }
     }
 
