@@ -52,6 +52,16 @@ class SettingsViewModel(
             val activeConfig = assistantRepository.loadLlmConfig()
             val initialActiveKey = assistantRepository.activeProviderKeyFlow.first()
 
+            val initialDisabledTools = assistantRepository.getDisabledTools()
+            val initialLocalTools = localTools.map { tool ->
+                LocalToolUiState(
+                    name = tool.spec.name,
+                    description = tool.spec.description,
+                    category = ToolRouter.getCategoryForTool(tool.spec.name) ?: "OTHER",
+                    isEnabled = "LOCAL:${tool.spec.name}" !in initialDisabledTools
+                )
+            }
+
             combine(
                 tokenManager.instances,
                 tokenManager.activeInstance,
@@ -76,8 +86,8 @@ class SettingsViewModel(
                     ?: io.github.leogallego.ansiblejane.ui.components.ThemeMode.SYSTEM
                 val preservedExpandedMcp = (current as? SettingsUiState.Ready)?.expandedMcpServers ?: emptySet()
                 val preservedExpandedCats = (current as? SettingsUiState.Ready)?.expandedCategories ?: emptySet()
-                val preservedLocalTools = (current as? SettingsUiState.Ready)?.localTools ?: emptyList()
-                val preservedDisabledTools = (current as? SettingsUiState.Ready)?.disabledTools ?: emptySet()
+                val preservedLocalTools = (current as? SettingsUiState.Ready)?.localTools ?: initialLocalTools
+                val preservedDisabledTools = (current as? SettingsUiState.Ready)?.disabledTools ?: initialDisabledTools
 
                 val mcpServerTools = connections.mapNotNull { (label, state) ->
                     if (state is McpConnectionState.Connected) {
@@ -142,18 +152,6 @@ class SettingsViewModel(
             }
         }
 
-        viewModelScope.launch {
-            val disabled = assistantRepository.getDisabledTools()
-            val toolUiStates = localTools.map { tool ->
-                LocalToolUiState(
-                    name = tool.spec.name,
-                    description = tool.spec.description,
-                    category = ToolRouter.getCategoryForTool(tool.spec.name) ?: "OTHER",
-                    isEnabled = "LOCAL:${tool.spec.name}" !in disabled
-                )
-            }
-            updateReady { copy(localTools = toolUiStates, disabledTools = disabled) }
-        }
     }
 
     // --- Tab ---
