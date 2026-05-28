@@ -23,6 +23,7 @@ class McpServerManager(
 
     private val clients = ConcurrentHashMap<String, McpClient>()
     private val mcpTools = mutableListOf<McpTool>()
+    @Volatile
     private var currentInstance: AapInstance? = null
 
     suspend fun connectAll(instance: AapInstance) {
