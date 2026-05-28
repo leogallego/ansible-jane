@@ -78,6 +78,7 @@ jobs:
 
       - name: Prepare Pages artifact
         run: |
+          cp -r site/ _site/
           mkdir -p _site/fdroid
           cp -r fdroid/repo _site/fdroid/
 

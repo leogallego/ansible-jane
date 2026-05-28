@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ansible Jane &mdash; Your Ansible, Across Any Distance</title>
+  <meta name="description" content="A lightweight Android app for managing Ansible Automation Platform. Browse templates, launch jobs, monitor workflows, and talk to Jane &mdash; an AI assistant that speaks automation.">
+  <meta name="theme-color" content="#0d1117">
+  <meta property="og:title" content="Ansible Jane &mdash; Your Ansible, Across Any Distance">
+  <meta property="og:description" content="A lightweight Android app for managing Ansible Automation Platform with an AI assistant that speaks automation.">
+  <meta property="og:image" content="https://leogallego.github.io/ansible-jane/img/icon.png">
+  <meta property="og:url" content="https://leogallego.github.io/ansible-jane/">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="img/icon.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <main>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <img src="img/icon.png" class="hero-icon" alt="Ansible Jane app icon" width="80" height="80">
+        <h1>Ansible Jane</h1>
+        <p class="tagline">Your Ansible, Across Any Distance</p>
+        <p class="sub">A lightweight Android app for Ansible Automation Platform. Launch jobs, monitor workflows, manage inventories, and talk to Jane &mdash; an AI assistant that understands your infrastructure. No ansible required on your phone. Just the connection.</p>
+        <div class="hero-badges">
+          <a class="btn btn-primary" href="https://github.com/leogallego/ansible-jane/releases">Download</a>
+          <a class="btn btn-outline" href="https://github.com/leogallego/ansible-jane">GitHub</a>
+        </div>
+        <div class="github-badge">
+          <a href="https://github.com/leogallego/ansible-jane"><img src="https://img.shields.io/github/stars/leogallego/ansible-jane?style=social" alt="Star Ansible Jane on GitHub"></a>
+        </div>
+      </div>
+      <div class="hero-phone">
+        <div class="phone-frame">
+          <img src="img/chat-dark.png" alt="Jane AI assistant conversation about Ansible jobs" width="400" height="900" fetchpriority="high">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="container">
+      <h2 class="section-title fade-in">What Jane Can Do</h2>
+      <p class="section-desc fade-in">She lives in the network between you and your automation platform. Everything you need, nothing you don't.</p>
+      <div class="features-grid">
+        <div class="feature-card fade-in">
+          <span class="feature-icon">&#x1f680;</span>
+          <h3>Launch &amp; Monitor Jobs</h3>
+          <p>Browse job templates, launch playbooks with parameters, and watch them run in real time. Approve or deny workflow steps from your pocket.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon">&#x1f916;</span>
+          <h3>Talk to Jane</h3>
+          <p>An AI assistant that speaks Ansible. Ask her to list failing jobs, check host facts, or launch a template &mdash; she calls the right API and reports back.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon">&#x1f50c;</span>
+          <h3>MCP Tool Integration</h3>
+          <p>Connect Jane to MCP servers for extended capabilities. Auto-discovers AAP's MCP endpoints. Add custom servers for your own tooling.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon">&#x1f4e6;</span>
+          <h3>Inventory &amp; Hosts</h3>
+          <p>Browse inventories, inspect hosts and their facts, check groups. Everything from your AAP instance, organized and searchable.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon">&#x26a1;</span>
+          <h3>Event-Driven Ansible</h3>
+          <p>Monitor EDA activations and rulebooks. See what's triggering your event-driven automation without opening a laptop.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon">&#x1f512;</span>
+          <h3>Secure by Default</h3>
+          <p>Tokens encrypted with Android Keystore + Tink. HTTPS-only. No data stored on third-party servers. Your credentials never leave your device.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section id="screenshots">
+    <div class="container">
+      <h2 class="section-title fade-in">See It In Action</h2>
+      <p class="section-desc fade-in">Built with Material You. Adapts to your device theme.</p>
+      <div class="screenshots-grid">
+        <div class="screenshot-card fade-in">
+          <img src="img/jobs-dark.png" alt="Recent jobs list showing status, timestamps and filters" loading="lazy">
+          <div class="caption">Job Activity</div>
+        </div>
+        <div class="screenshot-card fade-in">
+          <img src="img/templates-dark.png" alt="Job templates list with launch buttons" loading="lazy">
+          <div class="caption">Templates</div>
+        </div>
+        <div class="screenshot-card fade-in">
+          <img src="img/chat-dark.png" alt="AI assistant conversation with tool-use responses" loading="lazy">
+          <div class="caption">Jane</div>
+        </div>
+        <div class="screenshot-card fade-in">
+          <img src="img/tools-dark.png" alt="MCP server configuration and local tools management" loading="lazy">
+          <div class="caption">Tools</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section class="install" id="install">
+    <div class="container">
+      <h2 class="section-title fade-in">Get Ansible Jane</h2>
+      <p class="section-desc fade-in">Free, open source, no accounts. Install and connect to your AAP instance.</p>
+      <div class="install-grid">
+        <div class="install-card fade-in">
+          <h3>GitHub Releases</h3>
+          <p>Download the latest APK directly. Signed release builds for every version.</p>
+          <a class="btn btn-primary" href="https://github.com/leogallego/ansible-jane/releases">Download APK</a>
+        </div>
+        <div class="install-card fade-in">
+          <h3>F-Droid Repo</h3>
+          <p>Add our self-hosted F-Droid repository for automatic updates.</p>
+          <a class="btn btn-outline" href="fdroid/repo">Browse Repo</a>
+        </div>
+        <div class="install-card fade-in">
+          <h3>Obtainium</h3>
+          <p>Point Obtainium at the GitHub repo for update tracking without F-Droid.</p>
+          <a class="btn btn-outline" href="https://github.com/leogallego/ansible-jane">View Source</a>
+        </div>
+      </div>
+      <div class="install-footer fade-in">
+        <p>Requires Android 12+ and AAP 2.5+ with Gateway.</p>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="https://github.com/leogallego/ansible-jane">GitHub</a>
+      <a href="https://github.com/leogallego/ansible-jane/releases">Releases</a>
+      <a href="https://github.com/leogallego/ansible-jane/issues">Issues</a>
+      <a href="fdroid/repo">F-Droid Repo</a>
+    </div>
+    <p class="note">Built with Kotlin, Jetpack Compose, and Koog. Open source under the Apache 2.0 License.</p>
+    <p class="legal">"The ansible is, by definition, instantaneous. It bridges any distance." &mdash; inspired by the works of Ursula K. Le Guin and Orson Scott Card</p>
+  </footer>
+
+  <script>
+    const o = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); o.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(el => o.observe(el));
+  </script>
+</body>
+</html>
