@@ -31,6 +31,9 @@ class ChatEngineTest {
             val delta = awaitItem()
             assertTrue(delta is ChatEvent.TextDelta)
 
+            val tokenReport = awaitItem()
+            assertTrue(tokenReport is ChatEvent.TokenUsageReport)
+
             val msg = awaitItem()
             assertTrue(msg is ChatEvent.AssistantMessage)
             assertEquals("Hello there!", (msg as ChatEvent.AssistantMessage).fullText)
@@ -65,6 +68,9 @@ class ChatEngineTest {
 
             val delta = awaitItem()
             assertTrue(delta is ChatEvent.TextDelta)
+
+            val tokenReport = awaitItem()
+            assertTrue(tokenReport is ChatEvent.TokenUsageReport)
 
             val msg = awaitItem()
             assertTrue(msg is ChatEvent.AssistantMessage)
