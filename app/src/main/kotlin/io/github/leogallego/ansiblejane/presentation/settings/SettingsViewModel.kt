@@ -187,8 +187,8 @@ class SettingsViewModel(
     }
 
     fun refreshInstanceInfo(instanceId: String) {
-        val instance = tokenManager.instances.value.find { it.id == instanceId } ?: return
         viewModelScope.launch {
+            val instance = tokenManager.instances.value.find { it.id == instanceId } ?: return@launch
             updateReady { copy(discoveryRefreshing = true, discoveryError = null) }
             try {
                 val client = buildDiscoveryClient(instance)
@@ -284,8 +284,8 @@ class SettingsViewModel(
     // --- Tools (MCP) ---
 
     fun toggleMcpEnabled(enabled: Boolean) {
-        val instance = tokenManager.activeInstance.value ?: return
         viewModelScope.launch {
+            val instance = tokenManager.activeInstance.value ?: return@launch
             if (!enabled) {
                 tokenManager.updateMcpConfig(instance.id, false, instance.mcpServerUrls)
                 return@launch
@@ -329,11 +329,11 @@ class SettingsViewModel(
     }
 
     fun addMcpServer(url: String, label: String, toolset: String? = null) {
-        val instance = tokenManager.activeInstance.value ?: return
-        val sanitizedUrl = url.trim().trimEnd('/')
-        val uri = try { java.net.URI(sanitizedUrl) } catch (_: Exception) { return }
-        if (uri.scheme?.lowercase() !in listOf("https", "wss")) return
         viewModelScope.launch {
+            val instance = tokenManager.activeInstance.value ?: return@launch
+            val sanitizedUrl = url.trim().trimEnd('/')
+            val uri = try { java.net.URI(sanitizedUrl) } catch (_: Exception) { return@launch }
+            if (uri.scheme?.lowercase() !in listOf("https", "wss")) return@launch
             val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
             current.add(McpServerConfig(url = sanitizedUrl, label = label, toolset = toolset))
             tokenManager.updateMcpConfig(instance.id, true, current)
@@ -341,8 +341,8 @@ class SettingsViewModel(
     }
 
     fun removeMcpServer(url: String) {
-        val instance = tokenManager.activeInstance.value ?: return
         viewModelScope.launch {
+            val instance = tokenManager.activeInstance.value ?: return@launch
             val updated = instance.mcpServerUrls?.filter { it.url != url }
             val enabled = !updated.isNullOrEmpty()
             tokenManager.updateMcpConfig(instance.id, enabled, updated)
@@ -358,8 +358,8 @@ class SettingsViewModel(
     }
 
     private fun updateMcpServer(url: String, transform: (McpServerConfig) -> McpServerConfig) {
-        val instance = tokenManager.activeInstance.value ?: return
         viewModelScope.launch {
+            val instance = tokenManager.activeInstance.value ?: return@launch
             val updated = instance.mcpServerUrls?.map {
                 if (it.url == url) transform(it) else it
             }
