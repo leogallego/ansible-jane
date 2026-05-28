@@ -157,7 +157,6 @@ private fun SettingsContent(
                 localTools = state.localTools,
                 expandedMcpServers = state.expandedMcpServers,
                 expandedCategories = state.expandedCategories,
-                disabledTools = state.disabledTools,
                 onToggleMcp = onToggleMcp,
                 onAddMcpServer = onAddMcpServer,
                 onRemoveMcpServer = onRemoveMcpServer,

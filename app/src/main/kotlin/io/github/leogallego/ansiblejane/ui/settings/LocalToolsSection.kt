@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -26,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.presentation.settings.LocalToolUiState
@@ -123,33 +121,13 @@ fun LocalToolsSection(
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         categoryTools.forEach { tool ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = tool.name,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = tool.description,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                Switch(
-                                    checked = tool.isEnabled,
-                                    onCheckedChange = { onToggleTool(tool.name, it) },
-                                    modifier = Modifier.testTag("switch_local_tool_${tool.name}")
-                                )
-                            }
+                            ToolItemRow(
+                                name = tool.name,
+                                description = tool.description,
+                                isEnabled = tool.isEnabled,
+                                testTagPrefix = "switch_local_tool",
+                                onToggle = { onToggleTool(tool.name, it) }
+                            )
                         }
                     }
                 }

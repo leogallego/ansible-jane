@@ -330,9 +330,12 @@ class SettingsViewModel(
 
     fun addMcpServer(url: String, label: String, toolset: String? = null) {
         val instance = tokenManager.activeInstance.value ?: return
+        val sanitizedUrl = url.trim().trimEnd('/')
+        val uri = try { java.net.URI(sanitizedUrl) } catch (_: Exception) { return }
+        if (uri.scheme?.lowercase() !in listOf("https", "wss")) return
         viewModelScope.launch {
             val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
-            current.add(McpServerConfig(url = url.trimEnd('/'), label = label, toolset = toolset))
+            current.add(McpServerConfig(url = sanitizedUrl, label = label, toolset = toolset))
             tokenManager.updateMcpConfig(instance.id, true, current)
         }
     }
@@ -347,20 +350,18 @@ class SettingsViewModel(
     }
 
     fun toggleServerReadOnly(url: String, readOnly: Boolean) {
-        val instance = tokenManager.activeInstance.value ?: return
-        viewModelScope.launch {
-            val updated = instance.mcpServerUrls?.map {
-                if (it.url == url) it.copy(readOnly = readOnly) else it
-            }
-            tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
-        }
+        updateMcpServer(url) { it.copy(readOnly = readOnly) }
     }
 
     fun toggleServerEnabled(url: String, enabled: Boolean) {
+        updateMcpServer(url) { it.copy(enabled = enabled) }
+    }
+
+    private fun updateMcpServer(url: String, transform: (McpServerConfig) -> McpServerConfig) {
         val instance = tokenManager.activeInstance.value ?: return
         viewModelScope.launch {
             val updated = instance.mcpServerUrls?.map {
-                if (it.url == url) it.copy(enabled = enabled) else it
+                if (it.url == url) transform(it) else it
             }
             tokenManager.updateMcpConfig(instance.id, instance.mcpEnabled, updated)
         }
@@ -393,25 +394,11 @@ class SettingsViewModel(
     }
 
     fun toggleExpandMcpServer(label: String) {
-        updateReady {
-            val updated = if (label in expandedMcpServers) {
-                expandedMcpServers - label
-            } else {
-                expandedMcpServers + label
-            }
-            copy(expandedMcpServers = updated)
-        }
+        updateReady { copy(expandedMcpServers = expandedMcpServers.toggled(label)) }
     }
 
     fun toggleExpandCategory(category: String) {
-        updateReady {
-            val updated = if (category in expandedCategories) {
-                expandedCategories - category
-            } else {
-                expandedCategories + category
-            }
-            copy(expandedCategories = updated)
-        }
+        updateReady { copy(expandedCategories = expandedCategories.toggled(category)) }
     }
 
     fun refreshMcpServer(label: String) {
@@ -446,3 +433,6 @@ class SettingsViewModel(
         }
     }
 }
+
+private fun <T> Set<T>.toggled(item: T): Set<T> =
+    if (item in this) this - item else this + item

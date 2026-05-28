@@ -49,7 +49,6 @@ fun McpServerCard(
     connectionState: McpConnectionState?,
     tools: List<McpToolUiState>,
     expanded: Boolean,
-    disabledTools: Set<String>,
     onToggleExpand: () -> Unit,
     onToggleEnabled: (Boolean) -> Unit,
     onToggleReadOnly: (Boolean) -> Unit,
@@ -211,33 +210,13 @@ fun McpServerCard(
                             )
                         } else {
                             tools.forEach { tool ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = tool.name,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = tool.description,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                    Switch(
-                                        checked = tool.isEnabled,
-                                        onCheckedChange = { onToggleTool(tool.name, it) },
-                                        modifier = Modifier.testTag("switch_mcp_tool_${tool.name}")
-                                    )
-                                }
+                                ToolItemRow(
+                                    name = tool.name,
+                                    description = tool.description,
+                                    isEnabled = tool.isEnabled,
+                                    testTagPrefix = "switch_mcp_tool",
+                                    onToggle = { onToggleTool(tool.name, it) }
+                                )
                             }
                         }
                     }
