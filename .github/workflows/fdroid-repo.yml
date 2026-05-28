@@ -67,6 +67,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Copy repo icon
+        run: |
+          mkdir -p fdroid/repo/icons
+          cp fastlane/metadata/android/en-US/images/icon.png fdroid/repo/icons/icon.png
+
       - name: Generate repo index
         working-directory: fdroid
         run: fdroid update --create-metadata
