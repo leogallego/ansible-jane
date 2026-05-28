@@ -43,6 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
@@ -141,16 +143,18 @@ fun MainScreen(
                         onNavigateToSettings = onNavigateToSettings
                     )
                     if (selectedTab is TopLevelTab.Assistant && sessionTokens > 0) {
-                        val formatted = io.github.leogallego.ansiblejane.assistant.engine.TokenUsage(
-                            0, 0, sessionTokens
-                        ).formatTotal()
+                        val formatted = io.github.leogallego.ansiblejane.assistant.engine.TokenUsage
+                            .formatTokenCount(sessionTokens)
                         Text(
                             text = "$formatted tokens",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .padding(end = 4.dp)
-                                .testTag("text_session_tokens"),
+                                .testTag("text_session_tokens")
+                                .semantics {
+                                    contentDescription = "$sessionTokens tokens used this session"
+                                },
                         )
                     }
                     if (selectedTab is TopLevelTab.Assistant) {

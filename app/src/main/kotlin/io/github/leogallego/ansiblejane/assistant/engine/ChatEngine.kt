@@ -56,8 +56,13 @@ class ChatEngine(
         contextChars: Int = DEFAULT_CONTEXT_CHARS,
         onConfirmationRequired: (suspend (toolName: String, description: String, args: JsonObject) -> Boolean)? = null
     ): Flow<ChatEvent> = flow {
+        var accInputTokens = 0
+        var accOutputTokens = 0
+        var accTotalTokens = 0
+        var anyRealUsage = false
+        val messages = mutableListOf<ChatMessage>()
+
         try {
-            val messages = mutableListOf<ChatMessage>()
             messages.add(ChatMessage(role = Role.SYSTEM, content = SYSTEM_PROMPT))
             history.filter { it.role == Role.USER || it.role == Role.ASSISTANT }
                 .forEach { messages.add(it) }
@@ -76,10 +81,6 @@ class ChatEngine(
             var totalToolCalls = 0
             val toolCallHistory = mutableListOf<List<String>>()
             val softLimit = (contextChars * 0.9).toInt()
-            var accInputTokens = 0
-            var accOutputTokens = 0
-            var accTotalTokens = 0
-            var anyRealUsage = false
 
             loop@ while (iterations < maxIterations) {
                 iterations++
@@ -247,18 +248,23 @@ class ChatEngine(
             throw e
         } catch (e: LlmAuthException) {
             Log.e(TAG, "AUTH error: ${e.message}", e)
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error(e.message ?: "Authentication failed — check API key", e))
         } catch (e: LlmRateLimitException) {
             Log.w(TAG, "RATE_LIMIT: ${e.message}")
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error(e.message ?: "Rate limited — try again later", e))
         } catch (e: LlmTimeoutException) {
             Log.w(TAG, "TIMEOUT: ${e.message}")
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error("Response timed out", e))
         } catch (e: IOException) {
             Log.e(TAG, "IO error: ${e.message}", e)
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error("Unable to reach LLM server: ${e.message}", e))
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error: ${e.message}", e)
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error("Error: ${e.message}", e))
         }
     }
@@ -426,6 +432,22 @@ class ChatEngine(
 
         if (keepFrom > systemMessages.size) {
             messages.subList(systemMessages.size, keepFrom).clear()
+        }
+    }
+
+    private suspend fun kotlinx.coroutines.flow.FlowCollector<ChatEvent>.emitPartialTokenUsage(
+        anyRealUsage: Boolean,
+        accInputTokens: Int,
+        accOutputTokens: Int,
+        accTotalTokens: Int,
+        messages: List<ChatMessage>
+    ) {
+        if (anyRealUsage) {
+            emit(ChatEvent.TokenUsageReport(TokenUsage(
+                inputTokens = accInputTokens,
+                outputTokens = accOutputTokens,
+                totalTokens = accTotalTokens
+            )))
         }
     }
 

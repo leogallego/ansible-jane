@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class FakeAssistantRepository : IAssistantRepository {
     private val messages = mutableListOf<ChatMessage>()
@@ -36,7 +37,9 @@ class FakeAssistantRepository : IAssistantRepository {
 
     override fun addMessage(message: ChatMessage) {
         messages.add(message)
-        message.tokenUsage?.let { _sessionTokens.value += it.totalTokens }
+        message.tokenUsage?.let { usage ->
+            _sessionTokens.update { it + usage.totalTokens }
+        }
     }
 
     override fun getHistory(): List<ChatMessage> = messages.toList()

@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.MapSerializer
@@ -51,7 +52,9 @@ class AssistantRepository(
 
     override fun addMessage(message: ChatMessage) {
         messages.add(message)
-        message.tokenUsage?.let { _sessionTokens.value += it.totalTokens }
+        message.tokenUsage?.let { usage ->
+            _sessionTokens.update { it + usage.totalTokens }
+        }
         if (messages.size > MAX_MESSAGES) {
             messages.removeAt(0)
         }

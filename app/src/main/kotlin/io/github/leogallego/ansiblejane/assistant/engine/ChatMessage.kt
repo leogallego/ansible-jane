@@ -14,14 +14,18 @@ data class TokenUsage(
     val totalTokens: Int,
     val isEstimated: Boolean = false
 ) {
-    fun formatTotal(): String {
-        val prefix = if (isEstimated) "~" else ""
-        return if (totalTokens >= 1000) {
-            val k = totalTokens / 1000
-            val remainder = (totalTokens % 1000) / 100
-            if (remainder > 0) "$prefix${k}.${remainder}K" else "$prefix${k}K"
-        } else {
-            "$prefix$totalTokens"
+    fun formatTotal(): String = formatTokenCount(totalTokens, isEstimated)
+
+    companion object {
+        fun formatTokenCount(count: Int, isEstimated: Boolean = false): String {
+            val prefix = if (isEstimated) "~" else ""
+            return if (count >= 1000) {
+                val k = count / 1000
+                val remainder = (count % 1000) / 100
+                if (remainder > 0) "$prefix${k}.${remainder}K" else "$prefix${k}K"
+            } else {
+                "$prefix$count"
+            }
         }
     }
 }

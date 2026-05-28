@@ -35,6 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.engine.ResponseSource
@@ -263,6 +266,7 @@ private fun SourceBand(
                     ),
                     color = color,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
             }
@@ -278,6 +282,9 @@ private fun SourceBand(
                     text = "${tokenUsage.formatTotal()} tokens",
                     style = MaterialTheme.typography.labelSmall,
                     color = color,
+                    modifier = Modifier.semantics {
+                        contentDescription = "${tokenUsage.totalTokens} tokens"
+                    },
                 )
             }
         }
