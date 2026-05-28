@@ -1,8 +1,9 @@
 name: Update F-Droid repo
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Build and Release"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -17,6 +18,9 @@ concurrency:
 jobs:
   update-repo:
     name: Build and deploy F-Droid repo
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
