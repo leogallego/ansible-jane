@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,8 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,8 +49,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.R
@@ -69,7 +68,7 @@ fun InstancesTab(
     onShowDetails: (String) -> Unit,
     onDismissDetails: () -> Unit,
     onRefreshInstanceInfo: (String) -> Unit,
-    onSaveInstanceEdits: (instanceId: String, url: String, token: String, alias: String?, trustSelfSigned: Boolean) -> Unit,
+    onSaveInstanceEdits: (instanceId: String, token: String?, alias: String?, trustSelfSigned: Boolean) -> Unit,
     onAddInstance: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
@@ -138,8 +137,8 @@ fun InstancesTab(
             errorMessage = discoveryError,
             editError = instanceEditError,
             onRefresh = { onRefreshInstanceInfo(instance.id) },
-            onSave = { url, token, alias, trustSelfSigned ->
-                onSaveInstanceEdits(instance.id, url, token, alias, trustSelfSigned)
+            onSave = { token, alias, trustSelfSigned ->
+                onSaveInstanceEdits(instance.id, token, alias, trustSelfSigned)
             },
             onDismiss = onDismissDetails
         )
@@ -281,19 +280,21 @@ private fun InstanceDetailsBottomSheet(
     errorMessage: String? = null,
     editError: String? = null,
     onRefresh: () -> Unit,
-    onSave: (url: String, token: String, alias: String?, trustSelfSigned: Boolean) -> Unit,
+    onSave: (token: String?, alias: String?, trustSelfSigned: Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var url by remember(instance.id) { mutableStateOf(instance.baseUrl) }
     var alias by remember(instance.id) { mutableStateOf(instance.alias ?: "") }
-    var token by remember(instance.id) { mutableStateOf(instance.token) }
     var trustSelfSigned by remember(instance.id) { mutableStateOf(instance.trustSelfSigned) }
-    var tokenVisible by remember { mutableStateOf(false) }
+    var tokenResetActive by remember(instance.id) { mutableStateOf(false) }
+    var newToken by remember(instance.id) { mutableStateOf("") }
 
-    val hasChanges = url.trim() != instance.baseUrl ||
-        alias.trim().ifBlank { null } != instance.alias ||
-        token.trim() != instance.token ||
-        trustSelfSigned != instance.trustSelfSigned
+    val hasChanges by remember {
+        derivedStateOf {
+            alias.trim().ifBlank { null } != instance.alias ||
+                trustSelfSigned != instance.trustSelfSigned ||
+                (tokenResetActive && newToken.isNotBlank())
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -302,6 +303,7 @@ private fun InstanceDetailsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 32.dp)
         ) {
@@ -311,15 +313,9 @@ private fun InstanceDetailsBottomSheet(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            OutlinedTextField(
-                value = url,
-                onValueChange = { url = it },
-                label = { Text("URL") },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .testTag("field_instance_url")
+            ListItem(
+                headlineContent = { Text("URL") },
+                supportingContent = { Text(instance.baseUrl) }
             )
 
             OutlinedTextField(
@@ -334,27 +330,50 @@ private fun InstanceDetailsBottomSheet(
                     .testTag("field_instance_alias")
             )
 
-            OutlinedTextField(
-                value = token,
-                onValueChange = { token = it },
-                label = { Text("Token") },
-                singleLine = true,
-                visualTransformation = if (tokenVisible) VisualTransformation.None
-                    else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { tokenVisible = !tokenVisible }) {
-                        Icon(
-                            imageVector = if (tokenVisible) Icons.Default.VisibilityOff
-                                else Icons.Default.Visibility,
-                            contentDescription = if (tokenVisible) "Hide token" else "Show token"
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .testTag("field_instance_token")
-            )
+            if (!tokenResetActive) {
+                FilledTonalButton(
+                    onClick = { tokenResetActive = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .testTag("button_reset_token")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Key,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text("Replace Token")
+                }
+            } else {
+                Text(
+                    text = "The current token will be replaced. Paste your new token below.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+                OutlinedTextField(
+                    value = newToken,
+                    onValueChange = { newToken = it },
+                    label = { Text("New Token") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .testTag("field_instance_token")
+                )
+                TextButton(
+                    onClick = {
+                        tokenResetActive = false
+                        newToken = ""
+                    },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .testTag("button_cancel_token_reset")
+                ) {
+                    Text("Cancel token reset")
+                }
+            }
 
             Row(
                 modifier = Modifier
@@ -383,13 +402,12 @@ private fun InstanceDetailsBottomSheet(
             FilledTonalButton(
                 onClick = {
                     onSave(
-                        url.trim(),
-                        token.trim(),
+                        if (tokenResetActive) newToken.trim() else null,
                         alias.trim().ifBlank { null },
                         trustSelfSigned
                     )
                 },
-                enabled = hasChanges && !isSaving && url.isNotBlank() && token.isNotBlank(),
+                enabled = hasChanges && !isSaving,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)

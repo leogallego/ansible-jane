@@ -151,8 +151,7 @@ class SettingsViewModel(
 
     fun saveInstanceEdits(
         instanceId: String,
-        url: String,
-        token: String,
+        token: String?,
         alias: String?,
         trustSelfSigned: Boolean
     ) {
@@ -175,14 +174,16 @@ class SettingsViewModel(
                     ApiVersion.CONTROLLER_V2
                 }
                 tokenManager.saveInstance(
-                    baseUrl = url,
-                    token = token,
+                    baseUrl = instance.baseUrl,
+                    token = token ?: instance.token,
                     alias = alias,
                     apiVersion = apiVersion,
                     trustSelfSigned = trustSelfSigned,
                     existingId = instanceId
                 )
-                apiProvider.evictInstance(instanceId)
+                if (token != null || trustSelfSigned != instance.trustSelfSigned) {
+                    apiProvider.evictInstance(instanceId)
+                }
                 val updated = tokenManager.instances.value.find { it.id == instanceId }
                 updateReady {
                     copy(

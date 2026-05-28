@@ -48,8 +48,8 @@ fun SettingsScreen(
                     onShowDetails = { viewModel.showInstanceDetails(it) },
                     onDismissDetails = { viewModel.dismissDetails() },
                     onRefreshInstanceInfo = { viewModel.refreshInstanceInfo(it) },
-                    onSaveInstanceEdits = { id, url, token, alias, trust ->
-                        viewModel.saveInstanceEdits(id, url, token, alias, trust)
+                    onSaveInstanceEdits = { id, token, alias, trust ->
+                        viewModel.saveInstanceEdits(id, token, alias, trust)
                     },
                     onAddInstance = onAddInstance,
                     onTimezoneSelected = { viewModel.setTimezone(it) },
@@ -81,7 +81,7 @@ private fun SettingsContent(
     onShowDetails: (String) -> Unit,
     onDismissDetails: () -> Unit,
     onRefreshInstanceInfo: (String) -> Unit,
-    onSaveInstanceEdits: (String, String, String, String?, Boolean) -> Unit,
+    onSaveInstanceEdits: (String, String?, String?, Boolean) -> Unit,
     onAddInstance: () -> Unit,
     onTimezoneSelected: (String?) -> Unit,
     onTimeFormatSelected: (io.github.leogallego.ansiblejane.ui.components.TimeFormat) -> Unit,
