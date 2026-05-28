@@ -125,8 +125,8 @@ fun LocalToolsSection(
                                 name = tool.name,
                                 description = tool.description,
                                 isEnabled = tool.isEnabled,
-                                onToggle = { onToggleTool(tool.name, it) },
-                                testTagPrefix = "switch_local_tool"
+                                testTagPrefix = "switch_local_tool",
+                                onToggle = { onToggleTool(tool.name, it) }
                             )
                         }
                     }

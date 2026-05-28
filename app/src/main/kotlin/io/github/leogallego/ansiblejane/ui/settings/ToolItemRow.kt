@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -19,14 +20,15 @@ fun ToolItemRow(
     name: String,
     description: String,
     isEnabled: Boolean,
-    onToggle: (Boolean) -> Unit,
     testTagPrefix: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onToggle: (Boolean) -> Unit
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {

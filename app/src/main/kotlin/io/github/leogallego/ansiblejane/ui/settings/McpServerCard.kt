@@ -214,8 +214,8 @@ fun McpServerCard(
                                     name = tool.name,
                                     description = tool.description,
                                     isEnabled = tool.isEnabled,
-                                    onToggle = { onToggleTool(tool.name, it) },
-                                    testTagPrefix = "switch_mcp_tool"
+                                    testTagPrefix = "switch_mcp_tool",
+                                    onToggle = { onToggleTool(tool.name, it) }
                                 )
                             }
                         }

@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.R
+import java.net.URI
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +36,7 @@ fun AddMcpServerSheet(
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
     var toolset by remember { mutableStateOf("") }
+    var urlError by remember { mutableStateOf<String?>(null) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -62,11 +64,13 @@ fun AddMcpServerSheet(
 
             OutlinedTextField(
                 value = url,
-                onValueChange = { url = it },
+                onValueChange = { url = it; urlError = null },
                 label = { Text(stringResource(R.string.tools_mcp_server_url)) },
                 placeholder = { Text("https://mcp-server:3000/mcp") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                isError = urlError != null,
+                supportingText = urlError?.let { error -> { Text(error) } }
             )
 
             OutlinedTextField(
@@ -88,8 +92,13 @@ fun AddMcpServerSheet(
                 ) { Text(stringResource(R.string.action_cancel)) }
                 Button(
                     onClick = {
-                        onAdd(url, name, toolset.ifBlank { null })
-                        onDismiss()
+                        val error = validateMcpUrl(url)
+                        if (error != null) {
+                            urlError = error
+                        } else {
+                            onAdd(url, name, toolset.ifBlank { null })
+                            onDismiss()
+                        }
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -101,4 +110,18 @@ fun AddMcpServerSheet(
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
+
+private fun validateMcpUrl(url: String): String? {
+    val sanitized = url.trim().trimEnd('/')
+    if (sanitized.isBlank()) return "URL is required"
+    val uri = try {
+        URI(sanitized)
+    } catch (_: Exception) {
+        return "Invalid URL format"
+    }
+    val scheme = uri.scheme?.lowercase()
+    if (scheme !in listOf("https", "wss")) return "Only HTTPS and WSS URLs are supported"
+    if (uri.host.isNullOrBlank()) return "URL must include a hostname"
+    return null
 }
