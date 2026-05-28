@@ -1,12 +1,14 @@
 package io.github.leogallego.ansiblejane.ui.settings
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -16,22 +18,27 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +52,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.R
-import io.github.leogallego.ansiblejane.model.AapComponent
 import io.github.leogallego.ansiblejane.model.AapInstance
 
 @Composable
@@ -55,11 +61,14 @@ fun InstancesTab(
     selectedInstanceForDetails: AapInstance?,
     discoveryRefreshing: Boolean,
     discoveryError: String? = null,
+    instanceEditSaving: Boolean = false,
+    instanceEditError: String? = null,
     onSwitchInstance: (String) -> Unit,
     onRemoveInstance: (String) -> Unit,
     onShowDetails: (String) -> Unit,
     onDismissDetails: () -> Unit,
     onRefreshInstanceInfo: (String) -> Unit,
+    onSaveInstanceEdits: (instanceId: String, token: String?, alias: String?, trustSelfSigned: Boolean) -> Unit,
     onAddInstance: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
@@ -83,6 +92,7 @@ fun InstancesTab(
                     if (isActive) onShowDetails(instance.id)
                     else onSwitchInstance(instance.id)
                 },
+                onLongPress = { onShowDetails(instance.id) },
                 onRemove = { instanceToRemove = instance }
             )
         }
@@ -123,8 +133,13 @@ fun InstancesTab(
         InstanceDetailsBottomSheet(
             instance = instance,
             isRefreshing = discoveryRefreshing,
+            isSaving = instanceEditSaving,
             errorMessage = discoveryError,
+            editError = instanceEditError,
             onRefresh = { onRefreshInstanceInfo(instance.id) },
+            onSave = { token, alias, trustSelfSigned ->
+                onSaveInstanceEdits(instance.id, token, alias, trustSelfSigned)
+            },
             onDismiss = onDismissDetails
         )
     }
@@ -178,17 +193,22 @@ fun InstancesTab(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun InstanceCard(
     instance: AapInstance,
     isActive: Boolean,
     onTap: () -> Unit,
+    onLongPress: () -> Unit,
     onRemove: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onTap),
+            .combinedClickable(
+                onClick = onTap,
+                onLongClick = onLongPress
+            ),
         colors = CardDefaults.cardColors(
             containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer
             else MaterialTheme.colorScheme.surfaceVariant
@@ -256,10 +276,26 @@ private fun InstanceCard(
 private fun InstanceDetailsBottomSheet(
     instance: AapInstance,
     isRefreshing: Boolean,
+    isSaving: Boolean,
     errorMessage: String? = null,
+    editError: String? = null,
     onRefresh: () -> Unit,
+    onSave: (token: String?, alias: String?, trustSelfSigned: Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
+    var alias by remember(instance.id) { mutableStateOf(instance.alias ?: "") }
+    var trustSelfSigned by remember(instance.id) { mutableStateOf(instance.trustSelfSigned) }
+    var tokenResetActive by remember(instance.id) { mutableStateOf(false) }
+    var newToken by remember(instance.id) { mutableStateOf("") }
+
+    val hasChanges by remember {
+        derivedStateOf {
+            alias.trim().ifBlank { null } != instance.alias ||
+                trustSelfSigned != instance.trustSelfSigned ||
+                (tokenResetActive && newToken.isNotBlank())
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -267,6 +303,7 @@ private fun InstanceDetailsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 32.dp)
         ) {
@@ -275,20 +312,125 @@ private fun InstanceDetailsBottomSheet(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
+
             ListItem(
                 headlineContent = { Text("URL") },
                 supportingContent = { Text(instance.baseUrl) }
             )
-            if (instance.alias != null) {
-                ListItem(
-                    headlineContent = { Text("Alias") },
-                    supportingContent = { Text(instance.alias) }
+
+            OutlinedTextField(
+                value = alias,
+                onValueChange = { alias = it },
+                label = { Text("Alias") },
+                placeholder = { Text(instance.hostname) },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .testTag("field_instance_alias")
+            )
+
+            if (!tokenResetActive) {
+                FilledTonalButton(
+                    onClick = { tokenResetActive = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .testTag("button_reset_token")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Key,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text("Replace Token")
+                }
+            } else {
+                Text(
+                    text = "The current token will be replaced. Paste your new token below.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+                OutlinedTextField(
+                    value = newToken,
+                    onValueChange = { newToken = it },
+                    label = { Text("New Token") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .testTag("field_instance_token")
+                )
+                TextButton(
+                    onClick = {
+                        tokenResetActive = false
+                        newToken = ""
+                    },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .testTag("button_cancel_token_reset")
+                ) {
+                    Text("Cancel token reset")
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Trust self-signed certificate",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "Allow connections to servers with untrusted certificates",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = trustSelfSigned,
+                    onCheckedChange = { trustSelfSigned = it },
+                    modifier = Modifier.testTag("switch_trust_self_signed")
                 )
             }
-            if (instance.trustSelfSigned) {
-                ListItem(
-                    headlineContent = { Text("Self-Signed Certificate") },
-                    supportingContent = { Text("Trusted") }
+
+            FilledTonalButton(
+                onClick = {
+                    onSave(
+                        if (tokenResetActive) newToken.trim() else null,
+                        alias.trim().ifBlank { null },
+                        trustSelfSigned
+                    )
+                },
+                enabled = hasChanges && !isSaving,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .testTag("button_save_instance")
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Saving...")
+                } else {
+                    Text("Save Changes")
+                }
+            }
+
+            if (editError != null) {
+                Text(
+                    text = editError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
 
@@ -362,7 +504,7 @@ private fun InstanceDetailsBottomSheet(
                     .testTag("button_refresh_instance_info")
             ) {
                 if (isRefreshing) {
-                    androidx.compose.material3.CircularProgressIndicator(
+                    CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp
                     )

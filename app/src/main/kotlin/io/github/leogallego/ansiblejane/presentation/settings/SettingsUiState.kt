@@ -25,6 +25,8 @@ sealed interface SettingsUiState {
         val selectedInstanceForDetails: AapInstance? = null,
         val discoveryRefreshing: Boolean = false,
         val discoveryError: String? = null,
+        val instanceEditSaving: Boolean = false,
+        val instanceEditError: String? = null,
         // General
         val timezoneId: String? = null,
         val timeFormat: TimeFormat = TimeFormat.SYSTEM,
