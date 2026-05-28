@@ -68,6 +68,7 @@ fun MainScreen(
     val activeConfig by assistantRepository.activeConfigFlow.collectAsStateWithLifecycle(null)
     val savedConfigs by assistantRepository.savedConfigsFlow.collectAsStateWithLifecycle(emptyMap())
     val activeProviderKey by assistantRepository.activeProviderKeyFlow.collectAsStateWithLifecycle(null)
+    val sessionTokens by assistantRepository.sessionTokensFlow.collectAsStateWithLifecycle()
 
     val tabs = TopLevelTab.entries
     val dashboardTabIndex = tabs.indexOfFirst { it is TopLevelTab.Dashboard }.coerceAtLeast(0)
@@ -139,6 +140,19 @@ fun MainScreen(
                         },
                         onNavigateToSettings = onNavigateToSettings
                     )
+                    if (selectedTab is TopLevelTab.Assistant && sessionTokens > 0) {
+                        val formatted = io.github.leogallego.ansiblejane.assistant.engine.TokenUsage(
+                            0, 0, sessionTokens
+                        ).formatTotal()
+                        Text(
+                            text = "$formatted tokens",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .testTag("text_session_tokens"),
+                        )
+                    }
                     if (selectedTab is TopLevelTab.Assistant) {
                         IconButton(
                             onClick = { showClearChatConfirm = true },
