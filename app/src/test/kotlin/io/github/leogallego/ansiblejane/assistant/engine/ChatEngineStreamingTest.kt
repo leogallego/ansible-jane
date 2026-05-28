@@ -44,6 +44,9 @@ class ChatEngineStreamingTest {
             val delta = awaitItem()
             assertTrue(delta is ChatEvent.TextDelta)
 
+            val tokenReport = awaitItem()
+            assertTrue(tokenReport is ChatEvent.TokenUsageReport)
+
             val msg = awaitItem()
             assertTrue(msg is ChatEvent.AssistantMessage)
             assertEquals(1, (msg as ChatEvent.AssistantMessage).toolCallCount)

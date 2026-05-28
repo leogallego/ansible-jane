@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class FakeAssistantRepository : IAssistantRepository {
     private val messages = mutableListOf<ChatMessage>()
@@ -20,6 +23,8 @@ class FakeAssistantRepository : IAssistantRepository {
 
     private val _onHistoryCleared = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     override val onHistoryCleared: SharedFlow<Unit> = _onHistoryCleared.asSharedFlow()
+    private val _sessionTokens = MutableStateFlow(0)
+    override val sessionTokensFlow: StateFlow<Int> = _sessionTokens.asStateFlow()
 
     private val _activeConfigFlow = MutableStateFlow<LlmProviderConfig?>(null)
     override val activeConfigFlow: Flow<LlmProviderConfig?> = _activeConfigFlow
@@ -32,6 +37,9 @@ class FakeAssistantRepository : IAssistantRepository {
 
     override fun addMessage(message: ChatMessage) {
         messages.add(message)
+        message.tokenUsage?.let { usage ->
+            _sessionTokens.update { it + usage.totalTokens }
+        }
     }
 
     override fun getHistory(): List<ChatMessage> = messages.toList()
@@ -48,6 +56,7 @@ class FakeAssistantRepository : IAssistantRepository {
 
     override fun clearHistory() {
         messages.clear()
+        _sessionTokens.value = 0
         _onHistoryCleared.tryEmit(Unit)
     }
 

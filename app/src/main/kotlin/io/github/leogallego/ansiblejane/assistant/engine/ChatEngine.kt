@@ -38,6 +38,7 @@ sealed interface ChatEvent {
     ) : ChatEvent
     data class AssistantMessage(val fullText: String, val toolCallCount: Int) : ChatEvent
     data class Error(val message: String, val cause: Throwable? = null) : ChatEvent
+    data class TokenUsageReport(val usage: TokenUsage) : ChatEvent
 }
 
 class ChatEngine(
@@ -55,8 +56,13 @@ class ChatEngine(
         contextChars: Int = DEFAULT_CONTEXT_CHARS,
         onConfirmationRequired: (suspend (toolName: String, description: String, args: JsonObject) -> Boolean)? = null
     ): Flow<ChatEvent> = flow {
+        var accInputTokens = 0
+        var accOutputTokens = 0
+        var accTotalTokens = 0
+        var anyRealUsage = false
+        val messages = mutableListOf<ChatMessage>()
+
         try {
-            val messages = mutableListOf<ChatMessage>()
             messages.add(ChatMessage(role = Role.SYSTEM, content = SYSTEM_PROMPT))
             history.filter { it.role == Role.USER || it.role == Role.ASSISTANT }
                 .forEach { messages.add(it) }
@@ -115,7 +121,15 @@ class ChatEngine(
                             tc.args.clear()
                             tc.args.append(frame.content)
                         }
-                        is StreamFrame.End -> { /* handled after collect */ }
+                        is StreamFrame.End -> {
+                            val meta = frame.metaInfo
+                            if (meta.totalTokensCount != null) {
+                                accInputTokens += meta.inputTokensCount ?: 0
+                                accOutputTokens += meta.outputTokensCount ?: 0
+                                accTotalTokens += meta.totalTokensCount ?: 0
+                                anyRealUsage = true
+                            }
+                        }
                         else -> { /* ReasoningDelta etc — ignore */ }
                     }
                 }
@@ -142,6 +156,8 @@ class ChatEngine(
 
                     if (isRepeatingToolCalls(toolCallHistory)) {
                         Log.w(TAG, "ITER $iterations: repeat detected, stopping")
+                        val usage = buildTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages, responseText)
+                        emit(ChatEvent.TokenUsageReport(usage))
                         emit(ChatEvent.AssistantMessage(
                             (responseText ?: "") + "\n\nStopped: the same tools were being called repeatedly.",
                             totalToolCalls
@@ -215,11 +231,15 @@ class ChatEngine(
                     } else {
                         responseText ?: textBuilder.toString()
                     }
+                    val usage = buildTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages, finalText)
+                    emit(ChatEvent.TokenUsageReport(usage))
                     emit(ChatEvent.AssistantMessage(finalText, totalToolCalls))
                     return@flow
                 }
             }
 
+            val usage = buildTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages, null)
+            emit(ChatEvent.TokenUsageReport(usage))
             emit(ChatEvent.AssistantMessage(
                 "I wasn't able to complete this request within the tool call limit.",
                 totalToolCalls
@@ -228,18 +248,23 @@ class ChatEngine(
             throw e
         } catch (e: LlmAuthException) {
             Log.e(TAG, "AUTH error: ${e.message}", e)
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error(e.message ?: "Authentication failed — check API key", e))
         } catch (e: LlmRateLimitException) {
             Log.w(TAG, "RATE_LIMIT: ${e.message}")
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error(e.message ?: "Rate limited — try again later", e))
         } catch (e: LlmTimeoutException) {
             Log.w(TAG, "TIMEOUT: ${e.message}")
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error("Response timed out", e))
         } catch (e: IOException) {
             Log.e(TAG, "IO error: ${e.message}", e)
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error("Unable to reach LLM server: ${e.message}", e))
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error: ${e.message}", e)
+            emitPartialTokenUsage(anyRealUsage, accInputTokens, accOutputTokens, accTotalTokens, messages)
             emit(ChatEvent.Error("Error: ${e.message}", e))
         }
     }
@@ -407,6 +432,48 @@ class ChatEngine(
 
         if (keepFrom > systemMessages.size) {
             messages.subList(systemMessages.size, keepFrom).clear()
+        }
+    }
+
+    private suspend fun kotlinx.coroutines.flow.FlowCollector<ChatEvent>.emitPartialTokenUsage(
+        anyRealUsage: Boolean,
+        accInputTokens: Int,
+        accOutputTokens: Int,
+        accTotalTokens: Int,
+        messages: List<ChatMessage>
+    ) {
+        if (anyRealUsage) {
+            emit(ChatEvent.TokenUsageReport(TokenUsage(
+                inputTokens = accInputTokens,
+                outputTokens = accOutputTokens,
+                totalTokens = accTotalTokens
+            )))
+        }
+    }
+
+    private fun buildTokenUsage(
+        anyRealUsage: Boolean,
+        accInputTokens: Int,
+        accOutputTokens: Int,
+        accTotalTokens: Int,
+        messages: List<ChatMessage>,
+        responseText: String?
+    ): TokenUsage {
+        return if (anyRealUsage) {
+            TokenUsage(
+                inputTokens = accInputTokens,
+                outputTokens = accOutputTokens,
+                totalTokens = accTotalTokens
+            )
+        } else {
+            val totalChars = messages.sumOf { it.content.length } + (responseText?.length ?: 0)
+            val estimated = totalChars / 4
+            TokenUsage(
+                inputTokens = estimated * 2 / 3,
+                outputTokens = estimated / 3,
+                totalTokens = estimated,
+                isEstimated = true
+            )
         }
     }
 

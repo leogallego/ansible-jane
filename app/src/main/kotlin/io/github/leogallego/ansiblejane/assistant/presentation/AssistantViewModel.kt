@@ -10,6 +10,7 @@ import io.github.leogallego.ansiblejane.assistant.engine.ChatEvent
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.engine.ResponseSource
 import io.github.leogallego.ansiblejane.assistant.engine.Role
+import io.github.leogallego.ansiblejane.assistant.engine.TokenUsage
 import io.github.leogallego.ansiblejane.assistant.engine.ToolExecutor
 import io.github.leogallego.ansiblejane.assistant.engine.ToolRouter
 import io.github.leogallego.ansiblejane.assistant.llm.GeminiLlmProvider
@@ -103,6 +104,15 @@ class AssistantViewModel(
             mcpServerManager.connections.collect { connections ->
                 _uiState.update { current ->
                     if (current is AssistantUiState.Active) current.copy(connections = connections)
+                    else current
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            repository.sessionTokensFlow.collect { tokens ->
+                _uiState.update { current ->
+                    if (current is AssistantUiState.Active) current.copy(sessionTokens = tokens)
                     else current
                 }
             }
@@ -236,6 +246,7 @@ class AssistantViewModel(
             val textBuilder = StringBuilder()
             val usedSources = mutableSetOf<String>()
             val usedToolNames = mutableListOf<String>()
+            var pendingTokenUsage: TokenUsage? = null
             val localNames = matchedLocal.map { it.spec.name }.toSet()
 
             updateState { copy(streamingText = "Thinking...") }
@@ -284,7 +295,8 @@ class AssistantViewModel(
                                 role = Role.ASSISTANT,
                                 content = event.fullText,
                                 source = responseSource,
-                                toolsUsed = usedToolNames.distinct()
+                                toolsUsed = usedToolNames.distinct(),
+                                tokenUsage = pendingTokenUsage
                             )
                             repository.addMessage(finalMsg)
                             updateState {
@@ -308,6 +320,9 @@ class AssistantViewModel(
                                     streamingText = null
                                 )
                             }
+                        }
+                        is ChatEvent.TokenUsageReport -> {
+                            pendingTokenUsage = event.usage
                         }
                     }
                 }

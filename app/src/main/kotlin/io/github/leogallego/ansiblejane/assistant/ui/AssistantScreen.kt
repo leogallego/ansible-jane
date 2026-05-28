@@ -267,6 +267,7 @@ private fun ActiveChatContent(
                         content = message.content,
                         source = message.source,
                         toolsUsed = message.toolsUsed,
+                        tokenUsage = message.tokenUsage,
                         onCopy = {
                             clipboardManager.setText(AnnotatedString(message.content))
                         },
