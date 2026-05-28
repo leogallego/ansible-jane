@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ansible Jane &mdash; Your Ansible, Across Any Distance</title>
-  <meta name="description" content="A lightweight Android app for managing Ansible Automation Platform. Browse templates, launch jobs, monitor workflows, and talk to Jane &mdash; an AI assistant that speaks automation.">
-  <meta name="theme-color" content="#0d1117">
-  <meta property="og:title" content="Ansible Jane &mdash; Your Ansible, Across Any Distance">
-  <meta property="og:description" content="A lightweight Android app for managing Ansible Automation Platform with an AI assistant that speaks automation.">
+  <meta name="description" content="A lightweight Android app for managing Ansible Automation Platform. Launch jobs, monitor workflows, and talk to Jane &mdash; an AI that speaks automation.">
+  <meta name="theme-color" content="#0a0f14">
+  <meta property="og:title" content="Ansible Jane">
+  <meta property="og:description" content="Manage Ansible Automation Platform from your phone. AI-powered, open source.">
   <meta property="og:image" content="https://leogallego.github.io/ansible-jane/img/icon.png">
   <meta property="og:url" content="https://leogallego.github.io/ansible-jane/">
   <meta property="og:type" content="website">
@@ -16,144 +16,154 @@
 </head>
 <body>
 
+  <!-- Nav -->
+  <nav class="topnav">
+    <a class="topnav-brand" href="/">
+      <img src="img/icon.png" alt="" width="28" height="28">
+      Ansible Jane
+    </a>
+    <div class="topnav-links">
+      <a href="#capabilities">Features</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/leogallego/ansible-jane">GitHub</a>
+    </div>
+  </nav>
+
   <main>
 
   <!-- Hero -->
-  <div class="hero">
-    <div class="hero-inner">
-      <div class="hero-text">
-        <img src="img/icon.png" class="hero-icon" alt="Ansible Jane app icon" width="80" height="80">
-        <h1>Ansible Jane</h1>
-        <p class="tagline">Your Ansible, Across Any Distance</p>
-        <p class="sub">A lightweight Android app for Ansible Automation Platform. Launch jobs, monitor workflows, manage inventories, and talk to Jane &mdash; an AI assistant that understands your infrastructure. No ansible required on your phone. Just the connection.</p>
-        <div class="hero-badges">
-          <a class="btn btn-primary" href="https://github.com/leogallego/ansible-jane/releases">Download</a>
-          <a class="btn btn-outline" href="https://github.com/leogallego/ansible-jane">GitHub</a>
-        </div>
-        <div class="github-badge">
-          <a href="https://github.com/leogallego/ansible-jane"><img src="https://img.shields.io/github/stars/leogallego/ansible-jane?style=social" alt="Star Ansible Jane on GitHub"></a>
-        </div>
-      </div>
-      <div class="hero-phone">
-        <div class="phone-frame">
-          <img src="img/chat-dark.png" alt="Jane AI assistant conversation about Ansible jobs" width="400" height="900" fetchpriority="high">
-        </div>
-      </div>
+  <section class="hero">
+    <img src="img/icon.png" class="hero-icon" alt="Ansible Jane" width="72" height="72">
+    <h1>Meet <span class="accent">Jane</span></h1>
+    <p class="tagline">She lives in the network between you and your automation platform. Launch jobs, watch workflows, manage inventories, and ask her anything &mdash; all from your phone.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com/leogallego/ansible-jane/releases">Download</a>
+      <a class="btn btn-ghost" href="https://github.com/leogallego/ansible-jane">Source Code</a>
     </div>
-  </div>
+    <p class="hero-meta">Android 12+ &middot; AAP 2.5+ &middot; Apache 2.0 &middot; Free forever</p>
+  </section>
 
-  <!-- Features -->
-  <section id="features">
-    <div class="container">
-      <h2 class="section-title fade-in">What Jane Can Do</h2>
-      <p class="section-desc fade-in">She lives in the network between you and your automation platform. Everything you need, nothing you don't.</p>
-      <div class="features-grid">
-        <div class="feature-card fade-in">
-          <span class="feature-icon">&#x1f680;</span>
-          <h3>Launch &amp; Monitor Jobs</h3>
-          <p>Browse job templates, launch playbooks with parameters, and watch them run in real time. Approve or deny workflow steps from your pocket.</p>
-        </div>
-        <div class="feature-card fade-in">
-          <span class="feature-icon">&#x1f916;</span>
-          <h3>Talk to Jane</h3>
-          <p>An AI assistant that speaks Ansible. Ask her to list failing jobs, check host facts, or launch a template &mdash; she calls the right API and reports back.</p>
-        </div>
-        <div class="feature-card fade-in">
-          <span class="feature-icon">&#x1f50c;</span>
-          <h3>MCP Tool Integration</h3>
-          <p>Connect Jane to MCP servers for extended capabilities. Auto-discovers AAP's MCP endpoints. Add custom servers for your own tooling.</p>
-        </div>
-        <div class="feature-card fade-in">
-          <span class="feature-icon">&#x1f4e6;</span>
-          <h3>Inventory &amp; Hosts</h3>
-          <p>Browse inventories, inspect hosts and their facts, check groups. Everything from your AAP instance, organized and searchable.</p>
-        </div>
-        <div class="feature-card fade-in">
-          <span class="feature-icon">&#x26a1;</span>
-          <h3>Event-Driven Ansible</h3>
-          <p>Monitor EDA activations and rulebooks. See what's triggering your event-driven automation without opening a laptop.</p>
-        </div>
-        <div class="feature-card fade-in">
-          <span class="feature-icon">&#x1f512;</span>
-          <h3>Secure by Default</h3>
-          <p>Tokens encrypted with Android Keystore + Tink. HTTPS-only. No data stored on third-party servers. Your credentials never leave your device.</p>
-        </div>
+  <!-- Showcase — uncomment when screenshots are ready
+  <section class="showcase fade-in">
+    <h2>Built for Your Pocket</h2>
+    <p class="subtitle">Material You design. Dark theme. Adapts to your system.</p>
+    <div class="showcase-track">
+      <div class="showcase-item">
+        <img src="img/screen-dashboard.png" alt="Dashboard with job stats, EDA, and resources" loading="lazy">
+        <div class="label">Dashboard</div>
+      </div>
+      <div class="showcase-item">
+        <img src="img/screen-templates.png" alt="Job templates list with launch buttons" loading="lazy">
+        <div class="label">Templates</div>
+      </div>
+      <div class="showcase-item">
+        <img src="img/screen-activity.png" alt="Recent jobs with status badges and filters" loading="lazy">
+        <div class="label">Activity</div>
+      </div>
+      <div class="showcase-item">
+        <img src="img/screen-jane.png" alt="Jane AI assistant with MCP connected" loading="lazy">
+        <div class="label">Jane</div>
       </div>
     </div>
   </section>
+  -->
 
-  <!-- Screenshots -->
-  <section id="screenshots">
-    <div class="container">
-      <h2 class="section-title fade-in">See It In Action</h2>
-      <p class="section-desc fade-in">Built with Material You. Adapts to your device theme.</p>
-      <div class="screenshots-grid">
-        <div class="screenshot-card fade-in">
-          <img src="img/jobs-dark.png" alt="Recent jobs list showing status, timestamps and filters" loading="lazy">
-          <div class="caption">Job Activity</div>
-        </div>
-        <div class="screenshot-card fade-in">
-          <img src="img/templates-dark.png" alt="Job templates list with launch buttons" loading="lazy">
-          <div class="caption">Templates</div>
-        </div>
-        <div class="screenshot-card fade-in">
-          <img src="img/chat-dark.png" alt="AI assistant conversation with tool-use responses" loading="lazy">
-          <div class="caption">Jane</div>
-        </div>
-        <div class="screenshot-card fade-in">
-          <img src="img/tools-dark.png" alt="MCP server configuration and local tools management" loading="lazy">
-          <div class="caption">Tools</div>
-        </div>
+  <!-- Capabilities -->
+  <section class="capabilities" id="capabilities">
+    <h2 class="fade-in">What She Can Do</h2>
+
+    <div class="cap-row fade-in">
+      <div class="cap-icon">&#x1f916;</div>
+      <div class="cap-text">
+        <h3>Talk to Jane</h3>
+        <p>An AI assistant that speaks Ansible. Ask her to list failing jobs, check host facts, launch a template, or explain what went wrong. She talks to your platform through MCP and 61 local tools, then reports back in plain language.</p>
+      </div>
+    </div>
+
+    <div class="cap-row fade-in">
+      <div class="cap-icon">&#x1f680;</div>
+      <div class="cap-text">
+        <h3>Launch &amp; Monitor</h3>
+        <p>Browse job templates, launch playbooks with parameters, watch them run. Approve or deny workflow steps without opening a laptop. See stdout, status, and timing for every job.</p>
+      </div>
+    </div>
+
+    <div class="cap-row fade-in">
+      <div class="cap-icon">&#x1f50c;</div>
+      <div class="cap-text">
+        <h3>MCP Tools</h3>
+        <p>MCP is Jane's native language. She auto-discovers your AAP's MCP endpoints on connect. Add custom servers for knowledge bases, monitoring, or any tool that speaks the protocol.</p>
+      </div>
+    </div>
+
+    <div class="cap-row fade-in">
+      <div class="cap-icon">&#x1f4e6;</div>
+      <div class="cap-text">
+        <h3>Infrastructure at a Glance</h3>
+        <p>Browse inventories, inspect hosts and facts, check groups. 61 local tools cover jobs, inventories, credentials, projects, schedules, EDA, and platform config.</p>
+      </div>
+    </div>
+
+    <div class="cap-row fade-in">
+      <div class="cap-icon">&#x26a1;</div>
+      <div class="cap-text">
+        <h3>Event-Driven Ansible</h3>
+        <p>Monitor EDA activations and rulebooks. See what's triggering your event-driven automation without switching to a desktop.</p>
+      </div>
+    </div>
+
+    <div class="cap-row fade-in">
+      <div class="cap-icon">&#x1f512;</div>
+      <div class="cap-text">
+        <h3>Secure by Default</h3>
+        <p>Tokens encrypted with Android Keystore + Tink. HTTPS-only. No data on third-party servers. Multi-instance support &mdash; connect to several AAP deployments from one app.</p>
       </div>
     </div>
   </section>
 
   <!-- Install -->
   <section class="install" id="install">
-    <div class="container">
-      <h2 class="section-title fade-in">Get Ansible Jane</h2>
-      <p class="section-desc fade-in">Free, open source, no accounts. Install and connect to your AAP instance.</p>
-      <div class="install-grid">
-        <div class="install-card fade-in">
+    <div class="install-inner">
+      <h2 class="fade-in">Get Jane</h2>
+      <p class="subtitle fade-in">Free, open source, no accounts required.</p>
+      <div class="install-options fade-in">
+        <div class="install-option">
           <h3>GitHub Releases</h3>
-          <p>Download the latest APK directly. Signed release builds for every version.</p>
-          <a class="btn btn-primary" href="https://github.com/leogallego/ansible-jane/releases">Download APK</a>
+          <p>Signed APK for every version. Direct download.</p>
+          <a class="btn btn-primary" href="https://github.com/leogallego/ansible-jane/releases">Download</a>
         </div>
-        <div class="install-card fade-in">
+        <div class="install-option">
           <h3>F-Droid Repo</h3>
-          <p>Add our self-hosted F-Droid repository for automatic updates.</p>
-          <a class="btn btn-outline" href="fdroid/repo">Browse Repo</a>
+          <p>Self-hosted repo with automatic updates.</p>
+          <a class="btn btn-ghost" href="fdroid/repo">Browse Repo</a>
         </div>
-        <div class="install-card fade-in">
+        <div class="install-option">
           <h3>Obtainium</h3>
-          <p>Point Obtainium at the GitHub repo for update tracking without F-Droid.</p>
-          <a class="btn btn-outline" href="https://github.com/leogallego/ansible-jane">View Source</a>
+          <p>Point at the GitHub repo for update tracking.</p>
+          <a class="btn btn-ghost" href="https://github.com/leogallego/ansible-jane">View Source</a>
         </div>
       </div>
-      <div class="install-footer fade-in">
-        <p>Requires Android 12+ and AAP 2.5+ with Gateway.</p>
-      </div>
+      <p class="install-note fade-in">Requires Android 12+ and Ansible Automation Platform 2.5+ with Gateway.</p>
     </div>
   </section>
 
   </main>
 
-  <!-- Footer -->
   <footer>
     <div class="footer-links">
       <a href="https://github.com/leogallego/ansible-jane">GitHub</a>
       <a href="https://github.com/leogallego/ansible-jane/releases">Releases</a>
       <a href="https://github.com/leogallego/ansible-jane/issues">Issues</a>
-      <a href="fdroid/repo">F-Droid Repo</a>
+      <a href="fdroid/repo">F-Droid</a>
     </div>
-    <p class="note">Built with Kotlin, Jetpack Compose, and Koog. Open source under the Apache 2.0 License.</p>
-    <p class="legal">"The ansible is, by definition, instantaneous. It bridges any distance." &mdash; inspired by the works of Ursula K. Le Guin and Orson Scott Card</p>
+    <p class="note">Built with Kotlin, Jetpack Compose, and Koog. Apache 2.0 License.</p>
+    <p class="epigraph">"The ansible is, by definition, instantaneous. It bridges any distance."</p>
   </footer>
 
   <script>
-    const o = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); o.unobserve(e.target); } });
-    }, { threshold: 0.1 });
+    const o = new IntersectionObserver(es => {
+      es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); o.unobserve(e.target); } });
+    }, { threshold: 0.15 });
     document.querySelectorAll('.fade-in').forEach(el => o.observe(el));
   </script>
 </body>
