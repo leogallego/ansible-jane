@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
 import io.github.leogallego.ansiblejane.assistant.engine.ResponseSource
+import io.github.leogallego.ansiblejane.assistant.engine.TokenUsage
 import com.mikepenz.markdown.compose.LocalBulletListHandler
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
@@ -99,6 +100,7 @@ fun AssistantMessage(
     content: String,
     source: ResponseSource? = null,
     toolsUsed: List<String> = emptyList(),
+    tokenUsage: TokenUsage? = null,
     onCopy: (() -> Unit)? = null,
     onRegenerate: (() -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -145,7 +147,7 @@ fun AssistantMessage(
                     .padding(vertical = 4.dp)
             ) {
                 if (source != null) {
-                    SourceBand(source = source, toolsUsed = toolsUsed)
+                    SourceBand(source = source, toolsUsed = toolsUsed, tokenUsage = tokenUsage)
                 }
                 SelectionContainer {
                 val isDarkTheme = isSystemInDarkTheme()
@@ -225,6 +227,7 @@ fun AssistantMessage(
 private fun SourceBand(
     source: ResponseSource,
     toolsUsed: List<String>,
+    tokenUsage: TokenUsage? = null,
     modifier: Modifier = Modifier
 ) {
     val sourceLabel = when (source) {
@@ -261,6 +264,20 @@ private fun SourceBand(
                     color = color,
                     maxLines = 1,
                     modifier = Modifier.weight(1f, fill = false),
+                )
+            }
+            if (tokenUsage != null) {
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = "·",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = color,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = "${tokenUsage.formatTotal()} tokens",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = color,
                 )
             }
         }
