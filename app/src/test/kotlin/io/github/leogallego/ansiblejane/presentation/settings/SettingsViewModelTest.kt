@@ -12,6 +12,9 @@ import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.sse.SSE
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -58,8 +61,9 @@ class SettingsViewModelTest {
         fakeUserPreferences = FakeUserPreferencesRepository()
         fakeAssistantRepo = FakeAssistantRepository()
         mcpServerManager = McpServerManager(
-            httpClientFactory = { _, _ -> OkHttpClient() },
-            json = json
+            ktorClientFactory = { _, _ ->
+                HttpClient(OkHttp) { install(SSE) }
+            }
         )
     }
 

@@ -19,6 +19,7 @@ markdownRenderer = "0.41.0"
 ktor = "3.5.0"
 koog = "1.0.0"
 koog-google = "1.0.0-beta-preview7"
+mcp-sdk = "0.13.0"
 robolectric = "4.16.1"
 androidx-test-runner = "1.7.0"
 androidx-test-rules = "1.7.0"
@@ -68,6 +69,8 @@ koog-openai-client = { group = "ai.koog", name = "prompt-executor-openai-client"
 koog-google-client = { group = "ai.koog", name = "prompt-executor-google-client", version.ref = "koog-google" }
 koog-http-ktor = { group = "ai.koog", name = "http-client-ktor", version.ref = "koog" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+mcp-sdk-client = { group = "io.modelcontextprotocol", name = "kotlin-sdk-client", version.ref = "mcp-sdk" }
 markdown-renderer = { group = "com.mikepenz", name = "multiplatform-markdown-renderer", version.ref = "markdownRenderer" }
 markdown-renderer-m3 = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-m3", version.ref = "markdownRenderer" }
 markdown-renderer-code = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-code", version.ref = "markdownRenderer" }

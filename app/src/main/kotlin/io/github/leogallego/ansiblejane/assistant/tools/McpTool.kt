@@ -1,6 +1,7 @@
 package io.github.leogallego.ansiblejane.assistant.tools
 
-import io.github.leogallego.ansiblejane.network.mcp.McpClient
+import io.modelcontextprotocol.kotlin.sdk.client.Client
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.github.leogallego.ansiblejane.network.mcp.McpToolDefinition
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -11,7 +12,7 @@ import java.io.IOException
 import java.net.SocketTimeoutException
 
 class McpTool(
-    private val client: McpClient,
+    private val client: Client,
     private val mcpToolDef: McpToolDefinition,
     override val serverLabel: String,
     val toolset: String? = null
@@ -34,13 +35,13 @@ class McpTool(
     override suspend fun execute(args: JsonObject): ToolResult {
         return try {
             val cappedArgs = capPageSize(args)
-            val mcpResult = client.callTool(mcpToolDef.name, cappedArgs)
+            val result = client.callTool(mcpToolDef.name, cappedArgs)
 
-            val text = mcpResult.content
-                .mapNotNull { it.text }
-                .joinToString("\n")
+            val text = result.content
+                .filterIsInstance<TextContent>()
+                .joinToString("\n") { it.text }
 
-            if (mcpResult.isError) {
+            if (result.isError == true) {
                 ToolResult(
                     success = false,
                     data = text,

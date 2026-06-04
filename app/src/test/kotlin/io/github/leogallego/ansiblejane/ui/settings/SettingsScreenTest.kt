@@ -16,6 +16,9 @@ import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
 import io.github.leogallego.ansiblejane.testKoinModule
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.sse.SSE
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.junit.After
@@ -41,8 +44,9 @@ class SettingsScreenTest {
     private val fakeAssistantRepo = FakeAssistantRepository()
     private val json = Json { ignoreUnknownKeys = true }
     private val mcpServerManager = McpServerManager(
-        httpClientFactory = { _, _ -> OkHttpClient() },
-        json = json
+        ktorClientFactory = { _, _ ->
+            HttpClient(OkHttp) { install(SSE) }
+        }
     )
 
     @After
