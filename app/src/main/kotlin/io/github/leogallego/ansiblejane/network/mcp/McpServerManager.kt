@@ -1,11 +1,12 @@
 package io.github.leogallego.ansiblejane.network.mcp
 
-import io.github.leogallego.ansiblejane.assistant.tools.CachedMcpTool
 import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.McpServerConfig
+import io.github.leogallego.ansiblejane.model.ServerToolCache
 import io.github.leogallego.ansiblejane.model.ToolManifest
+import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -87,6 +88,7 @@ class McpServerManager(
             try { client.disconnect() } catch (_: Exception) {}
         }
         clients.clear()
+        connectionMutexes.clear()
         synchronized(mcpTools) { mcpTools.clear() }
         _connections.update { emptyMap() }
     }
@@ -95,7 +97,7 @@ class McpServerManager(
 
     fun getToolsForServer(label: String): List<Tool> =
         synchronized(mcpTools) {
-            mcpTools.filter { tool -> tool.serverLabelOrNull() == label }
+            mcpTools.filter { it.serverLabel == label }
         }
 
     fun setCachedTools(tools: List<Tool>) {
@@ -131,9 +133,7 @@ class McpServerManager(
                     McpTool(client, toolDef, config.label, config.toolset)
                 }
                 synchronized(mcpTools) {
-                    mcpTools.removeAll { tool ->
-                        tool.spec.name in liveTools.map { it.spec.name }
-                    }
+                    mcpTools.removeAll { it.serverLabel == serverLabel }
                     mcpTools.addAll(liveTools)
                 }
 
@@ -163,7 +163,7 @@ class McpServerManager(
         val seen = mutableSetOf<String>()
         val dedupedConfigs = configs.filter { config ->
             if (config.label in seen) {
-                android.util.Log.w(TAG, "Duplicate server label '${config.label}' — skipping auto-detected")
+                Log.w(TAG, "Duplicate server label '${config.label}' — skipping auto-detected")
                 false
             } else {
                 seen.add(config.label)
@@ -179,7 +179,7 @@ class McpServerManager(
                 cached.serverUrl == config.url && cached.toolset == config.toolset
             }
             if (allCached) {
-                android.util.Log.d(TAG, "All servers cached — deferring connections to lazy ensureConnected()")
+                Log.d(TAG, "All servers cached — deferring connections to lazy ensureConnected()")
                 return
             }
         }
@@ -208,14 +208,14 @@ class McpServerManager(
                             clients[config.label] = client
 
                             val versionMatch = !forceRefresh && !configChanged &&
-                                cached?.serverInfo?.version == info.version
+                                cached != null && cached.serverInfo.version == info.version
 
                             if (versionMatch) {
-                                android.util.Log.d(TAG, "Version match for ${config.label} — keeping cached tools")
+                                Log.d(TAG, "Version match for ${config.label} — keeping cached tools")
                                 _connections.update {
                                     it + (config.label to McpConnectionState.Connected(
                                         serverInfo = info,
-                                        toolCount = cached?.tools?.size ?: 0
+                                        toolCount = cached.tools.size
                                     ))
                                 }
                             } else {
@@ -224,7 +224,7 @@ class McpServerManager(
                                     McpTool(client, toolDef, config.label, config.toolset)
                                 }
                                 synchronized(mcpTools) {
-                                    mcpTools.removeAll { it.serverLabelOrNull() == config.label }
+                                    mcpTools.removeAll { it.serverLabel == config.label }
                                     mcpTools.addAll(liveTools)
                                 }
                                 _connections.update { it + (config.label to client.connectionState.value) }
@@ -256,7 +256,7 @@ class McpServerManager(
             try { client.disconnect() } catch (_: Exception) {}
         }
         clients.remove(label)
-        synchronized(mcpTools) { mcpTools.removeAll { it.serverLabelOrNull() == label } }
+        synchronized(mcpTools) { mcpTools.removeAll { it.serverLabel == label } }
         _connections.update { it + (label to McpConnectionState.Connecting) }
 
         val httpClient = httpClientFactory(instance, config)
@@ -269,10 +269,39 @@ class McpServerManager(
         }
     }
 
-    private fun Tool.serverLabelOrNull(): String? = when (this) {
-        is McpTool -> serverLabel
-        is CachedMcpTool -> serverLabel
-        else -> null
+    fun buildManifest(instance: AapInstance): ToolManifest? {
+        val allTools = getAllTools()
+        if (allTools.isEmpty()) return null
+
+        val configs = instance.mcpServerUrls?.filter { it.enabled } ?: return null
+        val configByLabel = configs.associateBy { it.label }
+
+        val serverLabels = allTools
+            .filterIsInstance<McpTool>()
+            .map { it.serverLabel }
+            .distinct()
+
+        val serverCaches = serverLabels.mapNotNull { label ->
+            val config = configByLabel[label] ?: return@mapNotNull null
+            val client = clients[label] ?: return@mapNotNull null
+
+            ServerToolCache(
+                serverUrl = config.url,
+                label = label,
+                toolset = config.toolset,
+                serverInfo = client.serverInfo ?: McpServerInfo("unknown", "0"),
+                tools = client.tools.value,
+                readOnly = config.readOnly
+            )
+        }
+
+        if (serverCaches.isEmpty()) return null
+
+        return ToolManifest(
+            instanceId = instance.id,
+            servers = serverCaches,
+            cachedAt = System.currentTimeMillis()
+        )
     }
 
     companion object {

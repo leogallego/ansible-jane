@@ -91,23 +91,21 @@ class SettingsViewModel(
                 val preservedDisabledTools = (current as? SettingsUiState.Ready)?.disabledTools ?: initialDisabledTools
 
                 val allMcpTools = mcpServerManager.getAllTools()
-                val mcpServerTools = allMcpTools.groupBy { tool ->
-                    when (tool) {
-                        is io.github.leogallego.ansiblejane.assistant.tools.McpTool -> tool.serverLabel
-                        is io.github.leogallego.ansiblejane.assistant.tools.CachedMcpTool -> tool.serverLabel
-                        else -> null
+                val mcpServerTools = allMcpTools
+                    .groupBy { it.serverLabel }
+                    .filterKeys { it != null }
+                    .mapKeys { it.key!! }
+                    .mapValues { (_, tools) ->
+                        tools.map { tool ->
+                            val schema = tool.spec.parametersSchema.takeIf { it.isNotEmpty() }
+                            McpToolUiState(
+                                name = tool.spec.name,
+                                description = tool.spec.description,
+                                isEnabled = "MCP:${tool.spec.name}" !in preservedDisabledTools,
+                                inputSchema = schema?.toString()
+                            )
+                        }
                     }
-                }.filterKeys { it != null }.mapKeys { it.key!! }.mapValues { (_, tools) ->
-                    tools.map { tool ->
-                        val schema = tool.spec.parametersSchema.takeIf { it.isNotEmpty() }
-                        McpToolUiState(
-                            name = tool.spec.name,
-                            description = tool.spec.description,
-                            isEnabled = "MCP:${tool.spec.name}" !in preservedDisabledTools,
-                            inputSchema = schema?.toString()
-                        )
-                    }
-                }
 
                 SettingsUiState.Ready(
                     currentTab = preservedTab,
@@ -483,6 +481,9 @@ class SettingsViewModel(
                 val instance = tokenManager.activeInstance.value ?: return@launch
                 updateReady { copy(isRefreshingTools = true) }
                 mcpServerManager.connectAllWithCache(instance, forceRefresh = true)
+                mcpServerManager.buildManifest(instance)?.let {
+                    tokenManager.saveManifest(instance.id, it)
+                }
             } finally {
                 updateReady { copy(isRefreshingTools = false) }
                 isRefreshing.set(false)

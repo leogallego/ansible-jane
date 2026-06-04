@@ -13,7 +13,7 @@ import java.net.SocketTimeoutException
 class McpTool(
     private val client: McpClient,
     private val mcpToolDef: McpToolDefinition,
-    val serverLabel: String,
+    override val serverLabel: String,
     val toolset: String? = null
 ) : Tool {
 

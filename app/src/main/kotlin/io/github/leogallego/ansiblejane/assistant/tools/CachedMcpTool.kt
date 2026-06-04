@@ -6,7 +6,7 @@ import kotlinx.serialization.json.JsonObject
 
 class CachedMcpTool(
     private val mcpToolDef: McpToolDefinition,
-    val serverLabel: String,
+    override val serverLabel: String,
     val toolset: String? = null,
     val readOnly: Boolean = false,
     private val serverManager: McpServerManager

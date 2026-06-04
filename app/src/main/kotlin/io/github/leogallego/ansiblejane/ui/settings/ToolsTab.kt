@@ -143,7 +143,7 @@ fun ToolsTab(
                     } else {
                         Icon(
                             Icons.Default.Refresh,
-                            contentDescription = "Refresh tools",
+                            contentDescription = stringResource(R.string.tools_mcp_refresh),
                             modifier = Modifier.size(18.dp)
                         )
                     }

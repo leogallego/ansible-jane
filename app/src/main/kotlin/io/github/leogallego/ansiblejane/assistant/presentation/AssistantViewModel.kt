@@ -18,16 +18,11 @@ import io.github.leogallego.ansiblejane.assistant.llm.KoogLlmProvider
 import io.github.leogallego.ansiblejane.assistant.llm.LlmProvider
 import io.github.leogallego.ansiblejane.assistant.tools.CachedMcpTool
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.assistant.tools.local.ListToolsLocalTool
 import io.github.leogallego.ansiblejane.data.ITokenManager
-import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.ToolManifest
-import io.github.leogallego.ansiblejane.model.ServerToolCache
-import io.github.leogallego.ansiblejane.network.mcp.McpServerInfo
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
-import io.github.leogallego.ansiblejane.network.mcp.McpToolDefinition
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 
 import kotlinx.collections.immutable.persistentListOf
@@ -98,10 +93,16 @@ class AssistantViewModel(
 
                     if (instance != null) {
                         _uiState.update { AssistantUiState.Loading }
+                        mcpServerManager.disconnectAll()
 
                         val manifest = tokenManager.loadManifest(instance.id)
                         if (manifest != null) {
+                            val configLabels = instance.mcpServerUrls
+                                ?.filter { it.enabled }
+                                ?.map { it.label }
+                                ?.toSet() ?: emptySet()
                             val cachedTools = buildCachedTools(manifest)
+                                .filter { it.serverLabel in configLabels }
                             mcpServerManager.setCachedTools(cachedTools)
                             Log.d(TAG, "CACHE: loaded ${cachedTools.size} cached tools for ${instance.id}")
                         }
@@ -120,7 +121,9 @@ class AssistantViewModel(
                                 } else {
                                     mcpServerManager.connectAll(instance)
                                 }
-                                populateManifestCache(instance)
+                                mcpServerManager.buildManifest(instance)?.let {
+                                    tokenManager.saveManifest(instance.id, it)
+                                }
                             } catch (e: CancellationException) {
                                 throw e
                             } catch (e: Exception) {
@@ -419,51 +422,6 @@ class AssistantViewModel(
                     serverManager = mcpServerManager
                 )
             }
-        }
-    }
-
-    private suspend fun populateManifestCache(instance: AapInstance) {
-        val allTools = mcpServerManager.getAllTools()
-        if (allTools.isEmpty()) return
-
-        val configs = instance.mcpServerUrls?.filter { it.enabled } ?: return
-        val configByLabel = configs.associateBy { it.label }
-
-        val serverCaches = allTools
-            .filterIsInstance<McpTool>()
-            .groupBy { it.serverLabel }
-            .mapNotNull { (label, tools) ->
-                val config = configByLabel[label] ?: return@mapNotNull null
-                val client = try {
-                    mcpServerManager.ensureConnected(label)
-                } catch (_: Exception) { return@mapNotNull null }
-
-                ServerToolCache(
-                    serverUrl = config.url,
-                    label = label,
-                    toolset = config.toolset,
-                    serverInfo = client.serverInfo
-                        ?: io.github.leogallego.ansiblejane.network.mcp.McpServerInfo("unknown", "0"),
-                    tools = tools.map { tool ->
-                        io.github.leogallego.ansiblejane.network.mcp.McpToolDefinition(
-                            name = tool.spec.name,
-                            description = tool.spec.description
-                                .removePrefix("[${tool.serverLabel}] "),
-                            inputSchema = tool.spec.parametersSchema
-                        )
-                    },
-                    readOnly = config.readOnly
-                )
-            }
-
-        if (serverCaches.isNotEmpty()) {
-            val manifest = ToolManifest(
-                instanceId = instance.id,
-                servers = serverCaches,
-                cachedAt = System.currentTimeMillis()
-            )
-            tokenManager.saveManifest(instance.id, manifest)
-            Log.d(TAG, "CACHE: saved manifest with ${serverCaches.size} servers, ${allTools.size} tools")
         }
     }
 

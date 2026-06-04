@@ -12,6 +12,8 @@ interface Tool {
     val spec: ToolSpec
     val isDestructive: Boolean
         get() = false
+    val serverLabel: String?
+        get() = null
     suspend fun execute(args: JsonObject): ToolResult
 
     companion object {

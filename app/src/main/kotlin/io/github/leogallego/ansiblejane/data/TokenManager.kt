@@ -80,6 +80,8 @@ class TokenManager(private val context: Context) : ITokenManager {
     }
 
     private companion object {
+        const val MAX_CACHE_AGE_MS = 7L * 24 * 60 * 60 * 1000
+
         // Legacy keys (kept for cleanup detection)
         val KEY_BASE_URL = stringPreferencesKey("base_url")
         val KEY_TOKEN = stringPreferencesKey("token")
@@ -449,6 +451,10 @@ class TokenManager(private val context: Context) : ITokenManager {
             val manifest = json.decodeFromString<ToolManifest>(jsonString)
             if (manifest.schemaVersion != ToolManifest.CURRENT_SCHEMA_VERSION) {
                 Log.w("TokenManager", "Manifest schema version mismatch: ${manifest.schemaVersion} != ${ToolManifest.CURRENT_SCHEMA_VERSION}")
+                deleteManifest(instanceId)
+                null
+            } else if (System.currentTimeMillis() - manifest.cachedAt > MAX_CACHE_AGE_MS) {
+                Log.d("TokenManager", "Manifest cache expired for $instanceId")
                 deleteManifest(instanceId)
                 null
             } else {
