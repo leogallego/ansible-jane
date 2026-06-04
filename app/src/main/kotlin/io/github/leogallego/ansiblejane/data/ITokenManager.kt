@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.data
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.McpServerConfig
+import io.github.leogallego.ansiblejane.model.ToolManifest
 import io.github.leogallego.ansiblejane.network.ApiVersion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,4 +55,8 @@ interface ITokenManager {
     suspend fun loadLlmApiKey(providerKey: String): String?
     suspend fun loadAllLlmApiKeys(): Map<String, String>
     suspend fun clearLlmApiKeys()
+
+    suspend fun saveManifest(instanceId: String, manifest: ToolManifest)
+    suspend fun loadManifest(instanceId: String): ToolManifest?
+    suspend fun deleteManifest(instanceId: String)
 }

@@ -13,13 +13,12 @@ import java.net.SocketTimeoutException
 class McpTool(
     private val client: McpClient,
     private val mcpToolDef: McpToolDefinition,
-    val serverLabel: String,
+    override val serverLabel: String,
     val toolset: String? = null
 ) : Tool {
 
     companion object {
         const val MAX_PAGE_SIZE = 10
-        private const val MAX_DESCRIPTION_CHARS = 300
         private val WRITE_SUFFIXES = Tool.WRITE_SUFFIXES
     }
 
@@ -28,7 +27,7 @@ class McpTool(
 
     override val spec: ToolSpec = ToolSpec(
         name = mcpToolDef.name,
-        description = "[$serverLabel] ${mcpToolDef.description}".take(MAX_DESCRIPTION_CHARS),
+        description = "[$serverLabel] ${mcpToolDef.description}".take(Tool.MAX_DESCRIPTION_CHARS),
         parametersSchema = mcpToolDef.inputSchema
     )
 

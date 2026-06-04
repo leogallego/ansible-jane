@@ -12,6 +12,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +55,8 @@ fun ToolsTab(
     onToggleExpandMcpServer: (label: String) -> Unit,
     onToggleExpandCategory: (category: String) -> Unit,
     onRefreshMcpServer: (label: String) -> Unit,
+    isRefreshingTools: Boolean = false,
+    onRefreshAllTools: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showAddServerSheet by remember { mutableStateOf(false) }
@@ -108,19 +112,42 @@ fun ToolsTab(
                 )
             }
 
-            OutlinedButton(
-                onClick = { showAddServerSheet = true },
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Text(
-                    stringResource(R.string.tools_mcp_add_server),
-                    modifier = Modifier.padding(start = 4.dp)
-                )
+                OutlinedButton(
+                    onClick = { showAddServerSheet = true },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        stringResource(R.string.tools_mcp_add_server),
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+                OutlinedButton(
+                    onClick = onRefreshAllTools,
+                    enabled = !isRefreshingTools,
+                    modifier = Modifier.testTag("button_refresh_tools")
+                ) {
+                    if (isRefreshingTools) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = stringResource(R.string.tools_mcp_refresh),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
             }
         }
 

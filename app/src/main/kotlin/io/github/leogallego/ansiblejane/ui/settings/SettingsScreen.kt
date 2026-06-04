@@ -71,6 +71,7 @@ fun SettingsScreen(
                     onToggleExpandMcpServer = { viewModel.toggleExpandMcpServer(it) },
                     onToggleExpandCategory = { viewModel.toggleExpandCategory(it) },
                     onRefreshMcpServer = { viewModel.refreshMcpServer(it) },
+                    onRefreshAllTools = { viewModel.refreshAllTools() },
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -107,6 +108,7 @@ private fun SettingsContent(
     onToggleExpandMcpServer: (String) -> Unit,
     onToggleExpandCategory: (String) -> Unit,
     onRefreshMcpServer: (String) -> Unit,
+    onRefreshAllTools: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     androidx.compose.foundation.layout.Column(modifier = modifier) {
@@ -173,6 +175,8 @@ private fun SettingsContent(
                 onToggleExpandMcpServer = onToggleExpandMcpServer,
                 onToggleExpandCategory = onToggleExpandCategory,
                 onRefreshMcpServer = onRefreshMcpServer,
+                isRefreshingTools = state.isRefreshingTools,
+                onRefreshAllTools = onRefreshAllTools,
                 modifier = Modifier.weight(1f)
             )
         }

@@ -26,8 +26,15 @@ class McpClient(
 
     val connectionState: StateFlow<McpConnectionState> = session.state
     val tools: StateFlow<List<McpToolDefinition>> = session.tools
+    var serverInfo: McpServerInfo? = null
+        private set
 
     suspend fun connect() {
+        initialize()
+        discoverTools()
+    }
+
+    suspend fun initialize(): McpServerInfo {
         session.updateState(McpConnectionState.Connecting)
         try {
             val initParams = buildJsonObject {
@@ -64,13 +71,8 @@ class McpClient(
             )
             transport.postNotification(serverUrl, notifyRequest, session.sessionId)
 
-            val discoveredTools = listTools()
-            session.updateState(
-                McpConnectionState.Connected(
-                    serverInfo = initResult.serverInfo,
-                    toolCount = discoveredTools.size
-                )
-            )
+            serverInfo = initResult.serverInfo
+            return initResult.serverInfo
         } catch (e: McpConnectionException) {
             session.updateState(McpConnectionState.Error(e.message ?: "Connection failed", e))
             throw e
@@ -83,6 +85,17 @@ class McpClient(
             session.updateState(McpConnectionState.Error(msg, e))
             throw McpConnectionException(msg, e)
         }
+    }
+
+    suspend fun discoverTools(): List<McpToolDefinition> {
+        val discoveredTools = listTools()
+        session.updateState(
+            McpConnectionState.Connected(
+                serverInfo = serverInfo ?: McpServerInfo("unknown", "0"),
+                toolCount = discoveredTools.size
+            )
+        )
+        return discoveredTools
     }
 
     fun disconnect() {

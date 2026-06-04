@@ -7,9 +7,11 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import android.util.Log
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.McpServerConfig
+import io.github.leogallego.ansiblejane.model.ToolManifest
 import io.github.leogallego.ansiblejane.network.ApiVersion
 import com.google.crypto.tink.Aead
 import com.google.crypto.tink.aead.AeadConfig
@@ -78,6 +80,8 @@ class TokenManager(private val context: Context) : ITokenManager {
     }
 
     private companion object {
+        const val MAX_CACHE_AGE_MS = 7L * 24 * 60 * 60 * 1000
+
         // Legacy keys (kept for cleanup detection)
         val KEY_BASE_URL = stringPreferencesKey("base_url")
         val KEY_TOKEN = stringPreferencesKey("token")
@@ -263,6 +267,8 @@ class TokenManager(private val context: Context) : ITokenManager {
         val updatedInstances = state.instances.filter { it.id != instanceId }
         if (updatedInstances.size == state.instances.size) return false
 
+        deleteManifest(instanceId)
+
         val newActiveId = if (state.activeInstanceId == instanceId) {
             updatedInstances.firstOrNull()?.id
         } else {
@@ -424,6 +430,48 @@ class TokenManager(private val context: Context) : ITokenManager {
         context.credentialsDataStore.edit { it.clear() }
         _instances.value = emptyList()
         _activeInstance.value = null
+    }
+
+    override suspend fun saveManifest(instanceId: String, manifest: ToolManifest) {
+        val key = stringPreferencesKey("manifest_$instanceId")
+        val jsonString = json.encodeToString(manifest)
+        if (jsonString.length > 100_000) {
+            Log.w("TokenManager", "Manifest cache for $instanceId exceeds 100KB (${jsonString.length} chars)")
+        }
+        context.credentialsDataStore.edit { prefs ->
+            prefs[key] = jsonString
+        }
+    }
+
+    override suspend fun loadManifest(instanceId: String): ToolManifest? {
+        val key = stringPreferencesKey("manifest_$instanceId")
+        val prefs = context.credentialsDataStore.data.first()
+        val jsonString = prefs[key] ?: return null
+        return try {
+            val manifest = json.decodeFromString<ToolManifest>(jsonString)
+            if (manifest.schemaVersion != ToolManifest.CURRENT_SCHEMA_VERSION) {
+                Log.w("TokenManager", "Manifest schema version mismatch: ${manifest.schemaVersion} != ${ToolManifest.CURRENT_SCHEMA_VERSION}")
+                deleteManifest(instanceId)
+                null
+            } else if (System.currentTimeMillis() - manifest.cachedAt > MAX_CACHE_AGE_MS) {
+                Log.d("TokenManager", "Manifest cache expired for $instanceId")
+                deleteManifest(instanceId)
+                null
+            } else {
+                manifest
+            }
+        } catch (e: Exception) {
+            Log.w("TokenManager", "Failed to deserialize manifest for $instanceId: ${e.message}")
+            deleteManifest(instanceId)
+            null
+        }
+    }
+
+    override suspend fun deleteManifest(instanceId: String) {
+        val key = stringPreferencesKey("manifest_$instanceId")
+        context.credentialsDataStore.edit { prefs ->
+            prefs.remove(key)
+        }
     }
 
     override val isLoggedIn: Flow<Boolean> = context.credentialsDataStore.data.map { prefs ->
