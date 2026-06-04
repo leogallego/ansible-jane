@@ -10,5 +10,6 @@ data class LocalToolUiState(
 data class McpToolUiState(
     val name: String,
     val description: String,
-    val isEnabled: Boolean
+    val isEnabled: Boolean,
+    val inputSchema: String? = null
 )

@@ -1,0 +1,50 @@
+package io.github.leogallego.ansiblejane.assistant.tools
+
+import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
+import io.github.leogallego.ansiblejane.network.mcp.McpToolDefinition
+import kotlinx.serialization.json.JsonObject
+
+class CachedMcpTool(
+    private val mcpToolDef: McpToolDefinition,
+    val serverLabel: String,
+    val toolset: String? = null,
+    val readOnly: Boolean = false,
+    private val serverManager: McpServerManager
+) : Tool {
+
+    override val isDestructive: Boolean =
+        Tool.WRITE_SUFFIXES.any { mcpToolDef.name.endsWith(it) }
+
+    override val spec: ToolSpec = ToolSpec(
+        name = mcpToolDef.name,
+        description = "[$serverLabel] ${mcpToolDef.description}".take(Tool.MAX_DESCRIPTION_CHARS),
+        parametersSchema = mcpToolDef.inputSchema
+    )
+
+    override suspend fun execute(args: JsonObject): ToolResult {
+        return try {
+            val client = serverManager.ensureConnected(serverLabel)
+            val mcpResult = client.callTool(mcpToolDef.name, args)
+
+            val text = mcpResult.content
+                .mapNotNull { it.text }
+                .joinToString("\n")
+
+            if (mcpResult.isError) {
+                ToolResult(
+                    success = false,
+                    data = text,
+                    errorType = ErrorType.SERVER_ERROR
+                )
+            } else {
+                ToolResult(success = true, data = text)
+            }
+        } catch (e: Exception) {
+            ToolResult(
+                success = false,
+                data = "Connection error: ${e.message}",
+                errorType = ErrorType.CONNECTION_ERROR
+            )
+        }
+    }
+}

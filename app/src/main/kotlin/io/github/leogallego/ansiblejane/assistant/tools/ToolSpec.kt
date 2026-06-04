@@ -15,6 +15,8 @@ interface Tool {
     suspend fun execute(args: JsonObject): ToolResult
 
     companion object {
+        const val MAX_DESCRIPTION_CHARS = 300
+
         val WRITE_SUFFIXES = setOf(
             "_create", "_update", "_delete",
             "_launch", "_relaunch", "_cancel",
