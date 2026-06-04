@@ -65,7 +65,12 @@ class GeminiLlmProvider(
         is LlmServerException, is LlmTimeoutException -> e
         is LLMClientException -> {
             val cause = e.cause
-            if (cause != null) mapException(cause) else LlmServerException("LLM error: ${e.message}")
+            when {
+                cause != null -> mapException(cause)
+                e.message?.contains("Content-Length mismatch") == true ->
+                    LlmRateLimitException("Rate limited — try again later")
+                else -> LlmServerException("Gemini error: ${e.message}")
+            }
         }
         is KoogHttpClientException -> {
             val code = e.statusCode

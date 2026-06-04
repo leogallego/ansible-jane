@@ -116,6 +116,13 @@ class GeminiLlmProviderTest {
     }
 
     @Test
+    fun `SHOULD throw LlmRateLimitException WHEN LLMClientException with Content-Length mismatch`() {
+        val ex = LLMClientException("google", "Content-Length mismatch: expected 1363 bytes, but received 0 bytes")
+        val mapped = provider.mapException(ex)
+        assertTrue(mapped is LlmRateLimitException)
+    }
+
+    @Test
     fun `SHOULD pass through already-mapped LlmAuthException`() {
         val ex = LlmAuthException("Already mapped")
         val mapped = provider.mapException(ex)
