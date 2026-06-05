@@ -79,6 +79,7 @@ class SettingsViewModelTest {
         userPreferences = fakeUserPreferences,
         assistantRepository = fakeAssistantRepo,
         mcpServerManager = mcpServerManager,
+        manifestRepository = io.github.leogallego.ansiblejane.fakes.FakeToolManifestRepository(),
         instanceDiscovery = io.github.leogallego.ansiblejane.network.InstanceDiscovery(json),
         httpClient = httpClient,
         json = json,

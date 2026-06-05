@@ -80,6 +80,7 @@ class SettingsScreenTest {
             userPreferences = fakeUserPreferences,
             assistantRepository = fakeAssistantRepo,
             mcpServerManager = mcpServerManager,
+            manifestRepository = io.github.leogallego.ansiblejane.fakes.FakeToolManifestRepository(),
             instanceDiscovery = io.github.leogallego.ansiblejane.network.InstanceDiscovery(json),
             httpClient = OkHttpClient(),
             json = json
