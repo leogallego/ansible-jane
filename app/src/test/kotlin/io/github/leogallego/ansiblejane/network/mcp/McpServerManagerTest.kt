@@ -351,6 +351,149 @@ class McpServerManagerTest {
         assertTrue(manager.connections.value.isEmpty())
     }
 
+    @Test
+    fun `connectAllWithCache reconnects when server URL changed`() = runBlocking {
+        server.dispatcher = mcpDispatcher(
+            tools = listOf(toolJson("new.tool", "New tool"))
+        )
+        server.start()
+        manager = createManager()
+
+        val manifest = ToolManifest(
+            instanceId = "inst-1",
+            servers = listOf(
+                ServerToolCache(
+                    serverUrl = "http://OLD-url/mcp",
+                    label = "test-server",
+                    serverInfo = McpServerInfo("test-mcp-server", "2.1.0"),
+                    tools = listOf(McpToolDefinition("old.tool", "Old")),
+                    readOnly = false
+                )
+            ),
+            cachedAt = System.currentTimeMillis()
+        )
+
+        val instance = createInstance(server.url("/mcp").toString())
+        manager.connectAllWithCache(instance, manifest)
+
+        val tools = manager.getAllTools()
+        assertEquals(1, tools.size)
+        assertEquals("new.tool", tools[0].spec.name)
+    }
+
+    @Test
+    fun `connectAllWithCache reconnects when toolset changed`() = runBlocking {
+        server.dispatcher = mcpDispatcher(
+            tools = listOf(toolJson("refreshed.tool", "Refreshed"))
+        )
+        server.start()
+        manager = createManager()
+
+        val serverUrl = server.url("/mcp").toString()
+
+        val manifest = ToolManifest(
+            instanceId = "inst-1",
+            servers = listOf(
+                ServerToolCache(
+                    serverUrl = serverUrl,
+                    label = "test-server",
+                    toolset = "old_toolset",
+                    serverInfo = McpServerInfo("test-mcp-server", "2.1.0"),
+                    tools = listOf(McpToolDefinition("old.tool", "Old")),
+                    readOnly = false
+                )
+            ),
+            cachedAt = System.currentTimeMillis()
+        )
+
+        val instance = AapInstance(
+            id = "inst-1",
+            baseUrl = "https://aap.example.com",
+            token = "token-1",
+            mcpServerUrls = listOf(
+                McpServerConfig(
+                    url = serverUrl,
+                    label = "test-server",
+                    enabled = true,
+                    toolset = "new_toolset"
+                )
+            )
+        )
+        manager.connectAllWithCache(instance, manifest)
+
+        val tools = manager.getAllTools()
+        assertEquals(1, tools.size)
+        assertEquals("refreshed.tool", tools[0].spec.name)
+    }
+
+    @Test
+    fun `connectAllWithCache skips duplicate labels`() = runBlocking {
+        server.dispatcher = mcpDispatcher(
+            tools = listOf(toolJson("only.tool", "Only one"))
+        )
+        server.start()
+        manager = createManager()
+
+        val serverUrl = server.url("/mcp").toString()
+        val instance = AapInstance(
+            id = "inst-1",
+            baseUrl = "https://aap.example.com",
+            token = "token-1",
+            mcpServerUrls = listOf(
+                McpServerConfig(url = serverUrl, label = "dup-server", enabled = true),
+                McpServerConfig(url = serverUrl, label = "dup-server", enabled = true)
+            )
+        )
+        manager.connectAllWithCache(instance)
+
+        val tools = manager.getAllTools()
+        assertEquals(1, tools.size)
+    }
+
+    @Test
+    fun `connectAllWithCache with no manifest connects all servers`() = runBlocking {
+        server.dispatcher = mcpDispatcher(
+            tools = listOf(toolJson("fresh.tool", "Fresh"))
+        )
+        server.start()
+        manager = createManager()
+
+        val instance = createInstance(server.url("/mcp").toString())
+        manager.connectAllWithCache(instance, manifest = null)
+
+        val tools = manager.getAllTools()
+        assertEquals(1, tools.size)
+        assertEquals("fresh.tool", tools[0].spec.name)
+    }
+
+    @Test
+    fun `buildManifest includes toolset from config`() = runBlocking {
+        server.dispatcher = mcpDispatcher(
+            tools = listOf(toolJson("controller.jobs_read", "List jobs"))
+        )
+        server.start()
+        manager = createManager()
+
+        val instance = AapInstance(
+            id = "inst-1",
+            baseUrl = "https://aap.example.com",
+            token = "token-1",
+            mcpServerUrls = listOf(
+                McpServerConfig(
+                    url = server.url("/mcp").toString(),
+                    label = "test-server",
+                    enabled = true,
+                    toolset = "job_management"
+                )
+            )
+        )
+        manager.connectAll(instance)
+
+        val manifest = manager.buildManifest(instance)
+        assertNotNull(manifest)
+        assertEquals("job_management", manifest!!.servers[0].toolset)
+    }
+
     // -- setCachedTools --
 
     @Test
