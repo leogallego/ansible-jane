@@ -7,6 +7,7 @@ import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.assistant.data.ModelFetcher
 import io.github.leogallego.ansiblejane.assistant.presentation.ModelFetchState
 import io.github.leogallego.ansiblejane.data.ITokenManager
+import io.github.leogallego.ansiblejane.data.IToolManifestRepository
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.ApiVersion
@@ -38,6 +39,7 @@ class SettingsViewModel(
     private val userPreferences: IUserPreferencesRepository,
     private val assistantRepository: IAssistantRepository,
     private val mcpServerManager: McpServerManager,
+    private val manifestRepository: IToolManifestRepository,
     private val instanceDiscovery: InstanceDiscovery,
     private val httpClient: OkHttpClient,
     private val json: Json,
@@ -482,7 +484,7 @@ class SettingsViewModel(
                 updateReady { copy(isRefreshingTools = true) }
                 mcpServerManager.connectAllWithCache(instance, forceRefresh = true)
                 mcpServerManager.buildManifest(instance)?.let {
-                    tokenManager.saveManifest(instance.id, it)
+                    manifestRepository.saveManifest(instance.id, it)
                 }
             } finally {
                 updateReady { copy(isRefreshingTools = false) }

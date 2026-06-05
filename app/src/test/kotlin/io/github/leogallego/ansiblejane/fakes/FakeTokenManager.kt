@@ -4,7 +4,6 @@ import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.McpServerConfig
-import io.github.leogallego.ansiblejane.model.ToolManifest
 import io.github.leogallego.ansiblejane.network.ApiVersion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -125,18 +124,6 @@ class FakeTokenManager : ITokenManager {
 
     override suspend fun clearLlmApiKeys() {
         llmApiKeys.clear()
-    }
-
-    private val manifests = mutableMapOf<String, ToolManifest>()
-
-    override suspend fun saveManifest(instanceId: String, manifest: ToolManifest) {
-        manifests[instanceId] = manifest
-    }
-
-    override suspend fun loadManifest(instanceId: String): ToolManifest? = manifests[instanceId]
-
-    override suspend fun deleteManifest(instanceId: String) {
-        manifests.remove(instanceId)
     }
 
     fun setInstances(list: List<AapInstance>) {

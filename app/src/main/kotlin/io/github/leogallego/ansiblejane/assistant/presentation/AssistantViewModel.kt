@@ -21,6 +21,7 @@ import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.assistant.tools.local.ListToolsLocalTool
 import io.github.leogallego.ansiblejane.data.ITokenManager
+import io.github.leogallego.ansiblejane.data.IToolManifestRepository
 import io.github.leogallego.ansiblejane.model.ToolManifest
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
@@ -41,6 +42,7 @@ class AssistantViewModel(
     private val mcpServerManager: McpServerManager,
     private val repository: IAssistantRepository,
     private val tokenManager: ITokenManager,
+    private val manifestRepository: IToolManifestRepository,
     private val localTools: List<LocalTool> = emptyList()
 ) : ViewModel() {
 
@@ -95,7 +97,7 @@ class AssistantViewModel(
                         _uiState.update { AssistantUiState.Loading }
                         mcpServerManager.disconnectAll()
 
-                        val manifest = tokenManager.loadManifest(instance.id)
+                        val manifest = manifestRepository.loadManifest(instance.id)
                         if (manifest != null) {
                             val configLabels = instance.mcpServerUrls
                                 ?.filter { it.enabled }
@@ -122,7 +124,7 @@ class AssistantViewModel(
                                     mcpServerManager.connectAll(instance)
                                 }
                                 mcpServerManager.buildManifest(instance)?.let {
-                                    tokenManager.saveManifest(instance.id, it)
+                                    manifestRepository.saveManifest(instance.id, it)
                                 }
                             } catch (e: CancellationException) {
                                 throw e

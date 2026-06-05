@@ -70,6 +70,7 @@ val assistantModule = module {
             mcpServerManager = get(),
             repository = get(),
             tokenManager = get(),
+            manifestRepository = get(),
             localTools = getAll<LocalTool>()
         )
     }
@@ -81,6 +82,7 @@ val assistantModule = module {
             userPreferences = get(),
             assistantRepository = get(),
             mcpServerManager = get(),
+            manifestRepository = get(),
             instanceDiscovery = get(),
             httpClient = get(named("llm")),
             json = networkJson,
