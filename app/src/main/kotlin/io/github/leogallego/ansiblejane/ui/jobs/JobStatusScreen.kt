@@ -23,6 +23,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.model.Job
@@ -83,7 +84,8 @@ private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = job.name,
-                    style = MaterialTheme.typography.headlineSmall
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.testTag("text_job_name")
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -97,7 +99,7 @@ private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    JobStatusBadge(status = job.status)
+                    JobStatusBadge(status = job.status, modifier = Modifier.testTag("badge_job_status"))
                     if (isActive) {
                         CircularProgressIndicator(
                             modifier = Modifier.padding(start = 8.dp),

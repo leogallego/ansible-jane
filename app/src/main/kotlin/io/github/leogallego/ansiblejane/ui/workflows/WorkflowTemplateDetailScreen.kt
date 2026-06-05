@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,7 +73,10 @@ fun WorkflowTemplateDetailScreen(
         },
         floatingActionButton = {
             if (uiState is WorkflowTemplateDetailUiState.Success) {
-                FloatingActionButton(onClick = { viewModel.launch() }) {
+                FloatingActionButton(
+                    onClick = { viewModel.launch() },
+                    modifier = Modifier.testTag("button_launch_workflow")
+                ) {
                     if (launchState is LaunchFromDetailState.Launching) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),

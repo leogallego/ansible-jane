@@ -205,6 +205,7 @@ private fun InstanceCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag("card_instance_${instance.id}")
             .combinedClickable(
                 onClick = onTap,
                 onLongClick = onLongPress
@@ -260,7 +261,10 @@ private fun InstanceCard(
                 }
             }
 
-            IconButton(onClick = onRemove) {
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier.testTag("button_remove_instance_${instance.id}")
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                     contentDescription = "Logout ${instance.displayLabel}",
