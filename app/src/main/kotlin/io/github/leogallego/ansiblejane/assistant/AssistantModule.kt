@@ -36,8 +36,9 @@ val assistantModule = module {
                                 )
                             }
                             addInterceptor(HttpLoggingInterceptor().apply {
-                                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
                                         else HttpLoggingInterceptor.Level.NONE
+                                redactHeader("Authorization")
                             })
                             if (instance.trustSelfSigned) {
                                 val tm = CertTrustManager.createTrustAllManager()
@@ -57,8 +58,9 @@ val assistantModule = module {
     single(named("llm")) {
         OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
                         else HttpLoggingInterceptor.Level.NONE
+                redactHeader("Authorization")
             })
             .build()
     }

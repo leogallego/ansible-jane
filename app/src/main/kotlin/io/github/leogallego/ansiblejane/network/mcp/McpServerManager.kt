@@ -11,7 +11,6 @@ import io.ktor.client.HttpClient
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
-import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -64,50 +63,11 @@ class McpServerManager(
     }
 
     private suspend fun connectServer(config: McpServerConfig, ktorClient: HttpClient) {
-        val sdkClient = Client(
-            clientInfo = Implementation(name = "AnsibleJane", version = "1.0")
-        )
-        val transport = StreamableHttpClientTransport(
-            client = ktorClient,
-            url = config.url
-        )
-
         _connections.update { it + (config.label to McpConnectionState.Connecting) }
-
         try {
-            sdkClient.connect(transport)
-
-            val sv = sdkClient.serverVersion
-            val serverInfo = McpServerInfo(
-                name = sv?.name ?: "unknown",
-                version = sv?.version ?: "0"
-            )
-
-            val sdkTools = sdkClient.listTools().tools
-            val toolDefs = sdkTools.map { tool ->
-                McpToolDefinition(
-                    name = tool.name,
-                    description = tool.description ?: "",
-                    inputSchema = toolSchemaToJsonObject(tool.inputSchema)
-                )
-            }
-
-            val state = SdkClientState(sdkClient, ktorClient, serverInfo, toolDefs)
-            clients[config.label] = state
-
-            val tools = toolDefs.map { toolDef ->
-                McpTool(sdkClient, toolDef, config.label, config.toolset)
-            }
-            synchronized(mcpTools) { mcpTools.addAll(tools) }
-
-            _connections.update {
-                it + (config.label to McpConnectionState.Connected(
-                    serverInfo = serverInfo,
-                    toolCount = toolDefs.size
-                ))
-            }
+            val state = connectAndDiscover(config.url, ktorClient)
+            registerServer(config.label, state, config.toolset)
         } catch (e: Exception) {
-            try { ktorClient.close() } catch (_: Exception) {}
             _connections.update {
                 it + (config.label to McpConnectionState.Error(
                     "Failed to connect: ${e.message}", e
@@ -116,8 +76,9 @@ class McpServerManager(
         }
     }
 
-    fun disconnectAll() {
+    suspend fun disconnectAll() {
         clients.values.forEach { state ->
+            try { state.client.close() } catch (_: Exception) {}
             try { state.ktorClient.close() } catch (_: Exception) {}
         }
         clients.clear()
@@ -153,54 +114,13 @@ class McpServerManager(
                 ?: throw IllegalStateException("No MCP config for server: $serverLabel")
 
             val ktorClient = ktorClientFactory(instance, config)
-            val sdkClient = Client(
-                clientInfo = Implementation(name = "AnsibleJane", version = "1.0")
-            )
-            val transport = StreamableHttpClientTransport(
-                client = ktorClient,
-                url = config.url
-            )
-
             _connections.update { it + (serverLabel to McpConnectionState.Connecting) }
 
             try {
-                sdkClient.connect(transport)
-
-                val sv = sdkClient.serverVersion
-                val serverInfo = McpServerInfo(
-                    name = sv?.name ?: "unknown",
-                    version = sv?.version ?: "0"
-                )
-
-                val sdkTools = sdkClient.listTools().tools
-                val toolDefs = sdkTools.map { tool ->
-                    McpToolDefinition(
-                        name = tool.name,
-                        description = tool.description ?: "",
-                        inputSchema = toolSchemaToJsonObject(tool.inputSchema)
-                    )
-                }
-
-                val state = SdkClientState(sdkClient, ktorClient, serverInfo, toolDefs)
-                clients[serverLabel] = state
-
-                val liveTools = toolDefs.map { toolDef ->
-                    McpTool(sdkClient, toolDef, config.label, config.toolset)
-                }
-                synchronized(mcpTools) {
-                    mcpTools.removeAll { it.serverLabel == serverLabel }
-                    mcpTools.addAll(liveTools)
-                }
-
-                _connections.update {
-                    it + (serverLabel to McpConnectionState.Connected(
-                        serverInfo = serverInfo,
-                        toolCount = toolDefs.size
-                    ))
-                }
-                sdkClient
+                val state = connectAndDiscover(config.url, ktorClient)
+                registerServer(config.label, state, config.toolset)
+                state.client
             } catch (e: Exception) {
-                try { ktorClient.close() } catch (_: Exception) {}
                 _connections.update {
                     it + (serverLabel to McpConnectionState.Error(
                         "Failed to connect: ${e.message}", e
@@ -259,9 +179,7 @@ class McpServerManager(
                         )
 
                         val ktorClient = ktorClientFactory(instance, config)
-                        val sdkClient = Client(
-                            clientInfo = Implementation(name = "AnsibleJane", version = "1.0")
-                        )
+                        val sdkClient = Client(clientInfo = CLIENT_INFO)
                         val transport = StreamableHttpClientTransport(
                             client = ktorClient,
                             url = config.url
@@ -271,57 +189,25 @@ class McpServerManager(
 
                         try {
                             sdkClient.connect(transport)
-
-                            val sv = sdkClient.serverVersion
-                            val serverInfo = McpServerInfo(
-                                name = sv?.name ?: "unknown",
-                                version = sv?.version ?: "0"
-                            )
+                            val serverInfo = extractServerInfo(sdkClient)
 
                             val versionMatch = !forceRefresh && !configChanged &&
                                 cached != null && cached.serverInfo.version == serverInfo.version
 
-                            if (versionMatch) {
+                            val toolDefs = if (versionMatch) {
                                 Log.d(TAG, "Version match for ${config.label} — keeping cached tools")
-                                clients[config.label] = SdkClientState(
-                                    sdkClient, ktorClient, serverInfo, cached.tools
-                                )
-                                _connections.update {
-                                    it + (config.label to McpConnectionState.Connected(
-                                        serverInfo = serverInfo,
-                                        toolCount = cached.tools.size
-                                    ))
-                                }
+                                cached!!.tools
                             } else {
-                                val sdkTools = sdkClient.listTools().tools
-                                val toolDefs = sdkTools.map { tool ->
-                                    McpToolDefinition(
-                                        name = tool.name,
-                                        description = tool.description ?: "",
-                                        inputSchema = toolSchemaToJsonObject(tool.inputSchema)
-                                    )
-                                }
-
-                                clients[config.label] = SdkClientState(
-                                    sdkClient, ktorClient, serverInfo, toolDefs
-                                )
-
-                                val liveTools = toolDefs.map { toolDef ->
-                                    McpTool(sdkClient, toolDef, config.label, config.toolset)
-                                }
-                                synchronized(mcpTools) {
-                                    mcpTools.removeAll { it.serverLabel == config.label }
-                                    mcpTools.addAll(liveTools)
-                                }
-                                _connections.update {
-                                    it + (config.label to McpConnectionState.Connected(
-                                        serverInfo = serverInfo,
-                                        toolCount = toolDefs.size
-                                    ))
-                                }
+                                discoverToolDefs(sdkClient)
                             }
+
+                            registerServer(
+                                config.label,
+                                SdkClientState(sdkClient, ktorClient, serverInfo, toolDefs),
+                                config.toolset
+                            )
                         } catch (e: Exception) {
-                            try { ktorClient.close() } catch (_: Exception) {}
+                            closeSafely(sdkClient, ktorClient)
                             _connections.update {
                                 it + (config.label to McpConnectionState.Error(
                                     "Failed to connect: ${e.message}", e
@@ -344,10 +230,10 @@ class McpServerManager(
         val instance = currentInstance ?: return
         val config = instance.mcpServerUrls?.find { it.label == label } ?: return
 
-        clients[label]?.let { state ->
+        clients.remove(label)?.let { state ->
+            try { state.client.close() } catch (_: Exception) {}
             try { state.ktorClient.close() } catch (_: Exception) {}
         }
-        clients.remove(label)
         synchronized(mcpTools) { mcpTools.removeAll { it.serverLabel == label } }
         _connections.update { it + (label to McpConnectionState.Connecting) }
 
@@ -401,7 +287,62 @@ class McpServerManager(
         )
     }
 
+    // -- helpers --
+
+    private suspend fun connectAndDiscover(
+        url: String,
+        ktorClient: HttpClient
+    ): SdkClientState {
+        val sdkClient = Client(clientInfo = CLIENT_INFO)
+        val transport = StreamableHttpClientTransport(client = ktorClient, url = url)
+        try {
+            sdkClient.connect(transport)
+            val serverInfo = extractServerInfo(sdkClient)
+            val toolDefs = discoverToolDefs(sdkClient)
+            return SdkClientState(sdkClient, ktorClient, serverInfo, toolDefs)
+        } catch (e: Exception) {
+            closeSafely(sdkClient, ktorClient)
+            throw e
+        }
+    }
+
+    private fun extractServerInfo(client: Client): McpServerInfo {
+        val sv = client.serverVersion
+        return McpServerInfo(name = sv?.name ?: "unknown", version = sv?.version ?: "0")
+    }
+
+    private suspend fun discoverToolDefs(client: Client): List<McpToolDefinition> {
+        return client.listTools().tools.map { tool ->
+            McpToolDefinition(
+                name = tool.name,
+                description = tool.description ?: "",
+                inputSchema = toolSchemaToJsonObject(tool.inputSchema)
+            )
+        }
+    }
+
+    private fun registerServer(label: String, state: SdkClientState, toolset: String?) {
+        clients[label] = state
+        val tools = state.toolDefs.map { McpTool(state.client, it, label, toolset) }
+        synchronized(mcpTools) {
+            mcpTools.removeAll { it.serverLabel == label }
+            mcpTools.addAll(tools)
+        }
+        _connections.update {
+            it + (label to McpConnectionState.Connected(
+                serverInfo = state.serverInfo,
+                toolCount = state.toolDefs.size
+            ))
+        }
+    }
+
+    private suspend fun closeSafely(sdkClient: Client, ktorClient: HttpClient) {
+        try { sdkClient.close() } catch (_: Exception) {}
+        try { ktorClient.close() } catch (_: Exception) {}
+    }
+
     companion object {
         private const val TAG = "McpServerManager"
+        private val CLIENT_INFO = Implementation(name = "AnsibleJane", version = "1.0")
     }
 }

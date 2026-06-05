@@ -26,8 +26,9 @@ val networkModule = module {
     factory {
         OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
                         else HttpLoggingInterceptor.Level.NONE
+                redactHeader("Authorization")
             })
             .build()
     }

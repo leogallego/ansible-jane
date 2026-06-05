@@ -431,7 +431,9 @@ class AssistantViewModel(
         backgroundConnectJob?.cancel()
         cachedProvider?.close()
         cachedProvider = null
-        mcpServerManager.disconnectAll()
+        kotlinx.coroutines.CoroutineScope(
+            kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO
+        ).launch { mcpServerManager.disconnectAll() }
     }
 
     private inline fun updateState(crossinline transform: AssistantUiState.Active.() -> AssistantUiState.Active) {

@@ -161,8 +161,9 @@ class AuthRepository(
         val builder = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor { token })
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
                         else HttpLoggingInterceptor.Level.NONE
+                redactHeader("Authorization")
             })
 
         if (trustSelfSigned) {

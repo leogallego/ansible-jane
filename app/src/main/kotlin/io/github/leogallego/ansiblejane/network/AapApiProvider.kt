@@ -99,8 +99,9 @@ class AapApiProvider(
                 instanceIdProvider = { instanceId }
             ))
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
                         else HttpLoggingInterceptor.Level.NONE
+                redactHeader("Authorization")
             })
 
         if (trustSelfSigned) {
