@@ -10,6 +10,9 @@ import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.network.networkJson
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
 import io.github.leogallego.ansiblejane.BuildConfig
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.sse.SSE
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.core.module.dsl.viewModel
@@ -20,32 +23,33 @@ import org.koin.dsl.module
 val assistantModule = module {
     single {
         McpServerManager(
-            httpClientFactory = { instance, serverConfig ->
-                OkHttpClient.Builder()
-                    .apply {
-                        if (serverConfig.useInstanceAuth) {
-                            addInterceptor(
-                                AuthInterceptor(
-                                    tokenProvider = { instance.token },
-                                    instanceIdProvider = { instance.id }
+            ktorClientFactory = { instance, serverConfig ->
+                HttpClient(OkHttp) {
+                    engine {
+                        config {
+                            if (serverConfig.useInstanceAuth) {
+                                addInterceptor(
+                                    AuthInterceptor(
+                                        tokenProvider = { instance.token },
+                                        instanceIdProvider = { instance.id }
+                                    )
                                 )
-                            )
+                            }
+                            addInterceptor(HttpLoggingInterceptor().apply {
+                                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
+                                        else HttpLoggingInterceptor.Level.NONE
+                                redactHeader("Authorization")
+                            })
+                            if (instance.trustSelfSigned) {
+                                val tm = CertTrustManager.createTrustAllManager()
+                                sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
+                                hostnameVerifier { _, _ -> true }
+                            }
                         }
                     }
-                    .addInterceptor(HttpLoggingInterceptor().apply {
-                        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
-                                else HttpLoggingInterceptor.Level.NONE
-                    })
-                    .apply {
-                        if (instance.trustSelfSigned) {
-                            val tm = CertTrustManager.createTrustAllManager()
-                            sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
-                            hostnameVerifier { _, _ -> true }
-                        }
-                    }
-                    .build()
-            },
-            json = networkJson
+                    install(SSE)
+                }
+            }
         )
     }
 
@@ -54,8 +58,9 @@ val assistantModule = module {
     single(named("llm")) {
         OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
                         else HttpLoggingInterceptor.Level.NONE
+                redactHeader("Authorization")
             })
             .build()
     }

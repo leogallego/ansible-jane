@@ -110,6 +110,8 @@ dependencies {
     implementation(libs.koog.google.client)
     implementation(libs.koog.http.ktor)
     implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.mcp.sdk.client)
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)

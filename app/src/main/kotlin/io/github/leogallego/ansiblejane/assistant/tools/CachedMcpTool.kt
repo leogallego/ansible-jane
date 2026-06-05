@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.assistant.tools
 
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.network.mcp.McpToolDefinition
 import kotlinx.serialization.json.JsonObject
@@ -24,13 +25,13 @@ class CachedMcpTool(
     override suspend fun execute(args: JsonObject): ToolResult {
         return try {
             val client = serverManager.ensureConnected(serverLabel)
-            val mcpResult = client.callTool(mcpToolDef.name, args)
+            val result = client.callTool(mcpToolDef.name, args)
 
-            val text = mcpResult.content
-                .mapNotNull { it.text }
-                .joinToString("\n")
+            val text = result.content
+                .filterIsInstance<TextContent>()
+                .joinToString("\n") { it.text }
 
-            if (mcpResult.isError) {
+            if (result.isError == true) {
                 ToolResult(
                     success = false,
                     data = text,
