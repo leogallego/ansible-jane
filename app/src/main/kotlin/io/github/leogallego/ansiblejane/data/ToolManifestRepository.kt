@@ -1,15 +1,19 @@
 package io.github.leogallego.ansiblejane.data
 
-import android.content.Context
-import android.util.Log
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.leogallego.ansiblejane.model.ToolManifest
+import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class ToolManifestRepository(private val context: Context) : IToolManifestRepository {
+class ToolManifestRepository(
+    private val dataStore: DataStore<Preferences>,
+    private val clock: () -> Long = { System.currentTimeMillis() }
+) : IToolManifestRepository {
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -19,14 +23,14 @@ class ToolManifestRepository(private val context: Context) : IToolManifestReposi
         if (jsonString.length > SIZE_WARNING_THRESHOLD) {
             Log.w(TAG, "Manifest cache for $instanceId exceeds 100KB (${jsonString.length} chars)")
         }
-        context.credentialsDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[key] = jsonString
         }
     }
 
     override suspend fun loadManifest(instanceId: String): ToolManifest? {
         val key = stringPreferencesKey("manifest_$instanceId")
-        val prefs = context.credentialsDataStore.data.first()
+        val prefs = dataStore.data.first()
         val jsonString = prefs[key] ?: return null
         return try {
             val manifest = json.decodeFromString<ToolManifest>(jsonString)
@@ -36,7 +40,7 @@ class ToolManifestRepository(private val context: Context) : IToolManifestReposi
                     deleteManifest(instanceId)
                     null
                 }
-                System.currentTimeMillis() - manifest.cachedAt > MAX_CACHE_AGE_MS -> {
+                clock() - manifest.cachedAt > MAX_CACHE_AGE_MS -> {
                     Log.d(TAG, "Manifest cache expired for $instanceId")
                     deleteManifest(instanceId)
                     null
@@ -52,7 +56,7 @@ class ToolManifestRepository(private val context: Context) : IToolManifestReposi
 
     override suspend fun deleteManifest(instanceId: String) {
         val key = stringPreferencesKey("manifest_$instanceId")
-        context.credentialsDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs.remove(key)
         }
     }

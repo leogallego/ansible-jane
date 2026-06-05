@@ -88,7 +88,7 @@ class CachedMcpToolTest {
         .setBody(body)
 
     @Test
-    fun `execute calls ensureConnected and returns tool result`() = runBlocking {
+    fun `SHOULD return success with tool output WHEN server connected`() = runBlocking {
         server.dispatcher = mcpDispatcher()
         server.start()
 
@@ -114,7 +114,7 @@ class CachedMcpToolTest {
     }
 
     @Test
-    fun `execute returns CONNECTION_ERROR when server unreachable`() = runBlocking {
+    fun `SHOULD return CONNECTION_ERROR WHEN server label not found`() = runBlocking {
         val tool = CachedMcpTool(
             mcpToolDef = McpToolDefinition("ping", "Ping"),
             serverLabel = "nonexistent-server",
@@ -128,7 +128,7 @@ class CachedMcpToolTest {
     }
 
     @Test
-    fun `execute returns SERVER_ERROR when tool call isError`() = runBlocking {
+    fun `SHOULD return SERVER_ERROR WHEN tool call returns isError`() = runBlocking {
         server.dispatcher = mcpDispatcher(
             toolCallResponse = """{"content":[{"type":"text","text":"something went wrong"}],"isError":true}"""
         )
@@ -157,7 +157,7 @@ class CachedMcpToolTest {
     }
 
     @Test
-    fun `spec includes server label in description`() {
+    fun `SHOULD include server label in description WHEN spec created`() {
         val tool = CachedMcpTool(
             mcpToolDef = McpToolDefinition("ping", "Ping the server"),
             serverLabel = "my-mcp",
@@ -169,7 +169,7 @@ class CachedMcpToolTest {
     }
 
     @Test
-    fun `isDestructive is true for write suffixes`() {
+    fun `SHOULD flag destructive WHEN tool name has write suffix`() {
         val create = CachedMcpTool(
             mcpToolDef = McpToolDefinition("hosts_create", "Create host"),
             serverLabel = "s",
@@ -186,7 +186,7 @@ class CachedMcpToolTest {
     }
 
     @Test
-    fun `execute passes arguments to tool call`() = runBlocking {
+    fun `SHOULD succeed WHEN arguments passed to tool call`() = runBlocking {
         server.dispatcher = mcpDispatcher()
         server.start()
 

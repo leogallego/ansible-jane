@@ -9,7 +9,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val dataModule = module {
-    single { ToolManifestRepository(androidContext()) } bind IToolManifestRepository::class
+    single { ToolManifestRepository(androidContext().credentialsDataStore) } bind IToolManifestRepository::class
     single { TokenManager(androidContext(), get()) } bind ITokenManager::class
     single { UserPreferencesRepository(androidContext()) } bind IUserPreferencesRepository::class
     single { BackupManager() }

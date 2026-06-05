@@ -47,7 +47,7 @@ class ToolManifestSerializationTest {
     )
 
     @Test
-    fun `roundtrip serialization preserves all fields`() {
+    fun `SHOULD preserve all fields WHEN roundtrip serialized`() {
         val manifest = sampleManifest()
         val encoded = json.encodeToString(manifest)
         val decoded = json.decodeFromString<ToolManifest>(encoded)
@@ -69,7 +69,7 @@ class ToolManifestSerializationTest {
     }
 
     @Test
-    fun `roundtrip preserves tool inputSchema`() {
+    fun `SHOULD preserve inputSchema WHEN tool roundtrip serialized`() {
         val schema = buildJsonObject {
             put("type", JsonPrimitive("object"))
             put("properties", buildJsonObject {
@@ -98,7 +98,7 @@ class ToolManifestSerializationTest {
     }
 
     @Test
-    fun `default schema version equals CURRENT_SCHEMA_VERSION`() {
+    fun `SHOULD default to CURRENT_SCHEMA_VERSION WHEN no version specified`() {
         val manifest = ToolManifest(
             instanceId = "inst-1",
             servers = emptyList(),
@@ -108,7 +108,7 @@ class ToolManifestSerializationTest {
     }
 
     @Test
-    fun `deserialization ignores unknown fields`() {
+    fun `SHOULD ignore unknown fields WHEN deserializing`() {
         val jsonString = """
         {
             "schemaVersion": 1,
@@ -124,14 +124,14 @@ class ToolManifestSerializationTest {
     }
 
     @Test
-    fun `McpToolDefinition defaults`() {
+    fun `SHOULD use empty defaults WHEN McpToolDefinition created with name only`() {
         val tool = McpToolDefinition("ping")
         assertEquals("", tool.description)
         assertEquals(JsonObject(emptyMap()), tool.inputSchema)
     }
 
     @Test
-    fun `ServerToolCache toolset is nullable`() {
+    fun `SHOULD preserve null toolset WHEN ServerToolCache roundtripped`() {
         val cache = ServerToolCache(
             serverUrl = "http://x",
             label = "s1",
@@ -147,7 +147,7 @@ class ToolManifestSerializationTest {
     }
 
     @Test
-    fun `corrupted JSON fails gracefully`() {
+    fun `SHOULD throw WHEN JSON is corrupted`() {
         val corrupted = """{"schemaVersion":1,"instanceId":"x","server"""
         val result = try {
             json.decodeFromString<ToolManifest>(corrupted)
@@ -159,7 +159,7 @@ class ToolManifestSerializationTest {
     }
 
     @Test
-    fun `empty servers list roundtrips`() {
+    fun `SHOULD roundtrip WHEN servers list is empty`() {
         val manifest = ToolManifest(
             instanceId = "inst-empty",
             servers = emptyList(),
@@ -170,7 +170,7 @@ class ToolManifestSerializationTest {
     }
 
     @Test
-    fun `multiple servers roundtrip`() {
+    fun `SHOULD preserve all servers WHEN multiple servers roundtripped`() {
         val manifest = ToolManifest(
             instanceId = "inst-multi",
             servers = listOf(
