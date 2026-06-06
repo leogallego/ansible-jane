@@ -438,7 +438,7 @@ private fun ImportPreviewScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = if (config.apiKey != null) "API key: ••••${config.apiKey.takeLast(4)}" else "No API key",
+                                text = config.apiKey?.let { key -> "API key: ••••${key.takeLast(4)}" } ?: "No API key",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 2.dp)

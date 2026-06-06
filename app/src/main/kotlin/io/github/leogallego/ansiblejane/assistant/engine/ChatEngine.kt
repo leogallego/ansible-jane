@@ -281,8 +281,9 @@ class ChatEngine(
                     metaInfo = RequestMetaInfo.Empty
                 ))
                 Role.ASSISTANT -> {
-                    if (msg.toolCallsJson != null) {
-                        val toolCalls = parseToolCalls(msg.toolCallsJson)
+                    val json = msg.toolCallsJson
+                    if (json != null) {
+                        val toolCalls = parseToolCalls(json)
                         val parts = mutableListOf<MessagePart.ResponsePart>()
                         if (msg.content.isNotEmpty()) {
                             parts.add(MessagePart.Text(msg.content))

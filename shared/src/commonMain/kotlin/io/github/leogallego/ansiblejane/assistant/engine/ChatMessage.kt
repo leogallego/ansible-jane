@@ -1,13 +1,12 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
-import androidx.compose.runtime.Immutable
-import java.util.concurrent.atomic.AtomicLong
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 enum class Role { USER, ASSISTANT, TOOL, SYSTEM }
 
 enum class ResponseSource { LOCAL, MCP, LLM, MIXED }
 
-@Immutable
 data class TokenUsage(
     val inputTokens: Int,
     val outputTokens: Int,
@@ -30,7 +29,9 @@ data class TokenUsage(
     }
 }
 
-@Immutable
+@OptIn(ExperimentalAtomicApi::class)
+private val messageCounter = AtomicLong(0)
+
 data class ChatMessage(
     val role: Role,
     val content: String,
@@ -40,11 +41,11 @@ data class ChatMessage(
     val source: ResponseSource? = null,
     val toolsUsed: List<String> = emptyList(),
     val tokenUsage: TokenUsage? = null,
-    val timestamp: Long = System.currentTimeMillis(),
+    val timestamp: Long = 0L,
     val id: Long = nextId()
 ) {
     companion object {
-        private val counter = AtomicLong(0)
-        fun nextId(): Long = counter.getAndIncrement()
+        @OptIn(ExperimentalAtomicApi::class)
+        fun nextId(): Long = messageCounter.fetchAndAdd(1)
     }
 }

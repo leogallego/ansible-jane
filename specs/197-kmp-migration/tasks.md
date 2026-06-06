@@ -70,22 +70,22 @@ Read skills/kotlin-project-modularization/SKILL.md
 
 ### Portable Code Moves (67 + 45 + 4 + 5 = ~121 files)
 
-- [ ] T008 [P] [US1] Move `tools/` (67 files) from `app/src/main/kotlin/.../assistant/tools/` to `shared/src/commonMain/kotlin/.../assistant/tools/` — zero changes needed, pure Kotlin
-- [ ] T009 [P] [US1] Move `model/` (44 files, excluding `AppError.kt`) from `app/src/main/kotlin/.../model/` to `shared/src/commonMain/kotlin/.../model/` — leave `AppError.kt` in `:app` until Phase 4/US3 when Ktor replaces Retrofit (it depends on both `retrofit2.HttpException` and Compose Icons)
-- [ ] T010 [P] [US1] Move `llm/` (4 files) from `app/src/main/kotlin/.../assistant/llm/` to `shared/src/commonMain/kotlin/.../assistant/llm/` — already KMP-native via Koog 1.0.0
-- [ ] T011 [US1] Move `engine/` (5 files) from `app/src/main/kotlin/.../assistant/engine/` to `shared/src/commonMain/kotlin/.../assistant/engine/` — fix `DebugLog.kt`: replace `android.util.Log` wrapper with `expect/actual` or `println` multiplatform logger. Update all 7 consumer files: `engine/ChatEngine.kt`, `engine/ToolExecutor.kt`, `engine/ToolRouter.kt`, `network/InstanceDiscovery.kt`, `network/mcp/McpServerManager.kt`, `data/ToolManifestRepository.kt`, `assistant/presentation/AssistantViewModel.kt`
+- [X] T008 [P] [US1] Move `tools/` (67 files) from `app/src/main/kotlin/.../assistant/tools/` to `shared/src/commonMain/kotlin/.../assistant/tools/` — zero changes needed, pure Kotlin
+- [X] T009 [P] [US1] Move `model/` (44 files, excluding `AppError.kt`) from `app/src/main/kotlin/.../model/` to `shared/src/commonMain/kotlin/.../model/` — leave `AppError.kt` in `:app` until Phase 4/US3 when Ktor replaces Retrofit (it depends on both `retrofit2.HttpException` and Compose Icons)
+- [X] T010 [P] [US1] Move `llm/` (4 files) from `app/src/main/kotlin/.../assistant/llm/` to `shared/src/commonMain/kotlin/.../assistant/llm/` — already KMP-native via Koog 1.0.0
+- [X] T011 [US1] Move `engine/` (5 files) from `app/src/main/kotlin/.../assistant/engine/` to `shared/src/commonMain/kotlin/.../assistant/engine/` — fix `DebugLog.kt`: replace `android.util.Log` wrapper with `expect/actual` or `println` multiplatform logger. Update all 7 consumer files: `engine/ChatEngine.kt`, `engine/ToolExecutor.kt`, `engine/ToolRouter.kt`, `network/InstanceDiscovery.kt`, `network/mcp/McpServerManager.kt`, `data/ToolManifestRepository.kt`, `assistant/presentation/AssistantViewModel.kt`
 
 ### DI and Supporting Code
 
-- [ ] T012 [US1] Move portable DI modules to `shared/src/commonMain/kotlin/.../di/` — `AssistantModule.kt` and `ToolModule.kt` (if they don't reference android/OkHttp). Keep `DataModule.kt` and `NetworkModule.kt` in `:app` for now (they have Android/Retrofit deps)
-- [ ] T013 [US1] Move `assistant/data/` interfaces and models to `shared/src/commonMain/kotlin/.../assistant/data/` — `AssistantRepository.kt` implementation stays in `:app` temporarily (it uses Android `Context` for file I/O). Extract repository interface to commonMain; full implementation moves in Phase 3/US2 (T038) after DataStoreStorageFactory is ready
-- [ ] T014 [US1] Update `shared/build.gradle.kts` — ensure all moved code compiles. Add any missing commonMain dependencies discovered during moves
+- [X] T012 [US1] Move portable DI modules to `shared/src/commonMain/kotlin/.../di/` — `AssistantModule.kt` and `ToolModule.kt` (if they don't reference android/OkHttp). Keep `DataModule.kt` and `NetworkModule.kt` in `:app` for now (they have Android/Retrofit deps)
+- [X] T013 [US1] Move `assistant/data/` interfaces and models to `shared/src/commonMain/kotlin/.../assistant/data/` — `AssistantRepository.kt` implementation stays in `:app` temporarily (it uses Android `Context` for file I/O). Extract repository interface to commonMain; full implementation moves in Phase 3/US2 (T038) after DataStoreStorageFactory is ready
+- [X] T014 [US1] Update `shared/build.gradle.kts` — ensure all moved code compiles. Add any missing commonMain dependencies discovered during moves
 
 ### Wire Up Android App
 
-- [ ] T015 [US1] Update `:app` (or `:composeApp`) `build.gradle.kts` to depend on `:shared`. Update import paths in remaining `:app` code to reference classes from `:shared`
-- [ ] T016 [US1] Run `./gradlew :composeApp:assembleDebug` (or `:app:assembleDebug` if still using app module). Fix compilation errors from moved code
-- [ ] T017 [US1] Run existing test suite (`scripts/test-all.sh` or `./gradlew testDebugUnitTest`). Fix any test failures from restructure
+- [X] T015 [US1] Update `:app` (or `:composeApp`) `build.gradle.kts` to depend on `:shared`. Update import paths in remaining `:app` code to reference classes from `:shared`
+- [X] T016 [US1] Run `./gradlew :composeApp:assembleDebug` (or `:app:assembleDebug` if still using app module). Fix compilation errors from moved code
+- [X] T017 [US1] Run existing test suite (`scripts/test-all.sh` or `./gradlew testDebugUnitTest`). Fix any test failures from restructure
 
 **Checkpoint**: Android app builds and runs from multi-module structure. All features work identically. 138+ files now in `shared/commonMain/`.
 

@@ -86,6 +86,7 @@ tasks.register<JacocoReport>("jacocoTestReport") {
 }
 
 dependencies {
+    implementation(project(":shared"))
     implementation(libs.androidx.core.ktx)
 
     implementation(platform(libs.androidx.compose.bom))
