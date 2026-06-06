@@ -99,6 +99,9 @@ ansible-jane/
 │       │   │   └── data/              # AssistantRepository
 │       │   ├── notification/           # Approval tracking (DataStore, no platform notifications)
 │       │   └── di/                     # Common Koin modules
+│       ├── commonMain/kotlin/
+│       │   └── platform/
+│       │       └── AppInitializer.kt   # expect fun initializeApp()
 │       ├── androidMain/kotlin/
 │       │   ├── SecureKeyStorage.kt
 │       │   ├── DataStoreStorageFactory.kt
@@ -106,6 +109,7 @@ ansible-jane/
 │       │   ├── ConnectivityObserver.kt
 │       │   ├── BackgroundWorker.kt
 │       │   ├── PlatformUtils.kt
+│       │   ├── NotificationManager.kt  # Android notifications (31 imports)
 │       │   └── TinkMigration.kt        # One-time Tink → cryptography-kotlin
 │       ├── jvmMain/kotlin/             # Desktop
 │       │   ├── SecureKeyStorage.kt
@@ -113,14 +117,16 @@ ansible-jane/
 │       │   ├── TlsTrustManager.kt
 │       │   ├── ConnectivityObserver.kt
 │       │   ├── BackgroundWorker.kt
-│       │   └── PlatformUtils.kt
+│       │   ├── PlatformUtils.kt
+│       │   └── NotificationManager.kt  # No-op
 │       └── iosMain/kotlin/             # iOS (Phase 7)
 │           ├── SecureKeyStorage.kt
 │           ├── DataStoreStorageFactory.kt
 │           ├── TlsTrustManager.kt
 │           ├── ConnectivityObserver.kt
 │           ├── BackgroundWorker.kt
-│           └── PlatformUtils.kt
+│           ├── PlatformUtils.kt
+│           └── NotificationManager.kt  # No-op
 ├── composeApp/                          # Compose Multiplatform UI
 │   └── src/
 │       ├── commonMain/kotlin/
@@ -226,7 +232,7 @@ Notes:
 **Step 2:** Create KMP Gradle project with `shared/` module (using `com.android.kotlin.multiplatform.library` plugin) and `composeApp/` module. Move 138+ portable files to `shared/commonMain/`. Android app builds from `composeApp/androidMain/`.
 
 ### Phase 2 — Platform Abstractions (1 week)
-Create 6 `expect/actual` contracts. Android `actual` wraps existing code. Stub Desktop/iOS. Move DataStore, repositories, DI to `shared/`.
+Create 7 `expect/actual` contracts + 1 `expect fun`. Android `actual` wraps existing code. Stub Desktop/iOS. Move DataStore, repositories, DI to `shared/`.
 
 ### Phase 3 — Retrofit → Ktor (1-2 weeks)
 Replace 14 files. Network layer + outside network. Verify all API calls on Android.

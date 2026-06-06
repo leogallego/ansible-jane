@@ -100,7 +100,7 @@ Migrate 60 Compose screen files from `androidx.compose.*` to Compose Multiplatfo
 
 ### User Story 6 — Desktop Target (Priority: P6)
 
-Add a Desktop (JVM) entry point with Compose Multiplatform window. Implement Desktop `actual` classes for all 6 contracts (Java KeyStore, CIO Ktor engine, file-based DataStore, `javax.net.ssl` TLS, polling connectivity, `ScheduledExecutor` background work). Package as runnable JAR or native distribution.
+Add a Desktop (JVM) entry point with Compose Multiplatform window. Implement Desktop `actual` classes for all 7 contracts (SecureKeyStorage via Java KeyStore, DataStoreStorageFactory via file-based storage, TlsTrustManager via `javax.net.ssl`, ConnectivityObserver via socket polling, BackgroundWorker via `ScheduledExecutorService`, PlatformUtils via Desktop.browse/logging, NotificationManager as no-op). Package as runnable JAR or native distribution.
 
 **Why this priority**: First non-Android target. JVM is easiest — portable from Linux, no special hardware or OS required. Validates the entire KMP architecture.
 
@@ -138,6 +138,7 @@ Add iOS target with Kotlin/Native. Implement iOS `actual` classes (Keychain, Dar
 - What happens when `koog-google` (Gemini provider, v1.0.0-beta-preview7) is used on non-JVM targets? → Needs verification; fallback: Gemini calls via platform-specific `actual` if needed
 - What happens to existing Android push notifications on Desktop/iOS? → Android notifications stay Android-only; desktop/iOS notifications are out of scope for this migration
 - What happens with the 13 Android-dependent files that can't move to `commonMain`? → Stay in `androidMain/` source set, accessed via `expect/actual` contracts
+- What happens with `AppError.kt` during the portable code move (US1)? → Deferred from US1 to US3 because it depends on both `retrofit2.HttpException` (replaced by Ktor in US3) and Compose Icons (moved to UI-layer extension). Moved in Phase 4 alongside Ktor migration
 
 ## Requirements *(mandatory)*
 
@@ -162,7 +163,7 @@ Add iOS target with Kotlin/Native. Implement iOS `actual` classes (Keychain, Dar
 
 - **shared module**: KMP library containing all business logic, models, tools, network, data, and DI — compiled for Android, JVM Desktop, and iOS
 - **composeApp module**: Compose Multiplatform application with all UI screens, ViewModels, navigation — with platform entry points in androidMain, jvmMain, iosMain
-- **expect/actual contracts**: 6 platform abstraction interfaces bridging commonMain to platform-specific implementations
+- **expect/actual contracts**: 7 platform abstraction interfaces (SecureKeyStorage, DataStoreStorageFactory, TlsTrustManager, ConnectivityObserver, BackgroundWorker, PlatformUtils, NotificationManager) + 1 `expect fun initializeApp()`, bridging commonMain to platform-specific implementations
 - **Ktor HttpClient**: Replaces Retrofit + OkHttp as the HTTP client, with per-platform engines (OkHttp/Android, CIO/Desktop, Darwin/iOS)
 - **cryptography-kotlin**: Replaces Tink for AES-256-GCM encryption with platform-native backends
 
