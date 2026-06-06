@@ -1,9 +1,9 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.*
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 
-class EdaReadOnlyRepository(private val apiProvider: AapApiProvider) {
+class EdaReadOnlyRepository(private val apiProvider: IAapApiProvider) {
 
     suspend fun getRulebooks(
         page: Int = 1,

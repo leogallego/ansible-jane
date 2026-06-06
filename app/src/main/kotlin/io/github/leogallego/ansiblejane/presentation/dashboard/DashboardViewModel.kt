@@ -12,7 +12,7 @@ import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.model.JobStatus
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +32,7 @@ class DashboardViewModel(
     private val hostRepository: IHostRepository,
     private val projectRepository: IProjectRepository,
     private val scheduleRepository: IScheduleRepository,
-    private val apiProvider: AapApiProvider,
+    private val apiProvider: IAapApiProvider,
     private val tokenManager: ITokenManager
 ) : ViewModel() {
 

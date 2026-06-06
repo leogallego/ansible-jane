@@ -2,9 +2,9 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.ExecutionEnvironment
 import io.github.leogallego.ansiblejane.model.Project
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 
-class ProjectRepository(private val apiProvider: AapApiProvider) : IProjectRepository {
+class ProjectRepository(private val apiProvider: IAapApiProvider) : IProjectRepository {
 
     override suspend fun getProjects(
         page: Int,

@@ -1,9 +1,9 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.Schedule
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 
-class ScheduleRepository(private val apiProvider: AapApiProvider) : IScheduleRepository {
+class ScheduleRepository(private val apiProvider: IAapApiProvider) : IScheduleRepository {
 
     override suspend fun getSchedules(page: Int, pageSize: Int): Result<SchedulesResult> {
         return try {

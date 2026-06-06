@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
+import io.ktor.client.plugins.ResponseException
 
 class EdaAuditViewModel(
     private val edaAuditRepository: IEdaAuditRepository,
@@ -109,7 +109,7 @@ class EdaAuditViewModel(
             },
             onFailure = { error ->
                 _uiState.update {
-                    if (error is HttpException && error.code() in listOf(404, 502, 503)) {
+                    if (error is ResponseException && error.response.status.value in listOf(404, 502, 503)) {
                         EdaAuditUiState.Empty("EDA is not configured on this AAP instance")
                     } else {
                         EdaAuditUiState.Error(AppError.from(error))

@@ -1,10 +1,10 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.*
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.serialization.json.JsonElement
 
-class ControllerReadOnlyRepository(private val apiProvider: AapApiProvider) {
+class ControllerReadOnlyRepository(private val apiProvider: IAapApiProvider) {
 
     suspend fun getOrganizations(
         page: Int = 1,

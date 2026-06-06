@@ -1,8 +1,8 @@
 package io.github.leogallego.ansiblejane.assistant.data
 
+import io.github.leogallego.ansiblejane.network.createPlatformHttpClient
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -21,7 +21,7 @@ class ModelFetcherTest {
     fun setup() {
         server = MockWebServer()
         server.start()
-        fetcher = ModelFetcher(OkHttpClient(), json)
+        fetcher = ModelFetcher(createPlatformHttpClient { expectSuccess = false }, json)
     }
 
     @After

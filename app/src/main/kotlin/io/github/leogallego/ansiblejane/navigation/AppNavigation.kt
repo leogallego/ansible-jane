@@ -21,7 +21,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.leogallego.ansiblejane.data.TokenManager
-import io.github.leogallego.ansiblejane.network.AuthInterceptor
+import io.github.leogallego.ansiblejane.network.AuthEvents
 import io.github.leogallego.ansiblejane.presentation.auth.AuthViewModel
 import io.github.leogallego.ansiblejane.ui.auth.AuthScreen
 import io.github.leogallego.ansiblejane.ui.jobs.JobStatusScreen
@@ -88,7 +88,7 @@ fun AppNavigation(
     // Per-instance 401 re-auth: navigate to auth screen pre-filled with instance details
     // Only navigate if not already on the auth screen to prevent re-auth loops
     LaunchedEffect(Unit) {
-        AuthInterceptor.unauthorizedEvent.collect { instanceId ->
+        AuthEvents.unauthorizedEvent.collect { instanceId ->
             val currentRoute = navController.currentDestination?.route
             if (currentRoute != null && currentRoute.startsWith("auth")) {
                 return@collect // Already on auth screen, skip

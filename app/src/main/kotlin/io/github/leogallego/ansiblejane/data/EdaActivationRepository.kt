@@ -1,9 +1,9 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.EdaActivation
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 
-class EdaActivationRepository(private val apiProvider: AapApiProvider) : IEdaActivationRepository {
+class EdaActivationRepository(private val apiProvider: IAapApiProvider) : IEdaActivationRepository {
 
     override suspend fun getActivations(
         page: Int,

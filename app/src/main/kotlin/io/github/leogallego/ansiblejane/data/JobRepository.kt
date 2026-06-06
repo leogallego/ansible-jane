@@ -2,12 +2,12 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.model.JobStatus
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class JobRepository(private val apiProvider: AapApiProvider) : IJobRepository {
+class JobRepository(private val apiProvider: IAapApiProvider) : IJobRepository {
 
     override suspend fun getJobStatus(jobId: Int): Result<Job> {
         return try {
@@ -33,7 +33,7 @@ class JobRepository(private val apiProvider: AapApiProvider) : IJobRepository {
     override suspend fun getJobStdout(jobId: Int): Result<String> {
         return try {
             val response = apiProvider.getApiService().getJobStdout(jobId)
-            Result.success(response.string())
+            Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }

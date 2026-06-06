@@ -8,7 +8,6 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
 import io.github.leogallego.ansiblejane.data.dataModule
-import io.github.leogallego.ansiblejane.network.networkModule
 import io.github.leogallego.ansiblejane.notification.ApprovalNotificationManager
 import io.github.leogallego.ansiblejane.notification.ApprovalPollingWorker
 import io.github.leogallego.ansiblejane.presentation.presentationModule
@@ -33,7 +32,7 @@ class AnsibleJaneApp : Application() {
         startKoin {
             androidLogger()
             androidContext(this@AnsibleJaneApp)
-            modules(networkModule, dataModule, presentationModule, localToolsModule, assistantModule)
+            modules(dataModule, presentationModule, localToolsModule, assistantModule)
         }
 
         ApprovalNotificationManager.createChannel(this)

@@ -1,9 +1,9 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.EdaRuleAudit
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 
-class EdaAuditRepository(private val apiProvider: AapApiProvider) : IEdaAuditRepository {
+class EdaAuditRepository(private val apiProvider: IAapApiProvider) : IEdaAuditRepository {
 
     override suspend fun getAuditRules(page: Int, pageSize: Int, search: String?): Result<EdaAuditResult> {
         return try {

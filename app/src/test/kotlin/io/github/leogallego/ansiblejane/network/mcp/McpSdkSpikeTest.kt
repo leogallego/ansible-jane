@@ -8,7 +8,7 @@ import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
-import io.github.leogallego.ansiblejane.network.CertTrustManager
+import io.github.leogallego.ansiblejane.network.createPlatformHttpClient
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -134,21 +134,8 @@ class McpSdkSpikeTest {
     }
 
     @Test
-    fun `Ktor OkHttp engine supports custom SSL trust manager`() {
-        val tm = CertTrustManager.createTrustAllManager()
-        val ssl = CertTrustManager.createSslSocketFactory(tm)
-
-        val ktorClient = HttpClient(OkHttp) {
-            engine {
-                config {
-                    proxy(Proxy.NO_PROXY)
-                    sslSocketFactory(ssl, tm)
-                    hostnameVerifier { _, _ -> true }
-                }
-            }
-            install(SSE)
-        }
-
+    fun `Platform HTTP client supports self-signed SSL`() {
+        val ktorClient = createPlatformHttpClient(trustSelfSigned = true)
         assertNotNull(ktorClient)
         ktorClient.close()
     }

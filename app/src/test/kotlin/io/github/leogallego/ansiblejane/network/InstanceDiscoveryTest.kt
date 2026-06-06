@@ -4,7 +4,6 @@ import io.github.leogallego.ansiblejane.model.AapComponent
 import io.github.leogallego.ansiblejane.model.PlatformType
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -20,7 +19,6 @@ class InstanceDiscoveryTest {
 
     private lateinit var server: MockWebServer
     private lateinit var discovery: InstanceDiscovery
-    private val client = OkHttpClient()
     private val json = Json { ignoreUnknownKeys = true }
 
     @Before
@@ -63,7 +61,7 @@ class InstanceDiscoveryTest {
             server.url("/").toString(),
             "test-token",
             ApiVersion.CONTROLLER_V2,
-            client
+            false
         )
 
         assertEquals("4.7.9", info.controllerVersion)
@@ -101,7 +99,7 @@ class InstanceDiscoveryTest {
             server.url("/").toString(),
             "test-token",
             ApiVersion.V2,
-            client
+            false
         )
 
         assertEquals("24.6.1", info.controllerVersion)
@@ -138,7 +136,7 @@ class InstanceDiscoveryTest {
             server.url("/").toString(),
             "test-token",
             ApiVersion.CONTROLLER_V2,
-            client
+            false
         )
 
         assertEquals(PlatformType.JEWEL.name, info.platformType)
@@ -159,7 +157,7 @@ class InstanceDiscoveryTest {
             server.url("/").toString(),
             "test-token",
             ApiVersion.V2,
-            client
+            false
         )
 
         assertEquals("", info.controllerVersion)
@@ -198,7 +196,7 @@ class InstanceDiscoveryTest {
             server.url("/").toString(),
             "test-token",
             ApiVersion.CONTROLLER_V2,
-            client
+            false
         )
 
         assertEquals(4, info.components.size)
@@ -236,7 +234,7 @@ class InstanceDiscoveryTest {
             server.url("/").toString(),
             "test-token",
             ApiVersion.CONTROLLER_V2,
-            client
+            false
         )
 
         assertEquals("2.6", info.gatewayVersion)

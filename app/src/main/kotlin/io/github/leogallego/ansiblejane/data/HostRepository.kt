@@ -2,10 +2,10 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.Host
 import io.github.leogallego.ansiblejane.model.JobHostSummary
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.serialization.json.JsonElement
 
-class HostRepository(private val apiProvider: AapApiProvider) : IHostRepository {
+class HostRepository(private val apiProvider: IAapApiProvider) : IHostRepository {
 
     override suspend fun getAllHosts(
         page: Int,

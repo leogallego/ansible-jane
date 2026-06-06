@@ -3,10 +3,10 @@ package io.github.leogallego.ansiblejane.data
 import io.github.leogallego.ansiblejane.model.Instance
 import io.github.leogallego.ansiblejane.model.InstanceGroup
 import io.github.leogallego.ansiblejane.model.PingResponse
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.serialization.json.JsonElement
 
-class InfrastructureRepository(private val apiProvider: AapApiProvider) : IInfrastructureRepository {
+class InfrastructureRepository(private val apiProvider: IAapApiProvider) : IInfrastructureRepository {
 
     override suspend fun getInstances(
         page: Int,

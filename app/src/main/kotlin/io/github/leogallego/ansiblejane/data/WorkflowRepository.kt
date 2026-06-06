@@ -6,12 +6,12 @@ import io.github.leogallego.ansiblejane.model.WorkflowJob
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplate
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplateNode
 import io.github.leogallego.ansiblejane.model.WorkflowNode
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class WorkflowRepository(private val apiProvider: AapApiProvider) : IWorkflowRepository {
+class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRepository {
 
     override suspend fun getWorkflowTemplates(
         page: Int,

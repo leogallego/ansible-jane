@@ -1,7 +1,8 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.data.backup.BackupManager
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.di.sharedNetworkModule
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import io.github.leogallego.ansiblejane.platform.BackgroundWorker
 import io.github.leogallego.ansiblejane.platform.ConnectivityObserver
 import io.github.leogallego.ansiblejane.platform.DataStoreFactory
@@ -22,21 +23,21 @@ val platformModule = module {
 }
 
 val dataModule = module {
-    includes(sharedDataModule, platformModule)
+    includes(sharedDataModule, sharedNetworkModule, platformModule)
     single { BackupManager() }
     single { AuthRepository(get(), get(), get()) } bind IAuthRepository::class
-    single { TemplateRepository(get<AapApiProvider>()) } bind ITemplateRepository::class
-    single { JobRepository(get<AapApiProvider>()) } bind IJobRepository::class
-    single { WorkflowRepository(get<AapApiProvider>()) } bind IWorkflowRepository::class
-    single { ScheduleRepository(get<AapApiProvider>()) } bind IScheduleRepository::class
-    single { EdaAuditRepository(get<AapApiProvider>()) } bind IEdaAuditRepository::class
-    single { InventoryRepository(get<AapApiProvider>()) } bind IInventoryRepository::class
-    single { HostRepository(get<AapApiProvider>()) } bind IHostRepository::class
-    single { InfrastructureRepository(get<AapApiProvider>()) } bind IInfrastructureRepository::class
-    single { CredentialRepository(get<AapApiProvider>()) } bind ICredentialRepository::class
-    single { ProjectRepository(get<AapApiProvider>()) } bind IProjectRepository::class
-    single { EdaActivationRepository(get<AapApiProvider>()) } bind IEdaActivationRepository::class
-    single { ControllerReadOnlyRepository(get<AapApiProvider>()) }
-    single { EdaReadOnlyRepository(get<AapApiProvider>()) }
-    single { PlatformRepository(get<AapApiProvider>()) }
+    single { TemplateRepository(get<IAapApiProvider>()) } bind ITemplateRepository::class
+    single { JobRepository(get<IAapApiProvider>()) } bind IJobRepository::class
+    single { WorkflowRepository(get<IAapApiProvider>()) } bind IWorkflowRepository::class
+    single { ScheduleRepository(get<IAapApiProvider>()) } bind IScheduleRepository::class
+    single { EdaAuditRepository(get<IAapApiProvider>()) } bind IEdaAuditRepository::class
+    single { InventoryRepository(get<IAapApiProvider>()) } bind IInventoryRepository::class
+    single { HostRepository(get<IAapApiProvider>()) } bind IHostRepository::class
+    single { InfrastructureRepository(get<IAapApiProvider>()) } bind IInfrastructureRepository::class
+    single { CredentialRepository(get<IAapApiProvider>()) } bind ICredentialRepository::class
+    single { ProjectRepository(get<IAapApiProvider>()) } bind IProjectRepository::class
+    single { EdaActivationRepository(get<IAapApiProvider>()) } bind IEdaActivationRepository::class
+    single { ControllerReadOnlyRepository(get<IAapApiProvider>()) }
+    single { EdaReadOnlyRepository(get<IAapApiProvider>()) }
+    single { PlatformRepository(get<IAapApiProvider>()) }
 }

@@ -2,9 +2,9 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.JobTemplate
 import io.github.leogallego.ansiblejane.model.LaunchRequest
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 
-class TemplateRepository(private val apiProvider: AapApiProvider) : ITemplateRepository {
+class TemplateRepository(private val apiProvider: IAapApiProvider) : ITemplateRepository {
 
     override suspend fun getTemplates(
         page: Int,

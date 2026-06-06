@@ -17,10 +17,9 @@ import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
 import io.github.leogallego.ansiblejane.testKoinModule
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.plugins.sse.SSE
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -45,7 +44,7 @@ class SettingsScreenTest {
     private val json = Json { ignoreUnknownKeys = true }
     private val mcpServerManager = McpServerManager(
         ktorClientFactory = { _, _ ->
-            HttpClient(OkHttp) { install(SSE) }
+            HttpClient(MockEngine) { engine { addHandler { respond("") } } }
         }
     )
 
@@ -82,7 +81,7 @@ class SettingsScreenTest {
             mcpServerManager = mcpServerManager,
             manifestRepository = io.github.leogallego.ansiblejane.fakes.FakeToolManifestRepository(),
             instanceDiscovery = io.github.leogallego.ansiblejane.network.InstanceDiscovery(json),
-            httpClient = OkHttpClient(),
+            httpClient = HttpClient(MockEngine) { engine { addHandler { respond("{}") } } },
             json = json
         )
         composeTestRule.setContent {

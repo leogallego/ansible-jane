@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.model.AppError
+import io.github.leogallego.ansiblejane.model.icon
 import io.github.leogallego.ansiblejane.model.ErrorDetail
 import io.github.leogallego.ansiblejane.ui.icons.AapIcons
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
@@ -113,19 +114,20 @@ fun ErrorMessage(
                             .padding(top = 8.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            error.detail.statusCode?.let {
+                            val d = error.detail
+                            d?.statusCode?.let {
                                 Text(
                                     text = "Status: $it",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
-                            error.detail.url?.let {
+                            d?.url?.let {
                                 Text(
                                     text = "URL: $it",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
-                            error.detail.rawMessage?.let {
+                            d?.rawMessage?.let {
                                 Text(
                                     text = "Detail: $it",
                                     style = MaterialTheme.typography.bodySmall

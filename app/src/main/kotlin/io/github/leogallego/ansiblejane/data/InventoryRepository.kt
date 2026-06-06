@@ -1,9 +1,9 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.Inventory
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 
-class InventoryRepository(private val apiProvider: AapApiProvider) : IInventoryRepository {
+class InventoryRepository(private val apiProvider: IAapApiProvider) : IInventoryRepository {
 
     override suspend fun getInventories(
         page: Int,

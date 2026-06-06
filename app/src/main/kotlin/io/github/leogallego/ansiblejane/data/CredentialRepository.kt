@@ -1,9 +1,9 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.Credential
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 
-class CredentialRepository(private val apiProvider: AapApiProvider) : ICredentialRepository {
+class CredentialRepository(private val apiProvider: IAapApiProvider) : ICredentialRepository {
 
     override suspend fun getCredentials(
         page: Int,

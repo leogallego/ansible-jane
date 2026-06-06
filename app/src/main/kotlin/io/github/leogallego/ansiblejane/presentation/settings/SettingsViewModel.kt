@@ -11,9 +11,9 @@ import io.github.leogallego.ansiblejane.data.IToolManifestRepository
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.ApiVersion
-import io.github.leogallego.ansiblejane.network.CertTrustManager
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import io.github.leogallego.ansiblejane.network.InstanceDiscovery
+import io.github.leogallego.ansiblejane.network.createPlatformHttpClient
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.assistant.engine.ToolRouter
@@ -21,6 +21,7 @@ import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
+import io.ktor.client.HttpClient
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +31,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import java.time.ZoneId
 
 class SettingsViewModel(
@@ -41,7 +41,7 @@ class SettingsViewModel(
     private val mcpServerManager: McpServerManager,
     private val manifestRepository: IToolManifestRepository,
     private val instanceDiscovery: InstanceDiscovery,
-    private val httpClient: OkHttpClient,
+    private val httpClient: HttpClient,
     private val json: Json,
     private val localTools: List<LocalTool> = emptyList()
 ) : ViewModel() {
@@ -254,14 +254,13 @@ class SettingsViewModel(
             val instance = tokenManager.instances.value.find { it.id == instanceId } ?: return@launch
             updateReady { copy(discoveryRefreshing = true, discoveryError = null) }
             try {
-                val client = buildDiscoveryClient(instance)
                 val apiVersion = try {
                     ApiVersion.valueOf(instance.apiVersion)
                 } catch (_: Exception) {
                     ApiVersion.CONTROLLER_V2
                 }
                 val info = instanceDiscovery.discover(
-                    instance.baseUrl, instance.token, apiVersion, client
+                    instance.baseUrl, instance.token, apiVersion, instance.trustSelfSigned
                 )
                 tokenManager.updateInstanceInfo(instanceId, info)
                 val updated = tokenManager.instances.value.find { it.id == instanceId }
@@ -274,15 +273,6 @@ class SettingsViewModel(
         }
     }
 
-    private fun buildDiscoveryClient(instance: io.github.leogallego.ansiblejane.model.AapInstance): OkHttpClient {
-        val builder = httpClient.newBuilder()
-        if (instance.trustSelfSigned) {
-            val tm = CertTrustManager.createTrustAllManager()
-            builder.sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
-            builder.hostnameVerifier { _, _ -> true }
-        }
-        return builder.build()
-    }
 
     // --- General (Display) ---
 
@@ -501,15 +491,9 @@ class SettingsViewModel(
 
     // --- Private helpers ---
 
-    private fun buildLlmClient(): OkHttpClient {
+    private fun buildLlmClient(): HttpClient {
         val instance = tokenManager.activeInstance.value
-        val builder = httpClient.newBuilder()
-        if (instance?.trustSelfSigned == true) {
-            val tm = CertTrustManager.createTrustAllManager()
-            builder.sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
-            builder.hostnameVerifier { _, _ -> true }
-        }
-        return builder.build()
+        return createPlatformHttpClient(trustSelfSigned = instance?.trustSelfSigned == true)
     }
 
     private inline fun updateReady(crossinline transform: SettingsUiState.Ready.() -> SettingsUiState.Ready) {
