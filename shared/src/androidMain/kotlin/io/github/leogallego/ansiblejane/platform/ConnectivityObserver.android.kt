@@ -1,4 +1,4 @@
-package io.github.leogallego.ansiblejane.data
+package io.github.leogallego.ansiblejane.platform
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -9,12 +9,12 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-class ConnectivityObserver(context: Context) {
+actual class ConnectivityObserver(context: Context) {
 
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-    val isConnected: Flow<Boolean> = callbackFlow {
+    actual fun observe(): Flow<Boolean> = callbackFlow {
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 trySend(true)
@@ -24,9 +24,13 @@ class ConnectivityObserver(context: Context) {
                 trySend(false)
             }
 
-            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                trySend(hasInternet)
+            override fun onCapabilitiesChanged(
+                network: Network,
+                capabilities: NetworkCapabilities
+            ) {
+                trySend(
+                    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                )
             }
         }
 
@@ -36,10 +40,11 @@ class ConnectivityObserver(context: Context) {
 
         connectivityManager.registerNetworkCallback(request, callback)
 
-        // Emit initial state
         val currentNetwork = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(currentNetwork)
-        trySend(capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true)
+        trySend(
+            capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        )
 
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)

@@ -5,11 +5,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-enum class ApiVersion(val prefix: String) {
-    CONTROLLER_V2("/api/controller/v2/"),
-    V2("/api/v2/")
-}
-
 class ApiVersionDetector(private val httpClient: OkHttpClient) {
 
     suspend fun detect(baseUrl: String, token: String): ApiVersion = withContext(Dispatchers.IO) {

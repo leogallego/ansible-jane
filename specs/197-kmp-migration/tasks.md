@@ -107,45 +107,45 @@ Read skills/kotlin-data-kmp-data-layer/SKILL.md
 
 ### expect declarations (commonMain)
 
-- [ ] T018 [P] [US2] Create `expect class SecureKeyStorage` in `shared/src/commonMain/kotlin/.../platform/SecureKeyStorage.kt` — methods: `suspend fun storeKey(alias: String, keyBytes: ByteArray)`, `suspend fun loadKey(alias: String): ByteArray?`, `suspend fun deleteKey(alias: String)`
-- [ ] T019 [P] [US2] Create `expect class DataStoreStorageFactory` in `shared/src/commonMain/kotlin/.../platform/DataStoreStorageFactory.kt` — method: `fun createStorage(name: String): Storage<Preferences>`
-- [ ] T020 [P] [US2] Create `expect class TlsTrustManager` in `shared/src/commonMain/kotlin/.../platform/TlsTrustManager.kt` — method: `fun createTrustManager(fingerprint: String?): Any` (returns platform-specific trust manager)
-- [ ] T021 [P] [US2] Create `expect class ConnectivityObserver` in `shared/src/commonMain/kotlin/.../platform/ConnectivityObserver.kt` — method: `fun observe(): Flow<Boolean>`
-- [ ] T022 [P] [US2] Create `expect class BackgroundWorker` in `shared/src/commonMain/kotlin/.../platform/BackgroundWorker.kt` — methods: `fun schedulePolling(intervalMinutes: Long)`, `fun cancelPolling()`
-- [ ] T023 [P] [US2] Create `expect class PlatformUtils` in `shared/src/commonMain/kotlin/.../platform/PlatformUtils.kt` — methods: `fun openUrl(url: String)`, `fun showToast(message: String)`, `fun getAppVersion(): String`
+- [X] T018 [P] [US2] Create `expect class SecureKeyStorage` in `shared/src/commonMain/kotlin/.../platform/SecureKeyStorage.kt` — methods: `suspend fun storeKey(alias: String, keyBytes: ByteArray)`, `suspend fun loadKey(alias: String): ByteArray?`, `suspend fun deleteKey(alias: String)`
+- [X] T019 [P] [US2] Create `expect class DataStoreStorageFactory` in `shared/src/commonMain/kotlin/.../platform/DataStoreStorageFactory.kt` — method: `fun createStorage(name: String): Storage<Preferences>`
+- [X] T020 [P] [US2] Create `expect class TlsTrustManager` in `shared/src/commonMain/kotlin/.../platform/TlsTrustManager.kt` — method: `fun createTrustManager(fingerprint: String?): Any` (returns platform-specific trust manager)
+- [X] T021 [P] [US2] Create `expect class ConnectivityObserver` in `shared/src/commonMain/kotlin/.../platform/ConnectivityObserver.kt` — method: `fun observe(): Flow<Boolean>`
+- [X] T022 [P] [US2] Create `expect class BackgroundWorker` in `shared/src/commonMain/kotlin/.../platform/BackgroundWorker.kt` — methods: `fun schedulePolling(intervalMinutes: Long)`, `fun cancelPolling()`
+- [X] T023 [P] [US2] Create `expect class PlatformUtils` in `shared/src/commonMain/kotlin/.../platform/PlatformUtils.kt` — methods: `fun openUrl(url: String)`, `fun showToast(message: String)`, `fun getAppVersion(): String`
 
 ### actual implementations — Android (androidMain)
 
-- [ ] T024 [P] [US2] Create `actual class SecureKeyStorage` in `shared/src/androidMain/kotlin/.../platform/SecureKeyStorage.kt` — wrap Android Keystore (extract from current `TokenManager.kt` Tink keyset management). Uses `AndroidKeysetManager` for now, replaced in Phase 5/US4
-- [ ] T025 [P] [US2] Create `actual class DataStoreStorageFactory` in `shared/src/androidMain/kotlin/.../platform/DataStoreStorageFactory.kt` — wrap current `DataStoreProvider.kt` logic using Android `Context`
-- [ ] T026 [P] [US2] Create `actual class TlsTrustManager` in `shared/src/androidMain/kotlin/.../platform/TlsTrustManager.kt` — wrap current `CertTrustManager.kt` using `javax.net.ssl.X509TrustManager`
-- [ ] T027 [P] [US2] Create `actual class ConnectivityObserver` in `shared/src/androidMain/kotlin/.../platform/ConnectivityObserver.kt` — wrap current `ConnectivityObserver.kt` using `ConnectivityManager`
-- [ ] T028 [P] [US2] Create `actual class BackgroundWorker` in `shared/src/androidMain/kotlin/.../platform/BackgroundWorker.kt` — wrap current `ApprovalPollingWorker.kt` using WorkManager
-- [ ] T029 [P] [US2] Create `actual class PlatformUtils` in `shared/src/androidMain/kotlin/.../platform/PlatformUtils.kt` — wrap Intent/Toast/BuildConfig from current `AuthScreen.kt`, `GeneralTab.kt`, `BackupRestoreSection.kt`
+- [X] T024 [P] [US2] Create `actual class SecureKeyStorage` in `shared/src/androidMain/kotlin/.../platform/SecureKeyStorage.kt` — wrap Android Keystore (extract from current `TokenManager.kt` Tink keyset management). Uses `AndroidKeysetManager` for now, replaced in Phase 5/US4
+- [X] T025 [P] [US2] Create `actual class DataStoreStorageFactory` in `shared/src/androidMain/kotlin/.../platform/DataStoreStorageFactory.kt` — wrap current `DataStoreProvider.kt` logic using Android `Context`
+- [X] T026 [P] [US2] Create `actual class TlsTrustManager` in `shared/src/androidMain/kotlin/.../platform/TlsTrustManager.kt` — wrap current `CertTrustManager.kt` using `javax.net.ssl.X509TrustManager`
+- [X] T027 [P] [US2] Create `actual class ConnectivityObserver` in `shared/src/androidMain/kotlin/.../platform/ConnectivityObserver.kt` — wrap current `ConnectivityObserver.kt` using `ConnectivityManager`
+- [X] T028 [P] [US2] Create `actual class BackgroundWorker` in `shared/src/androidMain/kotlin/.../platform/BackgroundWorker.kt` — wrap current `ApprovalPollingWorker.kt` using WorkManager
+- [X] T029 [P] [US2] Create `actual class PlatformUtils` in `shared/src/androidMain/kotlin/.../platform/PlatformUtils.kt` — wrap Intent/Toast/BuildConfig from current `AuthScreen.kt`, `GeneralTab.kt`, `BackupRestoreSection.kt`
 
 ### actual stubs — Desktop (jvmMain)
 
-- [ ] T030 [P] [US2] Create stub `actual class SecureKeyStorage` in `shared/src/jvmMain/kotlin/.../platform/SecureKeyStorage.kt` — throw `NotImplementedError("Desktop SecureKeyStorage: Phase 7/US6")` for now
-- [ ] T031 [P] [US2] Create stub `actual class DataStoreStorageFactory` in `shared/src/jvmMain/kotlin/.../platform/DataStoreStorageFactory.kt` — basic `FileStorage` using `java.io.File` in user home dir
-- [ ] T032 [P] [US2] Create stub `actual class TlsTrustManager` in `shared/src/jvmMain/kotlin/.../platform/TlsTrustManager.kt` — reuse `javax.net.ssl` (portable from Android)
-- [ ] T033 [P] [US2] Create stub `actual class ConnectivityObserver` in `shared/src/jvmMain/kotlin/.../platform/ConnectivityObserver.kt` — return `flowOf(true)` for now
-- [ ] T034 [P] [US2] Create stub `actual class BackgroundWorker` in `shared/src/jvmMain/kotlin/.../platform/BackgroundWorker.kt` — no-op stubs
-- [ ] T035 [P] [US2] Create stub `actual class PlatformUtils` in `shared/src/jvmMain/kotlin/.../platform/PlatformUtils.kt` — `println` for toast, no-op for others
+- [X] T030 [P] [US2] Create stub `actual class SecureKeyStorage` in `shared/src/jvmMain/kotlin/.../platform/SecureKeyStorage.kt` — throw `NotImplementedError("Desktop SecureKeyStorage: Phase 7/US6")` for now
+- [X] T031 [P] [US2] Create stub `actual class DataStoreStorageFactory` in `shared/src/jvmMain/kotlin/.../platform/DataStoreStorageFactory.kt` — basic `FileStorage` using `java.io.File` in user home dir
+- [X] T032 [P] [US2] Create stub `actual class TlsTrustManager` in `shared/src/jvmMain/kotlin/.../platform/TlsTrustManager.kt` — reuse `javax.net.ssl` (portable from Android)
+- [X] T033 [P] [US2] Create stub `actual class ConnectivityObserver` in `shared/src/jvmMain/kotlin/.../platform/ConnectivityObserver.kt` — return `flowOf(true)` for now
+- [X] T034 [P] [US2] Create stub `actual class BackgroundWorker` in `shared/src/jvmMain/kotlin/.../platform/BackgroundWorker.kt` — no-op stubs
+- [X] T035 [P] [US2] Create stub `actual class PlatformUtils` in `shared/src/jvmMain/kotlin/.../platform/PlatformUtils.kt` — `println` for toast, no-op for others
 
 ### Migrate remaining Android-dependent files
 
-- [ ] T036 [US2] Move `AnsibleJaneApp.kt` to `composeApp/src/androidMain/kotlin/.../AnsibleJaneApp.kt` — stays Android-only (Application subclass, WorkManager init, Koin `startKoin { androidContext() }`). Create `expect fun initializeApp()` in `shared/src/commonMain/kotlin/.../platform/AppInitializer.kt` for cross-platform Koin initialization; Android `actual` calls `startKoin` with `androidContext()`, Desktop `actual` calls `startKoin` without it
-- [ ] T036a [P] [US2] Create `expect/actual` notification interface: `expect class NotificationManager` in `shared/src/commonMain/kotlin/.../platform/NotificationManager.kt` — methods: `fun showApprovalNotification(approval: WorkflowApproval)`, `fun createChannel()`. Android `actual` wraps current `ApprovalNotificationManager.kt` (31 android.* imports). Desktop stub: no-op. iOS stub: no-op (platform notifications out of scope for this migration)
-- [ ] T036b [US2] Refactor `ApprovalPollingWorker.kt` to use `BackgroundWorker` contract — current file extends `CoroutineWorker` (WorkManager). Extract polling logic to `shared/src/commonMain/kotlin/.../notification/ApprovalPollingService.kt` (shared coroutine-based poller). Android `actual BackgroundWorker` delegates to WorkManager which calls the shared poller. Desktop/iOS `actual` calls the shared poller directly via `ScheduledExecutorService`/`BGTaskScheduler`
+- [X] T036 [US2] Move `AnsibleJaneApp.kt` to `composeApp/src/androidMain/kotlin/.../AnsibleJaneApp.kt` — stays Android-only (Application subclass, WorkManager init, Koin `startKoin { androidContext() }`). Create `expect fun initializeApp()` in `shared/src/commonMain/kotlin/.../platform/AppInitializer.kt` for cross-platform Koin initialization; Android `actual` calls `startKoin` with `androidContext()`, Desktop `actual` calls `startKoin` without it
+- [X] T036a [P] [US2] Create `expect/actual` notification interface: `expect class NotificationManager` in `shared/src/commonMain/kotlin/.../platform/NotificationManager.kt` — methods: `fun showApprovalNotification(approval: WorkflowApproval)`, `fun createChannel()`. Android `actual` wraps current `ApprovalNotificationManager.kt` (31 android.* imports). Desktop stub: no-op. iOS stub: no-op (platform notifications out of scope for this migration)
+- [X] T036b [US2] Refactor `ApprovalPollingWorker.kt` to use `BackgroundWorker` contract — current file extends `CoroutineWorker` (WorkManager). Extract polling logic to `shared/src/commonMain/kotlin/.../notification/ApprovalPollingService.kt` (shared coroutine-based poller). Android `actual BackgroundWorker` delegates to WorkManager which calls the shared poller. Desktop/iOS `actual` calls the shared poller directly via `ScheduledExecutorService`/`BGTaskScheduler`
 
 ### Move repositories to commonMain
 
-- [ ] T036c [US2] Move `TokenManager.kt` to `shared/src/commonMain/kotlin/.../data/TokenManager.kt` — refactor to use `SecureKeyStorage` and `DataStoreStorageFactory` instead of direct Android APIs
-- [ ] T037 [P] [US2] Move `UserPreferencesRepository.kt` to `shared/src/commonMain/kotlin/.../data/UserPreferencesRepository.kt` — refactor to use `DataStoreStorageFactory`
-- [ ] T038 [P] [US2] Move `AssistantRepository.kt` to `shared/src/commonMain/kotlin/.../assistant/data/AssistantRepository.kt` — replace `Context` file I/O with DataStore KMP
-- [ ] T039 [P] [US2] Move `ApprovalTracker.kt` to `shared/src/commonMain/kotlin/.../notification/ApprovalTracker.kt` — refactor to use `DataStoreStorageFactory`
-- [ ] T040 [US2] Move `DataModule.kt` to `shared/src/commonMain/kotlin/.../di/DataModule.kt` — replace `androidContext()` with platform-injected dependencies via `expect/actual`
-- [ ] T041 [US2] Verify Android build: `./gradlew :composeApp:assembleDebug`. Fix compilation errors. Run unit tests
+- [X] T036c [US2] Move `TokenManager.kt` to `shared/src/commonMain/kotlin/.../data/TokenManager.kt` — refactor to use `SecureKeyStorage` and `DataStoreStorageFactory` instead of direct Android APIs
+- [X] T037 [P] [US2] Move `UserPreferencesRepository.kt` to `shared/src/commonMain/kotlin/.../data/UserPreferencesRepository.kt` — refactor to use `DataStoreStorageFactory`
+- [X] T038 [P] [US2] Move `AssistantRepository.kt` to `shared/src/commonMain/kotlin/.../assistant/data/AssistantRepository.kt` — replace `Context` file I/O with DataStore KMP
+- [X] T039 [P] [US2] Move `ApprovalTracker.kt` to `shared/src/commonMain/kotlin/.../notification/ApprovalTracker.kt` — refactor to use `DataStoreStorageFactory`
+- [X] T040 [US2] Move `DataModule.kt` to `shared/src/commonMain/kotlin/.../di/DataModule.kt` — replace `androidContext()` with platform-injected dependencies via `expect/actual`
+- [X] T041 [US2] Verify Android build: `./gradlew :composeApp:assembleDebug`. Fix compilation errors. Run unit tests
 
 **Checkpoint**: All 7 `expect/actual` contracts + `initializeApp()` created. Android `actual` wraps existing code. Desktop stubs compile. Repositories and DataStore moved to `shared/commonMain/`. Android app works identically.
 

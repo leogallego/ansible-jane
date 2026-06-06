@@ -1,17 +1,14 @@
 package io.github.leogallego.ansiblejane.data
 
-import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.ApiVersion
-import com.google.crypto.tink.Aead
-import com.google.crypto.tink.aead.AeadConfig
-import com.google.crypto.tink.aead.AeadKeyTemplates
-import com.google.crypto.tink.integration.android.AndroidKeysetManager
+import io.github.leogallego.ansiblejane.platform.DataStoreFactory
+import io.github.leogallego.ansiblejane.platform.SecureKeyStorage
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,8 +20,10 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import java.nio.charset.StandardCharsets
-import java.util.UUID
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Serializable
 data class SerializedInstance(
@@ -46,14 +45,15 @@ data class InstancesState(
     val activeInstanceId: String? = null
 )
 
+@OptIn(ExperimentalEncodingApi::class, ExperimentalUuidApi::class)
 class TokenManager(
-    private val context: Context,
+    dataStoreFactory: DataStoreFactory,
+    private val secureKeyStorage: SecureKeyStorage,
     private val manifestRepository: IToolManifestRepository
 ) : ITokenManager {
 
-    private val aead: Aead
+    private val credentialsDataStore = dataStoreFactory.createPreferencesDataStore("credentials")
 
-    // Multi-instance reactive state
     private val _instances = MutableStateFlow<List<AapInstance>>(emptyList())
     override val instances: StateFlow<List<AapInstance>> = _instances.asStateFlow()
 
@@ -62,42 +62,25 @@ class TokenManager(
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    init {
-        AeadConfig.register()
-        val keysetHandle = AndroidKeysetManager.Builder()
-            .withSharedPref(context, "aap_keyset", "aap_keyset_prefs")
-            .withKeyTemplate(AeadKeyTemplates.AES256_GCM)
-            .withMasterKeyUri("android-keystore://aap_master_key")
-            .build()
-            .keysetHandle
-        aead = keysetHandle.getPrimitive(com.google.crypto.tink.RegistryConfiguration.get(), Aead::class.java)
-    }
-
     private companion object {
-        // Legacy keys (kept for cleanup detection)
         val KEY_BASE_URL = stringPreferencesKey("base_url")
         val KEY_TOKEN = stringPreferencesKey("token")
         val KEY_API_VERSION = stringPreferencesKey("api_version")
         val KEY_TRUST_SELF_SIGNED = booleanPreferencesKey("trust_self_signed")
         val KEY_CERT_FINGERPRINT = stringPreferencesKey("cert_fingerprint")
-
-        // Multi-instance key
         val KEY_INSTANCES_JSON = stringPreferencesKey("instances_json")
         val KEY_LLM_API_KEYS = stringPreferencesKey("llm_api_keys")
     }
 
     private fun encrypt(value: String): String {
-        val ciphertext = aead.encrypt(
-            value.toByteArray(StandardCharsets.UTF_8),
-            null
-        )
-        return android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP)
+        val ciphertext = secureKeyStorage.encrypt(value.encodeToByteArray())
+        return Base64.encode(ciphertext)
     }
 
     private fun decrypt(encoded: String): String {
-        val ciphertext = android.util.Base64.decode(encoded, android.util.Base64.NO_WRAP)
-        val plaintext = aead.decrypt(ciphertext, null)
-        return String(plaintext, StandardCharsets.UTF_8)
+        val ciphertext = Base64.decode(encoded)
+        val plaintext = secureKeyStorage.decrypt(ciphertext)
+        return plaintext.decodeToString()
     }
 
     private fun toAapInstance(serialized: SerializedInstance): AapInstance {
@@ -131,7 +114,7 @@ class TokenManager(
     }
 
     private suspend fun readState(): InstancesState {
-        val prefs = context.credentialsDataStore.data.first()
+        val prefs = credentialsDataStore.data.first()
         val jsonString = prefs[KEY_INSTANCES_JSON] ?: return InstancesState()
         return try {
             json.decodeFromString<InstancesState>(jsonString)
@@ -142,7 +125,7 @@ class TokenManager(
 
     private suspend fun writeState(state: InstancesState) {
         val jsonString = json.encodeToString(state)
-        context.credentialsDataStore.edit { prefs ->
+        credentialsDataStore.edit { prefs ->
             prefs[KEY_INSTANCES_JSON] = jsonString
         }
         updateReactiveState(state)
@@ -157,16 +140,9 @@ class TokenManager(
             }
         }
         _instances.value = decryptedInstances
-
-        val active = decryptedInstances.find { it.id == state.activeInstanceId }
-        _activeInstance.value = active
+        _activeInstance.value = decryptedInstances.find { it.id == state.activeInstanceId }
     }
 
-    /**
-     * Save a new instance or update an existing one.
-     * If this is the first instance, it becomes active automatically.
-     * Returns the instance ID.
-     */
     override suspend fun saveInstance(
         baseUrl: String,
         token: String,
@@ -177,10 +153,8 @@ class TokenManager(
         existingId: String?
     ): String {
         val normalizedUrl = baseUrl.trimEnd('/').lowercase()
-
         val state = readState()
 
-        // Check for duplicate URL (skip if updating existing instance)
         val duplicate = state.instances.find { serialized ->
             val id = existingId ?: ""
             if (serialized.id == id) return@find false
@@ -192,7 +166,6 @@ class TokenManager(
             }
         }
         if (duplicate != null) {
-            // Instance already exists — update its token and switch to it
             val updatedInstances = state.instances.map {
                 if (it.id == duplicate.id) {
                     it.copy(
@@ -208,7 +181,7 @@ class TokenManager(
             return duplicate.id
         }
 
-        val instanceId = existingId ?: UUID.randomUUID().toString()
+        val instanceId = existingId ?: Uuid.random().toString()
 
         val updatedInstances = if (existingId != null) {
             state.instances.map {
@@ -237,11 +210,8 @@ class TokenManager(
         }
 
         val activeId = when {
-            // First instance ever added — make it active
             state.instances.isEmpty() && existingId == null -> instanceId
-            // Re-auth or update of existing instance — ensure it's active
             existingId != null -> existingId
-            // Adding a new instance — switch to it
             else -> instanceId
         }
 
@@ -249,11 +219,6 @@ class TokenManager(
         return instanceId
     }
 
-    /**
-     * Remove an instance by ID.
-     * If the removed instance was active, promotes the next available instance.
-     * Returns true if an instance was removed.
-     */
     override suspend fun removeInstance(instanceId: String): Boolean {
         val state = readState()
         val updatedInstances = state.instances.filter { it.id != instanceId }
@@ -271,35 +236,23 @@ class TokenManager(
         return true
     }
 
-    /**
-     * Set the active instance by ID.
-     */
     override suspend fun setActiveInstance(instanceId: String) {
         val state = readState()
         if (state.instances.none { it.id == instanceId }) return
         writeState(state.copy(activeInstanceId = instanceId))
     }
 
-    /**
-     * Get a specific instance by ID.
-     */
     override fun getInstanceById(instanceId: String): AapInstance? {
         return _instances.value.find { it.id == instanceId }
     }
 
-    /**
-     * Load all instances from DataStore and update reactive state.
-     * Also handles legacy credential cleanup (R-005).
-     * Returns true if any instances exist after loading.
-     */
     override suspend fun loadCredentials(): Boolean {
-        val prefs = context.credentialsDataStore.data.first()
+        val prefs = credentialsDataStore.data.first()
 
-        // Legacy cleanup (R-005): if instances_json is absent but old keys exist, clear them
         if (prefs[KEY_INSTANCES_JSON] == null) {
             val hasLegacyKeys = prefs[KEY_BASE_URL] != null || prefs[KEY_TOKEN] != null
             if (hasLegacyKeys) {
-                context.credentialsDataStore.edit { p ->
+                credentialsDataStore.edit { p ->
                     p.remove(KEY_BASE_URL)
                     p.remove(KEY_TOKEN)
                     p.remove(KEY_API_VERSION)
@@ -316,10 +269,6 @@ class TokenManager(
         return state.instances.isNotEmpty()
     }
 
-    /**
-     * Legacy compatibility: save credentials as a single instance.
-     * Used by AuthRepository during the connect flow.
-     */
     override suspend fun saveCredentials(
         baseUrl: String,
         token: String,
@@ -340,10 +289,7 @@ class TokenManager(
         )
     }
 
-    override suspend fun updateInstanceInfo(
-        instanceId: String,
-        instanceInfo: InstanceInfo
-    ) {
+    override suspend fun updateInstanceInfo(instanceId: String, instanceInfo: InstanceInfo) {
         val state = readState()
         if (state.instances.none { it.id == instanceId }) return
         val updatedInstances = state.instances.map { serialized ->
@@ -369,7 +315,7 @@ class TokenManager(
     }
 
     private suspend fun readEncryptedLlmApiKeys(): Map<String, String> {
-        val prefs = context.credentialsDataStore.data.first()
+        val prefs = credentialsDataStore.data.first()
         val keysJson = prefs[KEY_LLM_API_KEYS] ?: return emptyMap()
         return try {
             json.decodeFromString(
@@ -386,7 +332,7 @@ class TokenManager(
             MapSerializer(String.serializer(), String.serializer()),
             keys
         )
-        context.credentialsDataStore.edit { prefs ->
+        credentialsDataStore.edit { prefs ->
             prefs[KEY_LLM_API_KEYS] = keysJson
         }
     }
@@ -409,22 +355,19 @@ class TokenManager(
     }
 
     override suspend fun clearLlmApiKeys() {
-        context.credentialsDataStore.edit { prefs ->
+        credentialsDataStore.edit { prefs ->
             prefs.remove(KEY_LLM_API_KEYS)
         }
     }
 
-    /**
-     * Clear all instances (full logout).
-     */
     override suspend fun clearCredentials() {
         clearLlmApiKeys()
-        context.credentialsDataStore.edit { it.clear() }
+        credentialsDataStore.edit { it.clear() }
         _instances.value = emptyList()
         _activeInstance.value = null
     }
 
-    override val isLoggedIn: Flow<Boolean> = context.credentialsDataStore.data.map { prefs ->
+    override val isLoggedIn: Flow<Boolean> = credentialsDataStore.data.map { prefs ->
         val jsonString = prefs[KEY_INSTANCES_JSON]
         if (jsonString != null) {
             try {

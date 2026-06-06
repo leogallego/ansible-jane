@@ -7,12 +7,13 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.leogallego.ansiblejane.model.ToolManifest
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import kotlinx.coroutines.flow.first
+import kotlin.time.Clock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class ToolManifestRepository(
     private val dataStore: DataStore<Preferences>,
-    private val clock: () -> Long = { System.currentTimeMillis() }
+    private val clock: () -> Long = { Clock.System.now().toEpochMilliseconds() }
 ) : IToolManifestRepository {
 
     private val json = Json { ignoreUnknownKeys = true }

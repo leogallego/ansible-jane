@@ -7,32 +7,6 @@ import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-enum class ThemeMode {
-    SYSTEM,
-    LIGHT,
-    DARK;
-
-    val displayName: String
-        get() = when (this) {
-            SYSTEM -> "System"
-            LIGHT -> "Light"
-            DARK -> "Dark"
-        }
-}
-
-enum class TimeFormat {
-    SYSTEM,
-    HOURS_24,
-    HOURS_12;
-
-    val displayName: String
-        get() = when (this) {
-            SYSTEM -> "System"
-            HOURS_24 -> "24-hour"
-            HOURS_12 -> "12-hour"
-        }
-}
-
 object DateFormatter {
 
     @Volatile

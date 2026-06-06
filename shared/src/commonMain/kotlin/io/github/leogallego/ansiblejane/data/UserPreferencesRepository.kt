@@ -1,45 +1,31 @@
 package io.github.leogallego.ansiblejane.data
 
-import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import io.github.leogallego.ansiblejane.platform.DataStoreFactory
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.userPreferencesDataStore: DataStore<Preferences> by preferencesDataStore(
-    name = "user_preferences"
-)
-
-interface IUserPreferencesRepository {
-    val timezoneId: Flow<String?>
-    val timeFormat: Flow<TimeFormat>
-    val themeMode: Flow<ThemeMode>
-    suspend fun setTimezoneId(zoneId: String?)
-    suspend fun setTimeFormat(format: TimeFormat)
-    suspend fun setThemeMode(mode: ThemeMode)
-}
-
 class UserPreferencesRepository(
-    private val context: Context
+    dataStoreFactory: DataStoreFactory
 ) : IUserPreferencesRepository {
 
-    override val timezoneId: Flow<String?> = context.userPreferencesDataStore.data.map { prefs ->
+    private val dataStore = dataStoreFactory.createPreferencesDataStore("user_preferences")
+
+    override val timezoneId: Flow<String?> = dataStore.data.map { prefs ->
         prefs[KEY_TIMEZONE]
     }
 
-    override val timeFormat: Flow<TimeFormat> = context.userPreferencesDataStore.data.map { prefs ->
+    override val timeFormat: Flow<TimeFormat> = dataStore.data.map { prefs ->
         prefs[KEY_TIME_FORMAT]?.let {
             try { TimeFormat.valueOf(it) } catch (_: Exception) { TimeFormat.SYSTEM }
         } ?: TimeFormat.SYSTEM
     }
 
     override suspend fun setTimezoneId(zoneId: String?) {
-        context.userPreferencesDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             if (zoneId == null) {
                 prefs.remove(KEY_TIMEZONE)
             } else {
@@ -49,19 +35,19 @@ class UserPreferencesRepository(
     }
 
     override suspend fun setTimeFormat(format: TimeFormat) {
-        context.userPreferencesDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[KEY_TIME_FORMAT] = format.name
         }
     }
 
-    override val themeMode: Flow<ThemeMode> = context.userPreferencesDataStore.data.map { prefs ->
+    override val themeMode: Flow<ThemeMode> = dataStore.data.map { prefs ->
         prefs[KEY_THEME_MODE]?.let {
             try { ThemeMode.valueOf(it) } catch (_: Exception) { ThemeMode.SYSTEM }
         } ?: ThemeMode.SYSTEM
     }
 
     override suspend fun setThemeMode(mode: ThemeMode) {
-        context.userPreferencesDataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[KEY_THEME_MODE] = mode.name
         }
     }

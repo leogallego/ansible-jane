@@ -1,16 +1,12 @@
 package io.github.leogallego.ansiblejane.assistant.data
 
-import android.content.Context
-import android.util.Log
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
+import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
+import io.github.leogallego.ansiblejane.assistant.engine.DebugLog
+import io.github.leogallego.ansiblejane.assistant.engine.Role
+import io.github.leogallego.ansiblejane.data.ITokenManager
+import io.github.leogallego.ansiblejane.platform.DataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
-import io.github.leogallego.ansiblejane.assistant.engine.ChatMessage
-import io.github.leogallego.ansiblejane.assistant.engine.Role
-import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
-import io.github.leogallego.ansiblejane.data.ITokenManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,15 +22,12 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
-private val Context.assistantDataStore: DataStore<Preferences> by preferencesDataStore(
-    name = "assistant_config"
-)
-
 class AssistantRepository(
-    private val context: Context,
+    dataStoreFactory: DataStoreFactory,
     private val tokenManager: ITokenManager
 ) : IAssistantRepository {
 
+    private val assistantDataStore = dataStoreFactory.createPreferencesDataStore("assistant_config")
     private val messages = mutableListOf<ChatMessage>()
     private val json = Json { ignoreUnknownKeys = true }
     private val _onHistoryCleared = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -97,14 +90,14 @@ class AssistantRepository(
             MapSerializer(String.serializer(), LlmProviderConfig.serializer()),
             allConfigs
         )
-        context.assistantDataStore.edit { prefs ->
+        assistantDataStore.edit { prefs ->
             prefs[KEY_LLM_CONFIGS] = mapJson
             prefs[KEY_ACTIVE_PROVIDER] = providerKey
         }
     }
 
     override suspend fun loadLlmConfig(): LlmProviderConfig? {
-        val prefs = context.assistantDataStore.data.first()
+        val prefs = assistantDataStore.data.first()
         val activeProvider = prefs[KEY_ACTIVE_PROVIDER] ?: return null
         val config = loadAllLlmConfigsRaw()[activeProvider] ?: return null
         return mergeApiKey(activeProvider, config)
@@ -124,7 +117,7 @@ class AssistantRepository(
             MapSerializer(String.serializer(), LlmProviderConfig.serializer()),
             stripped
         )
-        context.assistantDataStore.edit { prefs ->
+        assistantDataStore.edit { prefs ->
             prefs[KEY_LLM_CONFIGS] = mapJson
         }
     }
@@ -139,7 +132,7 @@ class AssistantRepository(
     }
 
     private suspend fun loadAllLlmConfigsRaw(): Map<String, LlmProviderConfig> {
-        val prefs = context.assistantDataStore.data.first()
+        val prefs = assistantDataStore.data.first()
         val mapJson = prefs[KEY_LLM_CONFIGS] ?: return emptyMap()
         return try {
             json.decodeFromString(
@@ -147,17 +140,23 @@ class AssistantRepository(
                 mapJson
             )
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to deserialize LLM configs", e)
+            DebugLog.w(TAG, "Failed to deserialize LLM configs: ${e.message}")
             emptyMap()
         }
     }
 
-    private suspend fun mergeApiKey(providerKey: String, config: LlmProviderConfig): LlmProviderConfig {
+    private suspend fun mergeApiKey(
+        providerKey: String,
+        config: LlmProviderConfig
+    ): LlmProviderConfig {
         val apiKey = tokenManager.loadLlmApiKey(providerKey)
         return if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
     }
 
-    private fun mergeApiKeyValue(config: LlmProviderConfig, apiKey: String): LlmProviderConfig =
+    private fun mergeApiKeyValue(
+        config: LlmProviderConfig,
+        apiKey: String
+    ): LlmProviderConfig =
         when (config) {
             is LlmProviderConfig.OpenAiCompatible -> config.copy(apiKey = apiKey)
         }
@@ -168,7 +167,7 @@ class AssistantRepository(
         }
 
     override val activeConfigFlow: Flow<LlmProviderConfig?> =
-        context.assistantDataStore.data.map { prefs ->
+        assistantDataStore.data.map { prefs ->
             val key = prefs[KEY_ACTIVE_PROVIDER] ?: return@map null
             val mapJson = prefs[KEY_LLM_CONFIGS] ?: return@map null
             try {
@@ -180,13 +179,13 @@ class AssistantRepository(
                 val apiKey = tokenManager.loadLlmApiKey(key)
                 if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
             } catch (e: Exception) {
-                Log.w(TAG, "Failed to deserialize active config from flow", e)
+                DebugLog.w(TAG, "Failed to deserialize active config from flow: ${e.message}")
                 null
             }
         }.distinctUntilChanged()
 
     override val savedConfigsFlow: Flow<Map<String, LlmProviderConfig>> =
-        context.assistantDataStore.data.map { prefs ->
+        assistantDataStore.data.map { prefs ->
             val mapJson = prefs[KEY_LLM_CONFIGS] ?: return@map emptyMap()
             try {
                 val configs = json.decodeFromString(
@@ -199,18 +198,18 @@ class AssistantRepository(
                     if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Failed to deserialize saved configs from flow", e)
+                DebugLog.w(TAG, "Failed to deserialize saved configs from flow: ${e.message}")
                 emptyMap()
             }
         }.distinctUntilChanged()
 
     override val activeProviderKeyFlow: Flow<String?> =
-        context.assistantDataStore.data.map { prefs ->
+        assistantDataStore.data.map { prefs ->
             prefs[KEY_ACTIVE_PROVIDER]
         }.distinctUntilChanged()
 
     override suspend fun switchActiveProvider(providerKey: String) {
-        context.assistantDataStore.edit { prefs ->
+        assistantDataStore.edit { prefs ->
             prefs[KEY_ACTIVE_PROVIDER] = providerKey
         }
     }
@@ -220,13 +219,13 @@ class AssistantRepository(
             kotlinx.serialization.builtins.SetSerializer(String.serializer()),
             tools
         )
-        context.assistantDataStore.edit { prefs ->
+        assistantDataStore.edit { prefs ->
             prefs[KEY_DISABLED_TOOLS] = encoded
         }
     }
 
     override suspend fun getDisabledTools(): Set<String> {
-        val prefs = context.assistantDataStore.data.first()
+        val prefs = assistantDataStore.data.first()
         val encoded = prefs[KEY_DISABLED_TOOLS] ?: return emptySet()
         return try {
             json.decodeFromString(
@@ -234,7 +233,7 @@ class AssistantRepository(
                 encoded
             )
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to deserialize disabled tools", e)
+            DebugLog.w(TAG, "Failed to deserialize disabled tools: ${e.message}")
             emptySet()
         }
     }
