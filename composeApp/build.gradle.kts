@@ -1,0 +1,105 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.multiplatform.library)
+    alias(libs.plugins.compose.multiplatform)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+kotlin {
+    android {
+        namespace = "io.github.leogallego.ansiblejane.composeapp"
+        compileSdk = 36
+        minSdk = 31
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
+
+    jvm("desktop")
+
+    // iOS targets added in Phase 8 (requires macOS + Kotlin/Native)
+    // iosArm64()
+    // iosSimulatorArm64()
+
+    sourceSets {
+        val desktopMain by getting
+
+        commonMain.dependencies {
+            implementation(projects.shared)
+
+            @Suppress("DEPRECATION")
+            implementation(compose.runtime)
+            @Suppress("DEPRECATION")
+            implementation(compose.foundation)
+            @Suppress("DEPRECATION")
+            implementation(compose.material3)
+            @Suppress("DEPRECATION")
+            implementation(compose.materialIconsExtended)
+            @Suppress("DEPRECATION")
+            implementation(compose.ui)
+            @Suppress("DEPRECATION")
+            implementation(compose.components.resources)
+            @Suppress("DEPRECATION")
+            implementation(compose.components.uiToolingPreview)
+
+            implementation(libs.cmp.lifecycle.viewmodel)
+            implementation(libs.cmp.lifecycle.viewmodel.compose)
+            implementation(libs.cmp.lifecycle.runtime.compose)
+            implementation(libs.cmp.navigation.compose)
+
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.collections.immutable)
+
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
+
+            implementation(libs.markdown.renderer)
+            implementation(libs.markdown.renderer.m3)
+            implementation(libs.markdown.renderer.code)
+        }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.coroutines.test)
+            implementation(libs.turbine)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.koin.android)
+        }
+
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.ktor.client.cio)
+        }
+
+        // iosMain.dependencies added in Phase 8
+        // iosMain.dependencies {
+        //     implementation(libs.ktor.client.darwin)
+        // }
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "io.github.leogallego.ansiblejane.MainKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Deb, TargetFormat.Rpm)
+            packageName = "AnsibleJane"
+            packageVersion = "0.7.6"
+
+            linux {
+                modules("jdk.security.auth")
+            }
+        }
+    }
+}

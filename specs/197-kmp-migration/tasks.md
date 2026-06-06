@@ -27,7 +27,7 @@
 
 **Purpose**: Record test results and build time before any changes. Required for SC-001 (zero regressions) and SC-008 (build time <30% increase).
 
-- [ ] T000 Capture baseline metrics: run `./gradlew assembleDebug` and record wall-clock build time. Run `./gradlew testDebugUnitTest` and record pass/fail counts. Save results to `specs/197-kmp-migration/baseline.txt` for comparison after each phase
+- [X] T000 Capture baseline metrics: run `./gradlew assembleDebug` and record wall-clock build time. Run `./gradlew testDebugUnitTest` and record pass/fail counts. Save results to `specs/197-kmp-migration/baseline.txt` for comparison after each phase
 
 ---
 
@@ -43,13 +43,13 @@ Read skills/kotlin-kmp-abstraction-decision/SKILL.md
 Read skills/kotlin-platform-kmp-bridges/SKILL.md
 ```
 
-- [ ] T001 Update `gradle/libs.versions.toml` — add Compose Multiplatform 1.11.1 (`compose-multiplatform`), cryptography-kotlin 0.6.0 (`cryptography-kotlin`), Ktor engine entries (`ktor-client-okhttp`, `ktor-client-cio`, `ktor-client-darwin`), Navigation 3. Keep existing entries. Upgrade kotlin from `2.3.21` to `2.4.0`
-- [ ] T002 Create `shared/build.gradle.kts` — KMP library module using `com.android.kotlin.multiplatform.library` plugin (AGP 9.x). Configure targets: `androidLibrary {}`, `jvm()`, `iosArm64()`, `iosSimulatorArm64()`. Add commonMain dependencies: `kotlinx-coroutines-core`, `kotlinx-serialization-json`, `ktor-client-core`, `datastore-preferences`, `koin-core`, `koog`, `collections-immutable`. Add androidMain/jvmMain/iosMain engine dependencies. Set android namespace, minSdk 31, compileSdk 36
-- [ ] T003 Create `composeApp/build.gradle.kts` — Compose Multiplatform application module. Apply `org.jetbrains.compose`, `org.jetbrains.kotlin.multiplatform`, `com.android.application`. Configure targets: `androidTarget {}`, `jvm()`. Add dependency on `:shared`. Add CMP dependencies for commonMain. Keep android config from current `app/build.gradle.kts` (applicationId, versionCode, versionName, signing)
-- [ ] T004 Update `settings.gradle.kts` — add `include(":shared")`, `include(":composeApp")`. Keep `:app` for now (removed after full migration). Add Compose Multiplatform plugin to pluginManagement
-- [ ] T005 Update root `build.gradle.kts` — add KMP and Compose Multiplatform plugin declarations (apply false). Remove AGP `com.android.application` from root if only in submodules
-- [ ] T006 [P] Create directory structure: `shared/src/commonMain/kotlin/`, `shared/src/androidMain/kotlin/`, `shared/src/jvmMain/kotlin/`, `shared/src/iosMain/kotlin/`, `composeApp/src/commonMain/kotlin/`, `composeApp/src/androidMain/kotlin/`, `composeApp/src/jvmMain/kotlin/`
-- [ ] T007 Run `./gradlew :shared:build` and `./gradlew :composeApp:assembleDebug` to verify empty modules compile. Fix any Gradle configuration errors
+- [X] T001 Update `gradle/libs.versions.toml` — add Compose Multiplatform 1.11.1 (`compose-multiplatform`), cryptography-kotlin 0.6.0 (`cryptography-kotlin`), Ktor engine entries (`ktor-client-okhttp`, `ktor-client-cio`, `ktor-client-darwin`), Navigation 3. Keep existing entries. Upgrade kotlin from `2.3.21` to `2.4.0`
+- [X] T002 Create `shared/build.gradle.kts` — KMP library module using `com.android.kotlin.multiplatform.library` plugin (AGP 9.x). Configure targets: `androidLibrary {}`, `jvm()`, `iosArm64()`, `iosSimulatorArm64()`. Add commonMain dependencies: `kotlinx-coroutines-core`, `kotlinx-serialization-json`, `ktor-client-core`, `datastore-preferences`, `koin-core`, `koog`, `collections-immutable`. Add androidMain/jvmMain/iosMain engine dependencies. Set android namespace, minSdk 31, compileSdk 36
+- [X] T003 Create `composeApp/build.gradle.kts` — Compose Multiplatform application module. Apply `org.jetbrains.compose`, `org.jetbrains.kotlin.multiplatform`, `com.android.application`. Configure targets: `androidTarget {}`, `jvm()`. Add dependency on `:shared`. Add CMP dependencies for commonMain. Keep android config from current `app/build.gradle.kts` (applicationId, versionCode, versionName, signing)
+- [X] T004 Update `settings.gradle.kts` — add `include(":shared")`, `include(":composeApp")`. Keep `:app` for now (removed after full migration). Add Compose Multiplatform plugin to pluginManagement
+- [X] T005 Update root `build.gradle.kts` — add KMP and Compose Multiplatform plugin declarations (apply false). Remove AGP `com.android.application` from root if only in submodules
+- [X] T006 [P] Create directory structure: `shared/src/commonMain/kotlin/`, `shared/src/androidMain/kotlin/`, `shared/src/jvmMain/kotlin/`, `shared/src/iosMain/kotlin/`, `composeApp/src/commonMain/kotlin/`, `composeApp/src/androidMain/kotlin/`, `composeApp/src/jvmMain/kotlin/`
+- [X] T007 Run `./gradlew :shared:build` and `./gradlew :composeApp:assembleDebug` to verify empty modules compile. Fix any Gradle configuration errors
 
 **Checkpoint**: Multi-module skeleton compiles. No code moved yet. `:app` module still builds independently.
 

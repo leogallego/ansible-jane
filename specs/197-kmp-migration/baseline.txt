@@ -1,0 +1,19 @@
+# KMP Migration Baseline Metrics
+# Captured: 2026-06-06
+# Branch: 197-kmp-migration (pre-migration, single-module)
+
+## Build Time
+- `./gradlew assembleDebug`: 49.882s (38 tasks: 30 executed, 8 cached)
+- Build type: Debug APK from single `:app` module
+
+## Test Results
+- `./gradlew testDebugUnitTest`: 36.189s
+- Total tests: 361
+- Passed: 332
+- Failed: 29 (all Robolectric sandbox failures — MavenDependencyResolver FileSystemException)
+- Non-Robolectric tests: 100% pass rate
+- Note: 29 failures are environment-specific (sandbox blocks Robolectric shadow JAR downloads), not code failures
+
+## SC-008 Target
+- Current build time: ~50s
+- Max allowed after migration: 65s (30% increase)
