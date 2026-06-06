@@ -217,15 +217,15 @@ Also fetch cryptography-kotlin docs:
 Use Context7 MCP tool: resolve-library-id for "cryptography-kotlin", then query-docs for "AES-GCM encryption decryption"
 ```
 
-- [ ] T059 [US4] Add `cryptography-kotlin` dependencies to `gradle/libs.versions.toml` and `shared/build.gradle.kts` — `cryptography-core` in commonMain, `cryptography-provider-jdk` in androidMain/jvmMain, `cryptography-provider-apple` in iosMain (stub for now)
-- [ ] T060 [US4] Create `CryptoManager.kt` in `shared/src/commonMain/kotlin/.../data/crypto/CryptoManager.kt` — AES-256-GCM encrypt/decrypt using cryptography-kotlin. Methods: `suspend fun encrypt(plaintext: ByteArray, key: ByteArray): ByteArray`, `suspend fun decrypt(ciphertext: ByteArray, key: ByteArray): ByteArray`
-- [ ] T061 [US4] Update `actual class SecureKeyStorage` in `shared/src/androidMain/kotlin/.../platform/SecureKeyStorage.kt` — replace Tink `AndroidKeysetManager` with cryptography-kotlin key generation + Android Keystore for key protection
-- [ ] T062 [US4] Refactor `TokenManager.kt` in `shared/src/commonMain/kotlin/.../data/TokenManager.kt` — use `CryptoManager` + `SecureKeyStorage` instead of Tink AEAD. Same encrypt → Base64 → DataStore flow
-- [ ] T063 [US4] Create `TinkMigration.kt` in `shared/src/androidMain/kotlin/.../platform/TinkMigration.kt` — one-time migration: detect Tink keyset in SharedPreferences → decrypt with Tink AEAD → re-encrypt with cryptography-kotlin → store new key → delete old Tink keyset. Must handle: missing keyset (fresh install), corrupted keyset (log error, prompt re-entry), successful migration
-- [ ] T064 [US4] Migrate `BackupManager.kt` crypto in `shared/src/commonMain/kotlin/.../data/BackupManager.kt` — replace `javax.crypto` PBKDF2 + AES-GCM with cryptography-kotlin equivalents for cross-platform consistency
-- [ ] T065 [US4] Wire `TinkMigration` into app startup in `composeApp/src/androidMain/kotlin/.../AnsibleJaneApp.kt` or `MainActivity.kt` — run migration before first DataStore access
-- [ ] T066 [US4] Remove Tink dependencies from `gradle/libs.versions.toml` and `build.gradle.kts`. Note: keep Tink temporarily in androidMain for `TinkMigration.kt` only (can remove after one release cycle)
-- [ ] T067 [US4] Verify on Android: save new credentials → close → reopen → credentials decrypted. Simulate upgrade: pre-populate Tink-encrypted data → run migration → verify credentials accessible. Test backup export/import
+- [X] T059 [US4] Add `cryptography-kotlin` dependencies to `gradle/libs.versions.toml` and `shared/build.gradle.kts` — `cryptography-core` in commonMain, `cryptography-provider-jdk` in androidMain/jvmMain, `cryptography-provider-apple` in iosMain (stub for now)
+- [X] T060 [US4] Create `CryptoManager.kt` in `shared/src/commonMain/kotlin/.../data/crypto/CryptoManager.kt` — AES-256-GCM encrypt/decrypt using cryptography-kotlin. Methods: `suspend fun encrypt(plaintext: ByteArray, key: ByteArray): ByteArray`, `suspend fun decrypt(ciphertext: ByteArray, key: ByteArray): ByteArray`
+- [X] T061 [US4] Update `actual class SecureKeyStorage` in `shared/src/androidMain/kotlin/.../platform/SecureKeyStorage.kt` — replace Tink `AndroidKeysetManager` with cryptography-kotlin key generation + Android Keystore for key protection
+- [X] T062 [US4] Refactor `TokenManager.kt` in `shared/src/commonMain/kotlin/.../data/TokenManager.kt` — use `CryptoManager` + `SecureKeyStorage` instead of Tink AEAD. Same encrypt → Base64 → DataStore flow
+- [X] T063 [US4] Create `TinkMigration.kt` in `shared/src/androidMain/kotlin/.../platform/TinkMigration.kt` — one-time migration: detect Tink keyset in SharedPreferences → decrypt with Tink AEAD → re-encrypt with cryptography-kotlin → store new key → delete old Tink keyset. Must handle: missing keyset (fresh install), corrupted keyset (log error, prompt re-entry), successful migration
+- [X] T064 [US4] Migrate `BackupManager.kt` crypto in `shared/src/commonMain/kotlin/.../data/BackupManager.kt` — replace `javax.crypto` PBKDF2 + AES-GCM with cryptography-kotlin equivalents for cross-platform consistency
+- [X] T065 [US4] Wire `TinkMigration` into app startup in `composeApp/src/androidMain/kotlin/.../AnsibleJaneApp.kt` or `MainActivity.kt` — run migration before first DataStore access
+- [X] T066 [US4] Remove Tink dependencies from `gradle/libs.versions.toml` and `build.gradle.kts`. Note: keep Tink temporarily in androidMain for `TinkMigration.kt` only (can remove after one release cycle)
+- [X] T067 [US4] Verify on Android: save new credentials → close → reopen → credentials decrypted. Simulate upgrade: pre-populate Tink-encrypted data → run migration → verify credentials accessible. Test backup export/import
 
 **Checkpoint**: Encryption fully migrated to cryptography-kotlin. Tink migration works. Android app handles both fresh install and upgrade scenarios.
 

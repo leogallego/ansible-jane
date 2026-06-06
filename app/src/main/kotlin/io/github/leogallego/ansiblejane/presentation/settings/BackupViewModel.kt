@@ -149,10 +149,11 @@ class BackupViewModel(
                     imported++
                 }
 
-                if (!envelope.llmConfigs.isNullOrEmpty()) {
-                    assistantRepository.saveAllLlmConfigs(envelope.llmConfigs)
-                    val activeConfig = envelope.activeProvider?.let { envelope.llmConfigs[it] }
-                        ?: envelope.llmConfigs.values.firstOrNull()
+                val configs = envelope.llmConfigs
+                if (!configs.isNullOrEmpty()) {
+                    assistantRepository.saveAllLlmConfigs(configs)
+                    val activeConfig = envelope.activeProvider?.let { configs[it] }
+                        ?: configs.values.firstOrNull()
                     activeConfig?.let { assistantRepository.saveLlmConfig(it) }
                 } else {
                     envelope.llmConfig?.let { config ->

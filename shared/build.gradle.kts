@@ -43,6 +43,8 @@ kotlin {
             implementation(libs.koog.google.client)
             implementation(libs.koog.http.ktor)
             implementation(libs.mcp.sdk.client)
+
+            implementation(libs.cryptography.core)
         }
 
         commonTest.dependencies {
@@ -54,12 +56,14 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kotlinx.coroutines.android)
-            implementation(libs.tink.android)
+            implementation(libs.tink.android) // Kept for TinkMigration — remove after one release cycle
             implementation(libs.androidx.work.runtime)
+            implementation(libs.cryptography.provider.jdk)
         }
 
         jvmMain.dependencies {
             implementation(libs.ktor.client.cio)
+            implementation(libs.cryptography.provider.jdk)
         }
 
         // iosMain.dependencies added in Phase 8

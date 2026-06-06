@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.data
 
+import io.github.leogallego.ansiblejane.data.backup.BackupManager
 import io.github.leogallego.ansiblejane.notification.ApprovalTracker
 import io.github.leogallego.ansiblejane.platform.BackgroundWorker
 import io.github.leogallego.ansiblejane.platform.ConnectivityObserver
@@ -14,4 +15,5 @@ val sharedDataModule = module {
     single { TokenManager(get(), get(), get()) } bind ITokenManager::class
     single { UserPreferencesRepository(get()) } bind IUserPreferencesRepository::class
     single { ApprovalTracker(get()) }
+    single { BackupManager() }
 }

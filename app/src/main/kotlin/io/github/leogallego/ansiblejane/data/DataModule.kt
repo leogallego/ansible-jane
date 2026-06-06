@@ -1,6 +1,5 @@
 package io.github.leogallego.ansiblejane.data
 
-import io.github.leogallego.ansiblejane.data.backup.BackupManager
 import io.github.leogallego.ansiblejane.di.sharedNetworkModule
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import io.github.leogallego.ansiblejane.platform.BackgroundWorker
@@ -24,7 +23,6 @@ val platformModule = module {
 
 val dataModule = module {
     includes(sharedDataModule, sharedNetworkModule, platformModule)
-    single { BackupManager() }
     single { AuthRepository(get(), get(), get()) } bind IAuthRepository::class
     single { TemplateRepository(get<IAapApiProvider>()) } bind ITemplateRepository::class
     single { JobRepository(get<IAapApiProvider>()) } bind IJobRepository::class

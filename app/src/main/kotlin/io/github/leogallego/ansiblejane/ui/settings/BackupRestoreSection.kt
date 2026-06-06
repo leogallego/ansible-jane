@@ -358,9 +358,10 @@ private fun ImportPreviewScreen(
                     )
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        if (inst.alias != null) {
+                        val instAlias = inst.alias
+                        if (instAlias != null) {
                             Text(
-                                text = inst.alias,
+                                text = instAlias,
                                 style = MaterialTheme.typography.titleSmall
                             )
                         }
@@ -393,9 +394,10 @@ private fun ImportPreviewScreen(
                                 )
                             }
                         }
-                        if (!inst.mcpServerUrls.isNullOrEmpty()) {
+                        val mcpUrls = inst.mcpServerUrls
+                        if (!mcpUrls.isNullOrEmpty()) {
                             Text(
-                                text = inst.mcpServerUrls.joinToString(", ") { it.label },
+                                text = mcpUrls.joinToString(", ") { it.label },
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 2.dp)
