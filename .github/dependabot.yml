@@ -31,6 +31,18 @@ updates:
       ktor:
         patterns:
           - "io.ktor*"
+      koog:
+        patterns:
+          - "ai.koog*"
+      mcp:
+        patterns:
+          - "io.modelcontextprotocol*"
+      datastore:
+        patterns:
+          - "androidx.datastore*"
+      navigation:
+        patterns:
+          - "androidx.navigation*"
       testing:
         patterns:
           - "junit*"

@@ -30,12 +30,18 @@ declare -A DEPS=(
   [lifecycle]="google|androidx.lifecycle:lifecycle-runtime-compose"
   [retrofit]="central|com.squareup.retrofit2:retrofit"
   [okhttp]="central|com.squareup.okhttp3:okhttp"
+  [ktor]="central|io.ktor:ktor-client-core"
   [kotlinx-serialization-json]="central|org.jetbrains.kotlinx:kotlinx-serialization-json"
   [koin]="central|io.insert-koin:koin-core"
   [datastore-preferences]="google|androidx.datastore:datastore-preferences"
   [tink-android]="central|com.google.crypto.tink:tink-android"
   [coroutines]="central|org.jetbrains.kotlinx:kotlinx-coroutines-android"
+  [collections-immutable]="central|org.jetbrains.kotlinx:kotlinx-collections-immutable"
   [core-ktx]="google|androidx.core:core-ktx"
+  [work-runtime]="google|androidx.work:work-runtime-ktx"
+  [koog]="central|ai.koog:prompt-executor-openai-client"
+  [koog-google]="central|ai.koog:prompt-executor-google-client"
+  [mcp-sdk]="central|io.modelcontextprotocol:kotlin-sdk-client"
   [markdownRenderer]="central|com.mikepenz:multiplatform-markdown-renderer"
 )
 
@@ -60,7 +66,7 @@ is_stable() {
   local v="$1"
   # Reject alpha, beta, RC, dev, SNAPSHOT, eap
   local lv="${v,,}"
-  if [[ "$lv" =~ (alpha|beta|rc|dev|snapshot|eap|milestone|-b[0-9]) ]]; then
+  if [[ "$lv" =~ (alpha|beta|rc|dev|snapshot|eap|milestone|preview|-b[0-9]) ]]; then
     return 1
   fi
   return 0
@@ -91,34 +97,43 @@ query_latest() {
     return
   }
 
-  local latest_stable="" latest_patch=""
+  local latest="" latest_patch=""
+  local current_is_stable=true
+  is_stable "$current" || current_is_stable=false
 
   # Extract all versions from <version> tags
   local versions
   versions=$(echo "$xml" | grep -oP '(?<=<version>)[^<]+' | sort -V)
 
-  # Find latest stable
+  # Find latest version (stable-only if current is stable, all if current is pre-release)
   while IFS= read -r v; do
-    if is_stable "$v"; then
-      latest_stable="$v"
+    if $current_is_stable; then
+      is_stable "$v" && latest="$v"
+    else
+      latest="$v"
     fi
   done <<< "$versions"
 
-  # Find latest patch for current major.minor
+  # Find latest patch for current major.minor (same stability logic)
   while IFS= read -r v; do
-    if is_stable "$v" && same_major_minor "$current" "$v"; then
-      latest_patch="$v"
+    if same_major_minor "$current" "$v"; then
+      if $current_is_stable; then
+        is_stable "$v" && latest_patch="$v"
+      else
+        latest_patch="$v"
+      fi
     fi
   done <<< "$versions"
 
-  echo "${latest_stable:-NONE}|${latest_patch:-NONE}|$url"
+  echo "${latest:-NONE}|${latest_patch:-NONE}|$url"
 }
 
 # Ordered keys for consistent output
 ORDERED_KEYS=(
   agp kotlin compose-bom activity-compose navigation-compose lifecycle
-  retrofit okhttp kotlinx-serialization-json koin datastore-preferences
-  tink-android coroutines core-ktx markdownRenderer
+  retrofit okhttp ktor kotlinx-serialization-json koin datastore-preferences
+  tink-android coroutines collections-immutable core-ktx work-runtime
+  koog koog-google mcp-sdk markdownRenderer
 )
 
 if $JSON_OUTPUT; then
