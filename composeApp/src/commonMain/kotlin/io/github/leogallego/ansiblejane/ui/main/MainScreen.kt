@@ -47,7 +47,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
-import io.github.leogallego.ansiblejane.data.TokenManager
+import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.presentation.notifications.NotificationsViewModel
 import io.github.leogallego.ansiblejane.ui.components.ProviderSwitchChip
 import io.github.leogallego.ansiblejane.ui.notifications.NotificationsSheet
@@ -62,7 +62,7 @@ fun MainScreen(
     onNavigateToApproval: (Int) -> Unit = {},
     content: @Composable (TopLevelTab, Segment) -> Unit
 ) {
-    val tokenManager: TokenManager = koinInject()
+    val tokenManager: ITokenManager = koinInject()
     val assistantRepository: IAssistantRepository = koinInject()
     val activeInstance by tokenManager.activeInstance.collectAsState()
     val activeConfig by assistantRepository.activeConfigFlow.collectAsState(null)

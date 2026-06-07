@@ -110,34 +110,36 @@ class HttpClientFactory(
         basePath: String,
         trustSelfSigned: Boolean,
         instanceId: String
-    ): HttpClient = createPlatformHttpClient(trustSelfSigned) {
-        expectSuccess = true
+    ): HttpClient {
+        val instanceToken = tokenManager.getInstanceById(instanceId)?.token
+        return createPlatformHttpClient(trustSelfSigned) {
+            expectSuccess = true
 
-        install(ContentNegotiation) { json(json) }
+            install(ContentNegotiation) { json(json) }
 
-        install(HttpTimeout) {
-            requestTimeoutMillis = 30_000
-            connectTimeoutMillis = 10_000
-            socketTimeoutMillis = 30_000
-        }
-
-        install(Logging) {
-            level = logLevel
-            sanitizeHeader { header -> header == HttpHeaders.Authorization }
-        }
-
-        defaultRequest {
-            url("${baseUrl.trimEnd('/')}$basePath")
-            val token = tokenManager.activeInstance.value?.token
-            if (token != null) {
-                header(HttpHeaders.Authorization, "Bearer $token")
+            install(HttpTimeout) {
+                requestTimeoutMillis = 30_000
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 30_000
             }
-        }
 
-        HttpResponseValidator {
-            validateResponse { response ->
-                if (response.status.value == 401) {
-                    AuthEvents.emitUnauthorized(instanceId)
+            install(Logging) {
+                level = logLevel
+                sanitizeHeader { header -> header == HttpHeaders.Authorization }
+            }
+
+            defaultRequest {
+                url("${baseUrl.trimEnd('/')}$basePath")
+                if (instanceToken != null) {
+                    header(HttpHeaders.Authorization, "Bearer $instanceToken")
+                }
+            }
+
+            HttpResponseValidator {
+                validateResponse { response ->
+                    if (response.status.value == 401) {
+                        AuthEvents.emitUnauthorized(instanceId)
+                    }
                 }
             }
         }

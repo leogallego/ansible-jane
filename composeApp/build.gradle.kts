@@ -9,6 +9,52 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+val generateAndroidAppVersion by tasks.registering {
+    val versionName = providers.gradleProperty("appVersionName")
+    val versionCode = providers.gradleProperty("appVersionCode")
+    val outputDir = layout.buildDirectory.dir("generated/kotlin/androidMain")
+    inputs.property("versionName", versionName)
+    inputs.property("versionCode", versionCode)
+    outputs.dir(outputDir)
+    doLast {
+        val file = outputDir.get().file("io/github/leogallego/ansiblejane/AppVersion.android.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            """
+            |package io.github.leogallego.ansiblejane
+            |
+            |actual object AppVersion {
+            |    actual val name: String = "${versionName.get()}"
+            |    actual val code: Int = ${versionCode.get()}
+            |}
+            """.trimMargin() + "\n"
+        )
+    }
+}
+
+val generateDesktopAppVersion by tasks.registering {
+    val versionName = providers.gradleProperty("appVersionName")
+    val versionCode = providers.gradleProperty("appVersionCode")
+    val outputDir = layout.buildDirectory.dir("generated/kotlin/desktopMain")
+    inputs.property("versionName", versionName)
+    inputs.property("versionCode", versionCode)
+    outputs.dir(outputDir)
+    doLast {
+        val file = outputDir.get().file("io/github/leogallego/ansiblejane/AppVersion.desktop.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            """
+            |package io.github.leogallego.ansiblejane
+            |
+            |actual object AppVersion {
+            |    actual val name: String = "${versionName.get()}"
+            |    actual val code: Int = ${versionCode.get()}
+            |}
+            """.trimMargin() + "\n"
+        )
+    }
+}
+
 kotlin {
     android {
         namespace = "io.github.leogallego.ansiblejane.composeapp"
@@ -72,12 +118,14 @@ kotlin {
             implementation(libs.turbine)
         }
 
+        androidMain.get().kotlin.srcDir(generateAndroidAppVersion.map { it.outputs.files.singleFile })
         androidMain.dependencies {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.koin.android)
             implementation(libs.androidx.activity.compose)
         }
 
+        desktopMain.kotlin.srcDir(generateDesktopAppVersion.map { it.outputs.files.singleFile })
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)

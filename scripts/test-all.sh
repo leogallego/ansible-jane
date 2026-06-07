@@ -44,8 +44,13 @@ else
     fail "testDebugUnitTest"
 fi
 
-if ./gradlew :shared:jvmTest --quiet 2>&1; then
-    pass ":shared:jvmTest"
+SHARED_OUTPUT=$(./gradlew :shared:jvmTest 2>&1)
+if [ $? -eq 0 ]; then
+    if echo "$SHARED_OUTPUT" | grep -q "0 tests"; then
+        skip ":shared:jvmTest (0 tests found — add tests to shared/src/commonTest or shared/src/jvmTest)"
+    else
+        pass ":shared:jvmTest"
+    fi
 else
     fail ":shared:jvmTest"
 fi

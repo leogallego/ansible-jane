@@ -18,7 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import io.github.leogallego.ansiblejane.data.TokenManager
+import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.network.AuthEvents
 import io.github.leogallego.ansiblejane.ui.auth.AuthScreen
 import io.github.leogallego.ansiblejane.ui.jobs.JobStatusScreen
@@ -36,7 +36,7 @@ fun AppNavigation(
     settingsContent: @Composable (onLogout: () -> Unit, onNavigateBack: () -> Unit, onAddInstance: () -> Unit) -> Unit = { _, _, _ -> },
     onHandleDeepLink: ((NavHostController) -> Unit)? = null
 ) {
-    val tokenManager: TokenManager = koinInject()
+    val tokenManager: ITokenManager = koinInject()
 
     val instances by tokenManager.instances.collectAsState()
     LaunchedEffect(instances) {
