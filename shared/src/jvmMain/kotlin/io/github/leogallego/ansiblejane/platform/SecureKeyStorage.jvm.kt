@@ -94,7 +94,11 @@ actual class SecureKeyStorage {
 
     private fun restrictPermissions(file: File) {
         try {
-            val perms = PosixFilePermissions.fromString("rw-------")
+            val perms = if (file.isDirectory) {
+                PosixFilePermissions.fromString("rwx------")
+            } else {
+                PosixFilePermissions.fromString("rw-------")
+            }
             Files.setPosixFilePermissions(file.toPath(), perms)
         } catch (_: UnsupportedOperationException) {
             file.setReadable(false, false)
@@ -102,6 +106,7 @@ actual class SecureKeyStorage {
             file.setWritable(false, false)
             file.setWritable(true, true)
             file.setExecutable(false, false)
+            if (file.isDirectory) file.setExecutable(true, true)
         }
     }
 
