@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Sandbox environment setup for Claude Code sessions
 # Run this at the start of any sandboxed session to fix common issues.
+# When sandbox is not active, removes any leftover proxy settings.
 
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -14,19 +15,36 @@ if [ ! -f local.properties ]; then
     echo "Created local.properties with Android SDK path"
 fi
 
-# 3. Add Gradle proxy settings if running in sandbox with HTTP proxy
-if [ -n "${HTTP_PROXY:-}" ] && ! grep -q "systemProp.http.proxyHost" gradle.properties 2>/dev/null; then
-    # Extract host and port from HTTP_PROXY (format: http://host:port)
-    PROXY_HOST=$(echo "$HTTP_PROXY" | sed -E 's|https?://||' | cut -d: -f1)
-    PROXY_PORT=$(echo "$HTTP_PROXY" | sed -E 's|https?://||' | cut -d: -f2)
-    cat >> gradle.properties <<EOF
+# 3. Manage Gradle proxy settings based on sandbox state
+GRADLE_PROPS="gradle.properties"
+if [ -n "${HTTP_PROXY:-}" ]; then
+    # Sandbox active — add proxy if not already present
+    if ! grep -q "systemProp.http.proxyHost" "$GRADLE_PROPS" 2>/dev/null; then
+        PROXY_HOST=$(echo "$HTTP_PROXY" | sed -E 's|https?://||' | cut -d: -f1)
+        PROXY_PORT=$(echo "$HTTP_PROXY" | sed -E 's|https?://||' | cut -d: -f2)
+        cat >> "$GRADLE_PROPS" <<EOF
 systemProp.http.proxyHost=$PROXY_HOST
 systemProp.http.proxyPort=$PROXY_PORT
 systemProp.https.proxyHost=$PROXY_HOST
 systemProp.https.proxyPort=$PROXY_PORT
 systemProp.http.nonProxyHosts=localhost|127.0.0.1|*.local
 EOF
-    echo "Added Gradle proxy settings (host=$PROXY_HOST, port=$PROXY_PORT)"
+        echo "Added Gradle proxy settings (host=$PROXY_HOST, port=$PROXY_PORT)"
+    else
+        echo "Gradle proxy settings already present"
+    fi
+else
+    # No sandbox — remove proxy settings if present
+    if grep -q "systemProp.http.proxyHost" "$GRADLE_PROPS" 2>/dev/null; then
+        sed -i '/^systemProp\.http\.proxyHost=/d' "$GRADLE_PROPS"
+        sed -i '/^systemProp\.http\.proxyPort=/d' "$GRADLE_PROPS"
+        sed -i '/^systemProp\.https\.proxyHost=/d' "$GRADLE_PROPS"
+        sed -i '/^systemProp\.https\.proxyPort=/d' "$GRADLE_PROPS"
+        sed -i '/^systemProp\.http\.nonProxyHosts=/d' "$GRADLE_PROPS"
+        # Remove trailing blank lines
+        sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$GRADLE_PROPS"
+        echo "Removed stale Gradle proxy settings (sandbox not active)"
+    fi
 fi
 
 echo "Sandbox setup complete."
