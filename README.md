@@ -175,7 +175,7 @@ The **Activity** tab shows recent jobs (both regular and workflow) sorted by cre
 
 The **Infrastructure** tab shows inventories and hosts from the active AAP instance with search support. Tap an inventory to see its hosts and details.
 
-### Jane AI Assistant
+### Jane AI Assistant (Android only)
 
 Access Jane via the chat icon. Ask questions in natural language about your AAP instance:
 

@@ -56,6 +56,20 @@ Three separate Ktor API service interfaces: `AapApiService` (Controller), `EdaAp
 - **composeApp module (`composeApp/`):** Compose Multiplatform UI -- navigation, screens (Dashboard, Templates, Activity, Infrastructure, EDA, Chat), themes, components. Source sets: `commonMain`, `androidMain`, `desktopMain`.
 - **app module (`app/`):** Android-only -- `MainActivity`, AI assistant (`assistant/` package with LLM providers, tool execution), Settings screens (General/Instances/Agent/Tools), Koin DI wiring. Depends on `:shared` and `:composeApp`.
 
+### Where to Put New Code (Android-first, Desktop stretch goal)
+
+| Target module | When to use | Examples |
+|---------------|-------------|----------|
+| `shared/commonMain` | Pure logic, no platform APIs | New tools, repository methods, data models, engine features |
+| `composeApp/commonMain` | UI that should work on all platforms | New screens, components, ViewModels |
+| `app/` | Android-only features, no KMP abstraction needed | AppFunctions, widgets, notification channels, WorkManager, Wear OS |
+| `composeApp/androidMain` | UI that uses Android-specific APIs | Camera, biometrics, platform-specific pickers |
+
+Rules:
+- **Don't create `expect/actual` unless you plan a desktop implementation.** If a feature is Android-only, put it in `app/` — no ceremony needed.
+- **Don't put shared logic in `app/`.** If a tool, repository, or engine feature lives in `app/`, desktop can never reach it.
+- Android-only screens plug into the shared nav graph via composable lambda injection (see `assistantContent` pattern in `AppNavigation`).
+
 ### Layer Responsibilities
 
 - **Network Layer:** Ktor `HttpClient` with engine abstraction (`HttpEngine` expect/actual), auth interceptor, self-signed cert support via `TlsTrustManager`. Instance discovery via `InstanceDiscovery` detects platform type (AAP/AWX/Jewel) and component versions.
@@ -65,7 +79,7 @@ Three separate Ktor API service interfaces: `AapApiService` (Controller), `EdaAp
 
 ## AI Assistant Architecture
 
-The AI assistant (`assistant/` package in `app/` module, Android-only for now) provides natural-language interaction with AAP via tool-use LLMs. Full pipeline flow with component responsibilities is documented in `docs/reference/tool-pipeline-architecture.md`.
+The AI assistant (`assistant/` package in `app/` module, Android-only for now) provides natural-language interaction with AAP via tool-use LLMs. The engine, LLM providers, and tools have zero Android dependencies and are planned to move to `shared/commonMain` (#243). Full pipeline flow with component responsibilities is documented in `docs/reference/tool-pipeline-architecture.md`.
 
 ### Tool System
 
