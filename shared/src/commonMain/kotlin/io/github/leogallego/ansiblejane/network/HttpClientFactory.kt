@@ -54,17 +54,17 @@ class HttpClientFactory(
         val edaClient = EdaApiClient(client)
 
         val existingClients = cached?.httpClients ?: emptyList()
+        val newClients = mutableListOf(client)
         val controllerClient = cached?.controller ?: run {
             val apiVersion = resolveApiVersion(instance.apiVersion)
             val ctrlHttp = buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id)
-            AapApiClient(ctrlHttp).also {
-                // ctrlHttp tracked via the list below
-            }
+            newClients.add(ctrlHttp)
+            AapApiClient(ctrlHttp)
         }
         val base = cached ?: ClientGroup(controller = controllerClient)
         clientCache[instance.id] = base.copy(
             eda = edaClient,
-            httpClients = existingClients + client
+            httpClients = existingClients + newClients
         )
         return edaClient
     }
@@ -81,15 +81,17 @@ class HttpClientFactory(
         val platformClient = PlatformApiClient(client)
 
         val existingClients = cached?.httpClients ?: emptyList()
+        val newClients = mutableListOf(client)
         val controllerClient = cached?.controller ?: run {
             val apiVersion = resolveApiVersion(instance.apiVersion)
             val ctrlHttp = buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id)
+            newClients.add(ctrlHttp)
             AapApiClient(ctrlHttp)
         }
         val base = cached ?: ClientGroup(controller = controllerClient)
         clientCache[instance.id] = base.copy(
             platform = platformClient,
-            httpClients = existingClients + client
+            httpClients = existingClients + newClients
         )
         return platformClient
     }
@@ -111,8 +113,10 @@ class HttpClientFactory(
         trustSelfSigned: Boolean,
         instanceId: String
     ): HttpClient {
-        val instanceToken = tokenManager.getInstanceById(instanceId)?.token
-        return createPlatformHttpClient(trustSelfSigned) {
+        val instance = tokenManager.getInstanceById(instanceId)
+        val instanceToken = instance?.token
+        val certFingerprint = instance?.certFingerprint
+        return createPlatformHttpClient(trustSelfSigned, certFingerprint) {
             expectSuccess = true
 
             install(ContentNegotiation) { json(json) }

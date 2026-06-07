@@ -5,5 +5,6 @@ import io.ktor.client.HttpClientConfig
 
 expect fun createPlatformHttpClient(
     trustSelfSigned: Boolean = false,
+    expectedFingerprint: String? = null,
     block: HttpClientConfig<*>.() -> Unit = {}
 ): HttpClient

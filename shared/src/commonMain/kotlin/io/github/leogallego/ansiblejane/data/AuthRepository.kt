@@ -8,7 +8,6 @@ import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import io.github.leogallego.ansiblejane.network.InstanceDiscovery
 import io.github.leogallego.ansiblejane.network.createPlatformHttpClient
 import io.github.leogallego.ansiblejane.network.networkJson
-import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -17,14 +16,13 @@ import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class AuthRepository(
     private val tokenManager: ITokenManager,
     private val apiProvider: IAapApiProvider,
-    private val instanceDiscovery: InstanceDiscovery
+    private val instanceDiscovery: InstanceDiscovery,
+    private val scope: CoroutineScope
 ) : IAuthRepository {
 
     override suspend fun validateCredentials(
@@ -37,10 +35,9 @@ class AuthRepository(
         return try {
             val detector = ApiVersionDetector()
             val apiVersion = detector.detect(baseUrl, token, trustSelfSigned)
-            val api = buildApiClient(baseUrl, apiVersion, token, trustSelfSigned)
-            val response = api.getMe()
-            val user = response.results.firstOrNull()
-                ?: return Result.failure(Exception("No user data returned"))
+            val user = withOneOffClient(baseUrl, apiVersion, token, trustSelfSigned) { api ->
+                api.getMe().results.firstOrNull()
+            } ?: return Result.failure(Exception("No user data returned"))
 
             val instanceId = tokenManager.saveCredentials(
                 baseUrl = baseUrl,
@@ -71,10 +68,9 @@ class AuthRepository(
             } catch (_: Exception) {
                 ApiVersion.CONTROLLER_V2
             }
-            val api = buildApiClient(instance.baseUrl, apiVersion, newToken, trustSelfSigned)
-            val response = api.getMe()
-            val user = response.results.firstOrNull()
-                ?: return Result.failure(Exception("No user data returned"))
+            val user = withOneOffClient(instance.baseUrl, apiVersion, newToken, trustSelfSigned) { api ->
+                api.getMe().results.firstOrNull()
+            } ?: return Result.failure(Exception("No user data returned"))
 
             tokenManager.saveCredentials(
                 baseUrl = instance.baseUrl,
@@ -105,15 +101,14 @@ class AuthRepository(
             } catch (_: Exception) {
                 ApiVersion.CONTROLLER_V2
             }
-            val api = buildApiClient(
+            val user = withOneOffClient(
                 activeInstance.baseUrl, apiVersion,
                 activeInstance.token, activeInstance.trustSelfSigned
+            ) { api ->
+                api.getMe().results.firstOrNull()
+            } ?: return CredentialStatus.ValidationFailed(
+                Exception("No user data returned")
             )
-            val response = api.getMe()
-            val user = response.results.firstOrNull()
-                ?: return CredentialStatus.ValidationFailed(
-                    Exception("No user data returned")
-                )
             CredentialStatus.Valid(user)
         } catch (e: Exception) {
             CredentialStatus.ValidationFailed(e)
@@ -137,7 +132,7 @@ class AuthRepository(
         apiVersion: ApiVersion,
         trustSelfSigned: Boolean
     ) {
-        CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+        scope.launch {
             try {
                 val info = instanceDiscovery.discover(baseUrl, token, apiVersion, trustSelfSigned)
                 tokenManager.updateInstanceInfo(instanceId, info)
@@ -149,12 +144,13 @@ class AuthRepository(
         }
     }
 
-    private fun buildApiClient(
+    private suspend fun <T> withOneOffClient(
         baseUrl: String,
         apiVersion: ApiVersion,
         token: String,
-        trustSelfSigned: Boolean
-    ): AapApiClient {
+        trustSelfSigned: Boolean,
+        block: suspend (AapApiClient) -> T
+    ): T {
         val client = createPlatformHttpClient(trustSelfSigned) {
             expectSuccess = true
             install(ContentNegotiation) { json(networkJson) }
@@ -167,6 +163,10 @@ class AuthRepository(
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
         }
-        return AapApiClient(client)
+        return try {
+            block(AapApiClient(client))
+        } finally {
+            client.close()
+        }
     }
 }

@@ -8,6 +8,9 @@ import io.github.leogallego.ansiblejane.platform.DataStoreFactory
 import io.github.leogallego.ansiblejane.platform.NotificationManager
 import io.github.leogallego.ansiblejane.platform.PlatformUtils
 import io.github.leogallego.ansiblejane.platform.SecureKeyStorage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -23,7 +26,7 @@ val platformModule = module {
 
 val dataModule = module {
     includes(sharedDataModule, sharedNetworkModule, platformModule)
-    single { AuthRepository(get(), get(), get()) } bind IAuthRepository::class
+    single { AuthRepository(get(), get(), get(), CoroutineScope(SupervisorJob() + Dispatchers.Default)) } bind IAuthRepository::class
     single { TemplateRepository(get<IAapApiProvider>()) } bind ITemplateRepository::class
     single { JobRepository(get<IAapApiProvider>()) } bind IJobRepository::class
     single { WorkflowRepository(get<IAapApiProvider>()) } bind IWorkflowRepository::class
