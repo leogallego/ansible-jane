@@ -32,9 +32,3 @@ class ScheduleRepository(private val apiProvider: IAapApiProvider) : IScheduleRe
         }
     }
 }
-
-data class SchedulesResult(
-    val schedules: List<Schedule>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

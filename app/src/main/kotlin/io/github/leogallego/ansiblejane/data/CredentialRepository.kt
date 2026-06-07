@@ -36,9 +36,3 @@ class CredentialRepository(private val apiProvider: IAapApiProvider) : ICredenti
         }
     }
 }
-
-data class CredentialListResult(
-    val credentials: List<Credential>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

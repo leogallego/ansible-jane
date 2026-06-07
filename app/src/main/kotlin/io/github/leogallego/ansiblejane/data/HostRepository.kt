@@ -86,15 +86,3 @@ class HostRepository(private val apiProvider: IAapApiProvider) : IHostRepository
         }
     }
 }
-
-data class HostListResult(
-    val hosts: List<Host>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)
-
-data class JobHostSummaryResult(
-    val summaries: List<JobHostSummary>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

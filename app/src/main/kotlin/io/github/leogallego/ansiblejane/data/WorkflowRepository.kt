@@ -142,15 +142,3 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
         }
     }
 }
-
-data class WorkflowTemplateListResult(
-    val templates: List<WorkflowJobTemplate>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)
-
-data class PendingApprovalResult(
-    val approvals: List<WorkflowApproval>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

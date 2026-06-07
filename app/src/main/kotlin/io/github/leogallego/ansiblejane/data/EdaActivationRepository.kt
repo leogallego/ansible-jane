@@ -34,9 +34,3 @@ class EdaActivationRepository(private val apiProvider: IAapApiProvider) : IEdaAc
         }
     }
 }
-
-data class EdaActivationListResult(
-    val activations: List<EdaActivation>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

@@ -36,9 +36,3 @@ class InventoryRepository(private val apiProvider: IAapApiProvider) : IInventory
         }
     }
 }
-
-data class InventoryListResult(
-    val inventories: List<Inventory>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

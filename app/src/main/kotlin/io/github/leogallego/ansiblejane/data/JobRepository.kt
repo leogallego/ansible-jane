@@ -78,9 +78,3 @@ class JobRepository(private val apiProvider: IAapApiProvider) : IJobRepository {
         }
     }
 }
-
-data class RecentJobsResult(
-    val jobs: List<Job>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

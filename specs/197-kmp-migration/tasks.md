@@ -250,44 +250,44 @@ Read skills/kotlin-ui-adaptive-resources/SKILL.md
 
 ### Import Migration
 
-- [ ] T068 [P] [US5] Batch-migrate Compose imports in UI files (60 files): replace `androidx.compose.*` with Compose Multiplatform equivalents. Move files from `app/src/main/kotlin/.../ui/` to `composeApp/src/commonMain/kotlin/.../ui/`. Most imports are identical (`org.jetbrains.compose.*` or same `androidx.compose.*` re-exported by CMP)
-- [ ] T069 [P] [US5] Batch-migrate ViewModel imports in presentation files (33 files): replace `androidx.lifecycle.ViewModel` with CMP `ViewModel` (from `org.jetbrains.lifecycle`). Move from `app/src/main/kotlin/.../presentation/` to `composeApp/src/commonMain/kotlin/.../presentation/`
+- [X] T068 [P] [US5] Batch-migrate Compose imports in UI files (60 files): replace `androidx.compose.*` with Compose Multiplatform equivalents. Move files from `app/src/main/kotlin/.../ui/` to `composeApp/src/commonMain/kotlin/.../ui/`. Most imports are identical (`org.jetbrains.compose.*` or same `androidx.compose.*` re-exported by CMP)
+- [X] T069 [P] [US5] Batch-migrate ViewModel imports in presentation files (33 files): replace `androidx.lifecycle.ViewModel` with CMP `ViewModel` (from `org.jetbrains.lifecycle`). Move from `app/src/main/kotlin/.../presentation/` to `composeApp/src/commonMain/kotlin/.../presentation/`
 
 ### collectAsStateWithLifecycle → collectAsState
 
-- [ ] T070 [US5] Replace all 56 `collectAsStateWithLifecycle()` calls with `collectAsState()` across 20 files. Files affected (check each): `DashboardScreen.kt`, `TemplatesScreen.kt`, `ActivityScreen.kt`, `InfrastructureScreen.kt`, `EdaScreen.kt`, `ChatScreen.kt`, `SettingsScreen.kt`, `GeneralTab.kt`, `InstancesTab.kt`, `AgentTab.kt`, `ToolsTab.kt`, `AuthScreen.kt`, `ApprovalDetailScreen.kt`, `WorkflowJobStatusScreen.kt`, `JobStatusScreen.kt`, `HostsScreen.kt`, `SchedulesScreen.kt`, `EdaAuditScreen.kt`, `BackupRestoreSection.kt`, `McpSettingsSection.kt`. Note: `collectAsState()` doesn't stop when backgrounded — add TODO comments for expensive flows (polling) that may need platform-specific lifecycle handling later
+- [X] T070 [US5] Replace all 56 `collectAsStateWithLifecycle()` calls with `collectAsState()` across 20 files. Files affected (check each): `DashboardScreen.kt`, `TemplatesScreen.kt`, `ActivityScreen.kt`, `InfrastructureScreen.kt`, `EdaScreen.kt`, `ChatScreen.kt`, `SettingsScreen.kt`, `GeneralTab.kt`, `InstancesTab.kt`, `AgentTab.kt`, `ToolsTab.kt`, `AuthScreen.kt`, `ApprovalDetailScreen.kt`, `WorkflowJobStatusScreen.kt`, `JobStatusScreen.kt`, `HostsScreen.kt`, `SchedulesScreen.kt`, `EdaAuditScreen.kt`, `BackupRestoreSection.kt`, `McpSettingsSection.kt`. Note: `collectAsState()` doesn't stop when backgrounded — add TODO comments for expensive flows (polling) that may need platform-specific lifecycle handling later
 
 ### Navigation 3 Migration
 
-- [ ] T071 [US5] Rewrite `AppNavigation.kt` in `composeApp/src/commonMain/kotlin/.../navigation/AppNavigation.kt` — replace `NavHost`/`NavController`/`composable()` with Navigation 3 `NavDisplay`/`BackStack` pattern. Define all destinations as data classes. Keep `testTagsAsResourceId = true` for UI automation
-- [ ] T072 [US5] Update all screen composables to receive Navigation 3 typed route parameters instead of NavController arguments. Update navigation calls from `navController.navigate()` to back stack manipulation
-- [ ] T073 [US5] Verify all navigation flows: Dashboard ↔ Templates ↔ Activity ↔ Infrastructure ↔ EDA ↔ Chat. Settings flow (tabbed: General/Instances/Agent/Tools). Job launch → job status. Workflow → workflow status. Template → approval detail
+- [X] T071 [US5] Rewrite `AppNavigation.kt` in `composeApp/src/commonMain/kotlin/.../navigation/AppNavigation.kt` — replace `NavHost`/`NavController`/`composable()` with Navigation 3 `NavDisplay`/`BackStack` pattern. Define all destinations as data classes. Keep `testTagsAsResourceId = true` for UI automation
+- [X] T072 [US5] Update all screen composables to receive Navigation 3 typed route parameters instead of NavController arguments. Update navigation calls from `navController.navigate()` to back stack manipulation
+- [X] T073 [US5] Verify all navigation flows: Dashboard ↔ Templates ↔ Activity ↔ Infrastructure ↔ EDA ↔ Chat. Settings flow (tabbed: General/Instances/Agent/Tools). Job launch → job status. Workflow → workflow status. Template → approval detail
 
 ### Android-Specific UI Fixes
 
-- [ ] T074 [US5] Fix `AuthScreen.kt` in `composeApp/src/commonMain/kotlin/.../ui/AuthScreen.kt` — replace `android.widget.Toast` with Compose `Snackbar` or call `PlatformUtils.showToast()`
-- [ ] T075 [US5] Fix `BackupRestoreSection.kt` in `composeApp/src/commonMain/kotlin/.../ui/settings/BackupRestoreSection.kt` — replace `Context`/`Uri`/`Toast` with `expect/actual` file picker and `PlatformUtils`
-- [ ] T076 [US5] Fix `GeneralTab.kt` in `composeApp/src/commonMain/kotlin/.../ui/settings/GeneralTab.kt` — replace `Intent`/`Uri` (open browser) with `PlatformUtils.openUrl()`
-- [ ] T077 [US5] Keep `MainActivity.kt` in `composeApp/src/androidMain/kotlin/.../MainActivity.kt` — Android entry point with `enableEdgeToEdge()`, Intent handling, deep links. Calls into shared `App()` composable
+- [X] T074 [US5] Fix `AuthScreen.kt` in `composeApp/src/commonMain/kotlin/.../ui/AuthScreen.kt` — replace `android.widget.Toast` with Compose `Snackbar` or call `PlatformUtils.showToast()`
+- [X] T075 [US5] Fix `BackupRestoreSection.kt` in `composeApp/src/commonMain/kotlin/.../ui/settings/BackupRestoreSection.kt` — replace `Context`/`Uri`/`Toast` with `expect/actual` file picker and `PlatformUtils`
+- [X] T076 [US5] Fix `GeneralTab.kt` in `composeApp/src/commonMain/kotlin/.../ui/settings/GeneralTab.kt` — replace `Intent`/`Uri` (open browser) with `PlatformUtils.openUrl()`
+- [X] T077 [US5] Keep `MainActivity.kt` in `composeApp/src/androidMain/kotlin/.../MainActivity.kt` — Android entry point with `enableEdgeToEdge()`, Intent handling, deep links. Calls into shared `App()` composable
 
 ### DI Updates
 
-- [ ] T078 [US5] Update Koin DI modules for CMP ViewModel injection — replace `viewModel {}` (koin-android) with CMP-compatible ViewModel factory. Update `composeApp/build.gradle.kts` with correct koin-compose dependencies
+- [X] T078 [US5] Update Koin DI modules for CMP ViewModel injection — replace `viewModel {}` (koin-android) with CMP-compatible ViewModel factory. Update `composeApp/build.gradle.kts` with correct koin-compose dependencies
 
 ### Dependency Cleanup (old Android-only libraries)
 
-- [ ] T078a [US5] Remove Compose BOM (`2026.05.01`) from `gradle/libs.versions.toml` and `build.gradle.kts` — replaced by Compose Multiplatform 1.11.1. Old BOM may conflict with CMP-provided Compose artifacts
-- [ ] T078b [P] [US5] Remove `androidx.navigation:navigation-compose` (2.9.8) from version catalog and build files — replaced by Navigation 3 (CMP-native)
-- [ ] T078c [P] [US5] Remove `androidx.lifecycle:lifecycle-*` Android-only artifacts from version catalog — replaced by CMP lifecycle equivalents. Keep only if still needed in `composeApp/androidMain/` for Activity-specific lifecycle
-- [ ] T078d [P] [US5] Replace `koin-android`/`koin-androidx-compose` with `koin-core`/`koin-compose` in `shared/` and `composeApp/`. Keep `koin-android` only in `composeApp/androidMain/` for `androidContext()` bootstrap
-- [ ] T078e [P] [US5] Replace `kotlinx-coroutines-android` with `kotlinx-coroutines-core` in `shared/`. Keep `coroutines-android` only in `composeApp/androidMain/` for `Dispatchers.Main` (Android requires the Android dispatcher artifact)
+- [X] T078a [US5] Remove Compose BOM (`2026.05.01`) from `gradle/libs.versions.toml` and `build.gradle.kts` — replaced by Compose Multiplatform 1.11.1. Old BOM may conflict with CMP-provided Compose artifacts
+- [X] T078b [P] [US5] Remove `androidx.navigation:navigation-compose` (2.9.8) from version catalog and build files — replaced by Navigation 3 (CMP-native)
+- [X] T078c [P] [US5] Remove `androidx.lifecycle:lifecycle-*` Android-only artifacts from version catalog — replaced by CMP lifecycle equivalents. Keep only if still needed in `composeApp/androidMain/` for Activity-specific lifecycle
+- [X] T078d [P] [US5] Replace `koin-android`/`koin-androidx-compose` with `koin-core`/`koin-compose` in `shared/` and `composeApp/`. Keep `koin-android` only in `composeApp/androidMain/` for `androidContext()` bootstrap
+- [X] T078e [P] [US5] Replace `kotlinx-coroutines-android` with `kotlinx-coroutines-core` in `shared/`. Keep `coroutines-android` only in `composeApp/androidMain/` for `Dispatchers.Main` (Android requires the Android dispatcher artifact)
 
 **Reference**: Consult `tmp/Kai/` (Kai reference project) for CMP module structure, Koin setup, and Navigation 3 patterns in a production KMP app.
 
 ### Validation
 
-- [ ] T079 [US5] Build and run Android app: `./gradlew :composeApp:assembleDebug`. Verify all screens render, navigation works, state collection works. Test on emulator
-- [ ] T080 [US5] Run unit tests: `./gradlew testDebugUnitTest`. Fix any failures from import/lifecycle changes
+- [X] T079 [US5] Build and run Android app: `./gradlew :composeApp:assembleDebug`. Verify all screens render, navigation works, state collection works. Test on emulator
+- [X] T080 [US5] Run unit tests: `./gradlew testDebugUnitTest`. Fix any failures from import/lifecycle changes
 
 **Checkpoint**: All 60 screens in `composeApp/commonMain/`. Navigation 3 working. All ViewModels use CMP lifecycle. Android app works identically.
 

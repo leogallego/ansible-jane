@@ -29,9 +29,3 @@ sealed interface AssistantUiState {
     data class Error(val error: AppError) : AssistantUiState
 }
 
-sealed interface ModelFetchState {
-    data object Idle : ModelFetchState
-    data object Loading : ModelFetchState
-    data class Success(val count: Int) : ModelFetchState
-    data class Error(val message: String) : ModelFetchState
-}

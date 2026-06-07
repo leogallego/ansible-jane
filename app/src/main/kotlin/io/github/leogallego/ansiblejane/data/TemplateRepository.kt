@@ -39,9 +39,3 @@ class TemplateRepository(private val apiProvider: IAapApiProvider) : ITemplateRe
         }
     }
 }
-
-data class TemplateListResult(
-    val templates: List<JobTemplate>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

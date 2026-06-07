@@ -24,9 +24,3 @@ class EdaAuditRepository(private val apiProvider: IAapApiProvider) : IEdaAuditRe
         }
     }
 }
-
-data class EdaAuditResult(
-    val auditRules: List<EdaRuleAudit>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

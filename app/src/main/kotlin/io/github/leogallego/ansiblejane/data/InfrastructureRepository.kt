@@ -74,15 +74,3 @@ class InfrastructureRepository(private val apiProvider: IAapApiProvider) : IInfr
         }
     }
 }
-
-data class InstanceListResult(
-    val instances: List<Instance>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)
-
-data class InstanceGroupListResult(
-    val instanceGroups: List<InstanceGroup>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)

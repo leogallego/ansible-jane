@@ -58,15 +58,3 @@ class ProjectRepository(private val apiProvider: IAapApiProvider) : IProjectRepo
         }
     }
 }
-
-data class ProjectListResult(
-    val projects: List<Project>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)
-
-data class ExecutionEnvironmentListResult(
-    val executionEnvironments: List<ExecutionEnvironment>,
-    val hasMore: Boolean,
-    val totalCount: Int
-)
