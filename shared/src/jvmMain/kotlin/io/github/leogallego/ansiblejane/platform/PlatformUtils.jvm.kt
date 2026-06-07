@@ -14,5 +14,5 @@ actual class PlatformUtils {
         println("Toast: $message")
     }
 
-    actual fun getAppVersion(): String = "0.0.0-desktop"
+    actual fun getAppVersion(): String = "0.7.6-alpha.0"
 }
