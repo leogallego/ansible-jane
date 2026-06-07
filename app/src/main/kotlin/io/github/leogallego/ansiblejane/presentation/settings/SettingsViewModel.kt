@@ -22,6 +22,7 @@ import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -313,19 +314,24 @@ class SettingsViewModel(
     fun fetchAvailableModels(baseUrl: String, apiKey: String?) {
         viewModelScope.launch {
             updateReady { copy(modelFetchState = ModelFetchState.Loading) }
-            val fetcher = ModelFetcher(buildLlmClient(), json)
-            when (val result = fetcher.fetchModels(baseUrl, apiKey)) {
-                is ModelFetcher.Result.Success -> {
-                    updateReady {
-                        copy(
-                            fetchedModels = result.models,
-                            modelFetchState = ModelFetchState.Success(result.models.size)
-                        )
+            val client = buildLlmClient()
+            try {
+                val fetcher = ModelFetcher(client, json)
+                when (val result = fetcher.fetchModels(baseUrl, apiKey)) {
+                    is ModelFetcher.Result.Success -> {
+                        updateReady {
+                            copy(
+                                fetchedModels = result.models,
+                                modelFetchState = ModelFetchState.Success(result.models.size)
+                            )
+                        }
+                    }
+                    is ModelFetcher.Result.Error -> {
+                        updateReady { copy(modelFetchState = ModelFetchState.Error(result.message)) }
                     }
                 }
-                is ModelFetcher.Result.Error -> {
-                    updateReady { copy(modelFetchState = ModelFetchState.Error(result.message)) }
-                }
+            } finally {
+                client.close()
             }
         }
     }
@@ -493,7 +499,13 @@ class SettingsViewModel(
 
     private fun buildLlmClient(): HttpClient {
         val instance = tokenManager.activeInstance.value
-        return createPlatformHttpClient(trustSelfSigned = instance?.trustSelfSigned == true)
+        return createPlatformHttpClient(trustSelfSigned = instance?.trustSelfSigned == true) {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 30_000
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 30_000
+            }
+        }
     }
 
     private inline fun updateReady(crossinline transform: SettingsUiState.Ready.() -> SettingsUiState.Ready) {

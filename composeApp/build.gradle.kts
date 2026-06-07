@@ -98,7 +98,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Deb, TargetFormat.Rpm)
             packageName = "AnsibleJane"
-            packageVersion = "0.7.6"
+            packageVersion = providers.gradleProperty("appVersionName").get().substringBefore("-")
 
             linux {
                 modules("jdk.security.auth")

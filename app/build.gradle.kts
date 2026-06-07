@@ -14,8 +14,8 @@ android {
         applicationId = "io.github.leogallego.ansiblejane"
         minSdk = 31
         targetSdk = 36
-        versionCode = 26060800
-        versionName = "0.7.7-alpha.0"
+        versionCode = providers.gradleProperty("appVersionCode").get().toInt()
+        versionName = providers.gradleProperty("appVersionName").get()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

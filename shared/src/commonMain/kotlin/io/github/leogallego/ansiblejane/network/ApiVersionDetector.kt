@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.network
 
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
@@ -20,6 +21,10 @@ class ApiVersionDetector {
             expectSuccess = false
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
+            }
+            install(HttpTimeout) {
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 15_000
             }
             defaultRequest {
                 header(HttpHeaders.Authorization, "Bearer $token")

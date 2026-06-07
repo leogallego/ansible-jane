@@ -9,6 +9,7 @@ import io.github.leogallego.ansiblejane.network.InstanceDiscovery
 import io.github.leogallego.ansiblejane.network.createPlatformHttpClient
 import io.github.leogallego.ansiblejane.network.networkJson
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.header
@@ -157,6 +158,10 @@ class AuthRepository(
         val client = createPlatformHttpClient(trustSelfSigned) {
             expectSuccess = true
             install(ContentNegotiation) { json(networkJson) }
+            install(HttpTimeout) {
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 30_000
+            }
             defaultRequest {
                 url("${baseUrl.trimEnd('/')}${apiVersion.prefix}")
                 header(HttpHeaders.Authorization, "Bearer $token")

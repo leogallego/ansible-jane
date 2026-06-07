@@ -6,6 +6,17 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+val generateVersionResource by tasks.registering {
+    val versionName = providers.gradleProperty("appVersionName").get()
+    val outputDir = layout.buildDirectory.dir("generated/resources/jvmMain")
+    outputs.dir(outputDir)
+    doLast {
+        val file = outputDir.get().file("version.properties").asFile
+        file.parentFile.mkdirs()
+        file.writeText("version=$versionName\n")
+    }
+}
+
 kotlin {
     android {
         namespace = "io.github.leogallego.ansiblejane.shared"
@@ -61,9 +72,12 @@ kotlin {
             implementation(libs.cryptography.provider.jdk)
         }
 
-        jvmMain.dependencies {
-            implementation(libs.ktor.client.cio)
-            implementation(libs.cryptography.provider.jdk)
+        jvmMain {
+            resources.srcDir(generateVersionResource.map { it.outputs.files.singleFile })
+            dependencies {
+                implementation(libs.ktor.client.cio)
+                implementation(libs.cryptography.provider.jdk)
+            }
         }
 
         // iosMain.dependencies added in Phase 8

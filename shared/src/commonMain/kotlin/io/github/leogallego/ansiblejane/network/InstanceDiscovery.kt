@@ -6,6 +6,7 @@ import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.PlatformType
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
@@ -37,6 +38,10 @@ class InstanceDiscovery(private val json: Json) {
         val client = createPlatformHttpClient(trustSelfSigned) {
             expectSuccess = false
             install(ContentNegotiation) { json(json) }
+            install(HttpTimeout) {
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 15_000
+            }
             defaultRequest {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }

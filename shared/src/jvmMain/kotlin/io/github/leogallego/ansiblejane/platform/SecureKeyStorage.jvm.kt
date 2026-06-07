@@ -6,20 +6,25 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermissions
 import java.security.KeyStore
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
+import java.security.SecureRandom
 import javax.crypto.spec.SecretKeySpec
 
 actual class SecureKeyStorage {
 
     private val provider = CryptographyProvider.Default
-    private val keystoreFile = File(System.getProperty("user.home"), ".ansiblejane/keystore.p12")
-    private val keystorePassword = "${System.getProperty("user.name")}ansiblejane".toCharArray()
+    private val configDir = File(System.getProperty("user.home"), ".ansiblejane")
+    private val keystoreFile = File(configDir, "keystore.p12")
+    private val passwordFile = File(configDir, "keystore.pwd")
+    private val keystorePassword: CharArray
     private val dataKey: ByteArray
 
     init {
-        keystoreFile.parentFile?.mkdirs()
+        configDir.mkdirs()
+        restrictPermissions(configDir)
+        keystorePassword = loadOrCreatePassword()
         dataKey = loadOrCreateDataKey()
     }
 
@@ -35,6 +40,19 @@ actual class SecureKeyStorage {
             .keyDecoder()
             .decodeFromByteArray(AES.Key.Format.RAW, dataKey)
         aesKey.cipher().decrypt(data)
+    }
+
+    private fun loadOrCreatePassword(): CharArray {
+        if (passwordFile.exists()) {
+            return passwordFile.readText().toCharArray()
+        }
+        val random = SecureRandom()
+        val bytes = ByteArray(32)
+        random.nextBytes(bytes)
+        val password = bytes.joinToString("") { "%02x".format(it) }
+        passwordFile.writeText(password)
+        restrictPermissions(passwordFile)
+        return password.toCharArray()
     }
 
     private fun loadOrCreateDataKey(): ByteArray {
@@ -69,8 +87,22 @@ actual class SecureKeyStorage {
         FileOutputStream(keystoreFile).use { fos ->
             keyStore.store(fos, keystorePassword)
         }
+        restrictPermissions(keystoreFile)
 
         return newKey
+    }
+
+    private fun restrictPermissions(file: File) {
+        try {
+            val perms = PosixFilePermissions.fromString("rw-------")
+            Files.setPosixFilePermissions(file.toPath(), perms)
+        } catch (_: UnsupportedOperationException) {
+            file.setReadable(false, false)
+            file.setReadable(true, true)
+            file.setWritable(false, false)
+            file.setWritable(true, true)
+            file.setExecutable(false, false)
+        }
     }
 
     companion object {

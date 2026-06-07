@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.network
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
@@ -15,7 +16,8 @@ import kotlinx.serialization.json.Json
 private data class ClientGroup(
     val controller: AapApiClient,
     val eda: EdaApiClient? = null,
-    val platform: PlatformApiClient? = null
+    val platform: PlatformApiClient? = null,
+    val httpClients: List<HttpClient> = emptyList()
 )
 
 class HttpClientFactory(
@@ -36,7 +38,7 @@ class HttpClientFactory(
         val apiVersion = resolveApiVersion(instance.apiVersion)
         val client = buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id)
         val apiClient = AapApiClient(client)
-        clientCache[instance.id] = ClientGroup(controller = apiClient)
+        clientCache[instance.id] = ClientGroup(controller = apiClient, httpClients = listOf(client))
         return apiClient
     }
 
@@ -51,12 +53,19 @@ class HttpClientFactory(
         val client = buildClient(instance.baseUrl, "/api/eda/v1/", instance.trustSelfSigned, instance.id)
         val edaClient = EdaApiClient(client)
 
+        val existingClients = cached?.httpClients ?: emptyList()
         val controllerClient = cached?.controller ?: run {
             val apiVersion = resolveApiVersion(instance.apiVersion)
-            AapApiClient(buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id))
+            val ctrlHttp = buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id)
+            AapApiClient(ctrlHttp).also {
+                // ctrlHttp tracked via the list below
+            }
         }
-        clientCache[instance.id] = (cached ?: ClientGroup(controller = controllerClient))
-            .copy(eda = edaClient)
+        val base = cached ?: ClientGroup(controller = controllerClient)
+        clientCache[instance.id] = base.copy(
+            eda = edaClient,
+            httpClients = existingClients + client
+        )
         return edaClient
     }
 
@@ -71,18 +80,23 @@ class HttpClientFactory(
         val client = buildClient(instance.baseUrl, "/api/gateway/v1/", instance.trustSelfSigned, instance.id)
         val platformClient = PlatformApiClient(client)
 
+        val existingClients = cached?.httpClients ?: emptyList()
         val controllerClient = cached?.controller ?: run {
             val apiVersion = resolveApiVersion(instance.apiVersion)
-            AapApiClient(buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id))
+            val ctrlHttp = buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id)
+            AapApiClient(ctrlHttp)
         }
-        clientCache[instance.id] = (cached ?: ClientGroup(controller = controllerClient))
-            .copy(platform = platformClient)
+        val base = cached ?: ClientGroup(controller = controllerClient)
+        clientCache[instance.id] = base.copy(
+            platform = platformClient,
+            httpClients = existingClients + client
+        )
         return platformClient
     }
 
     @Synchronized
     override fun evictInstance(instanceId: String) {
-        clientCache.remove(instanceId)
+        clientCache.remove(instanceId)?.httpClients?.forEach { it.close() }
     }
 
     private fun resolveApiVersion(apiVersionStr: String): ApiVersion = try {
@@ -100,6 +114,12 @@ class HttpClientFactory(
         expectSuccess = true
 
         install(ContentNegotiation) { json(json) }
+
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30_000
+            connectTimeoutMillis = 10_000
+            socketTimeoutMillis = 30_000
+        }
 
         install(Logging) {
             level = logLevel

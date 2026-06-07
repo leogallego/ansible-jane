@@ -1,7 +1,6 @@
 package io.github.leogallego.ansiblejane.model
 
 import kotlinx.serialization.Serializable
-import java.net.URI
 
 @Serializable
 data class McpServerConfig(
@@ -27,8 +26,18 @@ data class AapInstance(
     val instanceInfo: InstanceInfo? = null
 ) {
     val displayLabel: String
-        get() = alias ?: URI(baseUrl).host.orEmpty()
+        get() = alias ?: extractHost(baseUrl)
 
     val hostname: String
-        get() = URI(baseUrl).host.orEmpty()
+        get() = extractHost(baseUrl)
+
+    override fun toString(): String =
+        "AapInstance(id=$id, baseUrl=***, token=***, alias=$alias, apiVersion=$apiVersion)"
+}
+
+private fun extractHost(url: String): String {
+    val withoutScheme = url
+        .removePrefix("https://")
+        .removePrefix("http://")
+    return withoutScheme.substringBefore("/").substringBefore(":")
 }
