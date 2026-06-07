@@ -19,23 +19,41 @@ echo "=== Ansible Jane — Full Test Suite ==="
 echo "Started: $(date)"
 echo ""
 
-# --- 1. Build ---
+# --- 1. Build (Android + Desktop) ---
 echo "--- Stage 1: Build ---"
 if ./gradlew assembleDebug --quiet 2>&1; then
-    pass "assembleDebug"
+    pass "assembleDebug (all Android modules)"
 else
     fail "assembleDebug"
-    echo "Build failed, aborting remaining tests."
+    echo "Android build failed, aborting remaining tests."
     exit 1
+fi
+
+if ./gradlew :composeApp:desktopJar --quiet 2>&1; then
+    pass "desktopJar"
+else
+    fail "desktopJar"
 fi
 echo ""
 
-# --- 2. Unit tests ---
+# --- 2. Unit tests (all modules, all targets) ---
 echo "--- Stage 2: Unit Tests ---"
 if ./gradlew testDebugUnitTest --quiet 2>&1; then
-    pass "testDebugUnitTest"
+    pass "testDebugUnitTest (app + shared + composeApp Android)"
 else
     fail "testDebugUnitTest"
+fi
+
+if ./gradlew :shared:jvmTest --quiet 2>&1; then
+    pass ":shared:jvmTest"
+else
+    fail ":shared:jvmTest"
+fi
+
+if ./gradlew :composeApp:desktopTest --quiet 2>&1; then
+    pass ":composeApp:desktopTest"
+else
+    fail ":composeApp:desktopTest"
 fi
 echo ""
 

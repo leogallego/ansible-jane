@@ -1,6 +1,6 @@
 # Ansible Jane
 
-A lightweight Android app for managing [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Authenticate with your AAP instance, browse job templates, launch playbooks, monitor job status, and interact with Jane, an AI assistant that works with local models (as small as qwen3:8b via Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter) through tool-use and MCP.
+A multiplatform app (Android and Desktop) for managing [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Authenticate with your AAP instance, browse job templates, launch playbooks, monitor job status, and interact with Jane, an AI assistant that works with local models (as small as qwen3:8b via Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter) through tool-use and MCP.
 
 > **Disclaimer:** This project is not affiliated with or endorsed by Red Hat or the Ansible project.
 >
@@ -8,9 +8,16 @@ A lightweight Android app for managing [Ansible Automation Platform (AAP)](https
 
 ## Install
 
+### Android
+
 - **F-Droid** - add this repo to your F-Droid client: `https://leogallego.github.io/ansible-jane/fdroid/repo`
 - **GitHub Releases** - download the latest APK from [Releases](https://github.com/leogallego/ansible-jane/releases/latest)
 - **Obtainium** - point [Obtainium](https://github.com/ImranR98/Obtainium) to this repo for automatic updates
+
+### Desktop
+
+- **Build from source** - build a runnable JAR with `./gradlew :composeApp:desktopJar`
+- **Native package** - build a platform-specific installer with `./gradlew :composeApp:packageDeb` (Linux .deb), `./gradlew :composeApp:packageRpm` (Linux .rpm), or `./gradlew :composeApp:packageDmg` (macOS)
 
 ## Features
 
@@ -34,7 +41,7 @@ A lightweight Android app for managing [Ansible Automation Platform (AAP)](https
 ### AI Assistant (Jane)
 
 - **Natural-language interaction** with your AAP instance using tool-use LLMs
-- **61 local tools** - call AAP APIs directly via Retrofit with zero latency (jobs, inventories, hosts, projects, credentials, EDA, schedules, approvals, platform config, and more)
+- **61 local tools** - call AAP APIs directly via Ktor with zero latency (jobs, inventories, hosts, projects, credentials, EDA, schedules, approvals, platform config, and more)
 - **MCP integration** - connect to [aap-mcp-server](https://github.com/ansible/aap-mcp-server) for additional tool coverage
 - **Per-toolset MCP endpoints** - auto-detects 6 toolset-specific endpoints (jobs, inventory, monitoring, users, security, configuration) to reduce token cost
 - **Category-based tool routing** - ToolRouter selects only relevant tools per query, keeping LLM context small
@@ -58,29 +65,43 @@ A lightweight Android app for managing [Ansible Automation Platform (AAP)](https
 
 | Layer | Technology |
 |-------|-----------|
-| Language | Kotlin |
-| UI | Jetpack Compose + Material 3 (Material You) |
+| Language | Kotlin (Multiplatform) |
+| UI | Compose Multiplatform + Material 3 (Material You) |
 | Architecture | MVVM + Unidirectional Data Flow |
 | AI Engine | [Koog](https://github.com/JetBrains/koog) (JetBrains AI Agent Framework) |
-| Networking | Retrofit + Kotlin Serialization + Coroutines |
+| Networking | Ktor + Kotlin Serialization + Coroutines |
 | DI | Koin |
-| Security | Jetpack DataStore + Google Tink (Android Keystore-backed) |
+| Security | DataStore + cryptography-kotlin AES-256-GCM (Android Keystore on Android, PKCS12 keystore on Desktop) |
 
 ## Requirements
 
-- Android 12+ (API 31)
+- **Android:** Android 12+ (API 31)
+- **Desktop:** JDK 17+ (macOS, Linux, Windows)
 - AAP 2.5+ with Gateway (all API access goes through the gateway)
 - Personal Access Token with appropriate permissions (write access required for launching jobs)
 
 ## Building
 
 1. Clone the repository
-2. Open in Android Studio (Ladybug or later recommended)
+2. Open in Android Studio (Ladybug or later recommended) or IntelliJ IDEA
 3. Sync Gradle
-4. Run on a device or emulator
+
+### Android
 
 ```bash
 ./gradlew assembleDebug
+```
+
+### Desktop
+
+```bash
+# Runnable JAR
+./gradlew :composeApp:desktopJar
+
+# Native package (choose one)
+./gradlew :composeApp:packageDeb   # Linux .deb
+./gradlew :composeApp:packageRpm   # Linux .rpm
+./gradlew :composeApp:packageDmg   # macOS .dmg
 ```
 
 ## Usage
@@ -176,7 +197,7 @@ Access settings via the gear icon in the top bar:
 
 ## Security
 
-- Per-instance credentials encrypted at rest using Google Tink AES-256-GCM with Android Keystore
+- Per-instance credentials encrypted at rest using cryptography-kotlin AES-256-GCM (Android Keystore on Android, PKCS12 keystore at `~/.ansiblejane/` on Desktop)
 - HTTPS-only enforced via network security config
 - No hardcoded URLs or tokens
 - Tokens never stored in plain text
