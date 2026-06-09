@@ -14,17 +14,19 @@ updates:
           - "org.jetbrains.kotlinx:kotlinx-coroutines*"
           - "org.jetbrains.kotlinx:kotlinx-serialization*"
           - "org.jetbrains.kotlinx:kotlinx-collections*"
-      compose:
+          - "org.jetbrains.kotlinx:kotlinx-datetime*"
+      compose-multiplatform:
+        patterns:
+          - "org.jetbrains.compose*"
+          - "org.jetbrains.androidx.lifecycle*"
+          - "org.jetbrains.androidx.navigation*"
+      compose-android:
         patterns:
           - "androidx.compose*"
           - "androidx.activity:activity-compose"
       lifecycle:
         patterns:
           - "androidx.lifecycle*"
-      networking:
-        patterns:
-          - "com.squareup.okhttp3*"
-          - "com.squareup.retrofit2*"
       koin:
         patterns:
           - "io.insert-koin*"
@@ -37,18 +39,26 @@ updates:
       mcp:
         patterns:
           - "io.modelcontextprotocol*"
+      security:
+        patterns:
+          - "dev.whyoleg.cryptography*"
+          - "com.google.crypto.tink*"
       datastore:
         patterns:
           - "androidx.datastore*"
       navigation:
         patterns:
           - "androidx.navigation*"
+      markdown:
+        patterns:
+          - "com.mikepenz*"
       testing:
         patterns:
           - "junit*"
           - "org.robolectric*"
           - "app.cash.turbine*"
           - "androidx.test*"
+          - "com.squareup.okhttp3*"
 
   - package-ecosystem: "github-actions"
     directory: "/"

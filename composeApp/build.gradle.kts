@@ -58,7 +58,7 @@ val generateDesktopAppVersion by tasks.registering {
 kotlin {
     android {
         namespace = "io.github.leogallego.ansiblejane.composeapp"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 31
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
@@ -77,20 +77,13 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.shared)
 
-            @Suppress("DEPRECATION")
-            implementation(compose.runtime)
-            @Suppress("DEPRECATION")
-            implementation(compose.foundation)
-            @Suppress("DEPRECATION")
-            implementation(compose.material3)
-            @Suppress("DEPRECATION")
-            implementation(compose.materialIconsExtended)
-            @Suppress("DEPRECATION")
-            implementation(compose.ui)
-            @Suppress("DEPRECATION")
-            implementation(compose.components.resources)
-            @Suppress("DEPRECATION")
-            implementation(compose.components.uiToolingPreview)
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.material3)
+            implementation(libs.compose.material.icons.extended)
+            implementation(libs.compose.ui)
+            implementation(libs.compose.components.resources)
+            implementation(libs.compose.components.uiToolingPreview)
 
             implementation(libs.cmp.lifecycle.viewmodel)
             implementation(libs.cmp.lifecycle.viewmodel.compose)

@@ -20,7 +20,7 @@ val generateVersionResource by tasks.registering {
 kotlin {
     android {
         namespace = "io.github.leogallego.ansiblejane.shared"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 31
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
