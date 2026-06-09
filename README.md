@@ -16,8 +16,8 @@ A multiplatform app (Android and Desktop) for managing [Ansible Automation Platf
 
 ### Desktop
 
-- **Build from source** - build a runnable JAR with `./gradlew :composeApp:desktopJar`
-- **Native package** - build a platform-specific installer with `./gradlew :composeApp:packageDeb` (Linux .deb), `./gradlew :composeApp:packageRpm` (Linux .rpm), or `./gradlew :composeApp:packageDmg` (macOS)
+- **Build from source** - build a runnable JAR with `./gradlew :composeApp:packageUberJarForCurrentOS`, then run with `java -jar composeApp/build/compose/jars/AnsibleJane-*.jar`
+- **Native package** - build a platform-specific installer with `./gradlew :composeApp:packageDeb` (Linux .deb), `./gradlew :composeApp:packageRpm` (Linux .rpm), or `./gradlew :composeApp:packageDmg` (macOS). Installers are output to `composeApp/build/compose/binaries/main/`
 
 ## Features
 
@@ -95,10 +95,13 @@ A multiplatform app (Android and Desktop) for managing [Ansible Automation Platf
 ### Desktop
 
 ```bash
-# Runnable JAR
-./gradlew :composeApp:desktopJar
+# Runnable uber JAR (output: composeApp/build/compose/jars/AnsibleJane-*.jar)
+./gradlew :composeApp:packageUberJarForCurrentOS
 
-# Native package (choose one)
+# Run the JAR
+java -jar composeApp/build/compose/jars/AnsibleJane-*.jar
+
+# Native package (output: composeApp/build/compose/binaries/main/)
 ./gradlew :composeApp:packageDeb   # Linux .deb
 ./gradlew :composeApp:packageRpm   # Linux .rpm
 ./gradlew :composeApp:packageDmg   # macOS .dmg

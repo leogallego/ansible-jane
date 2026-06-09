@@ -65,7 +65,7 @@ class TinkMigration(private val context: Context) {
 
         var migratedCount = 0
         var failedCount = 0
-        val migratedInstances = state.instances.map { instance ->
+        val migratedInstances = state.instances.mapIndexed { index, instance ->
             try {
                 val decryptedUrl = tinkDecrypt(tinkAead, instance.encryptedUrl)
                 val decryptedToken = tinkDecrypt(tinkAead, instance.encryptedToken)
@@ -76,7 +76,7 @@ class TinkMigration(private val context: Context) {
                 migratedCount++
                 instance.copy(encryptedUrl = reEncryptedUrl, encryptedToken = reEncryptedToken)
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to migrate instance ${instance.id}", e)
+                Log.e(TAG, "Failed to migrate instance $index", e)
                 failedCount++
                 instance
             }

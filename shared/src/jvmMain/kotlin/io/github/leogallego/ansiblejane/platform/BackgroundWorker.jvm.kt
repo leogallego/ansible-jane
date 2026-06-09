@@ -11,6 +11,7 @@ actual class BackgroundWorker {
     private val lock = ReentrantLock()
     private var executor: ScheduledExecutorService? = null
     private var scheduledTask: ScheduledFuture<*>? = null
+    private var shutdownHook: Thread? = null
 
     actual fun schedulePolling(intervalMinutes: Long) {
         lock.withLock {
@@ -23,7 +24,7 @@ actual class BackgroundWorker {
             }
 
             val task = newExecutor.scheduleAtFixedRate(
-                { println("Desktop approval polling tick") },
+                { /* TODO(#243): wire to actual approval polling when assistant is ported */ },
                 intervalMinutes,
                 intervalMinutes,
                 TimeUnit.MINUTES
@@ -31,6 +32,10 @@ actual class BackgroundWorker {
 
             executor = newExecutor
             scheduledTask = task
+
+            val hook = Thread { cancelPollingInternal() }
+            Runtime.getRuntime().addShutdownHook(hook)
+            shutdownHook = hook
         }
     }
 
@@ -56,5 +61,14 @@ actual class BackgroundWorker {
             }
         }
         executor = null
+
+        shutdownHook?.let {
+            try {
+                Runtime.getRuntime().removeShutdownHook(it)
+            } catch (_: IllegalStateException) {
+                // JVM is already shutting down
+            }
+        }
+        shutdownHook = null
     }
 }

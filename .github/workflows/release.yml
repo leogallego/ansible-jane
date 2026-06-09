@@ -62,7 +62,7 @@ jobs:
       - name: Rename Desktop JAR
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          mv composeApp/build/compose/jars/AnsibleJane-*.jar "ansible-jane-desktop-linux-${VERSION}.jar" 2>/dev/null || true
+          mv composeApp/build/compose/jars/AnsibleJane-*.jar "ansible-jane-desktop-linux-${VERSION}.jar"
 
       - name: Extract changelog
         run: |
