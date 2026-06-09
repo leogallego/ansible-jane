@@ -7,6 +7,7 @@ import io.github.leogallego.ansiblejane.data.backup.BackupManager
 import io.github.leogallego.ansiblejane.fakes.FakeAssistantRepository
 import io.github.leogallego.ansiblejane.fakes.FakeTokenManager
 import io.github.leogallego.ansiblejane.fakes.FakeToolManifestRepository
+import io.github.leogallego.ansiblejane.platform.PlatformUtils
 import io.github.leogallego.ansiblejane.presentation.settings.BackupViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -20,5 +21,6 @@ fun testKoinModule(
     single<IAssistantRepository> { assistantRepository }
     single<IToolManifestRepository> { manifestRepository }
     single { BackupManager() }
+    single { PlatformUtils(org.robolectric.RuntimeEnvironment.getApplication()) }
     viewModel { BackupViewModel(get(), get(), get()) }
 }

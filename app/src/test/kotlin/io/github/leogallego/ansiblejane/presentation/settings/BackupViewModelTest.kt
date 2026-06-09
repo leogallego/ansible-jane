@@ -139,7 +139,7 @@ class BackupViewModelTest {
 
         val state = viewModel.uiState.value
         assertTrue(state is BackupUiState.Error)
-        assertEquals("Incorrect password", (state as BackupUiState.Error).message)
+        assertEquals("Incorrect password or corrupted backup", (state as BackupUiState.Error).message)
     }
 
     @Test

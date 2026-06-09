@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import io.github.leogallego.ansiblejane.data.ITokenManager
-import io.github.leogallego.ansiblejane.network.AapApiProvider
+import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withTimeoutOrNull
@@ -31,7 +31,7 @@ class ApprovalPollingWorker(
             if (instance == null) {
                 return Result.success()
             }
-            val apiProvider: AapApiProvider = get()
+            val apiProvider: IAapApiProvider = get()
             val approvalTracker: ApprovalTracker = get()
             val notificationManager: ApprovalNotificationManager = get()
 

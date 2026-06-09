@@ -43,5 +43,14 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+      - name: Build Desktop JAR
+        run: ./gradlew :composeApp:desktopJar --no-daemon --stacktrace
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Run shared JVM tests
+        run: ./gradlew :shared:jvmTest --no-daemon --stacktrace
+
+      - name: Run Desktop UI tests
+        run: ./gradlew :composeApp:desktopTest --no-daemon --stacktrace

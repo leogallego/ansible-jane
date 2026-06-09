@@ -13,12 +13,11 @@ import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.plugins.sse.SSE
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -37,7 +36,9 @@ class SettingsViewModelTest {
     private lateinit var fakeUserPreferences: FakeUserPreferencesRepository
     private lateinit var fakeAssistantRepo: FakeAssistantRepository
     private lateinit var mcpServerManager: McpServerManager
-    private val httpClient = OkHttpClient()
+    private val httpClient = HttpClient(MockEngine) {
+        engine { addHandler { respond("{}") } }
+    }
     private val json = Json { ignoreUnknownKeys = true }
 
     private val instance1 = AapInstance(
@@ -62,7 +63,7 @@ class SettingsViewModelTest {
         fakeAssistantRepo = FakeAssistantRepository()
         mcpServerManager = McpServerManager(
             ktorClientFactory = { _, _ ->
-                HttpClient(OkHttp) { install(SSE) }
+                HttpClient(MockEngine) { engine { addHandler { respond("") } } }
             }
         )
     }

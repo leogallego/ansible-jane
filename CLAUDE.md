@@ -4,19 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ansible Jane is a lightweight Android app for managing Ansible Automation Platform (AAP). Users authenticate with their AAP instance, browse job templates, launch playbooks, monitor job status, handle workflow approvals, and interact with Jane, an AI assistant that works with local models (Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter) through tool-use and MCP.
+Ansible Jane is a multiplatform app (Android and Desktop) for managing Ansible Automation Platform (AAP). Users authenticate with their AAP instance, browse job templates, launch playbooks, monitor job status, handle workflow approvals, and interact with Jane, an AI assistant that works with local models (Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter) through tool-use and MCP.
 
 Full specification is in `idea.md`.
 
 ## Tech Stack (Strictly Enforced)
 
-- **Language:** Kotlin only. No Java.
-- **UI:** Jetpack Compose with Material 3 (Material You). No XML layouts, no Fragments. Single `ComponentActivity`.
+- **Language:** Kotlin Multiplatform. No Java.
+- **UI:** Compose Multiplatform with Material 3 (Material You). No XML layouts, no Fragments.
 - **Architecture:** MVVM with Unidirectional Data Flow. ViewModels expose UI state via `StateFlow`.
 - **AI Engine:** [Koog](https://github.com/JetBrains/koog) (JetBrains AI Agent Framework) for LLM prompting and streaming.
-- **Networking:** Retrofit + Kotlin Serialization + Coroutines.
+- **Networking:** Ktor + Kotlin Serialization + Coroutines.
 - **DI:** Koin (not Hilt).
-- **Security:** Jetpack DataStore + Tink (Android Keystore-backed) for token/URL storage. HTTPS only via `network_security_config.xml`. `EncryptedSharedPreferences` is deprecated — do not use.
+- **Security:** DataStore + cryptography-kotlin (AES-256-GCM). Android uses Keystore backing. Desktop uses PKCS12 at `~/.ansiblejane/`. HTTPS only via `network_security_config.xml`. `EncryptedSharedPreferences` is deprecated — do not use. Tink kept in androidMain for migration only.
 
 ## AAP Requirements
 
@@ -46,27 +46,49 @@ All authenticated requests use header: `Authorization: Bearer <TOKEN>`
 | Platform users | GET | `/api/gateway/v1/users/` |
 | Platform services | GET | `/api/gateway/v1/services/` |
 
-Three separate Retrofit interfaces: `AapApiService` (Controller), `EdaApiService` (EDA), `PlatformApiService` (Gateway).
+Three separate Ktor API service interfaces: `AapApiService` (Controller), `EdaApiService` (EDA), `PlatformApiService` (Gateway).
 
 ## Architecture Layers
 
-- **Network Layer:** Retrofit interfaces (`AapApiService`, `EdaApiService`, `PlatformApiService`), OkHttpClient with auth interceptor, Koin `networkModule`. Instance discovery via `InstanceDiscovery` detects platform type (AAP/AWX/Jewel) and component versions.
-- **Data Layer:** `TokenManager` (DataStore + Tink encryption), repositories, `AssistantRepository` for LLM config persistence
-- **Presentation:** ViewModels with `StateFlow<UiState>` (Idle, Loading, Success, Error pattern)
-- **UI:** Compose screens reacting to ViewModel state — Dashboard, Templates, Activity, Infrastructure, EDA, Chat, Settings (tabbed: General/Instances/Agent/Tools), ApprovalDetail, WorkflowJobStatus
+### Multi-Module Structure
+
+- **shared module (`shared/`):** KMP library -- platform abstractions (`platform/`), networking (Ktor `network/`), data layer (repositories, DataStore, encryption), AI tools and engine. Source sets: `commonMain`, `androidMain`, `jvmMain` (Desktop).
+- **composeApp module (`composeApp/`):** Compose Multiplatform UI -- navigation, screens (Dashboard, Templates, Activity, Infrastructure, EDA, Chat), themes, components. Source sets: `commonMain`, `androidMain`, `desktopMain`.
+- **app module (`app/`):** Android-only -- `MainActivity`, AI assistant (`assistant/` package with LLM providers, tool execution), Settings screens (General/Instances/Agent/Tools), Koin DI wiring. Depends on `:shared` and `:composeApp`.
+
+### Where to Put New Code (Android-first, Desktop stretch goal)
+
+| Target module | When to use | Examples |
+|---------------|-------------|----------|
+| `shared/commonMain` | Pure logic, no platform APIs | New tools, repository methods, data models, engine features |
+| `composeApp/commonMain` | UI that should work on all platforms | New screens, components, ViewModels |
+| `app/` | Android-only features, no KMP abstraction needed | AppFunctions, widgets, notification channels, WorkManager, Wear OS |
+| `composeApp/androidMain` | UI that uses Android-specific APIs | Camera, biometrics, platform-specific pickers |
+
+Rules:
+- **Don't create `expect/actual` unless you plan a desktop implementation.** If a feature is Android-only, put it in `app/` — no ceremony needed.
+- **Don't put shared logic in `app/`.** If a tool, repository, or engine feature lives in `app/`, desktop can never reach it.
+- Android-only screens plug into the shared nav graph via composable lambda injection (see `assistantContent` pattern in `AppNavigation`).
+
+### Layer Responsibilities
+
+- **Network Layer:** Ktor `HttpClient` with engine abstraction (`HttpEngine` expect/actual), auth interceptor, self-signed cert support via `TlsTrustManager`. Instance discovery via `InstanceDiscovery` detects platform type (AAP/AWX/Jewel) and component versions.
+- **Data Layer:** `TokenManager` (DataStore + cryptography-kotlin encryption), repositories with `IRepository` interfaces in shared, `AssistantRepository` for LLM config persistence.
+- **Presentation:** ViewModels with `StateFlow<UiState>` (Idle, Loading, Success, Error pattern) in `composeApp`.
+- **Platform abstractions (`shared/.../platform/`):** `expect`/`actual` classes for `SecureKeyStorage`, `DataStoreFactory`, `ConnectivityObserver`, `BackgroundWorker`, `PlatformUtils`, `NotificationManager`, `TlsTrustManager`, `HttpEngine`.
 
 ## AI Assistant Architecture
 
-The AI assistant (`assistant/` package) provides natural-language interaction with AAP via tool-use LLMs. Full pipeline flow with component responsibilities is documented in `docs/reference/tool-pipeline-architecture.md`.
+The AI assistant (`assistant/` package in `app/` module, Android-only for now) provides natural-language interaction with AAP via tool-use LLMs. The engine, LLM providers, and tools have zero Android dependencies and are planned to move to `shared/commonMain` (#243). Full pipeline flow with component responsibilities is documented in `docs/reference/tool-pipeline-architecture.md`.
 
 ### Tool System
 
-Two tool sources, unified via `Tool` interface (`tools/ToolSpec.kt`):
+Two tool sources, unified via `Tool` interface (`shared/.../tools/ToolSpec.kt`):
 
-- **Local tools** (`tools/local/`) — 61 tools that call AAP APIs directly via Retrofit. Zero latency, no MCP server required. Covers jobs, inventories, hosts, projects, credentials, EDA, schedules, workflow approvals, platform config, and more. Examples: `list_job_templates`, `launch_job`, `get_host_facts`, `approve_workflow`, `list_platform_services`, `ping`.
+- **Local tools** (`tools/local/`) — 61 tools that call AAP APIs directly via Ktor. Zero latency, no MCP server required. Covers jobs, inventories, hosts, projects, credentials, EDA, schedules, workflow approvals, platform config, and more. Examples: `list_job_templates`, `launch_job`, `get_host_facts`, `approve_workflow`, `list_platform_services`, `ping`.
 - **MCP tools** (`tools/McpTool.kt`) — dynamically discovered from connected MCP servers. Each `McpTool` carries an optional `toolset` field for category-based routing. `McpServerConfig` supports per-toolset endpoints (e.g., `/job_management/mcp`) to reduce tool count per connection.
 
-### ToolRouter (`engine/ToolRouter.kt`)
+### ToolRouter (`app/.../engine/ToolRouter.kt`)
 
 Category-based query routing that selects relevant tools per user message:
 
@@ -78,7 +100,7 @@ Category-based query routing that selects relevant tools per user message:
 - **Read-only enforcement**: `McpServerConfig.readOnly` filters out write actions (`_create`, `_update`, `_delete`, `_launch`, etc.) from read-only MCP servers.
 - **Per-tool enable/disable**: `setToolEnabled()` / `isToolEnabled()` for user-facing tool management UI.
 
-### Engine Pipeline (`engine/`)
+### Engine Pipeline (`app/.../engine/`)
 
 - **ChatEngine** — agentic loop: sends user message + tool schemas to LLM, executes tool calls, re-sends results until LLM produces a text response. Max 10 iterations.
 - **ToolExecutor** — executes tool calls with 30s timeout, 2-minute result cache, array capping (max 10 items), and smart truncation (8K char limit).
@@ -115,11 +137,11 @@ See `skills/README.md` for sources and licenses.
 - **MUST** invoke the `android-cli` skill (via Skill tool) before ANY emulator or device interaction — deploying, starting/stopping emulators, capturing screenshots, inspecting layouts, or running apps. Never use `adb` directly for tasks the `android` CLI covers. If the skill is not loaded yet in this session, load it before proceeding.
 - **MUST** use the `android` CLI (`android run`, `android emulator`, `android screen capture`, `android layout`) for all device interaction. Prefer `android layout` over screenshots for inspecting UI state.
 - Use `uiautomator dump` to find elements by `resource-id` (from Compose `testTag`). Never hard-code pixel coordinates — always resolve element positions from the layout tree or resource-ids.
-- All Compose screens **MUST** have `testTag` modifiers on interactive elements (fields, buttons, switches) using the convention `field_<name>`, `button_<name>`, `switch_<name>`. The root `AppNavigation` has `testTagsAsResourceId = true` so tags appear as `resource-id` in uiautomator.
+- All Compose screens **MUST** have `testTag` modifiers on interactive elements (fields, buttons, switches) using the convention `field_<name>`, `button_<name>`, `switch_<name>`. The root `AppNavigation` receives a modifier with `testTagsAsResourceId = true` from Android's `MainActivity` so tags appear as `resource-id` in uiautomator.
 - Use `adb logcat` to verify network requests and errors instead of relying on screenshots.
 
 ## Security Rules
 
 - Never hardcode URLs or tokens
-- Only use DataStore + Tink for credentials — never `EncryptedSharedPreferences` (deprecated), plain `SharedPreferences`, or SQLite
+- Only use DataStore + cryptography-kotlin for credentials — never `EncryptedSharedPreferences` (deprecated), plain `SharedPreferences`, or SQLite
 - Enforce HTTPS-only via network security config

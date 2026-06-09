@@ -37,6 +37,12 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
+      - name: Run shared JVM tests
+        run: ./gradlew :shared:jvmTest --no-daemon --stacktrace
+
+      - name: Run Desktop UI tests
+        run: ./gradlew :composeApp:desktopTest --no-daemon --stacktrace
+
       - name: Build release APK
         run: ./gradlew assembleRelease --no-daemon --stacktrace
         env:
@@ -45,10 +51,18 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
+      - name: Build Desktop uber JAR
+        run: ./gradlew :composeApp:packageUberJarForCurrentOS --no-daemon --stacktrace
+
       - name: Rename APK
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           mv app/build/outputs/apk/release/app-release.apk "ansible-jane-${VERSION}.apk"
+
+      - name: Rename Desktop JAR
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mv composeApp/build/compose/jars/AnsibleJane-*.jar "ansible-jane-desktop-linux-${VERSION}.jar" 2>/dev/null || true
 
       - name: Extract changelog
         run: |
@@ -64,5 +78,7 @@ jobs:
         with:
           name: Release ${{ github.ref_name }}
           body_path: changelog.txt
-          files: ansible-jane-*.apk
+          files: |
+            ansible-jane-*.apk
+            ansible-jane-desktop-linux-*.jar
           prerelease: ${{ contains(github.ref_name, '-') }}

@@ -4,6 +4,7 @@ import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.assistant.data.TokenSavingMode
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.McpServerConfig
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -38,7 +39,7 @@ class BackupManagerTest {
     )
 
     @Test
-    fun `round-trip export and import preserves all instance data`() {
+    fun `round-trip export and import preserves all instance data`() = runTest {
         val exported = manager.exportBackup("mypassword", testInstances)
         val envelope = manager.importBackup(exported, "mypassword")
 
@@ -58,7 +59,7 @@ class BackupManagerTest {
     }
 
     @Test
-    fun `round-trip preserves LLM config when included`() {
+    fun `round-trip preserves LLM config when included`() = runTest {
         val llmConfig = LlmProviderConfig.OpenAiCompatible(
             url = "https://openrouter.ai/api/v1",
             model = "anthropic/claude-sonnet-4-6",
@@ -77,30 +78,30 @@ class BackupManagerTest {
     }
 
     @Test
-    fun `export without LLM config leaves it null`() {
+    fun `export without LLM config leaves it null`() = runTest {
         val exported = manager.exportBackup("pass", testInstances)
         val envelope = manager.importBackup(exported, "pass")
         assertNull(envelope.llmConfig)
     }
 
     @Test(expected = BackupDecryptionException::class)
-    fun `wrong password throws BackupDecryptionException`() {
+    fun `wrong password throws BackupDecryptionException`() = runTest {
         val exported = manager.exportBackup("correct", testInstances)
         manager.importBackup(exported, "wrong")
     }
 
     @Test(expected = BackupDecryptionException::class)
-    fun `corrupted data throws BackupDecryptionException`() {
+    fun `corrupted data throws BackupDecryptionException`() = runTest {
         manager.importBackup(ByteArray(100) { 0x42 }, "password")
     }
 
     @Test(expected = BackupDecryptionException::class)
-    fun `truncated data throws BackupDecryptionException`() {
+    fun `truncated data throws BackupDecryptionException`() = runTest {
         manager.importBackup(ByteArray(10), "password")
     }
 
     @Test
-    fun `exported data is not readable as plaintext`() {
+    fun `exported data is not readable as plaintext`() = runTest {
         val exported = manager.exportBackup("pass", testInstances)
         val asString = String(exported, Charsets.UTF_8)
         assertTrue(!asString.contains("secret-token-123"))
@@ -108,32 +109,31 @@ class BackupManagerTest {
     }
 
     @Test
-    fun `different passwords produce different ciphertexts`() {
+    fun `different passwords produce different ciphertexts`() = runTest {
         val export1 = manager.exportBackup("password1", testInstances)
         val export2 = manager.exportBackup("password2", testInstances)
         assertTrue(!export1.contentEquals(export2))
     }
 
     @Test
-    fun `same password produces different ciphertexts due to random salt`() {
+    fun `same password produces different ciphertexts due to random salt`() = runTest {
         val export1 = manager.exportBackup("same", testInstances)
         val export2 = manager.exportBackup("same", testInstances)
         assertTrue(!export1.contentEquals(export2))
-        // But both decrypt to the same data
         val env1 = manager.importBackup(export1, "same")
         val env2 = manager.importBackup(export2, "same")
         assertEquals(env1.instances.size, env2.instances.size)
     }
 
     @Test
-    fun `envelope version is set to 2`() {
+    fun `envelope version is set to 2`() = runTest {
         val exported = manager.exportBackup("pass", testInstances)
         val envelope = manager.importBackup(exported, "pass")
         assertEquals(2, envelope.version)
     }
 
     @Test
-    fun `envelope has valid timestamp`() {
+    fun `envelope has valid timestamp`() = runTest {
         val before = System.currentTimeMillis()
         val exported = manager.exportBackup("pass", testInstances)
         val after = System.currentTimeMillis()

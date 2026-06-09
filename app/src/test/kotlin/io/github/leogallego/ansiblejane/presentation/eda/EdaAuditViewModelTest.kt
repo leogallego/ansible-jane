@@ -6,16 +6,20 @@ import io.github.leogallego.ansiblejane.TestData
 import io.github.leogallego.ansiblejane.fakes.FakeEdaAuditRepository
 import io.github.leogallego.ansiblejane.fakes.FakeTokenManager
 import io.github.leogallego.ansiblejane.model.AppError
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ServerResponseException
+import io.ktor.client.request.get
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.HttpClient
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import retrofit2.HttpException
-import retrofit2.Response
 
 class EdaAuditViewModelTest {
 
@@ -35,9 +39,23 @@ class EdaAuditViewModelTest {
         return EdaAuditViewModel(fakeRepo, fakeTokenManager)
     }
 
-    private fun createHttpException(code: Int): HttpException {
-        val response = Response.error<Any>(code, "".toResponseBody(null))
-        return HttpException(response)
+    private suspend fun createHttpException(code: Int): Exception {
+        val client = HttpClient(MockEngine) {
+            expectSuccess = true
+            engine {
+                addHandler { respond("", HttpStatusCode.fromValue(code)) }
+            }
+        }
+        return try {
+            client.get("/")
+            error("Expected exception for status $code")
+        } catch (e: ClientRequestException) {
+            e
+        } catch (e: ServerResponseException) {
+            e
+        } finally {
+            client.close()
+        }
     }
 
     @Test

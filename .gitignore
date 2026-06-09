@@ -41,3 +41,11 @@ captures/
 .externalNativeBuild/
 .env*
 .superpowers/
+
+# Security / Certificates
+*.p12
+*.pfx
+*.pem
+*.pwd
+*.jks
+*.keystore

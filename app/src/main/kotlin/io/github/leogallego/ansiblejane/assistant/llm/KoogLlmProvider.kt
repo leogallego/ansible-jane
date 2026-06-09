@@ -19,9 +19,8 @@ import ai.koog.prompt.llm.LLMProvider as KoogLLMProvider
 import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.streaming.StreamFrame
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
-import io.github.leogallego.ansiblejane.network.CertTrustManager
+import io.github.leogallego.ansiblejane.network.createPlatformHttpClient
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.flow.Flow
@@ -95,15 +94,7 @@ class KoogLlmProvider(
             chatCompletionsPath = chatPath
         )
         val factory = if (trustSelfSigned) {
-            val tm = CertTrustManager.createTrustAllManager()
-            KtorKoogHttpClient.Factory(baseClient = HttpClient(OkHttp) {
-                engine {
-                    config {
-                        sslSocketFactory(CertTrustManager.createSslSocketFactory(tm), tm)
-                        hostnameVerifier { _, _ -> true }
-                    }
-                }
-            })
+            KtorKoogHttpClient.Factory(baseClient = createPlatformHttpClient(trustSelfSigned = true))
         } else {
             KtorKoogHttpClient.Factory()
         }
