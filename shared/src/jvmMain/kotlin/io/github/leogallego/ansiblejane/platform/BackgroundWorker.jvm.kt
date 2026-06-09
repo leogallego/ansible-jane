@@ -33,7 +33,10 @@ actual class BackgroundWorker {
             executor = newExecutor
             scheduledTask = task
 
-            val hook = Thread { cancelPollingInternal() }
+            val hookExecutor = newExecutor
+            val hook = Thread {
+                hookExecutor.shutdownNow()
+            }
             Runtime.getRuntime().addShutdownHook(hook)
             shutdownHook = hook
         }
