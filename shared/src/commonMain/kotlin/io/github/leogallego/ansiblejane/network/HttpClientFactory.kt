@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.network
 
+import io.github.leogallego.ansiblejane.assistant.engine.DebugLog
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpResponseValidator
@@ -23,7 +24,7 @@ private data class ClientGroup(
 class HttpClientFactory(
     private val tokenManager: ITokenManager,
     private val json: Json,
-    private val logLevel: LogLevel = LogLevel.NONE
+    private val logLevel: LogLevel = LogLevel.INFO
 ) : IAapApiProvider {
     private val clientCache = mutableMapOf<String, ClientGroup>()
 
@@ -142,10 +143,15 @@ class HttpClientFactory(
             HttpResponseValidator {
                 validateResponse { response ->
                     if (response.status.value == 401) {
+                        DebugLog.w(TAG, "401 Unauthorized for instance=$instanceId — emitting auth event")
                         AuthEvents.emitUnauthorized(instanceId)
                     }
                 }
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "HttpClientFactory"
     }
 }

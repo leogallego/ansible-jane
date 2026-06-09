@@ -59,6 +59,7 @@ class InstanceDiscovery(private val json: Json) {
         apiVersion: ApiVersion,
         token: String
     ): InstanceInfo = coroutineScope {
+        Log.d(TAG, "Probing $normalizedUrl (apiVersion=$apiVersion)")
         val components = mutableSetOf(AapComponent.CONTROLLER)
 
         val controllerPingDeferred = async {

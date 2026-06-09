@@ -10,6 +10,7 @@ import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.LLMProvider as KoogLLMProvider
 import ai.koog.prompt.streaming.StreamFrame
+import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.flow.Flow
@@ -42,10 +43,16 @@ class GeminiLlmProvider(
         tools: List<ToolDescriptor>,
         maxTokens: Int?
     ): Flow<StreamFrame> = flow {
+        Log.d(TAG, "Request: model=${model.id}, tools=${tools.size}, messages=${prompt.messages.size}")
+        val startTime = System.currentTimeMillis()
+        var frameCount = 0
         client.executeStreaming(prompt, model, tools).collect { frame ->
+            frameCount++
             emit(frame)
         }
+        Log.d(TAG, "Complete: ${frameCount} frames in ${System.currentTimeMillis() - startTime}ms")
     }.catch { e ->
+        Log.d(TAG, "Error: ${e::class.simpleName}: ${e.message}")
         throw mapException(e)
     }
 
@@ -58,6 +65,10 @@ class GeminiLlmProvider(
 
     override fun close() {
         client.close()
+    }
+
+    companion object {
+        private const val TAG = "GeminiLlmProvider"
     }
 
     internal fun mapException(e: Throwable): Throwable = when (e) {
