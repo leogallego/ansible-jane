@@ -3,18 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ansible Jane &mdash; Your Ansible, Across Any Distance</title>
-  <meta name="description" content="A lightweight Android app for managing Ansible Automation Platform. Launch jobs, monitor workflows, and talk to Jane &mdash; an AI that speaks automation.">
-  <meta name="theme-color" content="#0a0f14">
+  <title>Ansible Jane &mdash; Your Ansible Automation Platform, Across Any Distance</title>
+  <meta name="description" content="A multiplatform app for managing Ansible Automation Platform. Launch jobs, monitor workflows, and talk to Jane &mdash; an AI that speaks automation.">
+  <meta name="theme-color" content="#090A0F">
   <meta property="og:title" content="Ansible Jane">
-  <meta property="og:description" content="Manage Ansible Automation Platform from your phone. AI-powered, open source.">
+  <meta property="og:description" content="Manage Ansible Automation Platform from your phone or desktop. AI-powered, open source.">
   <meta property="og:image" content="https://leogallego.github.io/ansible-jane/img/icon.png">
   <meta property="og:url" content="https://leogallego.github.io/ansible-jane/">
   <meta property="og:type" content="website">
   <link rel="icon" href="img/icon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+  <!-- Starfield -->
+  <div class="starfield">
+    <div class="stars1"></div>
+    <div class="stars2"></div>
+  </div>
 
   <!-- Nav -->
   <nav class="topnav">
@@ -23,7 +32,7 @@
       Ansible Jane
     </a>
     <div class="topnav-links">
-      <a href="#capabilities">Features</a>
+      <a href="#network">Features</a>
       <a href="#install">Install</a>
       <a href="https://github.com/leogallego/ansible-jane">GitHub</a>
     </div>
@@ -35,115 +44,104 @@
   <section class="hero">
     <img src="img/icon.png" class="hero-icon" alt="Ansible Jane" width="72" height="72">
     <h1>Meet <span class="accent">Jane</span></h1>
-    <p class="tagline">She lives in the network between you and your automation platform. Launch jobs, watch workflows, manage inventories, and ask her anything &mdash; all from your phone.</p>
+    <p class="tagline">She lives in the network between you and your Ansible Automation Platform. Launch jobs, watch workflows, manage inventories, and ask her anything &mdash; across any distance.</p>
     <div class="hero-actions">
       <a class="btn btn-primary" href="https://github.com/leogallego/ansible-jane/releases">Download</a>
       <a class="btn btn-ghost" href="https://github.com/leogallego/ansible-jane">Source Code</a>
     </div>
-    <p class="hero-meta">Android 12+ &middot; AAP 2.5+ &middot; GPL-3.0 &middot; Free forever</p>
+    <p class="hero-meta">Android 12+ &middot; Desktop (JDK 17+) &middot; AAP 2.5+ &middot; GPL-3.0</p>
   </section>
 
-  <!-- Showcase — uncomment when screenshots are ready
+  <!-- Screenshots -->
   <section class="showcase fade-in">
-    <h2>Built for Your Pocket</h2>
-    <p class="subtitle">Material You design. Dark theme. Adapts to your system.</p>
+    <div class="showcase-top">
+      <h2>Built for Your Pocket</h2>
+      <button class="theme-toggle-btn" id="themeToggle" title="Switch theme">&#127769;</button>
+    </div>
+    <p class="subtitle">Material You design. Adapts to your system.</p>
     <div class="showcase-track">
       <div class="showcase-item">
-        <img src="img/screen-dashboard.png" alt="Dashboard with job stats, EDA, and resources" loading="lazy">
+        <img src="img/screens/jane-dark.png" data-dark="img/screens/jane-dark.png" data-light="img/screens/jane-light.png" alt="Jane AI assistant">
+        <div class="label">Jane</div>
+      </div>
+      <div class="showcase-item">
+        <img src="img/screens/dashboard-dark.png" data-dark="img/screens/dashboard-dark.png" data-light="img/screens/dashboard-light.png" alt="Dashboard">
         <div class="label">Dashboard</div>
       </div>
       <div class="showcase-item">
-        <img src="img/screen-templates.png" alt="Job templates list with launch buttons" loading="lazy">
+        <img src="img/screens/templates-dark.png" data-dark="img/screens/templates-dark.png" data-light="img/screens/templates-light.png" alt="Templates">
         <div class="label">Templates</div>
       </div>
       <div class="showcase-item">
-        <img src="img/screen-activity.png" alt="Recent jobs with status badges and filters" loading="lazy">
+        <img src="img/screens/activity-dark.png" data-dark="img/screens/activity-dark.png" data-light="img/screens/activity-light.png" alt="Activity">
         <div class="label">Activity</div>
-      </div>
-      <div class="showcase-item">
-        <img src="img/screen-jane.png" alt="Jane AI assistant with MCP connected" loading="lazy">
-        <div class="label">Jane</div>
       </div>
     </div>
   </section>
-  -->
 
-  <!-- Capabilities -->
-  <section class="capabilities" id="capabilities">
-    <h2 class="fade-in">What She Can Do</h2>
+  <!-- Network (Features) -->
+  <section class="network" id="network">
+    <h2 class="fade-in">The Network</h2>
 
-    <div class="cap-row fade-in">
-      <div class="cap-icon">&#x1f916;</div>
-      <div class="cap-text">
-        <h3>Talk to Jane</h3>
-        <p>An AI assistant that speaks Ansible. Ask her to list failing jobs, check host facts, launch a template, or explain what went wrong. She talks to your platform through MCP and 61 local tools, then reports back in plain language.</p>
-      </div>
+    <div class="node fade-in">
+      <span class="dot"></span><h3>Talk to Jane</h3>
+      <p>An AI assistant that speaks Ansible. Ask her to list failing jobs, check host facts, launch a template, or explain what went wrong on your Ansible Automation Platform. She talks to your platform through MCP and 61 local tools, then reports back in plain language.</p>
     </div>
 
-    <div class="cap-row fade-in">
-      <div class="cap-icon">&#x1f680;</div>
-      <div class="cap-text">
-        <h3>Launch &amp; Monitor</h3>
-        <p>Browse job templates, launch playbooks with parameters, watch them run. Approve or deny workflow steps without opening a laptop. See stdout, status, and timing for every job.</p>
-      </div>
+    <div class="node fade-in">
+      <span class="dot"></span><h3>Launch Jobs</h3>
+      <p>Browse job templates on your Ansible Automation Platform, launch playbooks with parameters, and approve or deny workflow steps without opening a laptop.</p>
     </div>
 
-    <div class="cap-row fade-in">
-      <div class="cap-icon">&#x1f50c;</div>
-      <div class="cap-text">
-        <h3>MCP Tools</h3>
-        <p>MCP is Jane's native language. She auto-discovers your AAP's MCP endpoints on connect. Add custom servers for knowledge bases, monitoring, or any tool that speaks the protocol.</p>
-      </div>
+    <div class="node fade-in">
+      <span class="dot"></span><h3>Monitor Everything</h3>
+      <p>Watch jobs run in real time. See stdout, status, and timing for every job. Full read-only mode available for safe browsing of your platform without risk of changes.</p>
     </div>
 
-    <div class="cap-row fade-in">
-      <div class="cap-icon">&#x1f4e6;</div>
-      <div class="cap-text">
-        <h3>Infrastructure at a Glance</h3>
-        <p>Browse inventories, inspect hosts and facts, check groups. 61 local tools cover jobs, inventories, credentials, projects, schedules, EDA, and platform config.</p>
-      </div>
+    <div class="node fade-in">
+      <span class="dot"></span><h3>MCP Tools</h3>
+      <p>Jane auto-discovers your Ansible Automation Platform's MCP endpoints on connect. Add custom MCP servers for knowledge bases, monitoring, or any tool that speaks the protocol.</p>
     </div>
 
-    <div class="cap-row fade-in">
-      <div class="cap-icon">&#x26a1;</div>
-      <div class="cap-text">
-        <h3>Event-Driven Ansible</h3>
-        <p>Monitor EDA activations and rulebooks. See what's triggering your event-driven automation without switching to a desktop.</p>
-      </div>
+    <div class="node fade-in">
+      <span class="dot"></span><h3>Infrastructure at a Glance</h3>
+      <p>Browse inventories, inspect hosts and facts, check groups. 61 local tools cover jobs, inventories, credentials, projects, schedules, EDA, and platform config on your Ansible Automation Platform.</p>
     </div>
 
-    <div class="cap-row fade-in">
-      <div class="cap-icon">&#x1f512;</div>
-      <div class="cap-text">
-        <h3>Secure by Default</h3>
-        <p>Tokens encrypted with Android Keystore + Tink. HTTPS-only. No data on third-party servers. Multi-instance support &mdash; connect to several AAP deployments from one app.</p>
-      </div>
+    <div class="node fade-in">
+      <span class="dot"></span><h3>Event-Driven Ansible</h3>
+      <p>Monitor EDA activations and rulebooks. See what's triggering your event-driven automation on your Ansible Automation Platform without switching to a desktop.</p>
+    </div>
+
+    <div class="node fade-in">
+      <span class="dot"></span><h3>Secure by Default</h3>
+      <p>Tokens encrypted with AES-256-GCM. Android Keystore or PKCS12 backing. HTTPS-only. No data on third-party servers. Connect to multiple Ansible Automation Platform instances from one app.</p>
     </div>
   </section>
 
   <!-- Install -->
   <section class="install" id="install">
     <div class="install-inner">
-      <h2 class="fade-in">Get Jane</h2>
+      <h2 class="fade-in">Begin Transmission</h2>
       <p class="subtitle fade-in">Free, open source, no accounts required.</p>
       <div class="install-options fade-in">
         <div class="install-option">
           <h3>GitHub Releases</h3>
-          <p>Signed APK for every version. Direct download.</p>
+          <p>Signed APK and Desktop JAR for every version. Direct download.</p>
           <a class="btn btn-primary" href="https://github.com/leogallego/ansible-jane/releases">Download</a>
         </div>
         <div class="install-option">
           <h3>F-Droid Repo</h3>
-          <p>Self-hosted repo with automatic updates.</p>
+          <p>Self-hosted repo with automatic updates via F-Droid client.</p>
           <a class="btn btn-ghost" href="fdroid/repo">Browse Repo</a>
         </div>
         <div class="install-option">
           <h3>Obtainium</h3>
-          <p>Point at the GitHub repo for update tracking.</p>
+          <p>Point Obtainium at the GitHub repo for automatic update tracking.</p>
           <a class="btn btn-ghost" href="https://github.com/leogallego/ansible-jane">View Source</a>
         </div>
       </div>
-      <p class="install-note fade-in">Requires Android 12+ and Ansible Automation Platform 2.5+ with Gateway.</p>
+      <p class="install-note fade-in">Requires Android 12+ or Desktop with JDK 17+. Ansible Automation Platform 2.5+.</p>
     </div>
   </section>
 
@@ -156,7 +154,7 @@
       <a href="https://github.com/leogallego/ansible-jane/issues">Issues</a>
       <a href="fdroid/repo">F-Droid</a>
     </div>
-    <p class="note">Built with Kotlin, Jetpack Compose, and Koog. GPL-3.0 License.</p>
+    <p class="note">Built with Kotlin Multiplatform, Compose, and Koog. GPL-3.0 License.</p>
     <p class="epigraph">"The ansible is, by definition, instantaneous. It bridges any distance."</p>
   </footer>
 
@@ -165,6 +163,23 @@
       es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); o.unobserve(e.target); } });
     }, { threshold: 0.15 });
     document.querySelectorAll('.fade-in').forEach(el => o.observe(el));
+
+    (function() {
+      var dark = true;
+      var btn = document.getElementById('themeToggle');
+      btn.addEventListener('click', function() {
+        dark = !dark;
+        btn.textContent = dark ? '🌙' : '☀️';
+        var key = dark ? 'dark' : 'light';
+        document.querySelectorAll('.showcase-item img[data-dark]').forEach(function(img) {
+          img.style.opacity = '0';
+          setTimeout(function() {
+            img.src = img.dataset[key];
+            img.style.opacity = '1';
+          }, 150);
+        });
+      });
+    })();
   </script>
 </body>
 </html>
