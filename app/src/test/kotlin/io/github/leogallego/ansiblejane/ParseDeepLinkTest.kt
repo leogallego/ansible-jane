@@ -75,4 +75,9 @@ class ParseDeepLinkTest {
     fun `empty URI returns null`() {
         assertNull(MainActivity.parseDeepLink(""))
     }
+
+    @Test
+    fun `ID exceeding Int max returns null`() {
+        assertNull(MainActivity.parseDeepLink("ansiblejane://approval/2147483648"))
+    }
 }
