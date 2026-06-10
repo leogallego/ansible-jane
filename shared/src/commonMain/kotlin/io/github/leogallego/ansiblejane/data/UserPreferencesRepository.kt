@@ -1,8 +1,10 @@
 package io.github.leogallego.ansiblejane.data
 
+import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.platform.DataStoreFactory
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
@@ -20,7 +22,7 @@ class UserPreferencesRepository(
 
     override val timeFormat: Flow<TimeFormat> = dataStore.data.map { prefs ->
         prefs[KEY_TIME_FORMAT]?.let {
-            try { TimeFormat.valueOf(it) } catch (_: Exception) { TimeFormat.SYSTEM }
+            try { TimeFormat.valueOf(it) } catch (_: IllegalArgumentException) { TimeFormat.SYSTEM }
         } ?: TimeFormat.SYSTEM
     }
 
@@ -42,13 +44,36 @@ class UserPreferencesRepository(
 
     override val themeMode: Flow<ThemeMode> = dataStore.data.map { prefs ->
         prefs[KEY_THEME_MODE]?.let {
-            try { ThemeMode.valueOf(it) } catch (_: Exception) { ThemeMode.SYSTEM }
+            try { ThemeMode.valueOf(it) } catch (_: IllegalArgumentException) { ThemeMode.SYSTEM }
         } ?: ThemeMode.SYSTEM
     }
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { prefs ->
             prefs[KEY_THEME_MODE] = mode.name
+        }
+    }
+
+    override val approvalPollInterval: Flow<PollInterval> = dataStore.data.map { prefs ->
+        prefs[KEY_POLL_INTERVAL]?.let {
+            try { PollInterval.valueOf(it) } catch (_: IllegalArgumentException) { PollInterval.MINUTES_15 }
+        } ?: PollInterval.MINUTES_15
+    }
+
+    override suspend fun setApprovalPollInterval(interval: PollInterval) {
+        dataStore.edit { prefs ->
+            prefs[KEY_POLL_INTERVAL] = interval.name
+        }
+    }
+
+    override fun approvalPollingEnabled(instanceId: String): Flow<Boolean> =
+        dataStore.data.map { prefs ->
+            prefs[pollingEnabledKey(instanceId)] ?: true
+        }
+
+    override suspend fun setApprovalPollingEnabled(instanceId: String, enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[pollingEnabledKey(instanceId)] = enabled
         }
     }
 
@@ -82,8 +107,12 @@ class UserPreferencesRepository(
         private val KEY_TIMEZONE = stringPreferencesKey("timezone_override")
         private val KEY_TIME_FORMAT = stringPreferencesKey("time_format")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
+        private val KEY_POLL_INTERVAL = stringPreferencesKey("approval_poll_interval")
 
         private fun favoritesKey(instanceId: String) =
             stringPreferencesKey("favorite_templates_$instanceId")
+
+        private fun pollingEnabledKey(instanceId: String) =
+            booleanPreferencesKey("approval_polling_enabled_$instanceId")
     }
 }

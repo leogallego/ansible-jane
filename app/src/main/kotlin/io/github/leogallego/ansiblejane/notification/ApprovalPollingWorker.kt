@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import io.github.leogallego.ansiblejane.data.ITokenManager
+import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.firstOrNull
@@ -29,6 +30,13 @@ class ApprovalPollingWorker(
                 tokenManager.activeInstance.firstOrNull { it != null }
             }
             if (instance == null) {
+                return Result.success()
+            }
+            val userPreferences: IUserPreferencesRepository = get()
+            val pollingEnabled = withTimeoutOrNull(5_000L) {
+                userPreferences.approvalPollingEnabled(instance.id).firstOrNull()
+            } ?: true
+            if (!pollingEnabled) {
                 return Result.success()
             }
             val apiProvider: IAapApiProvider = get()

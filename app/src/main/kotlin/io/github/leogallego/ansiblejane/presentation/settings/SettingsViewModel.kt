@@ -9,6 +9,7 @@ import io.github.leogallego.ansiblejane.assistant.presentation.ModelFetchState
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.data.IToolManifestRepository
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
+import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.ApiVersion
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
@@ -29,11 +30,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.time.ZoneId
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class SettingsViewModel(
     private val tokenManager: ITokenManager,
     private val apiProvider: IAapApiProvider,
@@ -138,26 +142,33 @@ class SettingsViewModel(
         }
 
         viewModelScope.launch {
-            userPreferences.themeMode.collect { mode ->
-                updateReady { copy(themeMode = mode) }
+            combine(
+                userPreferences.themeMode,
+                userPreferences.approvalPollInterval,
+                tokenManager.activeInstance.flatMapLatest { instance ->
+                    if (instance != null) userPreferences.approvalPollingEnabled(instance.id)
+                    else flowOf(true)
+                }
+            ) { mode, interval, pollingEnabled ->
+                Triple(mode, interval, pollingEnabled)
+            }.collect { (mode, interval, pollingEnabled) ->
+                updateReady {
+                    copy(themeMode = mode, pollInterval = interval, approvalPollingEnabled = pollingEnabled)
+                }
             }
         }
 
         viewModelScope.launch {
-            assistantRepository.activeProviderKeyFlow.collect { key ->
-                updateReady { copy(activeProviderKey = key) }
-            }
-        }
-
-        viewModelScope.launch {
-            assistantRepository.savedConfigsFlow.collect { configs ->
-                updateReady { copy(savedConfigs = configs) }
-            }
-        }
-
-        viewModelScope.launch {
-            assistantRepository.activeConfigFlow.collect { config ->
-                updateReady { copy(activeConfig = config) }
+            combine(
+                assistantRepository.activeProviderKeyFlow,
+                assistantRepository.savedConfigsFlow,
+                assistantRepository.activeConfigFlow
+            ) { key, configs, config ->
+                Triple(key, configs, config)
+            }.collect { (key, configs, config) ->
+                updateReady {
+                    copy(activeProviderKey = key, savedConfigs = configs, activeConfig = config)
+                }
             }
         }
 
@@ -292,6 +303,19 @@ class SettingsViewModel(
     fun setThemeMode(mode: io.github.leogallego.ansiblejane.ui.components.ThemeMode) {
         viewModelScope.launch {
             userPreferences.setThemeMode(mode)
+        }
+    }
+
+    fun setPollInterval(interval: PollInterval) {
+        viewModelScope.launch {
+            userPreferences.setApprovalPollInterval(interval)
+        }
+    }
+
+    fun setApprovalPollingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            val instanceId = tokenManager.activeInstance.value?.id ?: return@launch
+            userPreferences.setApprovalPollingEnabled(instanceId, enabled)
         }
     }
 

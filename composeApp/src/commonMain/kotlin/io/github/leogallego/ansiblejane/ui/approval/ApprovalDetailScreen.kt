@@ -13,10 +13,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import io.github.leogallego.ansiblejane.model.WorkflowApproval
@@ -42,6 +46,7 @@ import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
 import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
+import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -57,7 +62,11 @@ fun ApprovalDetailScreen(
     DetailScaffold(title = "Workflow Approval", onNavigateBack = onNavigateBack) {
             when (val state = uiState) {
                 is ApprovalDetailUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(16.dp)
+                    ) {
+                        SkeletonCard()
+                    }
                 }
 
                 is ApprovalDetailUiState.Error -> {
@@ -165,10 +174,19 @@ private fun ApprovalDetailContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                DetailRowHorizontal("Status", approval.status)
+                DetailRowHorizontal("Status", approval.status.replaceFirstChar { it.uppercase() })
 
                 if (approval.created.isNotBlank()) {
                     DetailRowHorizontal("Created", DateFormatter.formatDateTime(approval.created))
+                    if (approval.status == "pending") {
+                        DetailRowHorizontal("Pending for", DateFormatter.formatDuration(approval.created))
+                    }
+                }
+
+                approval.summaryFields.workflowJob?.let { job ->
+                    job.launchedBy?.let { user ->
+                        DetailRowHorizontal("Launched by", user.username)
+                    }
                 }
 
                 approval.summaryFields.workflowJobTemplate?.let { template ->
@@ -180,6 +198,13 @@ private fun ApprovalDetailContent(
                     DetailRowHorizontal("Job Status", job.status)
                 }
 
+                approval.summaryFields.approvedOrDeniedBy?.let { user ->
+                    DetailRowHorizontal(
+                        if (approval.status == "approved") "Approved by" else "Denied by",
+                        user.username
+                    )
+                }
+
                 if (approval.timedOut) {
                     DetailRowHorizontal("Timed Out", "Yes")
                 }
@@ -189,11 +214,48 @@ private fun ApprovalDetailContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         if (!showActions) {
-            Text(
-                text = "This approval has already been ${approval.status}.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            val displayStatus = approval.status.ifBlank { "unknown" }
+            val (cardColor, contentColor, statusIcon, statusDescription) = when (displayStatus) {
+                "approved" -> StatusCardStyle(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+                    Icons.Default.CheckCircle,
+                    "Approved"
+                )
+                "denied" -> StatusCardStyle(
+                    MaterialTheme.colorScheme.errorContainer,
+                    MaterialTheme.colorScheme.onErrorContainer,
+                    Icons.Default.Cancel,
+                    "Denied"
+                )
+                else -> StatusCardStyle(
+                    MaterialTheme.colorScheme.surfaceVariant,
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                    Icons.Default.Info,
+                    displayStatus.replaceFirstChar { it.uppercase() }
+                )
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = cardColor)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = statusIcon,
+                        contentDescription = statusDescription,
+                        tint = contentColor
+                    )
+                    Text(
+                        text = "This approval has been $displayStatus.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = contentColor
+                    )
+                }
+            }
         } else if (isActionInProgress) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -292,3 +354,10 @@ private fun ApprovalCompletedContent(
         }
     }
 }
+
+private data class StatusCardStyle(
+    val cardColor: Color,
+    val contentColor: Color,
+    val icon: ImageVector,
+    val description: String
+)
