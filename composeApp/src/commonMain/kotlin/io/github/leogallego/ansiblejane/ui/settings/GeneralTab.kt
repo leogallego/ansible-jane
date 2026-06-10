@@ -2,6 +2,10 @@ package io.github.leogallego.ansiblejane.ui.settings
 
 import io.github.leogallego.ansiblejane.platform.PlatformUtils
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -324,7 +328,11 @@ private fun NotificationSection(
                 )
             }
 
-            AnimatedVisibility(visible = approvalPollingEnabled) {
+            AnimatedVisibility(
+                visible = approvalPollingEnabled,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 Column {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text("Poll interval", style = MaterialTheme.typography.bodyMedium)

@@ -142,43 +142,33 @@ class SettingsViewModel(
         }
 
         viewModelScope.launch {
-            userPreferences.themeMode.collect { mode ->
-                updateReady { copy(themeMode = mode) }
-            }
-        }
-
-        viewModelScope.launch {
-            userPreferences.approvalPollInterval.collect { interval ->
-                updateReady { copy(pollInterval = interval) }
-            }
-        }
-
-        viewModelScope.launch {
-            tokenManager.activeInstance
-                .flatMapLatest { instance ->
+            combine(
+                userPreferences.themeMode,
+                userPreferences.approvalPollInterval,
+                tokenManager.activeInstance.flatMapLatest { instance ->
                     if (instance != null) userPreferences.approvalPollingEnabled(instance.id)
                     else flowOf(true)
                 }
-                .collect { enabled ->
-                    updateReady { copy(approvalPollingEnabled = enabled) }
+            ) { mode, interval, pollingEnabled ->
+                Triple(mode, interval, pollingEnabled)
+            }.collect { (mode, interval, pollingEnabled) ->
+                updateReady {
+                    copy(themeMode = mode, pollInterval = interval, approvalPollingEnabled = pollingEnabled)
                 }
-        }
-
-        viewModelScope.launch {
-            assistantRepository.activeProviderKeyFlow.collect { key ->
-                updateReady { copy(activeProviderKey = key) }
             }
         }
 
         viewModelScope.launch {
-            assistantRepository.savedConfigsFlow.collect { configs ->
-                updateReady { copy(savedConfigs = configs) }
-            }
-        }
-
-        viewModelScope.launch {
-            assistantRepository.activeConfigFlow.collect { config ->
-                updateReady { copy(activeConfig = config) }
+            combine(
+                assistantRepository.activeProviderKeyFlow,
+                assistantRepository.savedConfigsFlow,
+                assistantRepository.activeConfigFlow
+            ) { key, configs, config ->
+                Triple(key, configs, config)
+            }.collect { (key, configs, config) ->
+                updateReady {
+                    copy(activeProviderKey = key, savedConfigs = configs, activeConfig = config)
+                }
             }
         }
 

@@ -88,10 +88,16 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val SCHEME_PREFIX = "ansiblejane://"
+
         fun parseDeepLink(uri: String): Any? {
-            val segments = uri.removePrefix("ansiblejane://").split("/")
+            if (!uri.startsWith(SCHEME_PREFIX)) return null
+            val path = uri.removePrefix(SCHEME_PREFIX)
+            if (path.contains("..") || path.contains("//")) return null
+            val segments = path.split("/")
             if (segments.size < 2) return null
             val id = segments[1].toIntOrNull() ?: return null
+            if (id <= 0) return null
             return when (segments[0]) {
                 "approval" -> ApprovalDetailRoute(id)
                 "job" -> JobStatusRoute(id)

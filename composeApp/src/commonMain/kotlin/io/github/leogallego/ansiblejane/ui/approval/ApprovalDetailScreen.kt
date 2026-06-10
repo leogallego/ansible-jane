@@ -35,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import io.github.leogallego.ansiblejane.model.WorkflowApproval
@@ -212,21 +214,25 @@ private fun ApprovalDetailContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         if (!showActions) {
-            val (cardColor, contentColor, statusIcon) = when (approval.status) {
-                "approved" -> Triple(
+            val displayStatus = approval.status.ifBlank { "unknown" }
+            val (cardColor, contentColor, statusIcon, statusDescription) = when (displayStatus) {
+                "approved" -> StatusCardStyle(
                     MaterialTheme.colorScheme.primaryContainer,
                     MaterialTheme.colorScheme.onPrimaryContainer,
-                    Icons.Default.CheckCircle
+                    Icons.Default.CheckCircle,
+                    "Approved"
                 )
-                "denied" -> Triple(
+                "denied" -> StatusCardStyle(
                     MaterialTheme.colorScheme.errorContainer,
                     MaterialTheme.colorScheme.onErrorContainer,
-                    Icons.Default.Cancel
+                    Icons.Default.Cancel,
+                    "Denied"
                 )
-                else -> Triple(
+                else -> StatusCardStyle(
                     MaterialTheme.colorScheme.surfaceVariant,
                     MaterialTheme.colorScheme.onSurfaceVariant,
-                    Icons.Default.Info
+                    Icons.Default.Info,
+                    displayStatus.replaceFirstChar { it.uppercase() }
                 )
             }
             Card(
@@ -240,11 +246,11 @@ private fun ApprovalDetailContent(
                 ) {
                     Icon(
                         imageVector = statusIcon,
-                        contentDescription = null,
+                        contentDescription = statusDescription,
                         tint = contentColor
                     )
                     Text(
-                        text = "This approval has been ${approval.status}.",
+                        text = "This approval has been $displayStatus.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = contentColor
                     )
@@ -348,3 +354,10 @@ private fun ApprovalCompletedContent(
         }
     }
 }
+
+private data class StatusCardStyle(
+    val cardColor: Color,
+    val contentColor: Color,
+    val icon: ImageVector,
+    val description: String
+)

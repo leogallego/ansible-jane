@@ -10,6 +10,7 @@ import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -26,6 +27,8 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != ACTION_APPROVE && intent.action != ACTION_DENY) return
+
         val approvalId = intent.getIntExtra(EXTRA_APPROVAL_ID, -1)
         if (approvalId <= 0) return
 

@@ -33,7 +33,7 @@ class ApprovalPollingWorker(
                 return Result.success()
             }
             val userPreferences: IUserPreferencesRepository = get()
-            val pollingEnabled = withTimeoutOrNull(2_000L) {
+            val pollingEnabled = withTimeoutOrNull(5_000L) {
                 userPreferences.approvalPollingEnabled(instance.id).firstOrNull()
             } ?: true
             if (!pollingEnabled) {

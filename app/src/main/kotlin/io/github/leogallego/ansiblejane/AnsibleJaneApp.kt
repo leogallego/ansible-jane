@@ -21,6 +21,7 @@ import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -61,21 +62,23 @@ class AnsibleJaneApp : Application() {
         val userPreferences: IUserPreferencesRepository by inject()
 
         appScope.launch {
-            var lastInterval: PollInterval? = null
-            userPreferences.approvalPollInterval.collect { interval ->
-                val policy = if (lastInterval == null)
-                    ExistingPeriodicWorkPolicy.KEEP
-                else
-                    ExistingPeriodicWorkPolicy.REPLACE
-                WorkManager.getInstance(this@AnsibleJaneApp).enqueueUniquePeriodicWork(
-                    ApprovalPollingWorker.WORK_NAME,
-                    policy,
-                    PeriodicWorkRequestBuilder<ApprovalPollingWorker>(
-                        interval.minutes.toLong(), TimeUnit.MINUTES
-                    ).build()
-                )
-                lastInterval = interval
-            }
+            var firstEmission = true
+            userPreferences.approvalPollInterval
+                .distinctUntilChanged()
+                .collect { interval ->
+                    val policy = if (firstEmission)
+                        ExistingPeriodicWorkPolicy.KEEP
+                    else
+                        ExistingPeriodicWorkPolicy.REPLACE
+                    WorkManager.getInstance(this@AnsibleJaneApp).enqueueUniquePeriodicWork(
+                        ApprovalPollingWorker.WORK_NAME,
+                        policy,
+                        PeriodicWorkRequestBuilder<ApprovalPollingWorker>(
+                            interval.minutes.toLong(), TimeUnit.MINUTES
+                        ).build()
+                    )
+                    firstEmission = false
+                }
         }
 
         appScope.launch {
