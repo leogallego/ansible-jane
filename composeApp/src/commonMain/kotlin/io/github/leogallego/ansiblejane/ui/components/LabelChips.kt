@@ -17,9 +17,10 @@ fun LabelChips(
     labels: List<Label>,
     selectedLabel: Label?,
     onLabelSelected: (Label?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    extraContent: @Composable (() -> Unit)? = null
 ) {
-    if (labels.isEmpty()) return
+    if (labels.isEmpty() && extraContent == null) return
 
     Row(
         modifier = modifier
@@ -27,6 +28,7 @@ fun LabelChips(
             .padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        extraContent?.invoke()
         labels.forEach { label ->
             FilterChip(
                 selected = selectedLabel?.id == label.id,

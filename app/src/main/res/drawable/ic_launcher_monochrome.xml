@@ -4,8 +4,8 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Ansible "A" letterform centered in adaptive icon safe zone -->
+    <!-- Same "A" letterform, single color for themed icon tinting -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#000000"
         android:pathData="M54,28 L72,76 L65,76 L61,65 L47,65 L43,76 L36,76 Z M49.5,59 L58.5,59 L54,46 Z" />
 </vector>

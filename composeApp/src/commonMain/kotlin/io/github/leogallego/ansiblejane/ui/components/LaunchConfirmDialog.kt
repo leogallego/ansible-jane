@@ -14,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 
 @Composable
 fun LaunchConfirmDialog(
@@ -36,6 +38,8 @@ fun LaunchConfirmDialog(
         label = "dialogAlpha"
     )
 
+    val haptic = LocalHapticFeedback.current
+
     LaunchedEffect(Unit) { visible = true }
 
     AlertDialog(
@@ -43,7 +47,10 @@ fun LaunchConfirmDialog(
         title = { Text("Launch Job") },
         text = { Text("Launch \"$templateName\"?") },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onConfirm()
+            }) {
                 Text("Launch")
             }
         },

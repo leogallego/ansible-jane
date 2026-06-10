@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -24,6 +26,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -43,9 +47,12 @@ fun TemplateCard(
     onClick: () -> Unit,
     onLaunch: () -> Unit,
     modifier: Modifier = Modifier,
+    isFavorite: Boolean = false,
+    onToggleFavorite: (() -> Unit)? = null,
     testTagPrefix: String = ""
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val haptic = LocalHapticFeedback.current
     ElevatedCard(
         onClick = onClick,
         interactionSource = interactionSource,
@@ -101,21 +108,41 @@ fun TemplateCard(
                 }
             }
 
-            if (template.canStart) {
-                val launchTag = if (testTagPrefix.isNotEmpty()) {
-                    Modifier.testTag("${testTagPrefix}_launch_${template.id}")
-                } else {
-                    Modifier
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                if (onToggleFavorite != null) {
+                    IconButton(
+                        onClick = onToggleFavorite,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .testTag("button_favorite_${template.id}")
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                            contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-                IconButton(
-                    onClick = onLaunch,
-                    modifier = Modifier.size(48.dp).then(launchTag)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Launch ${template.name}",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                if (template.canStart) {
+                    val launchTag = if (testTagPrefix.isNotEmpty()) {
+                        Modifier.testTag("${testTagPrefix}_launch_${template.id}")
+                    } else {
+                        Modifier
+                    }
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onLaunch()
+                        },
+                        modifier = Modifier.size(48.dp).then(launchTag)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Launch ${template.name}",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }

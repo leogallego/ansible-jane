@@ -8,7 +8,9 @@ interface IUserPreferencesRepository {
     val timezoneId: Flow<String?>
     val timeFormat: Flow<TimeFormat>
     val themeMode: Flow<ThemeMode>
+    fun favoriteTemplateIds(instanceId: String): Flow<Set<Int>>
     suspend fun setTimezoneId(zoneId: String?)
     suspend fun setTimeFormat(format: TimeFormat)
     suspend fun setThemeMode(mode: ThemeMode)
+    suspend fun toggleFavoriteTemplate(instanceId: String, templateId: Int)
 }

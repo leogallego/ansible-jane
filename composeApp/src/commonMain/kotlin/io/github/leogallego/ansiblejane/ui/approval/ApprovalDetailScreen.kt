@@ -30,6 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
@@ -48,6 +50,7 @@ fun ApprovalDetailScreen(
     viewModel: ApprovalDetailViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val haptic = LocalHapticFeedback.current
 
     var showConfirmDialog by remember { mutableStateOf<String?>(null) }
 
@@ -121,6 +124,7 @@ fun ApprovalDetailScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         showConfirmDialog = null
                         if (action == "approve") viewModel.approve() else viewModel.deny()
                     }

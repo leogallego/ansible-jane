@@ -27,4 +27,14 @@ class FakeUserPreferencesRepository : IUserPreferencesRepository {
     override suspend fun setThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
     }
+
+    private val _favorites = mutableMapOf<String, MutableStateFlow<Set<Int>>>()
+
+    override fun favoriteTemplateIds(instanceId: String): Flow<Set<Int>> =
+        _favorites.getOrPut(instanceId) { MutableStateFlow(emptySet()) }
+
+    override suspend fun toggleFavoriteTemplate(instanceId: String, templateId: Int) {
+        val flow = _favorites.getOrPut(instanceId) { MutableStateFlow(emptySet()) }
+        flow.value = if (templateId in flow.value) flow.value - templateId else flow.value + templateId
+    }
 }

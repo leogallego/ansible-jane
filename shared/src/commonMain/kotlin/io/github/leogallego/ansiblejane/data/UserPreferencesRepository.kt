@@ -52,9 +52,38 @@ class UserPreferencesRepository(
         }
     }
 
+    override fun favoriteTemplateIds(instanceId: String): Flow<Set<Int>> =
+        dataStore.data.map { prefs ->
+            prefs[favoritesKey(instanceId)]
+                ?.split(",")
+                ?.mapNotNull { it.trim().toIntOrNull() }
+                ?.toSet()
+                ?: emptySet()
+        }
+
+    override suspend fun toggleFavoriteTemplate(instanceId: String, templateId: Int) {
+        val key = favoritesKey(instanceId)
+        dataStore.edit { prefs ->
+            val current = prefs[key]
+                ?.split(",")
+                ?.mapNotNull { it.trim().toIntOrNull() }
+                ?.toSet()
+                ?: emptySet()
+            val updated = if (templateId in current) current - templateId else current + templateId
+            if (updated.isEmpty()) {
+                prefs.remove(key)
+            } else {
+                prefs[key] = updated.joinToString(",")
+            }
+        }
+    }
+
     companion object {
         private val KEY_TIMEZONE = stringPreferencesKey("timezone_override")
         private val KEY_TIME_FORMAT = stringPreferencesKey("time_format")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
+
+        private fun favoritesKey(instanceId: String) =
+            stringPreferencesKey("favorite_templates_$instanceId")
     }
 }
