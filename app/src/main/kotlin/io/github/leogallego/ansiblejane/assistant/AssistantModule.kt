@@ -26,10 +26,18 @@ val assistantModule = module {
         McpServerManager(
             ktorClientFactory = { instance, serverConfig ->
                 createPlatformHttpClient(trustSelfSigned = instance.trustSelfSigned) {
-                    if (serverConfig.useInstanceAuth) {
-                        defaultRequest {
+                    defaultRequest {
+                        if (serverConfig.useInstanceAuth) {
                             header(HttpHeaders.Authorization, "Bearer ${instance.token}")
                         }
+                        serverConfig.headers
+                            .filter { (key, _) ->
+                                !serverConfig.useInstanceAuth ||
+                                    !key.equals(HttpHeaders.Authorization, ignoreCase = true)
+                            }
+                            .forEach { (key, value) ->
+                                header(key, value)
+                            }
                     }
                     install(SSE)
                 }

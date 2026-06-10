@@ -391,16 +391,34 @@ class SettingsViewModel(
         }
     }
 
-    fun addMcpServer(url: String, label: String, toolset: String? = null) {
+    fun addMcpServer(
+        url: String,
+        label: String,
+        toolset: String? = null,
+        headers: Map<String, String> = emptyMap(),
+        useInstanceAuth: Boolean = true
+    ) {
         viewModelScope.launch {
             val instance = tokenManager.activeInstance.value ?: return@launch
             val sanitizedUrl = url.trim().trimEnd('/')
             val uri = try { java.net.URI(sanitizedUrl) } catch (_: Exception) { return@launch }
             if (uri.scheme?.lowercase() !in listOf("https", "wss")) return@launch
             val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
-            current.add(McpServerConfig(url = sanitizedUrl, label = label, toolset = toolset))
+            current.add(
+                McpServerConfig(
+                    url = sanitizedUrl,
+                    label = label,
+                    toolset = toolset,
+                    headers = headers,
+                    useInstanceAuth = useInstanceAuth
+                )
+            )
             tokenManager.updateMcpConfig(instance.id, true, current)
         }
+    }
+
+    fun toggleUseInstanceAuth(url: String, useInstanceAuth: Boolean) {
+        updateMcpServer(url) { it.copy(useInstanceAuth = useInstanceAuth) }
     }
 
     fun removeMcpServer(url: String) {
