@@ -1,7 +1,7 @@
 package io.github.leogallego.ansiblejane.fakes
 
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
-import io.github.leogallego.ansiblejane.data.PollInterval
+import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import kotlinx.coroutines.flow.Flow

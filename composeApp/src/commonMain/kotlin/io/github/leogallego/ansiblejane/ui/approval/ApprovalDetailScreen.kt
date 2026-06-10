@@ -177,7 +177,7 @@ private fun ApprovalDetailContent(
                 if (approval.created.isNotBlank()) {
                     DetailRowHorizontal("Created", DateFormatter.formatDateTime(approval.created))
                     if (approval.status == "pending") {
-                        DetailRowHorizontal("Pending for", DateFormatter.formatRelative(approval.created).removeSuffix(" ago"))
+                        DetailRowHorizontal("Pending for", DateFormatter.formatDuration(approval.created))
                     }
                 }
 

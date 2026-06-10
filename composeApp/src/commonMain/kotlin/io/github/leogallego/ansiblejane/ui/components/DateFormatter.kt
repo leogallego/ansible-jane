@@ -69,6 +69,23 @@ object DateFormatter {
         }
     }
 
+    fun formatDuration(isoTimestamp: String): String {
+        return try {
+            val instant = Instant.parse(isoTimestamp)
+            val now = Instant.now()
+            val minutesAgo = ChronoUnit.MINUTES.between(instant, now).coerceAtLeast(0)
+            when {
+                minutesAgo < 1 -> "just now"
+                minutesAgo < 60 -> "${minutesAgo}m"
+                minutesAgo < 1440 -> "${minutesAgo / 60}h"
+                minutesAgo < 10080 -> "${minutesAgo / 1440}d"
+                else -> formatDateTime(isoTimestamp)
+            }
+        } catch (_: Exception) {
+            isoTimestamp
+        }
+    }
+
     fun formatDate(isoTimestamp: String): String {
         return try {
             val instant = Instant.parse(isoTimestamp)

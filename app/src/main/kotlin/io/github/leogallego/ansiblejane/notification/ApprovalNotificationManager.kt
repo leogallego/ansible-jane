@@ -63,9 +63,10 @@ class ApprovalNotificationManager {
             action = ApprovalActionReceiver.ACTION_APPROVE
             putExtra(ApprovalActionReceiver.EXTRA_APPROVAL_ID, approval.id)
         }
+        val approveRequestCode = (approval.id.hashCode() and 0x3FFFFFFF) shl 1
         val approvePendingIntent = PendingIntent.getBroadcast(
             context,
-            approval.id * 2,
+            approveRequestCode,
             approveIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -76,7 +77,7 @@ class ApprovalNotificationManager {
         }
         val denyPendingIntent = PendingIntent.getBroadcast(
             context,
-            approval.id * 2 + 1,
+            approveRequestCode or 1,
             denyIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

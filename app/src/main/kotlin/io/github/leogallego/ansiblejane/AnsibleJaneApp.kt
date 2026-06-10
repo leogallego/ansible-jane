@@ -8,7 +8,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
-import io.github.leogallego.ansiblejane.data.PollInterval
+import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.data.dataModule
 import io.github.leogallego.ansiblejane.notification.ApprovalNotificationManager
 import io.github.leogallego.ansiblejane.notification.ApprovalPollingWorker

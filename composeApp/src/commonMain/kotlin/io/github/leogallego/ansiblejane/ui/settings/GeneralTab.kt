@@ -1,6 +1,7 @@
 package io.github.leogallego.ansiblejane.ui.settings
 
 import io.github.leogallego.ansiblejane.platform.PlatformUtils
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,7 +42,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.AppVersion
-import io.github.leogallego.ansiblejane.data.PollInterval
+import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import java.time.ZoneId
@@ -323,22 +324,24 @@ private fun NotificationSection(
                 )
             }
 
-            if (approvalPollingEnabled) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text("Poll interval", style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(8.dp))
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    PollInterval.entries.forEachIndexed { index, interval ->
-                        SegmentedButton(
-                            selected = currentPollInterval == interval,
-                            onClick = { onPollIntervalSelected(interval) },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = PollInterval.entries.size
-                            ),
-                            modifier = Modifier.testTag("button_poll_${interval.minutes}")
-                        ) {
-                            Text(interval.displayName, style = MaterialTheme.typography.labelSmall)
+            AnimatedVisibility(visible = approvalPollingEnabled) {
+                Column {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Poll interval", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        PollInterval.entries.forEachIndexed { index, interval ->
+                            SegmentedButton(
+                                selected = currentPollInterval == interval,
+                                onClick = { onPollIntervalSelected(interval) },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = PollInterval.entries.size
+                                ),
+                                modifier = Modifier.testTag("button_poll_${interval.minutes}")
+                            ) {
+                                Text(interval.displayName, style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }

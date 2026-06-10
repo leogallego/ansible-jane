@@ -2,7 +2,7 @@ package io.github.leogallego.ansiblejane.presentation.settings
 
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.assistant.presentation.ModelFetchState
-import io.github.leogallego.ansiblejane.data.PollInterval
+import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState

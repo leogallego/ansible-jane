@@ -9,7 +9,7 @@ import io.github.leogallego.ansiblejane.assistant.presentation.ModelFetchState
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.data.IToolManifestRepository
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
-import io.github.leogallego.ansiblejane.data.PollInterval
+import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.ApiVersion
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.time.ZoneId
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class SettingsViewModel(
     private val tokenManager: ITokenManager,
     private val apiProvider: IAapApiProvider,
@@ -152,7 +153,6 @@ class SettingsViewModel(
             }
         }
 
-        @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
         viewModelScope.launch {
             tokenManager.activeInstance
                 .flatMapLatest { instance ->

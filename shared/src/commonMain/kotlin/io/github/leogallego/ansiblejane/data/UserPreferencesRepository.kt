@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.data
 
+import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.platform.DataStoreFactory
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
@@ -21,7 +22,7 @@ class UserPreferencesRepository(
 
     override val timeFormat: Flow<TimeFormat> = dataStore.data.map { prefs ->
         prefs[KEY_TIME_FORMAT]?.let {
-            try { TimeFormat.valueOf(it) } catch (_: Exception) { TimeFormat.SYSTEM }
+            try { TimeFormat.valueOf(it) } catch (_: IllegalArgumentException) { TimeFormat.SYSTEM }
         } ?: TimeFormat.SYSTEM
     }
 
@@ -43,7 +44,7 @@ class UserPreferencesRepository(
 
     override val themeMode: Flow<ThemeMode> = dataStore.data.map { prefs ->
         prefs[KEY_THEME_MODE]?.let {
-            try { ThemeMode.valueOf(it) } catch (_: Exception) { ThemeMode.SYSTEM }
+            try { ThemeMode.valueOf(it) } catch (_: IllegalArgumentException) { ThemeMode.SYSTEM }
         } ?: ThemeMode.SYSTEM
     }
 
@@ -55,7 +56,7 @@ class UserPreferencesRepository(
 
     override val approvalPollInterval: Flow<PollInterval> = dataStore.data.map { prefs ->
         prefs[KEY_POLL_INTERVAL]?.let {
-            try { PollInterval.valueOf(it) } catch (_: Exception) { PollInterval.MINUTES_15 }
+            try { PollInterval.valueOf(it) } catch (_: IllegalArgumentException) { PollInterval.MINUTES_15 }
         } ?: PollInterval.MINUTES_15
     }
 
