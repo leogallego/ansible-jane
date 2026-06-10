@@ -47,4 +47,24 @@ else
     fi
 fi
 
+# 4. Set up Robolectric offline mode jars
+# Robolectric needs pre-instrumented android-all jars in a flat directory.
+# In sandbox mode, it can't create ~/.robolectric-download-lock on the
+# read-only home filesystem, so offline mode with local jars is required.
+ROBO_DEPS="robolectric-deps"
+if [ ! -d "$ROBO_DEPS" ]; then
+    M2_ROBO="$HOME/.m2/repository/org/robolectric/android-all-instrumented"
+    if [ -d "$M2_ROBO" ]; then
+        mkdir -p "$ROBO_DEPS"
+        for jar in "$M2_ROBO"/*/android-all-instrumented-*.jar; do
+            [ -f "$jar" ] && ln -sf "$jar" "$ROBO_DEPS/$(basename "$jar")"
+        done
+        echo "Linked Robolectric SDK jars to $ROBO_DEPS"
+    else
+        echo "Warning: Robolectric jars not found in ~/.m2 — run tests once outside sandbox first"
+    fi
+else
+    echo "Robolectric deps directory already exists"
+fi
+
 echo "Sandbox setup complete."
