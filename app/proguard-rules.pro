@@ -22,3 +22,9 @@
 
 # ── Tink (protobuf reflection for key storage) ──────────────────────
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
+
+# ── Strip debug logging from release builds ─────────────────────────
+-assumenosideeffects class android.util.Log {
+    public static int d(...);
+    public static int v(...);
+}

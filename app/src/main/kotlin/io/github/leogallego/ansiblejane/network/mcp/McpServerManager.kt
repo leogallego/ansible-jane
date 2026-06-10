@@ -47,6 +47,7 @@ class McpServerManager(
 
         val configs = instance.mcpServerUrls?.filter { it.enabled } ?: return
         if (configs.isEmpty()) return
+        Log.d(TAG, "connectAll: ${configs.size} servers enabled")
 
         coroutineScope {
             configs.map { config ->
@@ -63,11 +64,14 @@ class McpServerManager(
     }
 
     private suspend fun connectServer(config: McpServerConfig, ktorClient: HttpClient) {
+        Log.d(TAG, "Connecting to '${config.label}' at ${config.url}")
         _connections.update { it + (config.label to McpConnectionState.Connecting) }
         try {
             val state = connectAndDiscover(config.url, ktorClient)
+            Log.d(TAG, "Connected '${config.label}': ${state.toolDefs.size} tools, server=${state.serverInfo.name}/${state.serverInfo.version}")
             registerServer(config.label, state, config.toolset)
         } catch (e: Exception) {
+            Log.w(TAG, "Failed to connect '${config.label}': ${e.message}")
             _connections.update {
                 it + (config.label to McpConnectionState.Error(
                     "Failed to connect: ${e.message}", e
@@ -77,6 +81,7 @@ class McpServerManager(
     }
 
     suspend fun disconnectAll() {
+        val count = clients.size
         clients.values.forEach { state ->
             try { state.client.close() } catch (_: Exception) {}
             try { state.ktorClient.close() } catch (_: Exception) {}
@@ -85,6 +90,7 @@ class McpServerManager(
         connectionMutexes.clear()
         synchronized(mcpTools) { mcpTools.clear() }
         _connections.update { emptyMap() }
+        if (count > 0) Log.d(TAG, "Disconnected $count servers")
     }
 
     fun getAllTools(): List<Tool> = synchronized(mcpTools) { mcpTools.toList() }

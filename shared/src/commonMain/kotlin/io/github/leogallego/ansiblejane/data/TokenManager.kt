@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.data
 
+import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.McpServerConfig
@@ -63,6 +64,7 @@ class TokenManager(
     private val json = Json { ignoreUnknownKeys = true }
 
     private companion object {
+        const val TAG = "TokenManager"
         val KEY_BASE_URL = stringPreferencesKey("base_url")
         val KEY_TOKEN = stringPreferencesKey("token")
         val KEY_API_VERSION = stringPreferencesKey("api_version")
@@ -135,7 +137,8 @@ class TokenManager(
         val decryptedInstances = state.instances.mapNotNull { serialized ->
             try {
                 toAapInstance(serialized)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to decrypt instance ${serialized.id}: ${e.message}")
                 null
             }
         }
@@ -152,6 +155,7 @@ class TokenManager(
         certFingerprint: String?,
         existingId: String?
     ): String {
+        Log.d(TAG, "saveInstance: alias=${alias ?: "none"}, apiVersion=$apiVersion, existingId=$existingId")
         val normalizedUrl = baseUrl.trimEnd('/').lowercase()
         val state = readState()
 
@@ -220,6 +224,7 @@ class TokenManager(
     }
 
     override suspend fun removeInstance(instanceId: String): Boolean {
+        Log.d(TAG, "removeInstance: $instanceId")
         val state = readState()
         val updatedInstances = state.instances.filter { it.id != instanceId }
         if (updatedInstances.size == state.instances.size) return false
@@ -237,6 +242,7 @@ class TokenManager(
     }
 
     override suspend fun setActiveInstance(instanceId: String) {
+        Log.d(TAG, "setActiveInstance: $instanceId")
         val state = readState()
         if (state.instances.none { it.id == instanceId }) return
         writeState(state.copy(activeInstanceId = instanceId))
@@ -252,6 +258,7 @@ class TokenManager(
         if (prefs[KEY_INSTANCES_JSON] == null) {
             val hasLegacyKeys = prefs[KEY_BASE_URL] != null || prefs[KEY_TOKEN] != null
             if (hasLegacyKeys) {
+                Log.d(TAG, "Clearing legacy single-instance keys")
                 credentialsDataStore.edit { p ->
                     p.remove(KEY_BASE_URL)
                     p.remove(KEY_TOKEN)
@@ -265,6 +272,7 @@ class TokenManager(
         }
 
         val state = readState()
+        Log.d(TAG, "Loaded ${state.instances.size} instances, active=${state.activeInstanceId}")
         updateReactiveState(state)
         return state.instances.isNotEmpty()
     }
