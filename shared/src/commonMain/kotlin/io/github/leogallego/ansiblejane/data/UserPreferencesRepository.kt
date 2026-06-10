@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.data
 import io.github.leogallego.ansiblejane.platform.DataStoreFactory
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
@@ -66,12 +67,12 @@ class UserPreferencesRepository(
 
     override fun approvalPollingEnabled(instanceId: String): Flow<Boolean> =
         dataStore.data.map { prefs ->
-            prefs[pollingEnabledKey(instanceId)] != "false"
+            prefs[pollingEnabledKey(instanceId)] ?: true
         }
 
     override suspend fun setApprovalPollingEnabled(instanceId: String, enabled: Boolean) {
         dataStore.edit { prefs ->
-            prefs[pollingEnabledKey(instanceId)] = enabled.toString()
+            prefs[pollingEnabledKey(instanceId)] = enabled
         }
     }
 
@@ -111,6 +112,6 @@ class UserPreferencesRepository(
             stringPreferencesKey("favorite_templates_$instanceId")
 
         private fun pollingEnabledKey(instanceId: String) =
-            stringPreferencesKey("approval_polling_enabled_$instanceId")
+            booleanPreferencesKey("approval_polling_enabled_$instanceId")
     }
 }

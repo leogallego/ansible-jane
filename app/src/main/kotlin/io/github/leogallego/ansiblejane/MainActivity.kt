@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
                 onHandleDeepLink = { navController ->
                     deepLink?.let { uri ->
                         val currentRoute = navController.currentDestination?.route
-                        if (currentRoute != null && currentRoute.contains("MainRoute")) {
+                        if (currentRoute != null && (currentRoute == "MainRoute" || currentRoute.startsWith("MainRoute/"))) {
                             pendingDeepLink.value = null
                             parseDeepLink(uri)?.let { route ->
                                 navController.navigate(route)
