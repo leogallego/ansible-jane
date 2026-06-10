@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -211,13 +212,26 @@ private fun ApprovalDetailContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         if (!showActions) {
+            val (cardColor, contentColor, statusIcon) = when (approval.status) {
+                "approved" -> Triple(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+                    Icons.Default.CheckCircle
+                )
+                "denied" -> Triple(
+                    MaterialTheme.colorScheme.errorContainer,
+                    MaterialTheme.colorScheme.onErrorContainer,
+                    Icons.Default.Cancel
+                )
+                else -> Triple(
+                    MaterialTheme.colorScheme.surfaceVariant,
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                    Icons.Default.Info
+                )
+            }
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (approval.status == "approved")
-                        MaterialTheme.colorScheme.primaryContainer
-                    else MaterialTheme.colorScheme.errorContainer
-                )
+                colors = CardDefaults.cardColors(containerColor = cardColor)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -225,19 +239,14 @@ private fun ApprovalDetailContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = if (approval.status == "approved")
-                            Icons.Default.CheckCircle else Icons.Default.Cancel,
+                        imageVector = statusIcon,
                         contentDescription = null,
-                        tint = if (approval.status == "approved")
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onErrorContainer
+                        tint = contentColor
                     )
                     Text(
                         text = "This approval has been ${approval.status}.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (approval.status == "approved")
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onErrorContainer
+                        color = contentColor
                     )
                 }
             }

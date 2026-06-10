@@ -25,14 +25,13 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
         private const val TAG = "ApprovalActionReceiver"
     }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     override fun onReceive(context: Context, intent: Intent) {
         val approvalId = intent.getIntExtra(EXTRA_APPROVAL_ID, -1)
         if (approvalId <= 0) return
 
         val isApprove = intent.action == ACTION_APPROVE
         val pendingResult = goAsync()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
         scope.launch {
             try {
@@ -46,7 +45,7 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
                 }
 
                 val apiProvider: IAapApiProvider = get()
-                val result = if (isApprove) {
+                if (isApprove) {
                     apiProvider.getApiService().approveWorkflow(approvalId)
                 } else {
                     apiProvider.getApiService().denyWorkflow(approvalId)
@@ -59,6 +58,7 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
                 Log.e(TAG, "Failed to ${if (isApprove) "approve" else "deny"} $approvalId", e)
             } finally {
                 pendingResult.finish()
+                scope.cancel()
             }
         }
     }
