@@ -24,7 +24,7 @@ private data class ClientGroup(
 class HttpClientFactory(
     private val tokenManager: ITokenManager,
     private val json: Json,
-    private val logLevel: LogLevel = LogLevel.INFO
+    private val logLevel: LogLevel = LogLevel.NONE
 ) : IAapApiProvider {
     private val clientCache = mutableMapOf<String, ClientGroup>()
 
