@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Switch
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -40,6 +41,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.AppVersion
+import io.github.leogallego.ansiblejane.data.PollInterval
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import java.time.ZoneId
@@ -49,9 +51,13 @@ fun GeneralTab(
     timezoneId: String?,
     timeFormat: TimeFormat,
     themeMode: ThemeMode,
+    pollInterval: PollInterval,
+    approvalPollingEnabled: Boolean,
     onTimezoneSelected: (String?) -> Unit,
     onTimeFormatSelected: (TimeFormat) -> Unit,
     onThemeModeSelected: (ThemeMode) -> Unit,
+    onPollIntervalSelected: (PollInterval) -> Unit,
+    onApprovalPollingToggled: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -67,6 +73,15 @@ fun GeneralTab(
             onTimezoneSelected = onTimezoneSelected,
             onTimeFormatSelected = onTimeFormatSelected,
             onThemeModeSelected = onThemeModeSelected
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        NotificationSection(
+            currentPollInterval = pollInterval,
+            approvalPollingEnabled = approvalPollingEnabled,
+            onPollIntervalSelected = onPollIntervalSelected,
+            onApprovalPollingToggled = onApprovalPollingToggled
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -267,6 +282,76 @@ private fun TimezonePickerSheet(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NotificationSection(
+    currentPollInterval: PollInterval,
+    approvalPollingEnabled: Boolean,
+    onPollIntervalSelected: (PollInterval) -> Unit,
+    onApprovalPollingToggled: (Boolean) -> Unit
+) {
+    Text(
+        text = "Notifications",
+        style = MaterialTheme.typography.titleMedium
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Approval notifications", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = "Poll for pending workflow approvals",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = approvalPollingEnabled,
+                    onCheckedChange = onApprovalPollingToggled,
+                    modifier = Modifier.testTag("switch_approval_polling")
+                )
+            }
+
+            if (approvalPollingEnabled) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Poll interval", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    PollInterval.entries.forEachIndexed { index, interval ->
+                        SegmentedButton(
+                            selected = currentPollInterval == interval,
+                            onClick = { onPollIntervalSelected(interval) },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = PollInterval.entries.size
+                            ),
+                            modifier = Modifier.testTag("button_poll_${interval.minutes}")
+                        ) {
+                            Text(interval.displayName, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        text = "Sound and vibration are configured in system notification settings.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 4.dp)
+    )
 }
 
 @Composable

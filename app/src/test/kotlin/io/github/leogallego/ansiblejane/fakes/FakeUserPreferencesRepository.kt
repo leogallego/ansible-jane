@@ -1,6 +1,7 @@
 package io.github.leogallego.ansiblejane.fakes
 
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
+import io.github.leogallego.ansiblejane.data.PollInterval
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +27,22 @@ class FakeUserPreferencesRepository : IUserPreferencesRepository {
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
+    }
+
+    private val _pollInterval = MutableStateFlow(PollInterval.MINUTES_15)
+    override val approvalPollInterval: Flow<PollInterval> = _pollInterval
+
+    override suspend fun setApprovalPollInterval(interval: PollInterval) {
+        _pollInterval.value = interval
+    }
+
+    private val _pollingEnabled = mutableMapOf<String, MutableStateFlow<Boolean>>()
+
+    override fun approvalPollingEnabled(instanceId: String): Flow<Boolean> =
+        _pollingEnabled.getOrPut(instanceId) { MutableStateFlow(true) }
+
+    override suspend fun setApprovalPollingEnabled(instanceId: String, enabled: Boolean) {
+        _pollingEnabled.getOrPut(instanceId) { MutableStateFlow(true) }.value = enabled
     }
 
     private val _favorites = mutableMapOf<String, MutableStateFlow<Set<Int>>>()

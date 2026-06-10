@@ -26,6 +26,7 @@ data class WorkflowApprovalJobRef(
     val id: Int,
     val name: String = "",
     val status: String = "",
+    @SerialName("launched_by") val launchedBy: WorkflowApprovalUserRef? = null,
 )
 
 @Serializable

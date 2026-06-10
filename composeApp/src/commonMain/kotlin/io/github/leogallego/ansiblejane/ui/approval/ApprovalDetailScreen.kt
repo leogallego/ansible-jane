@@ -17,6 +17,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +43,7 @@ import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
 import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
+import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -57,7 +59,11 @@ fun ApprovalDetailScreen(
     DetailScaffold(title = "Workflow Approval", onNavigateBack = onNavigateBack) {
             when (val state = uiState) {
                 is ApprovalDetailUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(16.dp)
+                    ) {
+                        SkeletonCard()
+                    }
                 }
 
                 is ApprovalDetailUiState.Error -> {
@@ -165,10 +171,19 @@ private fun ApprovalDetailContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                DetailRowHorizontal("Status", approval.status)
+                DetailRowHorizontal("Status", approval.status.replaceFirstChar { it.uppercase() })
 
                 if (approval.created.isNotBlank()) {
                     DetailRowHorizontal("Created", DateFormatter.formatDateTime(approval.created))
+                    if (approval.status == "pending") {
+                        DetailRowHorizontal("Pending for", DateFormatter.formatRelative(approval.created).removeSuffix(" ago"))
+                    }
+                }
+
+                approval.summaryFields.workflowJob?.let { job ->
+                    job.launchedBy?.let { user ->
+                        DetailRowHorizontal("Launched by", user.username)
+                    }
                 }
 
                 approval.summaryFields.workflowJobTemplate?.let { template ->
@@ -180,6 +195,13 @@ private fun ApprovalDetailContent(
                     DetailRowHorizontal("Job Status", job.status)
                 }
 
+                approval.summaryFields.approvedOrDeniedBy?.let { user ->
+                    DetailRowHorizontal(
+                        if (approval.status == "approved") "Approved by" else "Denied by",
+                        user.username
+                    )
+                }
+
                 if (approval.timedOut) {
                     DetailRowHorizontal("Timed Out", "Yes")
                 }
@@ -189,11 +211,36 @@ private fun ApprovalDetailContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         if (!showActions) {
-            Text(
-                text = "This approval has already been ${approval.status}.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (approval.status == "approved")
+                        MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (approval.status == "approved")
+                            Icons.Default.CheckCircle else Icons.Default.Cancel,
+                        contentDescription = null,
+                        tint = if (approval.status == "approved")
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Text(
+                        text = "This approval has been ${approval.status}.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (approval.status == "approved")
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
         } else if (isActionInProgress) {
             Box(
                 modifier = Modifier.fillMaxWidth(),

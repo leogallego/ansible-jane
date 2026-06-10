@@ -56,6 +56,8 @@ fun SettingsScreen(
                     onTimezoneSelected = { viewModel.setTimezone(it) },
                     onTimeFormatSelected = { viewModel.setTimeFormat(it) },
                     onThemeModeSelected = { viewModel.setThemeMode(it) },
+                    onPollIntervalSelected = { viewModel.setPollInterval(it) },
+                    onApprovalPollingToggled = { viewModel.setApprovalPollingEnabled(it) },
                     onClearHistory = { viewModel.clearHistory() },
                     onLogout = onLogout,
                     onSaveProviderConfig = { key, config -> viewModel.saveProviderConfig(key, config) },
@@ -98,6 +100,8 @@ private fun SettingsContent(
     onTimezoneSelected: (String?) -> Unit,
     onTimeFormatSelected: (io.github.leogallego.ansiblejane.ui.components.TimeFormat) -> Unit,
     onThemeModeSelected: (io.github.leogallego.ansiblejane.ui.components.ThemeMode) -> Unit,
+    onPollIntervalSelected: (io.github.leogallego.ansiblejane.data.PollInterval) -> Unit,
+    onApprovalPollingToggled: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
     onLogout: () -> Unit,
     onSaveProviderConfig: (String, io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig) -> Unit,
@@ -128,9 +132,13 @@ private fun SettingsContent(
                 timezoneId = state.timezoneId,
                 timeFormat = state.timeFormat,
                 themeMode = state.themeMode,
+                pollInterval = state.pollInterval,
+                approvalPollingEnabled = state.approvalPollingEnabled,
                 onTimezoneSelected = onTimezoneSelected,
                 onTimeFormatSelected = onTimeFormatSelected,
                 onThemeModeSelected = onThemeModeSelected,
+                onPollIntervalSelected = onPollIntervalSelected,
+                onApprovalPollingToggled = onApprovalPollingToggled,
                 modifier = Modifier.weight(1f)
             )
             SettingsTab.Instances -> InstancesTab(

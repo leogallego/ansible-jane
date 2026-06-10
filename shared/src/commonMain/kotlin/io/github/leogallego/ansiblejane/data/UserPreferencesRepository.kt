@@ -52,6 +52,29 @@ class UserPreferencesRepository(
         }
     }
 
+    override val approvalPollInterval: Flow<PollInterval> = dataStore.data.map { prefs ->
+        prefs[KEY_POLL_INTERVAL]?.let {
+            try { PollInterval.valueOf(it) } catch (_: Exception) { PollInterval.MINUTES_15 }
+        } ?: PollInterval.MINUTES_15
+    }
+
+    override suspend fun setApprovalPollInterval(interval: PollInterval) {
+        dataStore.edit { prefs ->
+            prefs[KEY_POLL_INTERVAL] = interval.name
+        }
+    }
+
+    override fun approvalPollingEnabled(instanceId: String): Flow<Boolean> =
+        dataStore.data.map { prefs ->
+            prefs[pollingEnabledKey(instanceId)] != "false"
+        }
+
+    override suspend fun setApprovalPollingEnabled(instanceId: String, enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[pollingEnabledKey(instanceId)] = enabled.toString()
+        }
+    }
+
     override fun favoriteTemplateIds(instanceId: String): Flow<Set<Int>> =
         dataStore.data.map { prefs ->
             prefs[favoritesKey(instanceId)]
@@ -82,8 +105,12 @@ class UserPreferencesRepository(
         private val KEY_TIMEZONE = stringPreferencesKey("timezone_override")
         private val KEY_TIME_FORMAT = stringPreferencesKey("time_format")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
+        private val KEY_POLL_INTERVAL = stringPreferencesKey("approval_poll_interval")
 
         private fun favoritesKey(instanceId: String) =
             stringPreferencesKey("favorite_templates_$instanceId")
+
+        private fun pollingEnabledKey(instanceId: String) =
+            stringPreferencesKey("approval_polling_enabled_$instanceId")
     }
 }

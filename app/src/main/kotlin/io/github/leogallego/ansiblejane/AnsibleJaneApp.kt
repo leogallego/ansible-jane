@@ -8,6 +8,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
+import io.github.leogallego.ansiblejane.data.PollInterval
 import io.github.leogallego.ansiblejane.data.dataModule
 import io.github.leogallego.ansiblejane.notification.ApprovalNotificationManager
 import io.github.leogallego.ansiblejane.notification.ApprovalPollingWorker
@@ -57,13 +58,26 @@ class AnsibleJaneApp : Application() {
 
         ApprovalNotificationManager.createChannel(this)
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            ApprovalPollingWorker.WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            PeriodicWorkRequestBuilder<ApprovalPollingWorker>(15, TimeUnit.MINUTES).build()
-        )
-
         val userPreferences: IUserPreferencesRepository by inject()
+
+        appScope.launch {
+            var lastInterval: PollInterval? = null
+            userPreferences.approvalPollInterval.collect { interval ->
+                val policy = if (lastInterval == null)
+                    ExistingPeriodicWorkPolicy.KEEP
+                else
+                    ExistingPeriodicWorkPolicy.REPLACE
+                WorkManager.getInstance(this@AnsibleJaneApp).enqueueUniquePeriodicWork(
+                    ApprovalPollingWorker.WORK_NAME,
+                    policy,
+                    PeriodicWorkRequestBuilder<ApprovalPollingWorker>(
+                        interval.minutes.toLong(), TimeUnit.MINUTES
+                    ).build()
+                )
+                lastInterval = interval
+            }
+        }
+
         appScope.launch {
             val savedZone = userPreferences.timezoneId.first()
             DateFormatter.zoneOverride = savedZone?.let {

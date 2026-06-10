@@ -9,6 +9,7 @@ import io.github.leogallego.ansiblejane.assistant.presentation.ModelFetchState
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.data.IToolManifestRepository
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
+import io.github.leogallego.ansiblejane.data.PollInterval
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.ApiVersion
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
@@ -29,6 +30,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -141,6 +144,24 @@ class SettingsViewModel(
             userPreferences.themeMode.collect { mode ->
                 updateReady { copy(themeMode = mode) }
             }
+        }
+
+        viewModelScope.launch {
+            userPreferences.approvalPollInterval.collect { interval ->
+                updateReady { copy(pollInterval = interval) }
+            }
+        }
+
+        @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+        viewModelScope.launch {
+            tokenManager.activeInstance
+                .flatMapLatest { instance ->
+                    if (instance != null) userPreferences.approvalPollingEnabled(instance.id)
+                    else flowOf(true)
+                }
+                .collect { enabled ->
+                    updateReady { copy(approvalPollingEnabled = enabled) }
+                }
         }
 
         viewModelScope.launch {
@@ -292,6 +313,19 @@ class SettingsViewModel(
     fun setThemeMode(mode: io.github.leogallego.ansiblejane.ui.components.ThemeMode) {
         viewModelScope.launch {
             userPreferences.setThemeMode(mode)
+        }
+    }
+
+    fun setPollInterval(interval: PollInterval) {
+        viewModelScope.launch {
+            userPreferences.setApprovalPollInterval(interval)
+        }
+    }
+
+    fun setApprovalPollingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            val instanceId = tokenManager.activeInstance.value?.id ?: return@launch
+            userPreferences.setApprovalPollingEnabled(instanceId, enabled)
         }
     }
 
