@@ -9,6 +9,7 @@ import androidx.compose.ui.test.performClick
 import io.github.leogallego.ansiblejane.MainDispatcherRule
 import io.github.leogallego.ansiblejane.fakes.FakeTemplateRepository
 import io.github.leogallego.ansiblejane.fakes.FakeTokenManager
+import io.github.leogallego.ansiblejane.fakes.FakeUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.JobTemplate
 import io.github.leogallego.ansiblejane.model.JobTemplateSummaryFields
 import io.github.leogallego.ansiblejane.model.LabelSummary
@@ -32,6 +33,7 @@ class TemplateListScreenTest {
 
     private val fakeRepo = FakeTemplateRepository()
     private val fakeTokenManager = FakeTokenManager()
+    private val fakeUserPrefs = FakeUserPreferencesRepository()
 
     private fun launchableTemplate(
         id: Int = 1,
@@ -52,7 +54,7 @@ class TemplateListScreenTest {
     private fun setUpScreen(
         onNavigateToJobStatus: (Int) -> Unit = {}
     ) {
-        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager)
+        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
         composeTestRule.setContent {
             MaterialTheme {
                 TemplateListScreen(

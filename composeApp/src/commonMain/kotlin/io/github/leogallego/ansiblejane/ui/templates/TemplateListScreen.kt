@@ -3,13 +3,21 @@ package io.github.leogallego.ansiblejane.ui.templates
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,6 +61,8 @@ fun TemplateListScreen(
     val uiState by viewModel.uiState.collectAsState()
     val launchState by viewModel.launchState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val favoriteIds by viewModel.favoriteIds.collectAsState()
+    val showFavoritesOnly by viewModel.showFavoritesOnly.collectAsState()
     var selectedLabel by remember { mutableStateOf<Label?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     var isRefreshing by remember { mutableStateOf(false) }
@@ -121,6 +131,23 @@ fun TemplateListScreen(
                         onLabelSelected = { label ->
                             selectedLabel = label
                             viewModel.filterByLabel(label)
+                        },
+                        extraContent = {
+                            if (favoriteIds.isNotEmpty()) {
+                                FilterChip(
+                                    selected = showFavoritesOnly,
+                                    onClick = { viewModel.toggleShowFavoritesOnly() },
+                                    label = { Text("Favorites") },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Filled.Star,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    },
+                                    modifier = Modifier.testTag("chip_favorites")
+                                )
+                            }
                         }
                     )
 
@@ -132,15 +159,23 @@ fun TemplateListScreen(
                         },
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        if (state.templates.isEmpty()) {
-                            EmptyState(message = "No templates available")
+                        val displayTemplates = if (showFavoritesOnly) {
+                            state.templates.filter { it.id in favoriteIds }
+                        } else {
+                            state.templates.sortedByDescending { it.id in favoriteIds }
+                        }
+
+                        if (displayTemplates.isEmpty()) {
+                            EmptyState(
+                                message = if (showFavoritesOnly) "No favorite templates" else "No templates available"
+                            )
                         } else {
                             val listState = rememberLazyListState()
 
-                            if (state.hasMore) {
+                            if (state.hasMore && !showFavoritesOnly) {
                                 PaginationEffect(
                                     listState = listState,
-                                    itemCount = state.templates.size,
+                                    itemCount = displayTemplates.size,
                                     onLoadMore = { viewModel.loadMore() }
                                 )
                             }
@@ -150,18 +185,20 @@ fun TemplateListScreen(
                                 modifier = Modifier.fillMaxSize().testTag("list_templates")
                             ) {
                                 items(
-                                    items = state.templates,
+                                    items = displayTemplates,
                                     key = { it.id }
                                 ) { template ->
                                     TemplateCard(
                                         template = template,
                                         onClick = { viewModel.requestLaunch(template) },
                                         onLaunch = { viewModel.requestLaunch(template) },
+                                        isFavorite = template.id in favoriteIds,
+                                        onToggleFavorite = { viewModel.toggleFavorite(template.id) },
                                         testTagPrefix = "button"
                                     )
                                 }
 
-                                if (state.isLoadingMore) {
+                                if (state.isLoadingMore && !showFavoritesOnly) {
                                     item { LoadMoreIndicator() }
                                 }
                             }

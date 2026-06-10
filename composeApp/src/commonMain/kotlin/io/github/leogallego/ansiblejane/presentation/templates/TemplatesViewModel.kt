@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.leogallego.ansiblejane.data.ITemplateRepository
 import io.github.leogallego.ansiblejane.data.ITokenManager
+import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.JobTemplate
 import io.github.leogallego.ansiblejane.model.Label
@@ -13,12 +14,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TemplatesViewModel(
     private val templateRepository: ITemplateRepository,
-    private val tokenManager: ITokenManager
+    private val tokenManager: ITokenManager,
+    private val userPreferences: IUserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TemplatesUiState>(TemplatesUiState.Idle)
@@ -29,6 +33,12 @@ class TemplatesViewModel(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    val favoriteIds: StateFlow<Set<Int>> = userPreferences.favoriteTemplateIds
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    private val _showFavoritesOnly = MutableStateFlow(false)
+    val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly.asStateFlow()
 
     private var currentPage = 1
     private var currentSearch: String? = null
@@ -113,6 +123,16 @@ class TemplatesViewModel(
         viewModelScope.launch {
             fetchTemplates()
         }
+    }
+
+    fun toggleFavorite(templateId: Int) {
+        viewModelScope.launch {
+            userPreferences.toggleFavoriteTemplate(templateId)
+        }
+    }
+
+    fun toggleShowFavoritesOnly() {
+        _showFavoritesOnly.update { !it }
     }
 
     fun requestLaunch(template: JobTemplate) {

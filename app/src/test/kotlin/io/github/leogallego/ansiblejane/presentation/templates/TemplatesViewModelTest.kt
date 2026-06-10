@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import io.github.leogallego.ansiblejane.MainDispatcherRule
 import io.github.leogallego.ansiblejane.fakes.FakeTemplateRepository
 import io.github.leogallego.ansiblejane.fakes.FakeTokenManager
+import io.github.leogallego.ansiblejane.fakes.FakeUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.testInstance
 import io.github.leogallego.ansiblejane.testJobTemplate
@@ -27,16 +28,18 @@ class TemplatesViewModelTest {
 
     private lateinit var fakeRepo: FakeTemplateRepository
     private lateinit var fakeTokenManager: FakeTokenManager
+    private lateinit var fakeUserPrefs: FakeUserPreferencesRepository
     private lateinit var viewModel: TemplatesViewModel
 
     @Before
     fun setup() {
         fakeRepo = FakeTemplateRepository()
         fakeTokenManager = FakeTokenManager()
+        fakeUserPrefs = FakeUserPreferencesRepository()
     }
 
     private fun createViewModel(): TemplatesViewModel {
-        return TemplatesViewModel(fakeRepo, fakeTokenManager)
+        return TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
     }
 
     // --- Init / active instance ---

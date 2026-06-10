@@ -6,6 +6,7 @@ import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class UserPreferencesRepository(
@@ -52,9 +53,30 @@ class UserPreferencesRepository(
         }
     }
 
+    override val favoriteTemplateIds: Flow<Set<Int>> = dataStore.data.map { prefs ->
+        prefs[KEY_FAVORITE_TEMPLATES]
+            ?.split(",")
+            ?.mapNotNull { it.trim().toIntOrNull() }
+            ?.toSet()
+            ?: emptySet()
+    }
+
+    override suspend fun toggleFavoriteTemplate(templateId: Int) {
+        val current = favoriteTemplateIds.first()
+        val updated = if (templateId in current) current - templateId else current + templateId
+        dataStore.edit { prefs ->
+            if (updated.isEmpty()) {
+                prefs.remove(KEY_FAVORITE_TEMPLATES)
+            } else {
+                prefs[KEY_FAVORITE_TEMPLATES] = updated.joinToString(",")
+            }
+        }
+    }
+
     companion object {
         private val KEY_TIMEZONE = stringPreferencesKey("timezone_override")
         private val KEY_TIME_FORMAT = stringPreferencesKey("time_format")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
+        private val KEY_FAVORITE_TEMPLATES = stringPreferencesKey("favorite_template_ids")
     }
 }
