@@ -61,6 +61,14 @@
     <string name="tools_mcp_remove">Remove</string>
     <string name="tools_mcp_read_only">Read Only</string>
     <string name="tools_mcp_error_retry">Tap Refresh to retry</string>
+    <string name="tools_mcp_use_instance_auth">Use instance auth</string>
+    <string name="tools_mcp_custom_headers">Custom headers</string>
+    <string name="tools_mcp_header_name">Header name</string>
+    <string name="tools_mcp_header_value">Header value</string>
+    <string name="tools_mcp_add_header">Add header</string>
+    <string name="tools_mcp_remove_header">Remove header</string>
+    <string name="tools_mcp_popular_servers">Popular Servers</string>
+    <string name="tools_mcp_headers_count">%1$d custom header(s)</string>
     <!-- Tools tab - Local -->
     <string name="tools_local_title">Local Tools</string>
     <string name="tools_local_description">%1$d tools across %2$d categories</string>

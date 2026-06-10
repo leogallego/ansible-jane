@@ -47,9 +47,10 @@ fun ToolsTab(
     expandedMcpServers: Set<String>,
     expandedCategories: Set<String>,
     onToggleMcp: (Boolean) -> Unit,
-    onAddMcpServer: (url: String, label: String, toolset: String?) -> Unit,
+    onAddMcpServer: (url: String, label: String, toolset: String?, headers: Map<String, String>, useInstanceAuth: Boolean) -> Unit,
     onRemoveMcpServer: (url: String) -> Unit,
     onToggleReadOnly: (url: String, readOnly: Boolean) -> Unit,
+    onToggleUseInstanceAuth: (url: String, useInstanceAuth: Boolean) -> Unit,
     onToggleServerEnabled: (url: String, enabled: Boolean) -> Unit,
     onToggleToolEnabled: (name: String, source: ToolSource, enabled: Boolean) -> Unit,
     onToggleExpandMcpServer: (label: String) -> Unit,
@@ -104,6 +105,7 @@ fun ToolsTab(
                     onToggleExpand = { onToggleExpandMcpServer(server.label) },
                     onToggleEnabled = { onToggleServerEnabled(server.url, it) },
                     onToggleReadOnly = { onToggleReadOnly(server.url, it) },
+                    onToggleUseInstanceAuth = { onToggleUseInstanceAuth(server.url, it) },
                     onToggleTool = { name, enabled ->
                         onToggleToolEnabled(name, ToolSource.MCP, enabled)
                     },
@@ -167,7 +169,9 @@ fun ToolsTab(
     if (showAddServerSheet) {
         AddMcpServerSheet(
             onDismiss = { showAddServerSheet = false },
-            onAdd = onAddMcpServer
+            onAdd = { url, label, toolset, headers, useInstanceAuth ->
+                onAddMcpServer(url, label, toolset, headers, useInstanceAuth)
+            }
         )
     }
 }

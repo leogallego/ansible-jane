@@ -63,9 +63,14 @@ fun SettingsScreen(
                     onFetchModels = { url, key -> viewModel.fetchAvailableModels(url, key) },
                     onClearFetchedModels = { viewModel.clearFetchedModels() },
                     onToggleMcp = { viewModel.toggleMcpEnabled(it) },
-                    onAddMcpServer = { url, label, toolset -> viewModel.addMcpServer(url, label, toolset) },
+                    onAddMcpServer = { url, label, toolset, headers, useInstanceAuth ->
+                        viewModel.addMcpServer(url, label, toolset, headers, useInstanceAuth)
+                    },
                     onRemoveMcpServer = { viewModel.removeMcpServer(it) },
                     onToggleReadOnly = { url, readOnly -> viewModel.toggleServerReadOnly(url, readOnly) },
+                    onToggleUseInstanceAuth = { url, useInstanceAuth ->
+                        viewModel.toggleUseInstanceAuth(url, useInstanceAuth)
+                    },
                     onToggleServerEnabled = { url, enabled -> viewModel.toggleServerEnabled(url, enabled) },
                     onToggleToolEnabled = { name, source, enabled -> viewModel.toggleToolEnabled(name, source, enabled) },
                     onToggleExpandMcpServer = { viewModel.toggleExpandMcpServer(it) },
@@ -100,9 +105,10 @@ private fun SettingsContent(
     onFetchModels: (String, String?) -> Unit,
     onClearFetchedModels: () -> Unit,
     onToggleMcp: (Boolean) -> Unit,
-    onAddMcpServer: (String, String, String?) -> Unit,
+    onAddMcpServer: (String, String, String?, Map<String, String>, Boolean) -> Unit,
     onRemoveMcpServer: (String) -> Unit,
     onToggleReadOnly: (String, Boolean) -> Unit,
+    onToggleUseInstanceAuth: (String, Boolean) -> Unit,
     onToggleServerEnabled: (String, Boolean) -> Unit,
     onToggleToolEnabled: (String, ToolSource, Boolean) -> Unit,
     onToggleExpandMcpServer: (String) -> Unit,
@@ -170,6 +176,7 @@ private fun SettingsContent(
                 onAddMcpServer = onAddMcpServer,
                 onRemoveMcpServer = onRemoveMcpServer,
                 onToggleReadOnly = onToggleReadOnly,
+                onToggleUseInstanceAuth = onToggleUseInstanceAuth,
                 onToggleServerEnabled = onToggleServerEnabled,
                 onToggleToolEnabled = onToggleToolEnabled,
                 onToggleExpandMcpServer = onToggleExpandMcpServer,

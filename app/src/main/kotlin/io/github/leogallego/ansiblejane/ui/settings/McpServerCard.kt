@@ -52,6 +52,7 @@ fun McpServerCard(
     onToggleExpand: () -> Unit,
     onToggleEnabled: (Boolean) -> Unit,
     onToggleReadOnly: (Boolean) -> Unit,
+    onToggleUseInstanceAuth: (Boolean) -> Unit,
     onToggleTool: (String, Boolean) -> Unit,
     onRefresh: () -> Unit,
     onRemove: () -> Unit,
@@ -162,6 +163,32 @@ fun McpServerCard(
                             checked = server.readOnly,
                             onCheckedChange = onToggleReadOnly,
                             modifier = Modifier.testTag("switch_mcp_readonly_${server.label}")
+                        )
+                    }
+
+                    if (!server.isAutoDetected) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.tools_mcp_use_instance_auth),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Switch(
+                                checked = server.useInstanceAuth,
+                                onCheckedChange = onToggleUseInstanceAuth,
+                                modifier = Modifier.testTag("switch_mcp_instance_auth_${server.label}")
+                            )
+                        }
+                    }
+
+                    if (server.headers.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.tools_mcp_headers_count, server.headers.size),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary
                         )
                     }
 

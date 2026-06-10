@@ -94,7 +94,7 @@ class TokenManager(
             apiVersion = serialized.apiVersion,
             trustSelfSigned = serialized.trustSelfSigned,
             certFingerprint = serialized.certFingerprint,
-            mcpServerUrls = serialized.mcpServerUrls,
+            mcpServerUrls = serialized.mcpServerUrls?.map { decryptHeaders(it) },
             mcpEnabled = serialized.mcpEnabled,
             instanceInfo = serialized.instanceInfo
         )
@@ -109,9 +109,23 @@ class TokenManager(
             apiVersion = instance.apiVersion,
             trustSelfSigned = instance.trustSelfSigned,
             certFingerprint = instance.certFingerprint,
-            mcpServerUrls = instance.mcpServerUrls,
+            mcpServerUrls = instance.mcpServerUrls?.map { encryptHeaders(it) },
             mcpEnabled = instance.mcpEnabled,
             instanceInfo = instance.instanceInfo
+        )
+    }
+
+    private fun encryptHeaders(config: McpServerConfig): McpServerConfig {
+        if (config.headers.isEmpty()) return config
+        return config.copy(headers = config.headers.mapValues { (_, v) -> encrypt(v) })
+    }
+
+    private fun decryptHeaders(config: McpServerConfig): McpServerConfig {
+        if (config.headers.isEmpty()) return config
+        return config.copy(
+            headers = config.headers.mapNotNull { (k, v) ->
+                try { k to decrypt(v) } catch (_: Exception) { null }
+            }.toMap()
         )
     }
 
@@ -316,7 +330,10 @@ class TokenManager(
         val state = readState()
         val updatedInstances = state.instances.map { serialized ->
             if (serialized.id == instanceId) {
-                serialized.copy(mcpEnabled = enabled, mcpServerUrls = servers)
+                serialized.copy(
+                    mcpEnabled = enabled,
+                    mcpServerUrls = servers?.map { encryptHeaders(it) }
+                )
             } else serialized
         }
         writeState(state.copy(instances = updatedInstances))
