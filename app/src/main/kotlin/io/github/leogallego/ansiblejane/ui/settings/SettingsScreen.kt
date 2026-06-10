@@ -100,7 +100,7 @@ private fun SettingsContent(
     onTimezoneSelected: (String?) -> Unit,
     onTimeFormatSelected: (io.github.leogallego.ansiblejane.ui.components.TimeFormat) -> Unit,
     onThemeModeSelected: (io.github.leogallego.ansiblejane.ui.components.ThemeMode) -> Unit,
-    onPollIntervalSelected: (io.github.leogallego.ansiblejane.data.PollInterval) -> Unit,
+    onPollIntervalSelected: (io.github.leogallego.ansiblejane.model.PollInterval) -> Unit,
     onApprovalPollingToggled: (Boolean) -> Unit,
     onClearHistory: () -> Unit,
     onLogout: () -> Unit,
