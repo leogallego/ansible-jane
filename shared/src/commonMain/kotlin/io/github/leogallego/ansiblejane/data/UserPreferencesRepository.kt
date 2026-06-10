@@ -52,26 +52,28 @@ class UserPreferencesRepository(
         }
     }
 
-    override val favoriteTemplateIds: Flow<Set<Int>> = dataStore.data.map { prefs ->
-        prefs[KEY_FAVORITE_TEMPLATES]
-            ?.split(",")
-            ?.mapNotNull { it.trim().toIntOrNull() }
-            ?.toSet()
-            ?: emptySet()
-    }
+    override fun favoriteTemplateIds(instanceId: String): Flow<Set<Int>> =
+        dataStore.data.map { prefs ->
+            prefs[favoritesKey(instanceId)]
+                ?.split(",")
+                ?.mapNotNull { it.trim().toIntOrNull() }
+                ?.toSet()
+                ?: emptySet()
+        }
 
-    override suspend fun toggleFavoriteTemplate(templateId: Int) {
+    override suspend fun toggleFavoriteTemplate(instanceId: String, templateId: Int) {
+        val key = favoritesKey(instanceId)
         dataStore.edit { prefs ->
-            val current = prefs[KEY_FAVORITE_TEMPLATES]
+            val current = prefs[key]
                 ?.split(",")
                 ?.mapNotNull { it.trim().toIntOrNull() }
                 ?.toSet()
                 ?: emptySet()
             val updated = if (templateId in current) current - templateId else current + templateId
             if (updated.isEmpty()) {
-                prefs.remove(KEY_FAVORITE_TEMPLATES)
+                prefs.remove(key)
             } else {
-                prefs[KEY_FAVORITE_TEMPLATES] = updated.joinToString(",")
+                prefs[key] = updated.joinToString(",")
             }
         }
     }
@@ -80,6 +82,8 @@ class UserPreferencesRepository(
         private val KEY_TIMEZONE = stringPreferencesKey("timezone_override")
         private val KEY_TIME_FORMAT = stringPreferencesKey("time_format")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
-        private val KEY_FAVORITE_TEMPLATES = stringPreferencesKey("favorite_template_ids")
+
+        private fun favoritesKey(instanceId: String) =
+            stringPreferencesKey("favorite_templates_$instanceId")
     }
 }

@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -34,7 +37,12 @@ class TemplatesViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    val favoriteIds: StateFlow<Set<Int>> = userPreferences.favoriteTemplateIds
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val favoriteIds: StateFlow<Set<Int>> = tokenManager.activeInstance
+        .flatMapLatest { instance ->
+            if (instance != null) userPreferences.favoriteTemplateIds(instance.id)
+            else flowOf(emptySet())
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     private val _showFavoritesOnly = MutableStateFlow(false)
@@ -126,8 +134,9 @@ class TemplatesViewModel(
     }
 
     fun toggleFavorite(templateId: Int) {
+        val instanceId = tokenManager.activeInstance.value?.id ?: return
         viewModelScope.launch {
-            userPreferences.toggleFavoriteTemplate(templateId)
+            userPreferences.toggleFavoriteTemplate(instanceId, templateId)
         }
     }
 
