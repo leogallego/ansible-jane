@@ -6,7 +6,6 @@ import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class UserPreferencesRepository(
@@ -62,9 +61,13 @@ class UserPreferencesRepository(
     }
 
     override suspend fun toggleFavoriteTemplate(templateId: Int) {
-        val current = favoriteTemplateIds.first()
-        val updated = if (templateId in current) current - templateId else current + templateId
         dataStore.edit { prefs ->
+            val current = prefs[KEY_FAVORITE_TEMPLATES]
+                ?.split(",")
+                ?.mapNotNull { it.trim().toIntOrNull() }
+                ?.toSet()
+                ?: emptySet()
+            val updated = if (templateId in current) current - templateId else current + templateId
             if (updated.isEmpty()) {
                 prefs.remove(KEY_FAVORITE_TEMPLATES)
             } else {

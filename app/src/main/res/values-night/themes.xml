@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.AnsibleJane" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.AnsibleJane" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowSplashScreenBackground">#1C1B1F</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
     </style>
