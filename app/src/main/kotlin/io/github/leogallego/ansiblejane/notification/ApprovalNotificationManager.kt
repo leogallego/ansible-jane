@@ -24,6 +24,9 @@ class ApprovalNotificationManager {
         private const val GROUP_KEY = "io.github.leogallego.ansiblejane.APPROVAL_GROUP"
         internal const val SUMMARY_ID = 0x4A414E45 // "JANE" — avoids collision with default ID 0
 
+        internal fun safeNotificationId(approvalId: Int): Int =
+            if (approvalId == SUMMARY_ID) approvalId + 1 else approvalId
+
         fun createChannel(context: Context) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -102,7 +105,7 @@ class ApprovalNotificationManager {
             .build()
 
         val manager = NotificationManagerCompat.from(context)
-        manager.notify(approval.id, notification)
+        manager.notify(safeNotificationId(approval.id), notification)
 
         val summaryNotification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_approval)

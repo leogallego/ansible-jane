@@ -29,9 +29,6 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
         private const val TAG = "ApprovalActionReceiver"
     }
 
-    private fun safeNotificationId(approvalId: Int): Int =
-        if (approvalId == ApprovalNotificationManager.SUMMARY_ID) approvalId + 1 else approvalId
-
     private fun showErrorNotification(
         context: Context,
         approvalId: Int,
@@ -43,7 +40,7 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
             action = if (wasApprove) ACTION_APPROVE else ACTION_DENY
             putExtra(EXTRA_APPROVAL_ID, approvalId)
         }
-        val retryRequestCode = (approvalId.hashCode() and 0x1FFFFFFF) or 0x40000000
+        val retryRequestCode = (approvalId.hashCode() and 0x7FFFFFFF) or Int.MIN_VALUE
         val retryPendingIntent = PendingIntent.getBroadcast(
             context,
             retryRequestCode,
@@ -60,7 +57,7 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
             .build()
 
         try {
-            NotificationManagerCompat.from(context).notify(safeNotificationId(approvalId), notification)
+            NotificationManagerCompat.from(context).notify(ApprovalNotificationManager.safeNotificationId(approvalId), notification)
         } catch (e: SecurityException) {
             Log.w(TAG, "Cannot post error notification — channel may have been deleted", e)
         }
@@ -99,7 +96,7 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
                     apiProvider.getApiService().denyWorkflow(approvalId)
                 }
 
-                NotificationManagerCompat.from(context).cancel(safeNotificationId(approvalId))
+                NotificationManagerCompat.from(context).cancel(ApprovalNotificationManager.safeNotificationId(approvalId))
 
                 Log.i(TAG, "Approval $approvalId ${actionLabel}d")
             } catch (e: Exception) {
