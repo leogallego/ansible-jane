@@ -1,10 +1,13 @@
 package io.github.leogallego.ansiblejane.notification
 
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +29,35 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
         private const val TAG = "ApprovalActionReceiver"
     }
 
+    private fun showErrorNotification(
+        context: Context,
+        approvalId: Int,
+        wasApprove: Boolean,
+        errorMessage: String?
+    ) {
+        val actionLabel = if (wasApprove) "approve" else "deny"
+        val retryIntent = Intent(context, ApprovalActionReceiver::class.java).apply {
+            action = if (wasApprove) ACTION_APPROVE else ACTION_DENY
+            putExtra(EXTRA_APPROVAL_ID, approvalId)
+        }
+        val retryPendingIntent = PendingIntent.getBroadcast(
+            context,
+            approvalId,
+            retryIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, ApprovalNotificationManager.CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification_approval)
+            .setContentTitle("Failed to $actionLabel approval")
+            .setContentText(errorMessage ?: "Please try again")
+            .setAutoCancel(true)
+            .addAction(R.drawable.ic_notification_approval, "Retry", retryPendingIntent)
+            .build()
+
+        NotificationManagerCompat.from(context).notify(approvalId, notification)
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_APPROVE && intent.action != ACTION_DENY) return
 
@@ -37,13 +69,15 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
         scope.launch {
+            val actionLabel = if (isApprove) "approve" else "deny"
             try {
                 val tokenManager: ITokenManager = get()
                 val instance = withTimeoutOrNull(5_000L) {
                     tokenManager.activeInstance.firstOrNull { it != null }
                 }
                 if (instance == null) {
-                    Log.w(TAG, "No active instance, cannot ${if (isApprove) "approve" else "deny"} $approvalId")
+                    Log.w(TAG, "No active instance, cannot $actionLabel $approvalId")
+                    showErrorNotification(context, approvalId, isApprove, "No active instance")
                     return@launch
                 }
 
@@ -56,9 +90,10 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
 
                 NotificationManagerCompat.from(context).cancel(approvalId)
 
-                Log.i(TAG, "Approval $approvalId ${if (isApprove) "approved" else "denied"}")
+                Log.i(TAG, "Approval $approvalId ${actionLabel}d")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to ${if (isApprove) "approve" else "deny"} $approvalId", e)
+                Log.e(TAG, "Failed to $actionLabel $approvalId", e)
+                showErrorNotification(context, approvalId, isApprove, e.message)
             } finally {
                 pendingResult.finish()
                 scope.cancel()

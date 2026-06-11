@@ -67,6 +67,17 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
+            all {
+                val roboDepsDir = file("${rootProject.projectDir}/robolectric-deps")
+                if (roboDepsDir.exists()) {
+                    it.systemProperty("robolectric.offline", "true")
+                    it.systemProperty("robolectric.dependency.dir", roboDepsDir.absolutePath)
+                }
+                val tmpDir = file("${rootProject.projectDir}/.tmp")
+                if (tmpDir.exists()) {
+                    it.systemProperty("java.io.tmpdir", tmpDir.absolutePath)
+                }
+            }
         }
     }
 }
@@ -139,6 +150,7 @@ dependencies {
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.androidx.test.runner)
     testImplementation(libs.androidx.test.rules)
+    testImplementation(libs.androidx.work.testing)
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)

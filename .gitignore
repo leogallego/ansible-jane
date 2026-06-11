@@ -25,6 +25,9 @@ aap-docs/
 # Temporary files
 .tmp/
 
+# Robolectric offline SDK jars (sandbox)
+robolectric-deps/
+
 # Android / Gradle
 build/
 .gradle/
