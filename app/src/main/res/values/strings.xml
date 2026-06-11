@@ -24,6 +24,11 @@
     <string name="action_retry">Retry</string>
     <string name="action_cancel">Cancel</string>
 
+    <!-- Notification: approval actions -->
+    <string name="notification_approval_failed_title">Failed to %1$s approval</string>
+    <string name="notification_approval_failed_message">Please try again</string>
+    <string name="notification_no_active_instance">No active instance</string>
+
 
     <!-- Shared component text -->
     <string name="show_details">Show details</string>

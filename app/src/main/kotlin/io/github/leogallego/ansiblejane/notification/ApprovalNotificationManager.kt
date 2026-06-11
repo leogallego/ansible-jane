@@ -22,7 +22,7 @@ class ApprovalNotificationManager {
         const val CHANNEL_ID = "workflow_approvals"
         const val CHANNEL_NAME = "Workflow Approvals"
         private const val GROUP_KEY = "io.github.leogallego.ansiblejane.APPROVAL_GROUP"
-        private const val SUMMARY_ID = 0x4A414E45 // "JANE" — avoids collision with default ID 0
+        internal const val SUMMARY_ID = 0x4A414E45 // "JANE" — avoids collision with default ID 0
 
         fun createChannel(context: Context) {
             val channel = NotificationChannel(

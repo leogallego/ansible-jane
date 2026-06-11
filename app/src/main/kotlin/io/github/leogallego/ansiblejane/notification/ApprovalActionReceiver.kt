@@ -29,6 +29,9 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
         private const val TAG = "ApprovalActionReceiver"
     }
 
+    private fun safeNotificationId(approvalId: Int): Int =
+        if (approvalId == ApprovalNotificationManager.SUMMARY_ID) approvalId + 1 else approvalId
+
     private fun showErrorNotification(
         context: Context,
         approvalId: Int,
@@ -40,22 +43,27 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
             action = if (wasApprove) ACTION_APPROVE else ACTION_DENY
             putExtra(EXTRA_APPROVAL_ID, approvalId)
         }
+        val retryRequestCode = (approvalId.hashCode() and 0x1FFFFFFF) or 0x40000000
         val retryPendingIntent = PendingIntent.getBroadcast(
             context,
-            approvalId,
+            retryRequestCode,
             retryIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(context, ApprovalNotificationManager.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_approval)
-            .setContentTitle("Failed to $actionLabel approval")
-            .setContentText(errorMessage ?: "Please try again")
+            .setContentTitle(context.getString(R.string.notification_approval_failed_title, actionLabel))
+            .setContentText(errorMessage ?: context.getString(R.string.notification_approval_failed_message))
             .setAutoCancel(true)
-            .addAction(R.drawable.ic_notification_approval, "Retry", retryPendingIntent)
+            .addAction(R.drawable.ic_notification_approval, context.getString(R.string.action_retry), retryPendingIntent)
             .build()
 
-        NotificationManagerCompat.from(context).notify(approvalId, notification)
+        try {
+            NotificationManagerCompat.from(context).notify(safeNotificationId(approvalId), notification)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Cannot post error notification — channel may have been deleted", e)
+        }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -77,7 +85,10 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
                 }
                 if (instance == null) {
                     Log.w(TAG, "No active instance, cannot $actionLabel $approvalId")
-                    showErrorNotification(context, approvalId, isApprove, "No active instance")
+                    showErrorNotification(
+                        context, approvalId, isApprove,
+                        context.getString(R.string.notification_no_active_instance)
+                    )
                     return@launch
                 }
 
@@ -88,7 +99,7 @@ class ApprovalActionReceiver : BroadcastReceiver(), KoinComponent {
                     apiProvider.getApiService().denyWorkflow(approvalId)
                 }
 
-                NotificationManagerCompat.from(context).cancel(approvalId)
+                NotificationManagerCompat.from(context).cancel(safeNotificationId(approvalId))
 
                 Log.i(TAG, "Approval $approvalId ${actionLabel}d")
             } catch (e: Exception) {
