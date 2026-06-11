@@ -373,9 +373,36 @@ class SettingsViewModelTest {
 
             fakeAssistantRepo.saveLlmConfig(testConfig)
 
-            // saveLlmConfig updates activeConfig, savedConfigs, and activeProviderKey
+            // saveLlmConfig updates 3 flows (activeConfig, savedConfigs, activeProviderKey).
+            // The ViewModel's combine operator may emit intermediate states as each flow
+            // settles — use expectMostRecentItem() to skip those and assert the final state.
             val updated = expectMostRecentItem() as SettingsUiState.Ready
             assertEquals(testConfig, updated.activeConfig)
+        }
+    }
+
+    @Test
+    fun `multiple simultaneous flow updates settle to correct final state`() = runTest {
+        val testConfig = LlmProviderConfig.OpenAiCompatible(
+            url = "https://api.openai.com/v1",
+            model = "gpt-4",
+            apiKey = "test-key"
+        )
+        val viewModel = createViewModel()
+
+        viewModel.uiState.test {
+            awaitItem() // initial
+
+            fakeUserPreferences.setThemeMode(ThemeMode.DARK)
+            fakeAssistantRepo.switchActiveProvider("openai")
+            fakeUserPreferences.setTimezoneId("America/New_York")
+            fakeAssistantRepo.saveAllLlmConfigs(mapOf("openai" to testConfig))
+
+            val settled = expectMostRecentItem() as SettingsUiState.Ready
+            assertEquals(ThemeMode.DARK, settled.themeMode)
+            assertEquals("openai", settled.activeProviderKey)
+            assertEquals("America/New_York", settled.timezoneId)
+            assertEquals(1, settled.savedConfigs.size)
         }
     }
 

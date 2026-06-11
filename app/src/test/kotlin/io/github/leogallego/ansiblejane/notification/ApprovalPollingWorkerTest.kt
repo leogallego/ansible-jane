@@ -74,18 +74,20 @@ class ApprovalPollingWorkerTest {
         context.filesDir.resolve("datastore").deleteRecursively()
     }
 
+    private enum class FailureMode { NONE, HTTP_500, NETWORK_ERROR }
+
     private fun buildMockApiProvider(
         approvals: List<WorkflowApproval> = emptyList(),
-        shouldFail: Boolean = false
+        failureMode: FailureMode = FailureMode.NONE
     ): IAapApiProvider {
         val responseJson = json.encodeToString(
             PaginatedResponse(count = approvals.size, results = approvals)
         )
         val mockEngine = MockEngine { _ ->
-            if (shouldFail) {
-                respond("error", status = HttpStatusCode.InternalServerError)
-            } else {
-                respond(
+            when (failureMode) {
+                FailureMode.HTTP_500 -> respond("error", status = HttpStatusCode.InternalServerError)
+                FailureMode.NETWORK_ERROR -> throw java.io.IOException("Connection refused")
+                FailureMode.NONE -> respond(
                     content = responseJson,
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
@@ -172,9 +174,20 @@ class ApprovalPollingWorkerTest {
     }
 
     @Test
-    fun `API failure returns retry`() = runTest {
+    fun `HTTP error returns retry`() = runTest {
         fakeTokenManager.setInstances(listOf(testInstance))
-        startKoinWith(apiProvider = buildMockApiProvider(shouldFail = true))
+        startKoinWith(apiProvider = buildMockApiProvider(failureMode = FailureMode.HTTP_500))
+        val worker = buildWorker()
+
+        val result = worker.doWork()
+
+        assertEquals(ListenableWorker.Result.retry(), result)
+    }
+
+    @Test
+    fun `network error returns retry`() = runTest {
+        fakeTokenManager.setInstances(listOf(testInstance))
+        startKoinWith(apiProvider = buildMockApiProvider(failureMode = FailureMode.NETWORK_ERROR))
         val worker = buildWorker()
 
         val result = worker.doWork()

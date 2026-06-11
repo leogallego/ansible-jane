@@ -73,6 +73,10 @@ android {
                     it.systemProperty("robolectric.offline", "true")
                     it.systemProperty("robolectric.dependency.dir", roboDepsDir.absolutePath)
                 }
+                val tmpDir = file("${rootProject.projectDir}/.tmp")
+                if (tmpDir.exists()) {
+                    it.systemProperty("java.io.tmpdir", tmpDir.absolutePath)
+                }
             }
         }
     }

@@ -177,14 +177,20 @@ class ApprovalActionReceiverTest {
 
         receiver.onReceive(context, buildIntent(ApprovalActionReceiver.ACTION_APPROVE, approvalId = 42))
 
-        Thread.sleep(6_000)
-
         val notifManager = shadowOf(
             context.getSystemService(android.app.NotificationManager::class.java)
         )
-        val notification = notifManager.getNotification(42)
+        // Poll for error notification instead of fixed sleep — production timeout is 5s,
+        // so we poll up to 10s with short intervals to avoid flakiness on slow CI.
+        var notification: android.app.Notification? = null
+        val deadline = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < deadline) {
+            notification = notifManager.getNotification(42)
+            if (notification != null) break
+            Thread.sleep(200)
+        }
         assertNotNull("Error notification should be posted", notification)
-        val extras = notification.extras
+        val extras = notification!!.extras
         assertTrue(
             "Title should indicate failure",
             extras.getString("android.title")?.contains("Failed") == true
@@ -202,14 +208,20 @@ class ApprovalActionReceiverTest {
         receiver.onReceive(context, buildIntent(ApprovalActionReceiver.ACTION_APPROVE, approvalId = 42))
 
         callLatch.await(5, TimeUnit.SECONDS)
-        Thread.sleep(100)
 
+        // Poll briefly — notification is posted right after the IOException is caught
         val notifManager = shadowOf(
             context.getSystemService(android.app.NotificationManager::class.java)
         )
-        val notification = notifManager.getNotification(42)
+        var notification: android.app.Notification? = null
+        val deadline = System.currentTimeMillis() + 2_000
+        while (System.currentTimeMillis() < deadline) {
+            notification = notifManager.getNotification(42)
+            if (notification != null) break
+            Thread.sleep(50)
+        }
         assertNotNull("Error notification should replace original", notification)
-        assertEquals("Should have Retry action", 1, notification.actions.size)
+        assertEquals("Should have Retry action", 1, notification!!.actions.size)
         assertEquals("Retry", notification.actions[0].title)
     }
 }
