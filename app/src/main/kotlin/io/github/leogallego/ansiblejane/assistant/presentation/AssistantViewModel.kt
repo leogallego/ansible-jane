@@ -191,6 +191,7 @@ class AssistantViewModel(
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
             val disabledTools = repository.getDisabledTools()
+            val enabledOverrides = repository.getEnabledOverrides()
 
             mcpServerManager.refreshConnections()
             val mcpTools = mcpServerManager.getAllTools()
@@ -199,7 +200,7 @@ class AssistantViewModel(
             toolRouter.registerLocalTools(localTools)
             toolRouter.registerMcpTools(mcpTools)
 
-            toolRouter.applyPersistedDisables(disabledTools)
+            toolRouter.applyPersistedState(disabledTools, enabledOverrides)
 
             Log.d(TAG, "ROUTE: query=\"$text\", ${localTools.size} local, ${mcpTools.size} mcp, ${disabledTools.size} disabled")
             val queryResult = toolRouter.getToolsForQuery(text, serverConfigs)

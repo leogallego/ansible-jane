@@ -1069,7 +1069,7 @@ class ToolRouterTest {
     }
 
     @Test
-    fun `applyPersistedDisables SHOULD parse key format and disable tools`() {
+    fun `applyPersistedState SHOULD parse key format and disable tools`() {
         val tools = listOf(
             localTool("list_hosts"),
             localTool("list_jobs"),
@@ -1078,7 +1078,7 @@ class ToolRouterTest {
         router.registerLocalTools(tools)
         router.registerMcpTools(listOf(mcpTool("controller.users_list")))
 
-        router.applyPersistedDisables(setOf("LOCAL:list_hosts", "MCP:controller.users_list"))
+        router.applyPersistedState(setOf("LOCAL:list_hosts", "MCP:controller.users_list"), emptySet())
 
         assertFalse(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
         assertTrue(router.isToolEnabled("list_jobs", ToolSource.LOCAL))
@@ -1125,10 +1125,10 @@ class ToolRouterTest {
     }
 
     @Test
-    fun `applyPersistedDisables SHOULD skip invalid key formats gracefully`() {
+    fun `applyPersistedState SHOULD skip invalid key formats gracefully`() {
         router.registerLocalTools(listOf(localTool("list_hosts")))
 
-        router.applyPersistedDisables(setOf("INVALID:list_hosts", "list_hosts", ":list_hosts"))
+        router.applyPersistedState(setOf("INVALID:list_hosts", "list_hosts", ":list_hosts"), emptySet())
 
         assertTrue("valid tool unaffected by invalid keys", router.isToolEnabled("list_hosts", ToolSource.LOCAL))
     }
@@ -1194,6 +1194,59 @@ class ToolRouterTest {
     @Test
     fun `getCategoryForTool SHOULD return null for unknown tool`() {
         assertNull(ToolRouter.getCategoryForTool("nonexistent_tool"))
+    }
+
+    // --- Issue #288: user re-enable survives re-registration ---
+
+    @Test
+    fun `SHOULD preserve user re-enable of auto-disabled MCP tool after re-registration`() {
+        router.registerLocalTools(listOf(localTool("list_hosts")))
+        assertFalse("auto-disabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+
+        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, true)
+        assertTrue("user re-enabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+
+        router.registerLocalTools(listOf(localTool("list_hosts")))
+        assertTrue("survives re-registration", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+    }
+
+    @Test
+    fun `userEnabled SHOULD override autoDisabled but not userDisabled`() {
+        router.registerLocalTools(listOf(localTool("list_hosts")))
+        router.registerMcpTools(listOf(mcpTool("controller.hosts_list"), mcpTool("controller.users_list")))
+
+        assertTrue(router.isAutoDisabled("controller.hosts_list", ToolSource.MCP))
+        assertFalse(router.isAutoDisabled("controller.users_list", ToolSource.MCP))
+
+        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, true)
+        assertTrue("userEnabled overrides autoDisabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+
+        router.setToolEnabled("controller.users_list", ToolSource.MCP, false)
+        assertFalse("userDisabled takes effect", router.isToolEnabled("controller.users_list", ToolSource.MCP))
+    }
+
+    @Test
+    fun `applyPersistedState SHOULD populate both sets correctly`() {
+        router.registerLocalTools(listOf(localTool("list_hosts")))
+        router.registerMcpTools(listOf(mcpTool("controller.hosts_list"), mcpTool("controller.users_list")))
+
+        router.applyPersistedState(
+            disabled = setOf("MCP:controller.users_list"),
+            enabledOverrides = setOf("MCP:controller.hosts_list")
+        )
+
+        assertTrue("enabledOverride overrides autoDisabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+        assertFalse("userDisabled applied", router.isToolEnabled("controller.users_list", ToolSource.MCP))
+    }
+
+    @Test
+    fun `isAutoDisabled SHOULD return correct status`() {
+        router.registerLocalTools(listOf(localTool("list_hosts")))
+        router.registerMcpTools(listOf(mcpTool("controller.hosts_list"), mcpTool("controller.users_list")))
+
+        assertTrue(router.isAutoDisabled("controller.hosts_list", ToolSource.MCP))
+        assertFalse(router.isAutoDisabled("controller.users_list", ToolSource.MCP))
+        assertFalse(router.isAutoDisabled("list_hosts", ToolSource.LOCAL))
     }
 
     @Test
