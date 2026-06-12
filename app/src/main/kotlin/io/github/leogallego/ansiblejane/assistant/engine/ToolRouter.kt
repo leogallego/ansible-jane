@@ -261,6 +261,18 @@ class ToolRouter {
         return (toolName to source) !in disabledTools
     }
 
+    fun applyPersistedDisables(keys: Set<String>) {
+        for (entry in keys) {
+            val colonIndex = entry.indexOf(':')
+            if (colonIndex > 0) {
+                val sourceStr = entry.substring(0, colonIndex)
+                val toolName = entry.substring(colonIndex + 1)
+                val source = try { ToolSource.valueOf(sourceStr) } catch (_: Exception) { continue }
+                setToolEnabled(toolName, source, false)
+            }
+        }
+    }
+
     data class QueryResult(
         val tools: List<Tool>,
         val categoryMatched: Boolean

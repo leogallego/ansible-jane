@@ -1030,6 +1030,145 @@ class ToolRouterTest {
         assertFalse("list_hosts" in names)
     }
 
+    // --- Disabled tools filtering (issue #282) ---
+
+    @Test
+    fun `SHOULD not include disabled MCP tools in query results`() {
+        val tools = listOf(
+            mcpTool("controller.hosts_list"),
+            mcpTool("controller.groups_list"),
+            mcpTool("controller.users_list")
+        )
+        router.registerMcpTools(tools)
+        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, false)
+
+        val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig)).tools
+        val names = result.map { it.spec.name }
+
+        assertFalse("controller.hosts_list" in names)
+        assertTrue("controller.groups_list" in names)
+    }
+
+    @Test
+    fun `SHOULD exclude multiple disabled tools from query results`() {
+        val tools = listOf(
+            localTool("list_hosts"),
+            localTool("list_inventories"),
+            localTool("list_groups")
+        )
+        router.registerLocalTools(tools)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_inventories", ToolSource.LOCAL, false)
+
+        val result = router.getToolsForQuery("show my hosts and inventories").tools
+        val names = result.map { it.spec.name }
+
+        assertFalse("list_hosts" in names)
+        assertFalse("list_inventories" in names)
+        assertTrue("list_groups" in names)
+    }
+
+    @Test
+    fun `applyPersistedDisables SHOULD parse key format and disable tools`() {
+        val tools = listOf(
+            localTool("list_hosts"),
+            localTool("list_jobs"),
+            localTool("list_inventories")
+        )
+        router.registerLocalTools(tools)
+        router.registerMcpTools(listOf(mcpTool("controller.users_list")))
+
+        router.applyPersistedDisables(setOf("LOCAL:list_hosts", "MCP:controller.users_list"))
+
+        assertFalse(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
+        assertTrue(router.isToolEnabled("list_jobs", ToolSource.LOCAL))
+        assertFalse(router.isToolEnabled("controller.users_list", ToolSource.MCP))
+
+        val result = router.getToolsForQuery("show hosts and users").tools
+        val names = result.map { it.spec.name }
+
+        assertFalse("list_hosts" in names)
+        assertFalse("controller.users_list" in names)
+    }
+
+    @Test
+    fun `SHOULD keep manual disables after re-registering local tools`() {
+        router.registerLocalTools(listOf(localTool("list_hosts"), localTool("list_inventories")))
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+
+        router.registerLocalTools(listOf(localTool("list_hosts"), localTool("list_inventories")))
+
+        assertFalse(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
+    }
+
+    @Test
+    fun `SHOULD keep manual MCP disables alongside auto-disabled overlaps`() {
+        val local = listOf(localTool("list_hosts"))
+        val mcp = listOf(
+            mcpTool("controller.hosts_list"),
+            mcpTool("controller.users_list")
+        )
+        router.registerLocalTools(local)
+        router.registerMcpTools(mcp)
+
+        router.setToolEnabled("controller.users_list", ToolSource.MCP, false)
+
+        assertFalse("auto-disabled overlap", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+        assertFalse("manually disabled", router.isToolEnabled("controller.users_list", ToolSource.MCP))
+
+        val result = router.getToolsForQuery("show hosts and users").tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_hosts" in names)
+        assertFalse("controller.hosts_list" in names)
+        assertFalse("controller.users_list" in names)
+    }
+
+    @Test
+    fun `applyPersistedDisables SHOULD skip invalid key formats gracefully`() {
+        router.registerLocalTools(listOf(localTool("list_hosts")))
+
+        router.applyPersistedDisables(setOf("INVALID:list_hosts", "list_hosts", ":list_hosts"))
+
+        assertTrue("valid tool unaffected by invalid keys", router.isToolEnabled("list_hosts", ToolSource.LOCAL))
+    }
+
+    @Test
+    fun `SHOULD re-include tool in query results WHEN re-enabled after disable`() {
+        val tools = listOf(
+            localTool("list_hosts"),
+            localTool("list_inventories")
+        )
+        router.registerLocalTools(tools)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+
+        val before = router.getToolsForQuery("show my hosts").tools
+        assertFalse("list_hosts" in before.map { it.spec.name })
+
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, true)
+
+        val after = router.getToolsForQuery("show my hosts").tools
+        assertTrue("list_hosts" in after.map { it.spec.name })
+    }
+
+    @Test
+    fun `SHOULD return categoryMatched true but empty tools WHEN all category tools disabled`() {
+        val tools = listOf(
+            localTool("list_hosts"),
+            localTool("list_inventories"),
+            localTool("list_groups")
+        )
+        router.registerLocalTools(tools)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_inventories", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_groups", ToolSource.LOCAL, false)
+
+        val result = router.getToolsForQuery("show my hosts")
+
+        assertTrue("category should match", result.categoryMatched)
+        assertTrue("tools should be empty", result.tools.isEmpty())
+    }
+
     // --- getCategoryForTool ---
 
     @Test

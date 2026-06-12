@@ -199,15 +199,7 @@ class AssistantViewModel(
             toolRouter.registerLocalTools(localTools)
             toolRouter.registerMcpTools(mcpTools)
 
-            for (entry in disabledTools) {
-                val colonIndex = entry.indexOf(':')
-                if (colonIndex > 0) {
-                    val sourceStr = entry.substring(0, colonIndex)
-                    val toolName = entry.substring(colonIndex + 1)
-                    val source = try { ToolSource.valueOf(sourceStr) } catch (_: Exception) { continue }
-                    toolRouter.setToolEnabled(toolName, source, false)
-                }
-            }
+            toolRouter.applyPersistedDisables(disabledTools)
 
             Log.d(TAG, "ROUTE: query=\"$text\", ${localTools.size} local, ${mcpTools.size} mcp, ${disabledTools.size} disabled")
             val queryResult = toolRouter.getToolsForQuery(text, serverConfigs)
