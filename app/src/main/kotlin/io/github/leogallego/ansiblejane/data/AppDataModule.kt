@@ -1,6 +1,8 @@
 package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.di.sharedNetworkModule
+import io.github.leogallego.ansiblejane.notification.ApprovalNotificationManager
+import io.github.leogallego.ansiblejane.notification.IApprovalNotificationManager
 import io.github.leogallego.ansiblejane.platform.BackgroundWorker
 import io.github.leogallego.ansiblejane.platform.ConnectivityObserver
 import io.github.leogallego.ansiblejane.platform.DataStoreFactory
@@ -17,6 +19,7 @@ val platformModule = module {
     single { BackgroundWorker(androidContext()) }
     single { NotificationManager(androidContext()) }
     single { PlatformUtils(androidContext()) }
+    single<IApprovalNotificationManager> { ApprovalNotificationManager() }
 }
 
 val dataModule = module {

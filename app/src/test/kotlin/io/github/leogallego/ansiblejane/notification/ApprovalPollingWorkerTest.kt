@@ -6,6 +6,7 @@ import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.data.IUserPreferencesRepository
+import io.github.leogallego.ansiblejane.fakes.FakeApprovalNotificationManager
 import io.github.leogallego.ansiblejane.fakes.FakeTokenManager
 import io.github.leogallego.ansiblejane.fakes.FakeUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.AapInstance
@@ -15,6 +16,7 @@ import io.github.leogallego.ansiblejane.network.AapApiClient
 import io.github.leogallego.ansiblejane.network.EdaApiClient
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import io.github.leogallego.ansiblejane.network.PlatformApiClient
+import io.github.leogallego.ansiblejane.notification.IApprovalNotificationManager
 import io.github.leogallego.ansiblejane.platform.DataStoreFactory
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -45,7 +47,7 @@ class ApprovalPollingWorkerTest {
     private lateinit var fakeTokenManager: FakeTokenManager
     private lateinit var fakeUserPreferences: FakeUserPreferencesRepository
     private lateinit var approvalTracker: ApprovalTracker
-    private lateinit var notificationManager: ApprovalNotificationManager
+    private lateinit var fakeNotificationManager: FakeApprovalNotificationManager
     private val json = Json { ignoreUnknownKeys = true }
 
     private val testInstance = AapInstance(
@@ -63,7 +65,7 @@ class ApprovalPollingWorkerTest {
         fakeUserPreferences = FakeUserPreferencesRepository()
         val context: Context = ApplicationProvider.getApplicationContext()
         approvalTracker = ApprovalTracker(DataStoreFactory(context))
-        notificationManager = ApprovalNotificationManager()
+        fakeNotificationManager = FakeApprovalNotificationManager()
         ApprovalNotificationManager.createChannel(context)
     }
 
@@ -113,7 +115,7 @@ class ApprovalPollingWorkerTest {
                 single<IAapApiProvider> { apiProvider }
                 single<IUserPreferencesRepository> { fakeUserPreferences }
                 single { approvalTracker }
-                single { notificationManager }
+                single<IApprovalNotificationManager> { fakeNotificationManager }
             })
         }
     }
@@ -216,5 +218,32 @@ class ApprovalPollingWorkerTest {
 
         assertEquals(ListenableWorker.Result.success(), result)
         assertTrue("Should poll when enabled by default", 10 in approvalTracker.getSeenIds())
+    }
+
+    @Test
+    fun `new approvals trigger showNotification calls`() = runTest {
+        fakeTokenManager.setInstances(listOf(testInstance))
+        startKoinWith(apiProvider = buildMockApiProvider(listOf(approval1, approval2)))
+        val worker = buildWorker()
+
+        worker.doWork()
+
+        val shownIds = fakeNotificationManager.shownApprovals.map { it.id }
+        assertTrue("Approval 10 should be shown", 10 in shownIds)
+        assertTrue("Approval 20 should be shown", 20 in shownIds)
+        assertEquals("Should show exactly 2 notifications", 2, fakeNotificationManager.shownApprovals.size)
+    }
+
+    @Test
+    fun `IDs marked as seen even when notification permission denied`() = runTest {
+        fakeTokenManager.setInstances(listOf(testInstance))
+        fakeNotificationManager.returnValue = false
+        startKoinWith(apiProvider = buildMockApiProvider(listOf(approval1)))
+        val worker = buildWorker()
+
+        worker.doWork()
+
+        assertTrue("Should still mark as seen", 10 in approvalTracker.getSeenIds())
+        assertEquals("Should attempt notification", 1, fakeNotificationManager.shownApprovals.size)
     }
 }
