@@ -1069,7 +1069,7 @@ class ToolRouterTest {
     }
 
     @Test
-    fun `SHOULD parse persisted key format and disable tools correctly`() {
+    fun `applyPersistedDisables SHOULD parse key format and disable tools`() {
         val tools = listOf(
             localTool("list_hosts"),
             localTool("list_jobs"),
@@ -1078,16 +1078,7 @@ class ToolRouterTest {
         router.registerLocalTools(tools)
         router.registerMcpTools(listOf(mcpTool("controller.users_list")))
 
-        val persistedKeys = setOf("LOCAL:list_hosts", "MCP:controller.users_list")
-        for (entry in persistedKeys) {
-            val colonIndex = entry.indexOf(':')
-            if (colonIndex > 0) {
-                val sourceStr = entry.substring(0, colonIndex)
-                val toolName = entry.substring(colonIndex + 1)
-                val source = ToolSource.valueOf(sourceStr)
-                router.setToolEnabled(toolName, source, false)
-            }
-        }
+        router.applyPersistedDisables(setOf("LOCAL:list_hosts", "MCP:controller.users_list"))
 
         assertFalse(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
         assertTrue(router.isToolEnabled("list_jobs", ToolSource.LOCAL))
@@ -1134,23 +1125,10 @@ class ToolRouterTest {
     }
 
     @Test
-    fun `SHOULD handle invalid persisted key format gracefully`() {
+    fun `applyPersistedDisables SHOULD skip invalid key formats gracefully`() {
         router.registerLocalTools(listOf(localTool("list_hosts")))
 
-        val invalidKeys = setOf("INVALID:list_hosts", "list_hosts", ":list_hosts")
-        for (entry in invalidKeys) {
-            val colonIndex = entry.indexOf(':')
-            if (colonIndex > 0) {
-                val sourceStr = entry.substring(0, colonIndex)
-                val toolName = entry.substring(colonIndex + 1)
-                try {
-                    val source = ToolSource.valueOf(sourceStr)
-                    router.setToolEnabled(toolName, source, false)
-                } catch (_: IllegalArgumentException) {
-                    // invalid source — skip, matching AssistantViewModel behavior
-                }
-            }
-        }
+        router.applyPersistedDisables(setOf("INVALID:list_hosts", "list_hosts", ":list_hosts"))
 
         assertTrue("valid tool unaffected by invalid keys", router.isToolEnabled("list_hosts", ToolSource.LOCAL))
     }
