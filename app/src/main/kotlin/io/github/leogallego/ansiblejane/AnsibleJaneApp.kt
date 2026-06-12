@@ -28,7 +28,7 @@ import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
-import java.time.ZoneId
+import kotlinx.datetime.TimeZone
 import java.util.concurrent.TimeUnit
 
 class AnsibleJaneApp : Application() {
@@ -84,7 +84,7 @@ class AnsibleJaneApp : Application() {
         appScope.launch {
             val savedZone = userPreferences.timezoneId.first()
             DateFormatter.zoneOverride = savedZone?.let {
-                try { ZoneId.of(it) } catch (_: Exception) { null }
+                try { TimeZone.of(it) } catch (_: Exception) { null }
             }
             DateFormatter.timeFormat = userPreferences.timeFormat.first()
         }

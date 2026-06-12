@@ -134,6 +134,7 @@ dependencies {
     implementation(libs.tink.android)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.datetime)
 
     implementation(libs.markdown.renderer)
     implementation(libs.markdown.renderer.m3)
