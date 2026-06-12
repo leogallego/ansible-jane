@@ -41,7 +41,7 @@ class ApprovalPollingWorker(
             }
             val apiProvider: IAapApiProvider = get()
             val approvalTracker: ApprovalTracker = get()
-            val notificationManager: ApprovalNotificationManager = get()
+            val notificationManager: IApprovalNotificationManager = get()
 
             val response = apiProvider.getApiService().getWorkflowApprovals(status = "pending")
             val pendingApprovals = response.results

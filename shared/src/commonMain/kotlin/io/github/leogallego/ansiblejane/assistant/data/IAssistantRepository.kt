@@ -23,4 +23,6 @@ interface IAssistantRepository {
     suspend fun switchActiveProvider(providerKey: String)
     suspend fun saveDisabledTools(tools: Set<String>)
     suspend fun getDisabledTools(): Set<String>
+    suspend fun saveEnabledOverrides(tools: Set<String>)
+    suspend fun getEnabledOverrides(): Set<String>
 }

@@ -20,10 +20,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class DashboardViewModel(
     private val jobRepository: IJobRepository,
@@ -77,8 +80,9 @@ class DashboardViewModel(
         _uiState.update { DashboardUiState.Loading }
         dashboardJob = viewModelScope.launch {
             val instance = tokenManager.activeInstance.value ?: return@launch
-            val since24h = Instant.now().minus(24, ChronoUnit.HOURS).toString()
-            val since7d = Instant.now().minus(7, ChronoUnit.DAYS).toString()
+            val now = Clock.System.now()
+            val since24h = (now - 24.hours).toString()
+            val since7d = (now - 7.days).toString()
 
             val activeDeferred = async {
                 jobRepository.getRecentJobs(
@@ -199,31 +203,28 @@ class DashboardViewModel(
         val successJobs = successResult.getOrNull()?.jobs ?: emptyList()
         val failedJobs = failedResult.getOrNull()?.jobs ?: emptyList()
 
-        val dayFormat = DateTimeFormatter.ofPattern("EEE")
-        val zone = ZoneId.systemDefault()
-        val now = Instant.now()
+        val tz = TimeZone.currentSystemDefault()
+        val now = Clock.System.now()
+
+        fun bucketByDate(jobs: List<Job>): Map<LocalDate, Int> =
+            jobs.mapNotNull { job ->
+                job.finished?.let {
+                    try { Instant.parse(it).toLocalDateTime(tz).date } catch (_: Exception) { null }
+                }
+            }.groupingBy { it }.eachCount()
+
+        val successByDate = bucketByDate(successJobs)
+        val failedByDate = bucketByDate(failedJobs)
 
         return (6 downTo 0).map { daysAgo ->
-            val day = now.minus(daysAgo.toLong(), ChronoUnit.DAYS)
-            val dayStart = day.atZone(zone).toLocalDate()
-            val label = dayFormat.format(dayStart)
-
-            val successCount = successJobs.count { job ->
-                job.finished?.let {
-                    try {
-                        Instant.parse(it).atZone(zone).toLocalDate() == dayStart
-                    } catch (_: Exception) { false }
-                } ?: false
-            }
-            val failCount = failedJobs.count { job ->
-                job.finished?.let {
-                    try {
-                        Instant.parse(it).atZone(zone).toLocalDate() == dayStart
-                    } catch (_: Exception) { false }
-                } ?: false
-            }
-
-            DayJobStats(label = label, successful = successCount, failed = failCount)
+            val dayDate = (now - daysAgo.days).toLocalDateTime(tz).date
+            val label = dayDate.dayOfWeek.name.take(3).lowercase()
+                .replaceFirstChar { it.uppercase() }
+            DayJobStats(
+                label = label,
+                successful = successByDate[dayDate] ?: 0,
+                failed = failedByDate[dayDate] ?: 0
+            )
         }
     }
 

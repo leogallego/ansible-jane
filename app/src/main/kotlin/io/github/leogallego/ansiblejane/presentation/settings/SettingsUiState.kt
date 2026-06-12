@@ -50,6 +50,7 @@ sealed interface SettingsUiState {
         val expandedMcpServers: Set<String> = emptySet(),
         val expandedCategories: Set<String> = emptySet(),
         val disabledTools: Set<String> = emptySet(),
+        val enabledOverrides: Set<String> = emptySet(),
         val isRefreshingTools: Boolean = false
     ) : SettingsUiState
 }

@@ -16,7 +16,7 @@ import io.github.leogallego.ansiblejane.MainActivity
 import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.model.WorkflowApproval
 
-class ApprovalNotificationManager {
+class ApprovalNotificationManager : IApprovalNotificationManager {
 
     companion object {
         const val CHANNEL_ID = "workflow_approvals"
@@ -40,7 +40,7 @@ class ApprovalNotificationManager {
         }
     }
 
-    fun showNotification(context: Context, approval: WorkflowApproval): Boolean {
+    override fun showNotification(context: Context, approval: WorkflowApproval): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     context,

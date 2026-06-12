@@ -35,7 +35,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import java.time.ZoneId
+import kotlinx.datetime.TimeZone
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class SettingsViewModel(
@@ -61,6 +61,7 @@ class SettingsViewModel(
             val initialActiveKey = assistantRepository.activeProviderKeyFlow.first()
 
             val initialDisabledTools = assistantRepository.getDisabledTools()
+            val initialEnabledOverrides = assistantRepository.getEnabledOverrides()
             val initialLocalTools = localTools.map { tool ->
                 LocalToolUiState(
                     name = tool.spec.name,
@@ -78,7 +79,7 @@ class SettingsViewModel(
                 mcpServerManager.connections
             ) { instances, active, timezone, timeFormat, connections ->
                 DateFormatter.zoneOverride = timezone?.let {
-                    try { ZoneId.of(it) } catch (_: Exception) { null }
+                    try { TimeZone.of(it) } catch (_: Exception) { null }
                 }
                 DateFormatter.timeFormat = timeFormat
 
@@ -96,6 +97,7 @@ class SettingsViewModel(
                 val preservedExpandedCats = (current as? SettingsUiState.Ready)?.expandedCategories ?: emptySet()
                 val preservedLocalTools = (current as? SettingsUiState.Ready)?.localTools ?: initialLocalTools
                 val preservedDisabledTools = (current as? SettingsUiState.Ready)?.disabledTools ?: initialDisabledTools
+                val preservedEnabledOverrides = (current as? SettingsUiState.Ready)?.enabledOverrides ?: initialEnabledOverrides
 
                 val allMcpTools = mcpServerManager.getAllTools()
                 val mcpServerTools = allMcpTools
@@ -134,7 +136,8 @@ class SettingsViewModel(
                     mcpServerTools = mcpServerTools,
                     expandedMcpServers = preservedExpandedMcp,
                     expandedCategories = preservedExpandedCats,
-                    disabledTools = preservedDisabledTools
+                    disabledTools = preservedDisabledTools,
+                    enabledOverrides = preservedEnabledOverrides
                 )
             }.collect { state ->
                 _uiState.update { state }
@@ -475,12 +478,23 @@ class SettingsViewModel(
     fun toggleToolEnabled(toolName: String, source: ToolSource, enabled: Boolean) {
         val key = "${source.name}:$toolName"
         viewModelScope.launch {
-            val current = (uiState.value as? SettingsUiState.Ready)?.disabledTools ?: emptySet()
-            val updated = if (enabled) current - key else current + key
-            assistantRepository.saveDisabledTools(updated)
+            val currentDisabled = (uiState.value as? SettingsUiState.Ready)?.disabledTools ?: emptySet()
+            val currentOverrides = (uiState.value as? SettingsUiState.Ready)?.enabledOverrides ?: emptySet()
+            val updatedDisabled: Set<String>
+            val updatedOverrides: Set<String>
+            if (enabled) {
+                updatedDisabled = currentDisabled - key
+                updatedOverrides = currentOverrides + key
+            } else {
+                updatedDisabled = currentDisabled + key
+                updatedOverrides = currentOverrides - key
+            }
+            assistantRepository.saveDisabledTools(updatedDisabled)
+            assistantRepository.saveEnabledOverrides(updatedOverrides)
             updateReady {
                 copy(
-                    disabledTools = updated,
+                    disabledTools = updatedDisabled,
+                    enabledOverrides = updatedOverrides,
                     localTools = localTools.map {
                         if (it.name == toolName && source == ToolSource.LOCAL) {
                             it.copy(isEnabled = enabled)

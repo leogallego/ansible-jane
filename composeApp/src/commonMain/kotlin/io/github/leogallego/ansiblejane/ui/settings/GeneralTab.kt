@@ -49,7 +49,7 @@ import io.github.leogallego.ansiblejane.AppVersion
 import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
-import java.time.ZoneId
+import kotlinx.datetime.TimeZone
 
 @Composable
 fun GeneralTab(
@@ -109,7 +109,7 @@ private fun DisplaySection(
     onThemeModeSelected: (ThemeMode) -> Unit
 ) {
     var showTimezonePicker by remember { mutableStateOf(false) }
-    val timezoneDisplay = currentTimezone ?: "System (${ZoneId.systemDefault().id})"
+    val timezoneDisplay = currentTimezone ?: "System (${TimeZone.currentSystemDefault().id})"
 
     Text(
         text = "Display",
@@ -212,10 +212,10 @@ private fun TimezonePickerSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
-    val systemZone = ZoneId.systemDefault().id
+    val systemZone = TimeZone.currentSystemDefault().id
 
     val timezones = remember {
-        listOf(null to "System ($systemZone)") + ZoneId.getAvailableZoneIds()
+        listOf(null to "System ($systemZone)") + TimeZone.availableZoneIds
             .filter { it.contains("/") && !it.startsWith("SystemV") }
             .sorted()
             .map { it to it }

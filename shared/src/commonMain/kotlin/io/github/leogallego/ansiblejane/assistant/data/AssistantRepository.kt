@@ -40,6 +40,7 @@ class AssistantRepository(
         val KEY_LLM_CONFIGS = stringPreferencesKey("llm_configs")
         val KEY_ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
         val KEY_DISABLED_TOOLS = stringPreferencesKey("disabled_tools")
+        val KEY_ENABLED_OVERRIDES = stringPreferencesKey("enabled_overrides")
         const val MAX_MESSAGES = 100
     }
 
@@ -234,6 +235,30 @@ class AssistantRepository(
             )
         } catch (e: Exception) {
             DebugLog.w(TAG, "Failed to deserialize disabled tools: ${e.message}")
+            emptySet()
+        }
+    }
+
+    override suspend fun saveEnabledOverrides(tools: Set<String>) {
+        val encoded = json.encodeToString(
+            kotlinx.serialization.builtins.SetSerializer(String.serializer()),
+            tools
+        )
+        assistantDataStore.edit { prefs ->
+            prefs[KEY_ENABLED_OVERRIDES] = encoded
+        }
+    }
+
+    override suspend fun getEnabledOverrides(): Set<String> {
+        val prefs = assistantDataStore.data.first()
+        val encoded = prefs[KEY_ENABLED_OVERRIDES] ?: return emptySet()
+        return try {
+            json.decodeFromString(
+                kotlinx.serialization.builtins.SetSerializer(String.serializer()),
+                encoded
+            )
+        } catch (e: Exception) {
+            DebugLog.w(TAG, "Failed to deserialize enabled overrides: ${e.message}")
             emptySet()
         }
     }

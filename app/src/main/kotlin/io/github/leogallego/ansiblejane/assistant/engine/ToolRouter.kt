@@ -11,7 +11,9 @@ class ToolRouter {
 
     private val localTools = mutableListOf<LocalTool>()
     private val mcpTools = mutableListOf<Tool>()
-    private val disabledTools = mutableSetOf<Pair<String, ToolSource>>()
+    private val autoDisabled = mutableSetOf<Pair<String, ToolSource>>()
+    private val userDisabled = mutableSetOf<Pair<String, ToolSource>>()
+    private val userEnabled = mutableSetOf<Pair<String, ToolSource>>()
 
     private enum class Category(
         val keywords: Set<String>,
@@ -254,23 +256,48 @@ class ToolRouter {
 
     fun setToolEnabled(toolName: String, source: ToolSource, enabled: Boolean) {
         val key = toolName to source
-        if (enabled) disabledTools.remove(key) else disabledTools.add(key)
+        if (enabled) {
+            userDisabled.remove(key)
+            userEnabled.add(key)
+        } else {
+            userDisabled.add(key)
+            userEnabled.remove(key)
+        }
     }
 
     fun isToolEnabled(toolName: String, source: ToolSource): Boolean {
-        return (toolName to source) !in disabledTools
+        val key = toolName to source
+        return key !in userDisabled && (key !in autoDisabled || key in userEnabled)
     }
 
-    fun applyPersistedDisables(keys: Set<String>) {
-        for (entry in keys) {
+    fun isAutoDisabled(toolName: String, source: ToolSource): Boolean {
+        return (toolName to source) in autoDisabled
+    }
+
+    fun applyPersistedState(disabled: Set<String>, enabledOverrides: Set<String>) {
+        for (entry in disabled) {
             val colonIndex = entry.indexOf(':')
             if (colonIndex > 0) {
                 val sourceStr = entry.substring(0, colonIndex)
                 val toolName = entry.substring(colonIndex + 1)
                 val source = try { ToolSource.valueOf(sourceStr) } catch (_: Exception) { continue }
-                setToolEnabled(toolName, source, false)
+                userDisabled.add(toolName to source)
             }
         }
+        for (entry in enabledOverrides) {
+            val colonIndex = entry.indexOf(':')
+            if (colonIndex > 0) {
+                val sourceStr = entry.substring(0, colonIndex)
+                val toolName = entry.substring(colonIndex + 1)
+                val source = try { ToolSource.valueOf(sourceStr) } catch (_: Exception) { continue }
+                userEnabled.add(toolName to source)
+            }
+        }
+    }
+
+    @Deprecated("Use applyPersistedState instead", ReplaceWith("applyPersistedState(keys, emptySet())"))
+    fun applyPersistedDisables(keys: Set<String>) {
+        applyPersistedState(keys, emptySet())
     }
 
     data class QueryResult(
@@ -381,7 +408,7 @@ class ToolRouter {
         for (localName in activeLocalNames) {
             val overlappingMcpNames = OVERLAP_MAPPING[localName] ?: continue
             for (mcpName in overlappingMcpNames) {
-                disabledTools.add(mcpName to ToolSource.MCP)
+                autoDisabled.add(mcpName to ToolSource.MCP)
                 disabledCount++
             }
         }

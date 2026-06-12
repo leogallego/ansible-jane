@@ -1,41 +1,37 @@
 package io.github.leogallego.ansiblejane.ui.components
 
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.time.temporal.ChronoUnit
-import java.util.Locale
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 object DateFormatter {
 
     @Volatile
-    var zoneOverride: ZoneId? = null
+    var zoneOverride: TimeZone? = null
 
     @Volatile
     var timeFormat: TimeFormat = TimeFormat.SYSTEM
 
-    private val dateOnlyFormatter: DateTimeFormatter =
-        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-
-    private val zone: ZoneId
-        get() = zoneOverride ?: ZoneId.systemDefault()
-
-    private val dateTimeFormatter: DateTimeFormatter
-        get() = when (timeFormat) {
-            TimeFormat.SYSTEM ->
-                DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
-            TimeFormat.HOURS_24 ->
-                DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm", Locale.getDefault())
-            TimeFormat.HOURS_12 ->
-                DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a", Locale.getDefault())
-        }
+    private val zone: TimeZone
+        get() = zoneOverride ?: TimeZone.currentSystemDefault()
 
     fun formatDateTime(isoTimestamp: String): String {
         return try {
             val instant = Instant.parse(isoTimestamp)
-            val local = instant.atZone(zone)
-            dateTimeFormatter.format(local)
+            val local = instant.toLocalDateTime(zone)
+            val month = MONTH_ABBREVS[local.month.ordinal]
+            val use24h = when (timeFormat) {
+                TimeFormat.SYSTEM -> isSystem24HourFormat()
+                TimeFormat.HOURS_24 -> true
+                TimeFormat.HOURS_12 -> false
+            }
+            if (use24h) {
+                "$month ${local.day}, ${local.year} ${local.hour.pad()}:${local.minute.pad()}"
+            } else {
+                val (hour12, amPm) = to12Hour(local.hour)
+                "$month ${local.day}, ${local.year} $hour12:${local.minute.pad()} $amPm"
+            }
         } catch (_: Exception) {
             isoTimestamp
         }
@@ -44,8 +40,9 @@ object DateFormatter {
     fun formatRelative(isoTimestamp: String): String {
         return try {
             val instant = Instant.parse(isoTimestamp)
-            val now = Instant.now()
-            val minutesAgo = ChronoUnit.MINUTES.between(instant, now)
+            val now = Clock.System.now()
+            val diff = now - instant
+            val minutesAgo = diff.inWholeMinutes
             if (minutesAgo < 0) {
                 val minutesUntil = -minutesAgo
                 when {
@@ -72,8 +69,8 @@ object DateFormatter {
     fun formatDuration(isoTimestamp: String): String {
         return try {
             val instant = Instant.parse(isoTimestamp)
-            val now = Instant.now()
-            val minutesAgo = ChronoUnit.MINUTES.between(instant, now).coerceAtLeast(0)
+            val now = Clock.System.now()
+            val minutesAgo = (now - instant).inWholeMinutes.coerceAtLeast(0)
             when {
                 minutesAgo < 1 -> "just now"
                 minutesAgo < 60 -> "${minutesAgo}m"
@@ -89,10 +86,28 @@ object DateFormatter {
     fun formatDate(isoTimestamp: String): String {
         return try {
             val instant = Instant.parse(isoTimestamp)
-            val local = instant.atZone(zone)
-            dateOnlyFormatter.format(local)
+            val local = instant.toLocalDateTime(zone)
+            val month = MONTH_ABBREVS[local.month.ordinal]
+            "$month ${local.day}, ${local.year}"
         } catch (_: Exception) {
             isoTimestamp
         }
     }
+
+    private fun Int.pad(): String = toString().padStart(2, '0')
+
+    private fun to12Hour(hour24: Int): Pair<Int, String> {
+        val amPm = if (hour24 < 12) "AM" else "PM"
+        val hour12 = when {
+            hour24 == 0 -> 12
+            hour24 > 12 -> hour24 - 12
+            else -> hour24
+        }
+        return hour12 to amPm
+    }
+
+    private val MONTH_ABBREVS = arrayOf(
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    )
 }
