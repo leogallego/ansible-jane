@@ -21,13 +21,16 @@ object DateFormatter {
             val instant = Instant.parse(isoTimestamp)
             val local = instant.toLocalDateTime(zone)
             val month = MONTH_ABBREVS[local.month.ordinal]
-            when (timeFormat) {
-                TimeFormat.SYSTEM, TimeFormat.HOURS_24 ->
-                    "$month ${local.day}, ${local.year} ${local.hour.pad()}:${local.minute.pad()}"
-                TimeFormat.HOURS_12 -> {
-                    val (hour12, amPm) = to12Hour(local.hour)
-                    "$month ${local.day}, ${local.year} $hour12:${local.minute.pad()} $amPm"
-                }
+            val use24h = when (timeFormat) {
+                TimeFormat.SYSTEM -> isSystem24HourFormat()
+                TimeFormat.HOURS_24 -> true
+                TimeFormat.HOURS_12 -> false
+            }
+            if (use24h) {
+                "$month ${local.day}, ${local.year} ${local.hour.pad()}:${local.minute.pad()}"
+            } else {
+                val (hour12, amPm) = to12Hour(local.hour)
+                "$month ${local.day}, ${local.year} $hour12:${local.minute.pad()} $amPm"
             }
         } catch (_: Exception) {
             isoTimestamp
