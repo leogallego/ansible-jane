@@ -24,6 +24,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -205,28 +206,25 @@ class DashboardViewModel(
         val tz = TimeZone.currentSystemDefault()
         val now = Clock.System.now()
 
+        fun bucketByDate(jobs: List<Job>): Map<LocalDate, Int> =
+            jobs.mapNotNull { job ->
+                job.finished?.let {
+                    try { Instant.parse(it).toLocalDateTime(tz).date } catch (_: Exception) { null }
+                }
+            }.groupingBy { it }.eachCount()
+
+        val successByDate = bucketByDate(successJobs)
+        val failedByDate = bucketByDate(failedJobs)
+
         return (6 downTo 0).map { daysAgo ->
-            val day = now - daysAgo.days
-            val dayDate = day.toLocalDateTime(tz).date
+            val dayDate = (now - daysAgo.days).toLocalDateTime(tz).date
             val label = dayDate.dayOfWeek.name.take(3).lowercase()
                 .replaceFirstChar { it.uppercase() }
-
-            val successCount = successJobs.count { job ->
-                job.finished?.let {
-                    try {
-                        Instant.parse(it).toLocalDateTime(tz).date == dayDate
-                    } catch (_: Exception) { false }
-                } ?: false
-            }
-            val failCount = failedJobs.count { job ->
-                job.finished?.let {
-                    try {
-                        Instant.parse(it).toLocalDateTime(tz).date == dayDate
-                    } catch (_: Exception) { false }
-                } ?: false
-            }
-
-            DayJobStats(label = label, successful = successCount, failed = failCount)
+            DayJobStats(
+                label = label,
+                successful = successByDate[dayDate] ?: 0,
+                failed = failedByDate[dayDate] ?: 0
+            )
         }
     }
 
