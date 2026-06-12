@@ -1133,6 +1133,42 @@ class ToolRouterTest {
         assertTrue("valid tool unaffected by invalid keys", router.isToolEnabled("list_hosts", ToolSource.LOCAL))
     }
 
+    @Test
+    fun `SHOULD re-include tool in query results WHEN re-enabled after disable`() {
+        val tools = listOf(
+            localTool("list_hosts"),
+            localTool("list_inventories")
+        )
+        router.registerLocalTools(tools)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+
+        val before = router.getToolsForQuery("show my hosts").tools
+        assertFalse("list_hosts" in before.map { it.spec.name })
+
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, true)
+
+        val after = router.getToolsForQuery("show my hosts").tools
+        assertTrue("list_hosts" in after.map { it.spec.name })
+    }
+
+    @Test
+    fun `SHOULD return categoryMatched true but empty tools WHEN all category tools disabled`() {
+        val tools = listOf(
+            localTool("list_hosts"),
+            localTool("list_inventories"),
+            localTool("list_groups")
+        )
+        router.registerLocalTools(tools)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_inventories", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_groups", ToolSource.LOCAL, false)
+
+        val result = router.getToolsForQuery("show my hosts")
+
+        assertTrue("category should match", result.categoryMatched)
+        assertTrue("tools should be empty", result.tools.isEmpty())
+    }
+
     // --- getCategoryForTool ---
 
     @Test
