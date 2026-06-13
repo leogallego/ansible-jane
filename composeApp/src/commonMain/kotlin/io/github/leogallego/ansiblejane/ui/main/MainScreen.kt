@@ -108,6 +108,7 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showClearChatConfirm by remember { mutableStateOf(false) }
+    var showProviderMenu by remember { mutableStateOf(false) }
 
     if (showClearChatConfirm) {
         AlertDialog(
@@ -167,7 +168,6 @@ fun MainScreen(
                 },
                 actions = {
                     if (selectedTab is TopLevelTab.Assistant) {
-                        var showProviderMenu by remember { mutableStateOf(false) }
                         Box {
                             IconButton(
                                 onClick = { showProviderMenu = true },
@@ -414,7 +414,7 @@ private fun ProviderDropdownMenu(
                     }
                 },
                 onClick = {
-                    if (!isActive) onSwitchProvider(key)
+                    if (!isActive) onSwitchProvider(key) else onDismiss()
                 }
             )
         }
