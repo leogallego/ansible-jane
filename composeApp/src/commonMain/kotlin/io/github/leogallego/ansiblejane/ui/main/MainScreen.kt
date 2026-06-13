@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.ui.main
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -85,6 +86,7 @@ fun MainScreen(
     val tokenManager: ITokenManager = koinInject()
     val assistantRepository: IAssistantRepository = koinInject()
     val activeInstance by tokenManager.activeInstance.collectAsState()
+    val activeConfig by assistantRepository.activeConfigFlow.collectAsState(null)
     val savedConfigs by assistantRepository.savedConfigsFlow.collectAsState(emptyMap())
     val activeProviderKey by assistantRepository.activeProviderKeyFlow.collectAsState(null)
     val sessionTokens by assistantRepository.sessionTokensFlow.collectAsState()
@@ -108,7 +110,7 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showClearChatConfirm by remember { mutableStateOf(false) }
-    var showProviderMenu by remember { mutableStateOf(false) }
+    var showProviderMenu by remember(selectedTabIndex) { mutableStateOf(false) }
 
     if (showClearChatConfirm) {
         AlertDialog(
@@ -133,7 +135,9 @@ fun MainScreen(
                 title = {
                     AnimatedContent(
                         targetState = selectedTab,
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        transitionSpec = {
+                            fadeIn() togetherWith fadeOut() using SizeTransform(clip = false)
+                        },
                         label = "titleCrossfade"
                     ) { tab ->
                         if (tab is TopLevelTab.Assistant) {
@@ -175,7 +179,11 @@ fun MainScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.AutoAwesome,
-                                    contentDescription = "AI model"
+                                    contentDescription = "AI model",
+                                    tint = if (activeConfig != null)
+                                        MaterialTheme.colorScheme.onSurface
+                                    else
+                                        MaterialTheme.colorScheme.error
                                 )
                             }
                             ProviderDropdownMenu(
@@ -407,7 +415,8 @@ private fun ProviderDropdownMenu(
                                 color = if (isActive)
                                     MaterialTheme.colorScheme.onPrimaryContainer
                                 else MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Text(
                                 text = model,
