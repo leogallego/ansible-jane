@@ -84,7 +84,6 @@ fun MainScreen(
     val tokenManager: ITokenManager = koinInject()
     val assistantRepository: IAssistantRepository = koinInject()
     val activeInstance by tokenManager.activeInstance.collectAsState()
-    val activeConfig by assistantRepository.activeConfigFlow.collectAsState(null)
     val savedConfigs by assistantRepository.savedConfigsFlow.collectAsState(emptyMap())
     val activeProviderKey by assistantRepository.activeProviderKeyFlow.collectAsState(null)
     val sessionTokens by assistantRepository.sessionTokensFlow.collectAsState()
@@ -353,6 +352,15 @@ private fun ProviderDropdownMenu(
                     }
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        }
+
+        if (configuredProviders.isEmpty()) {
+            Text(
+                text = "No providers configured",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
         }
 
         configuredProviders.forEach { (key, config) ->
