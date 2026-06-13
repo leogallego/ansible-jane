@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
+import io.github.leogallego.ansiblejane.assistant.engine.TokenUsage
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.data.ITokenManager
@@ -139,7 +140,7 @@ fun MainScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Filled.Assistant,
-                                    contentDescription = "Jane",
+                                    contentDescription = null,
                                     modifier = Modifier.size(28.dp)
                                 )
                                 activeInstance?.let { instance ->
@@ -338,8 +339,7 @@ private fun ProviderDropdownMenu(
         shape = RoundedCornerShape(16.dp)
     ) {
         if (sessionTokens > 0) {
-            val formatted = io.github.leogallego.ansiblejane.assistant.engine.TokenUsage
-                .formatTokenCount(sessionTokens)
+            val formatted = TokenUsage.formatTokenCount(sessionTokens)
             Text(
                 text = "$formatted tokens",
                 style = MaterialTheme.typography.labelSmall,
