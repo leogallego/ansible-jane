@@ -99,6 +99,11 @@ class SettingsViewModel(
                 val preservedDisabledTools = (current as? SettingsUiState.Ready)?.disabledTools ?: initialDisabledTools
                 val preservedEnabledOverrides = (current as? SettingsUiState.Ready)?.enabledOverrides ?: initialEnabledOverrides
 
+                val activeLocalNames = localTools.map { it.spec.name }.toSet()
+                val autoDisabledMcpNames = activeLocalNames
+                    .flatMap { ToolRouter.OVERLAP_MAPPING[it] ?: emptySet() }
+                    .toSet()
+
                 val allMcpTools = mcpServerManager.getAllTools()
                 val mcpServerTools = allMcpTools
                     .groupBy { it.serverLabel }
@@ -107,10 +112,14 @@ class SettingsViewModel(
                     .mapValues { (_, tools) ->
                         tools.map { tool ->
                             val schema = tool.spec.parametersSchema.takeIf { it.isNotEmpty() }
+                            val isAutoDisabled = tool.spec.name in autoDisabledMcpNames
+                            val key = "MCP:${tool.spec.name}"
                             McpToolUiState(
                                 name = tool.spec.name,
                                 description = tool.spec.description,
-                                isEnabled = "MCP:${tool.spec.name}" !in preservedDisabledTools,
+                                isEnabled = if (isAutoDisabled) key in preservedEnabledOverrides
+                                    else key !in preservedDisabledTools,
+                                isAutoDisabled = isAutoDisabled,
                                 inputSchema = schema?.toString()
                             )
                         }
@@ -480,17 +489,20 @@ class SettingsViewModel(
         viewModelScope.launch {
             val currentDisabled = (uiState.value as? SettingsUiState.Ready)?.disabledTools ?: emptySet()
             val currentOverrides = (uiState.value as? SettingsUiState.Ready)?.enabledOverrides ?: emptySet()
+
+            val isAutoDisabled = source == ToolSource.MCP &&
+                toolName in localTools.flatMap { ToolRouter.OVERLAP_MAPPING[it.spec.name] ?: emptySet() }
+
             val updatedDisabled: Set<String>
             val updatedOverrides: Set<String>
-            if (enabled) {
-                updatedDisabled = currentDisabled - key
-                updatedOverrides = currentOverrides + key
+            if (isAutoDisabled) {
+                updatedDisabled = currentDisabled
+                updatedOverrides = if (enabled) currentOverrides + key else currentOverrides - key
             } else {
-                updatedDisabled = currentDisabled + key
-                updatedOverrides = currentOverrides - key
+                updatedDisabled = if (enabled) currentDisabled - key else currentDisabled + key
+                updatedOverrides = currentOverrides
             }
-            assistantRepository.saveDisabledTools(updatedDisabled)
-            assistantRepository.saveEnabledOverrides(updatedOverrides)
+            assistantRepository.saveToolState(updatedDisabled, updatedOverrides)
             updateReady {
                 copy(
                     disabledTools = updatedDisabled,

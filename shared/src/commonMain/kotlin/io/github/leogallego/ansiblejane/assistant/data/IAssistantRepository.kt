@@ -25,4 +25,5 @@ interface IAssistantRepository {
     suspend fun getDisabledTools(): Set<String>
     suspend fun saveEnabledOverrides(tools: Set<String>)
     suspend fun getEnabledOverrides(): Set<String>
+    suspend fun saveToolState(disabled: Set<String>, enabledOverrides: Set<String>)
 }

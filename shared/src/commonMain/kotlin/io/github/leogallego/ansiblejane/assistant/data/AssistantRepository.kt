@@ -262,4 +262,12 @@ class AssistantRepository(
             emptySet()
         }
     }
+
+    override suspend fun saveToolState(disabled: Set<String>, enabledOverrides: Set<String>) {
+        val setSerializer = kotlinx.serialization.builtins.SetSerializer(String.serializer())
+        assistantDataStore.edit { prefs ->
+            prefs[KEY_DISABLED_TOOLS] = json.encodeToString(setSerializer, disabled)
+            prefs[KEY_ENABLED_OVERRIDES] = json.encodeToString(setSerializer, enabledOverrides)
+        }
+    }
 }

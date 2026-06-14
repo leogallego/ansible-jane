@@ -13,6 +13,9 @@ object DateFormatter {
     @Volatile
     var timeFormat: TimeFormat = TimeFormat.SYSTEM
 
+    @Volatile
+    var systemIs24Hour: Boolean? = null
+
     private val zone: TimeZone
         get() = zoneOverride ?: TimeZone.currentSystemDefault()
 
@@ -22,7 +25,7 @@ object DateFormatter {
             val local = instant.toLocalDateTime(zone)
             val month = MONTH_ABBREVS[local.month.ordinal]
             val use24h = when (timeFormat) {
-                TimeFormat.SYSTEM -> isSystem24HourFormat()
+                TimeFormat.SYSTEM -> systemIs24Hour ?: isSystem24HourFormat()
                 TimeFormat.HOURS_24 -> true
                 TimeFormat.HOURS_12 -> false
             }

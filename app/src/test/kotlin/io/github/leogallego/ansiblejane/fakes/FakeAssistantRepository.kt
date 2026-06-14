@@ -102,4 +102,9 @@ class FakeAssistantRepository : IAssistantRepository {
     }
 
     override suspend fun getEnabledOverrides(): Set<String> = savedEnabledOverrides
+
+    override suspend fun saveToolState(disabled: Set<String>, enabledOverrides: Set<String>) {
+        savedDisabledTools = disabled
+        savedEnabledOverrides = enabledOverrides
+    }
 }

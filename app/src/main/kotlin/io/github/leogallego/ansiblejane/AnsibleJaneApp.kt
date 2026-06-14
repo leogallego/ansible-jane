@@ -87,6 +87,7 @@ class AnsibleJaneApp : Application() {
                 try { TimeZone.of(it) } catch (_: Exception) { null }
             }
             DateFormatter.timeFormat = userPreferences.timeFormat.first()
+            DateFormatter.systemIs24Hour = android.text.format.DateFormat.is24HourFormat(this@AnsibleJaneApp)
         }
     }
 }

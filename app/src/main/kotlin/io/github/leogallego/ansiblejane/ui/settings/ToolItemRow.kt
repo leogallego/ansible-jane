@@ -22,6 +22,7 @@ fun ToolItemRow(
     isEnabled: Boolean,
     testTagPrefix: String,
     modifier: Modifier = Modifier,
+    isAutoDisabled: Boolean = false,
     onToggle: (Boolean) -> Unit
 ) {
     Row(
@@ -45,6 +46,13 @@ fun ToolItemRow(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
+            if (isAutoDisabled) {
+                Text(
+                    text = "Auto-disabled (overlaps local tool)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
         }
         Switch(
             checked = isEnabled,
