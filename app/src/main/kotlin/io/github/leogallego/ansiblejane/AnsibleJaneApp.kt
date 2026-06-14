@@ -81,6 +81,8 @@ class AnsibleJaneApp : Application() {
                 }
         }
 
+        DateFormatter.systemIs24Hour = android.text.format.DateFormat.is24HourFormat(this)
+
         appScope.launch {
             val savedZone = userPreferences.timezoneId.first()
             DateFormatter.zoneOverride = savedZone?.let {

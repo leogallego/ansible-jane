@@ -215,16 +215,6 @@ class AssistantRepository(
         }
     }
 
-    override suspend fun saveDisabledTools(tools: Set<String>) {
-        val encoded = json.encodeToString(
-            kotlinx.serialization.builtins.SetSerializer(String.serializer()),
-            tools
-        )
-        assistantDataStore.edit { prefs ->
-            prefs[KEY_DISABLED_TOOLS] = encoded
-        }
-    }
-
     override suspend fun getDisabledTools(): Set<String> {
         val prefs = assistantDataStore.data.first()
         val encoded = prefs[KEY_DISABLED_TOOLS] ?: return emptySet()
@@ -239,16 +229,6 @@ class AssistantRepository(
         }
     }
 
-    override suspend fun saveEnabledOverrides(tools: Set<String>) {
-        val encoded = json.encodeToString(
-            kotlinx.serialization.builtins.SetSerializer(String.serializer()),
-            tools
-        )
-        assistantDataStore.edit { prefs ->
-            prefs[KEY_ENABLED_OVERRIDES] = encoded
-        }
-    }
-
     override suspend fun getEnabledOverrides(): Set<String> {
         val prefs = assistantDataStore.data.first()
         val encoded = prefs[KEY_ENABLED_OVERRIDES] ?: return emptySet()
@@ -260,6 +240,14 @@ class AssistantRepository(
         } catch (e: Exception) {
             DebugLog.w(TAG, "Failed to deserialize enabled overrides: ${e.message}")
             emptySet()
+        }
+    }
+
+    override suspend fun saveToolState(disabled: Set<String>, enabledOverrides: Set<String>) {
+        val setSerializer = kotlinx.serialization.builtins.SetSerializer(String.serializer())
+        assistantDataStore.edit { prefs ->
+            prefs[KEY_DISABLED_TOOLS] = json.encodeToString(setSerializer, disabled)
+            prefs[KEY_ENABLED_OVERRIDES] = json.encodeToString(setSerializer, enabledOverrides)
         }
     }
 }

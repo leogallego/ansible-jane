@@ -21,8 +21,7 @@ interface IAssistantRepository {
     val savedConfigsFlow: Flow<Map<String, LlmProviderConfig>>
     val activeProviderKeyFlow: Flow<String?>
     suspend fun switchActiveProvider(providerKey: String)
-    suspend fun saveDisabledTools(tools: Set<String>)
     suspend fun getDisabledTools(): Set<String>
-    suspend fun saveEnabledOverrides(tools: Set<String>)
     suspend fun getEnabledOverrides(): Set<String>
+    suspend fun saveToolState(disabled: Set<String>, enabledOverrides: Set<String>)
 }

@@ -11,5 +11,6 @@ data class McpToolUiState(
     val name: String,
     val description: String,
     val isEnabled: Boolean,
+    val isAutoDisabled: Boolean = false,
     val inputSchema: String? = null
 )
