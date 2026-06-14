@@ -15,10 +15,8 @@ import io.github.leogallego.ansiblejane.network.ApiVersion
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import io.github.leogallego.ansiblejane.network.InstanceDiscovery
 import io.github.leogallego.ansiblejane.network.createPlatformHttpClient
-import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
 import io.github.leogallego.ansiblejane.assistant.engine.ToolRouter
-import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
@@ -46,34 +44,32 @@ class SettingsViewModel(
     private val mcpServerManager: McpServerManager,
     private val manifestRepository: IToolManifestRepository,
     private val instanceDiscovery: InstanceDiscovery,
+    private val toolRouter: ToolRouter,
     private val httpClient: HttpClient,
-    private val json: Json,
-    private val localTools: List<LocalTool> = emptyList()
+    private val json: Json
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-    private val autoDisabledMcpNames: Set<String> = localTools
-        .flatMap { ToolRouter.OVERLAP_MAPPING[it.spec.name] ?: emptySet() }
-        .toSet()
-
     init {
         viewModelScope.launch {
+            toolRouter.initialize()
+
             val configs = assistantRepository.loadAllLlmConfigs()
             val activeConfig = assistantRepository.loadLlmConfig()
             val initialActiveKey = assistantRepository.activeProviderKeyFlow.first()
 
-            val initialDisabledTools = assistantRepository.getDisabledTools()
-            val initialEnabledOverrides = assistantRepository.getEnabledOverrides()
-            val initialLocalTools = localTools.map { tool ->
-                LocalToolUiState(
-                    name = tool.spec.name,
-                    description = tool.spec.description,
-                    category = ToolRouter.getCategoryForTool(tool.spec.name) ?: "OTHER",
-                    isEnabled = "LOCAL:${tool.spec.name}" !in initialDisabledTools
-                )
-            }
+            val initialLocalTools = toolRouter.getAllRegisteredTools()
+                .filter { (_, source) -> source == ToolSource.LOCAL }
+                .map { (tool, _) ->
+                    LocalToolUiState(
+                        name = tool.spec.name,
+                        description = tool.spec.description,
+                        category = ToolRouter.getCategoryForTool(tool.spec.name) ?: "OTHER",
+                        isEnabled = toolRouter.isToolEnabled(tool.spec.name, ToolSource.LOCAL)
+                    )
+                }
 
             combine(
                 tokenManager.instances,
@@ -101,8 +97,6 @@ class SettingsViewModel(
                 val preservedExpandedMcp = (current as? SettingsUiState.Ready)?.expandedMcpServers ?: emptySet()
                 val preservedExpandedCats = (current as? SettingsUiState.Ready)?.expandedCategories ?: emptySet()
                 val preservedLocalTools = (current as? SettingsUiState.Ready)?.localTools ?: initialLocalTools
-                val preservedDisabledTools = (current as? SettingsUiState.Ready)?.disabledTools ?: initialDisabledTools
-                val preservedEnabledOverrides = (current as? SettingsUiState.Ready)?.enabledOverrides ?: initialEnabledOverrides
 
                 val allMcpTools = mcpServerManager.getAllTools()
                 val mcpServerTools = allMcpTools
@@ -112,14 +106,11 @@ class SettingsViewModel(
                     .mapValues { (_, tools) ->
                         tools.map { tool ->
                             val schema = tool.spec.parametersSchema.takeIf { it.isNotEmpty() }
-                            val isAutoDisabled = tool.spec.name in autoDisabledMcpNames
-                            val key = "MCP:${tool.spec.name}"
                             McpToolUiState(
                                 name = tool.spec.name,
                                 description = tool.spec.description,
-                                isEnabled = if (isAutoDisabled) key in preservedEnabledOverrides
-                                    else key !in preservedDisabledTools,
-                                isAutoDisabled = isAutoDisabled,
+                                isEnabled = toolRouter.isToolEnabled(tool.spec.name, ToolSource.MCP, tool.serverLabel),
+                                isAutoDisabled = toolRouter.isAutoDisabled(tool.spec.name, ToolSource.MCP, tool.serverLabel),
                                 inputSchema = schema?.toString()
                             )
                         }
@@ -144,9 +135,7 @@ class SettingsViewModel(
                     localTools = preservedLocalTools,
                     mcpServerTools = mcpServerTools,
                     expandedMcpServers = preservedExpandedMcp,
-                    expandedCategories = preservedExpandedCats,
-                    disabledTools = preservedDisabledTools,
-                    enabledOverrides = preservedEnabledOverrides
+                    expandedCategories = preservedExpandedCats
                 )
             }.collect { state ->
                 _uiState.update { state }
@@ -484,36 +473,19 @@ class SettingsViewModel(
         }
     }
 
-    fun toggleToolEnabled(toolName: String, source: ToolSource, enabled: Boolean) {
-        val key = "${source.name}:$toolName"
+    fun toggleToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) {
         viewModelScope.launch {
-            val currentDisabled = (uiState.value as? SettingsUiState.Ready)?.disabledTools ?: emptySet()
-            val currentOverrides = (uiState.value as? SettingsUiState.Ready)?.enabledOverrides ?: emptySet()
-
-            val isAutoDisabled = source == ToolSource.MCP && toolName in autoDisabledMcpNames
-
-            val updatedDisabled: Set<String>
-            val updatedOverrides: Set<String>
-            if (isAutoDisabled) {
-                updatedDisabled = currentDisabled - key
-                updatedOverrides = if (enabled) currentOverrides + key else currentOverrides - key
-            } else {
-                updatedDisabled = if (enabled) currentDisabled - key else currentDisabled + key
-                updatedOverrides = currentOverrides - key
-            }
-            assistantRepository.saveToolState(updatedDisabled, updatedOverrides)
+            toolRouter.toggleToolEnabled(toolName, source, serverLabel, enabled)
             updateReady {
                 copy(
-                    disabledTools = updatedDisabled,
-                    enabledOverrides = updatedOverrides,
                     localTools = localTools.map {
                         if (it.name == toolName && source == ToolSource.LOCAL) {
                             it.copy(isEnabled = enabled)
                         } else it
                     },
-                    mcpServerTools = mcpServerTools.mapValues { (_, tools) ->
+                    mcpServerTools = mcpServerTools.mapValues { (server, tools) ->
                         tools.map {
-                            if (it.name == toolName && source == ToolSource.MCP) {
+                            if (it.name == toolName && source == ToolSource.MCP && server == serverLabel) {
                                 it.copy(isEnabled = enabled)
                             } else it
                         }

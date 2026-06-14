@@ -52,7 +52,7 @@ fun ToolsTab(
     onToggleReadOnly: (url: String, readOnly: Boolean) -> Unit,
     onToggleUseInstanceAuth: (url: String, useInstanceAuth: Boolean) -> Unit,
     onToggleServerEnabled: (url: String, enabled: Boolean) -> Unit,
-    onToggleToolEnabled: (name: String, source: ToolSource, enabled: Boolean) -> Unit,
+    onToggleToolEnabled: (name: String, source: ToolSource, serverLabel: String?, enabled: Boolean) -> Unit,
     onToggleExpandMcpServer: (label: String) -> Unit,
     onToggleExpandCategory: (category: String) -> Unit,
     onRefreshMcpServer: (label: String) -> Unit,
@@ -107,7 +107,7 @@ fun ToolsTab(
                     onToggleReadOnly = { onToggleReadOnly(server.url, it) },
                     onToggleUseInstanceAuth = { onToggleUseInstanceAuth(server.url, it) },
                     onToggleTool = { name, enabled ->
-                        onToggleToolEnabled(name, ToolSource.MCP, enabled)
+                        onToggleToolEnabled(name, ToolSource.MCP, server.label, enabled)
                     },
                     onRefresh = { onRefreshMcpServer(server.label) },
                     onRemove = { onRemoveMcpServer(server.url) }
@@ -161,7 +161,7 @@ fun ToolsTab(
             expandedCategories = expandedCategories,
             onToggleCategory = onToggleExpandCategory,
             onToggleTool = { name, enabled ->
-                onToggleToolEnabled(name, ToolSource.LOCAL, enabled)
+                onToggleToolEnabled(name, ToolSource.LOCAL, null, enabled)
             }
         )
     }

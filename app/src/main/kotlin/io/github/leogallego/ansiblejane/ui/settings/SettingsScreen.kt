@@ -74,7 +74,7 @@ fun SettingsScreen(
                         viewModel.toggleUseInstanceAuth(url, useInstanceAuth)
                     },
                     onToggleServerEnabled = { url, enabled -> viewModel.toggleServerEnabled(url, enabled) },
-                    onToggleToolEnabled = { name, source, enabled -> viewModel.toggleToolEnabled(name, source, enabled) },
+                    onToggleToolEnabled = { name, source, serverLabel, enabled -> viewModel.toggleToolEnabled(name, source, serverLabel, enabled) },
                     onToggleExpandMcpServer = { viewModel.toggleExpandMcpServer(it) },
                     onToggleExpandCategory = { viewModel.toggleExpandCategory(it) },
                     onRefreshMcpServer = { viewModel.refreshMcpServer(it) },
@@ -114,7 +114,7 @@ private fun SettingsContent(
     onToggleReadOnly: (String, Boolean) -> Unit,
     onToggleUseInstanceAuth: (String, Boolean) -> Unit,
     onToggleServerEnabled: (String, Boolean) -> Unit,
-    onToggleToolEnabled: (String, ToolSource, Boolean) -> Unit,
+    onToggleToolEnabled: (String, ToolSource, String?, Boolean) -> Unit,
     onToggleExpandMcpServer: (String) -> Unit,
     onToggleExpandCategory: (String) -> Unit,
     onRefreshMcpServer: (String) -> Unit,

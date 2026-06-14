@@ -1,19 +1,72 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
+import androidx.annotation.VisibleForTesting
+import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.model.McpServerConfig
+import java.util.concurrent.atomic.AtomicBoolean
 
-class ToolRouter {
+class ToolRouter(
+    initialLocalTools: List<LocalTool> = emptyList(),
+    private val repository: IAssistantRepository? = null
+) {
+
+    data class ToolKey(val name: String, val source: ToolSource, val serverLabel: String? = null) {
+        fun toPersistedKey(): String = when (source) {
+            ToolSource.LOCAL -> "LOCAL:$name"
+            ToolSource.MCP -> "MCP:${serverLabel ?: ""}:$name"
+        }
+
+        companion object {
+            fun fromPersistedKey(key: String): ToolKey? {
+                val firstColon = key.indexOf(':')
+                if (firstColon <= 0) return null
+                val sourceStr = key.substring(0, firstColon)
+                val source = try { ToolSource.valueOf(sourceStr) } catch (_: Exception) { return null }
+                val rest = key.substring(firstColon + 1)
+                return when (source) {
+                    ToolSource.LOCAL -> ToolKey(rest, source)
+                    ToolSource.MCP -> {
+                        val secondColon = rest.indexOf(':')
+                        if (secondColon >= 0) {
+                            val serverLabel = rest.substring(0, secondColon).takeIf { it.isNotEmpty() }
+                            val name = rest.substring(secondColon + 1)
+                            ToolKey(name, source, serverLabel)
+                        } else {
+                            null
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private val localTools = mutableListOf<LocalTool>()
     private val mcpTools = mutableListOf<Tool>()
-    private val autoDisabled = mutableSetOf<Pair<String, ToolSource>>()
-    private val userDisabled = mutableSetOf<Pair<String, ToolSource>>()
-    private val userEnabled = mutableSetOf<Pair<String, ToolSource>>()
+    private val autoDisabled = mutableSetOf<ToolKey>()
+    private val userDisabled = mutableSetOf<ToolKey>()
+    private val userEnabled = mutableSetOf<ToolKey>()
+
+    private val initialized = AtomicBoolean(false)
+
+    init {
+        if (initialLocalTools.isNotEmpty()) {
+            localTools.addAll(initialLocalTools)
+            autoDisableOverlappingMcpTools()
+        }
+    }
+
+    suspend fun initialize() {
+        if (!initialized.compareAndSet(false, true)) return
+        val repo = repository ?: return
+        val disabled = repo.getDisabledTools()
+        val overrides = repo.getEnabledOverrides()
+        applyPersistedState(disabled, overrides)
+    }
 
     private enum class Category(
         val keywords: Set<String>,
@@ -242,20 +295,24 @@ class ToolRouter {
         }
     }
 
+    @Synchronized
     fun registerLocalTools(tools: List<LocalTool>) {
         localTools.clear()
         localTools.addAll(tools)
         autoDisableOverlappingMcpTools()
     }
 
+    @Synchronized
     fun registerMcpTools(tools: List<Tool>) {
         mcpTools.clear()
         mcpTools.addAll(tools)
         autoDisableOverlappingMcpTools()
     }
 
-    fun setToolEnabled(toolName: String, source: ToolSource, enabled: Boolean) {
-        val key = toolName to source
+    @VisibleForTesting
+    @Synchronized
+    fun setToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) {
+        val key = ToolKey(toolName, source, serverLabel)
         if (enabled) {
             userDisabled.remove(key)
             userEnabled.add(key)
@@ -265,39 +322,59 @@ class ToolRouter {
         }
     }
 
-    fun isToolEnabled(toolName: String, source: ToolSource): Boolean {
-        val key = toolName to source
-        return key !in userDisabled && (key !in autoDisabled || key in userEnabled)
+    @Synchronized
+    fun isToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null): Boolean {
+        val key = ToolKey(toolName, source, serverLabel)
+        val isAuto = isAutoDisabledByName(toolName, source)
+        return key !in userDisabled && (!isAuto || key in userEnabled)
     }
 
-    fun isAutoDisabled(toolName: String, source: ToolSource): Boolean {
-        return (toolName to source) in autoDisabled
+    @Synchronized
+    fun isAutoDisabled(toolName: String, source: ToolSource, serverLabel: String? = null): Boolean {
+        return isAutoDisabledByName(toolName, source)
     }
 
+    private fun isAutoDisabledByName(toolName: String, source: ToolSource): Boolean {
+        return autoDisabled.any { it.name == toolName && it.source == source }
+    }
+
+    suspend fun toggleToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) {
+        val snapshot = synchronized(this) {
+            val key = ToolKey(toolName, source, serverLabel)
+            val isAuto = isAutoDisabledByName(toolName, source)
+            if (isAuto) {
+                userDisabled.remove(key)
+                if (enabled) userEnabled.add(key) else userEnabled.remove(key)
+            } else {
+                if (enabled) userDisabled.remove(key) else userDisabled.add(key)
+                userEnabled.remove(key)
+            }
+            Pair(
+                userDisabled.map { it.toPersistedKey() }.toSet(),
+                userEnabled.map { it.toPersistedKey() }.toSet()
+            )
+        }
+        repository?.saveToolState(snapshot.first, snapshot.second)
+    }
+
+    @Synchronized
+    fun getPersistedDisabled(): Set<String> =
+        userDisabled.map { it.toPersistedKey() }.toSet()
+
+    @Synchronized
+    fun getPersistedOverrides(): Set<String> =
+        userEnabled.map { it.toPersistedKey() }.toSet()
+
+    @Synchronized
     fun applyPersistedState(disabled: Set<String>, enabledOverrides: Set<String>) {
         for (entry in disabled) {
-            val colonIndex = entry.indexOf(':')
-            if (colonIndex > 0) {
-                val sourceStr = entry.substring(0, colonIndex)
-                val toolName = entry.substring(colonIndex + 1)
-                val source = try { ToolSource.valueOf(sourceStr) } catch (_: Exception) { continue }
-                userDisabled.add(toolName to source)
-            }
+            val key = ToolKey.fromPersistedKey(entry) ?: continue
+            userDisabled.add(key)
         }
         for (entry in enabledOverrides) {
-            val colonIndex = entry.indexOf(':')
-            if (colonIndex > 0) {
-                val sourceStr = entry.substring(0, colonIndex)
-                val toolName = entry.substring(colonIndex + 1)
-                val source = try { ToolSource.valueOf(sourceStr) } catch (_: Exception) { continue }
-                userEnabled.add(toolName to source)
-            }
+            val key = ToolKey.fromPersistedKey(entry) ?: continue
+            userEnabled.add(key)
         }
-    }
-
-    @Deprecated("Use applyPersistedState instead", ReplaceWith("applyPersistedState(keys, emptySet())"))
-    fun applyPersistedDisables(keys: Set<String>) {
-        applyPersistedState(keys, emptySet())
     }
 
     data class QueryResult(
@@ -305,6 +382,7 @@ class ToolRouter {
         val categoryMatched: Boolean
     )
 
+    @Synchronized
     fun getToolsForQuery(
         query: String,
         serverConfigs: List<McpServerConfig> = emptyList()
@@ -337,7 +415,7 @@ class ToolRouter {
         }
 
         val filteredMcp = mcpTools.filter { tool ->
-            val isEnabled = isToolEnabled(tool.spec.name, ToolSource.MCP)
+            val isEnabled = isToolEnabled(tool.spec.name, ToolSource.MCP, tool.serverLabel)
 
             val toolToolset = (tool as? McpTool)?.toolset
             val toolsetCategories = toolToolset?.let { TOOLSET_CATEGORY_MAP[it] }
@@ -351,10 +429,7 @@ class ToolRouter {
             }
 
             val passesReadOnly = if (readOnlyLabels.isNotEmpty()) {
-                val serverLabel = tool.spec.description
-                    .substringAfter("[", "")
-                    .substringBefore("]", "")
-                if (serverLabel in readOnlyLabels) {
+                if (tool.serverLabel in readOnlyLabels) {
                     WRITE_ACTIONS.none { action -> tool.spec.name.endsWith(action) }
                 } else {
                     true
@@ -395,6 +470,7 @@ class ToolRouter {
             .map { it.first }
     }
 
+    @Synchronized
     fun getAllRegisteredTools(): List<Pair<Tool, ToolSource>> {
         val result = mutableListOf<Pair<Tool, ToolSource>>()
         localTools.forEach { result.add(it to ToolSource.LOCAL) }
@@ -402,13 +478,18 @@ class ToolRouter {
         return result
     }
 
+    private suspend fun persistState() {
+        repository?.saveToolState(getPersistedDisabled(), getPersistedOverrides())
+    }
+
     private fun autoDisableOverlappingMcpTools() {
+        autoDisabled.clear()
         val activeLocalNames = localTools.map { it.spec.name }.toSet()
         var disabledCount = 0
         for (localName in activeLocalNames) {
             val overlappingMcpNames = OVERLAP_MAPPING[localName] ?: continue
             for (mcpName in overlappingMcpNames) {
-                autoDisabled.add(mcpName to ToolSource.MCP)
+                autoDisabled.add(ToolKey(mcpName, ToolSource.MCP))
                 disabledCount++
             }
         }

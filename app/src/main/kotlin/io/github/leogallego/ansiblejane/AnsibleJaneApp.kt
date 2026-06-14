@@ -15,7 +15,6 @@ import io.github.leogallego.ansiblejane.notification.ApprovalPollingWorker
 import io.github.leogallego.ansiblejane.platform.DataStoreFactory
 import io.github.leogallego.ansiblejane.platform.SecureKeyStorage
 import io.github.leogallego.ansiblejane.platform.TinkMigration
-import io.github.leogallego.ansiblejane.presentation.appPresentationModule
 import io.github.leogallego.ansiblejane.presentation.presentationModule
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +38,7 @@ class AnsibleJaneApp : Application() {
         startKoin {
             androidLogger()
             androidContext(this@AnsibleJaneApp)
-            modules(dataModule, presentationModule, appPresentationModule, localToolsModule, assistantModule)
+            modules(dataModule, presentationModule, localToolsModule, assistantModule)
         }
 
         appScope.launch(Dispatchers.IO) {

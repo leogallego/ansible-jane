@@ -20,6 +20,7 @@ class ToolRouterTest {
     private lateinit var router: ToolRouter
 
     private fun mcpTool(name: String, serverLabel: String = "aap") = object : Tool {
+        override val serverLabel: String = serverLabel
         override val spec = ToolSpec(name, "[$serverLabel] description of $name", JsonObject(emptyMap()))
         override suspend fun execute(args: JsonObject) = ToolResult(success = true)
     }
@@ -151,8 +152,8 @@ class ToolRouterTest {
         router.registerLocalTools(listOf(localTool("list_job_templates")))
         assertFalse(router.isToolEnabled("controller.job_templates_list", ToolSource.MCP))
 
-        router.setToolEnabled("controller.job_templates_list", ToolSource.MCP, true)
-        assertTrue(router.isToolEnabled("controller.job_templates_list", ToolSource.MCP))
+        router.setToolEnabled("controller.job_templates_list", ToolSource.MCP, "aap", true)
+        assertTrue(router.isToolEnabled("controller.job_templates_list", ToolSource.MCP, "aap"))
     }
 
     @Test
@@ -160,7 +161,7 @@ class ToolRouterTest {
         router.registerLocalTools(listOf(localTool("list_hosts")))
         assertTrue(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
 
-        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, enabled = false)
         assertFalse(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
     }
 
@@ -171,7 +172,7 @@ class ToolRouterTest {
             localTool("list_inventories")
         )
         router.registerLocalTools(tools)
-        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, enabled = false)
 
         val result = router.getToolsForQuery("show my hosts and inventories").tools
         val names = result.map { it.spec.name }
@@ -1040,7 +1041,7 @@ class ToolRouterTest {
             mcpTool("controller.users_list")
         )
         router.registerMcpTools(tools)
-        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, false)
+        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", false)
 
         val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
@@ -1057,8 +1058,8 @@ class ToolRouterTest {
             localTool("list_groups")
         )
         router.registerLocalTools(tools)
-        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
-        router.setToolEnabled("list_inventories", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, enabled = false)
+        router.setToolEnabled("list_inventories", ToolSource.LOCAL, enabled = false)
 
         val result = router.getToolsForQuery("show my hosts and inventories").tools
         val names = result.map { it.spec.name }
@@ -1078,11 +1079,11 @@ class ToolRouterTest {
         router.registerLocalTools(tools)
         router.registerMcpTools(listOf(mcpTool("controller.users_list")))
 
-        router.applyPersistedState(setOf("LOCAL:list_hosts", "MCP:controller.users_list"), emptySet())
+        router.applyPersistedState(setOf("LOCAL:list_hosts", "MCP:aap:controller.users_list"), emptySet())
 
         assertFalse(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
         assertTrue(router.isToolEnabled("list_jobs", ToolSource.LOCAL))
-        assertFalse(router.isToolEnabled("controller.users_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("controller.users_list", ToolSource.MCP, "aap"))
 
         val result = router.getToolsForQuery("show hosts and users").tools
         val names = result.map { it.spec.name }
@@ -1094,7 +1095,7 @@ class ToolRouterTest {
     @Test
     fun `SHOULD keep manual disables after re-registering local tools`() {
         router.registerLocalTools(listOf(localTool("list_hosts"), localTool("list_inventories")))
-        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, enabled = false)
 
         router.registerLocalTools(listOf(localTool("list_hosts"), localTool("list_inventories")))
 
@@ -1111,10 +1112,10 @@ class ToolRouterTest {
         router.registerLocalTools(local)
         router.registerMcpTools(mcp)
 
-        router.setToolEnabled("controller.users_list", ToolSource.MCP, false)
+        router.setToolEnabled("controller.users_list", ToolSource.MCP, "aap", false)
 
-        assertFalse("auto-disabled overlap", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
-        assertFalse("manually disabled", router.isToolEnabled("controller.users_list", ToolSource.MCP))
+        assertFalse("auto-disabled overlap", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
+        assertFalse("manually disabled", router.isToolEnabled("controller.users_list", ToolSource.MCP, "aap"))
 
         val result = router.getToolsForQuery("show hosts and users").tools
         val names = result.map { it.spec.name }
@@ -1140,12 +1141,12 @@ class ToolRouterTest {
             localTool("list_inventories")
         )
         router.registerLocalTools(tools)
-        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, enabled = false)
 
         val before = router.getToolsForQuery("show my hosts").tools
         assertFalse("list_hosts" in before.map { it.spec.name })
 
-        router.setToolEnabled("list_hosts", ToolSource.LOCAL, true)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, enabled = true)
 
         val after = router.getToolsForQuery("show my hosts").tools
         assertTrue("list_hosts" in after.map { it.spec.name })
@@ -1159,9 +1160,9 @@ class ToolRouterTest {
             localTool("list_groups")
         )
         router.registerLocalTools(tools)
-        router.setToolEnabled("list_hosts", ToolSource.LOCAL, false)
-        router.setToolEnabled("list_inventories", ToolSource.LOCAL, false)
-        router.setToolEnabled("list_groups", ToolSource.LOCAL, false)
+        router.setToolEnabled("list_hosts", ToolSource.LOCAL, enabled = false)
+        router.setToolEnabled("list_inventories", ToolSource.LOCAL, enabled = false)
+        router.setToolEnabled("list_groups", ToolSource.LOCAL, enabled = false)
 
         val result = router.getToolsForQuery("show my hosts")
 
@@ -1203,11 +1204,11 @@ class ToolRouterTest {
         router.registerLocalTools(listOf(localTool("list_hosts")))
         assertFalse("auto-disabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
 
-        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, true)
-        assertTrue("user re-enabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", true)
+        assertTrue("user re-enabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
 
         router.registerLocalTools(listOf(localTool("list_hosts")))
-        assertTrue("survives re-registration", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+        assertTrue("survives re-registration", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
     }
 
     @Test
@@ -1218,11 +1219,11 @@ class ToolRouterTest {
         assertTrue(router.isAutoDisabled("controller.hosts_list", ToolSource.MCP))
         assertFalse(router.isAutoDisabled("controller.users_list", ToolSource.MCP))
 
-        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, true)
-        assertTrue("userEnabled overrides autoDisabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", true)
+        assertTrue("userEnabled overrides autoDisabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
 
-        router.setToolEnabled("controller.users_list", ToolSource.MCP, false)
-        assertFalse("userDisabled takes effect", router.isToolEnabled("controller.users_list", ToolSource.MCP))
+        router.setToolEnabled("controller.users_list", ToolSource.MCP, "aap", false)
+        assertFalse("userDisabled takes effect", router.isToolEnabled("controller.users_list", ToolSource.MCP, "aap"))
     }
 
     @Test
@@ -1231,12 +1232,12 @@ class ToolRouterTest {
         router.registerMcpTools(listOf(mcpTool("controller.hosts_list"), mcpTool("controller.users_list")))
 
         router.applyPersistedState(
-            disabled = setOf("MCP:controller.users_list"),
-            enabledOverrides = setOf("MCP:controller.hosts_list")
+            disabled = setOf("MCP:aap:controller.users_list"),
+            enabledOverrides = setOf("MCP:aap:controller.hosts_list")
         )
 
-        assertTrue("enabledOverride overrides autoDisabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
-        assertFalse("userDisabled applied", router.isToolEnabled("controller.users_list", ToolSource.MCP))
+        assertTrue("enabledOverride overrides autoDisabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
+        assertFalse("userDisabled applied", router.isToolEnabled("controller.users_list", ToolSource.MCP, "aap"))
     }
 
     @Test
