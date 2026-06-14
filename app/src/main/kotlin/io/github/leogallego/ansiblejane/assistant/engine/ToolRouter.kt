@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
+import androidx.annotation.VisibleForTesting
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
@@ -294,18 +295,22 @@ class ToolRouter(
         }
     }
 
+    @Synchronized
     fun registerLocalTools(tools: List<LocalTool>) {
         localTools.clear()
         localTools.addAll(tools)
         autoDisableOverlappingMcpTools()
     }
 
+    @Synchronized
     fun registerMcpTools(tools: List<Tool>) {
         mcpTools.clear()
         mcpTools.addAll(tools)
         autoDisableOverlappingMcpTools()
     }
 
+    @VisibleForTesting
+    @Synchronized
     fun setToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) {
         val key = ToolKey(toolName, source, serverLabel)
         if (enabled) {
@@ -317,12 +322,14 @@ class ToolRouter(
         }
     }
 
+    @Synchronized
     fun isToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null): Boolean {
         val key = ToolKey(toolName, source, serverLabel)
         val isAuto = isAutoDisabledByName(toolName, source)
         return key !in userDisabled && (!isAuto || key in userEnabled)
     }
 
+    @Synchronized
     fun isAutoDisabled(toolName: String, source: ToolSource, serverLabel: String? = null): Boolean {
         return isAutoDisabledByName(toolName, source)
     }
@@ -332,24 +339,29 @@ class ToolRouter(
     }
 
     suspend fun toggleToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) {
-        val key = ToolKey(toolName, source, serverLabel)
-        val isAuto = isAutoDisabledByName(toolName, source)
-        if (isAuto) {
-            userDisabled.remove(key)
-            if (enabled) userEnabled.add(key) else userEnabled.remove(key)
-        } else {
-            if (enabled) userDisabled.remove(key) else userDisabled.add(key)
-            userEnabled.remove(key)
+        synchronized(this) {
+            val key = ToolKey(toolName, source, serverLabel)
+            val isAuto = isAutoDisabledByName(toolName, source)
+            if (isAuto) {
+                userDisabled.remove(key)
+                if (enabled) userEnabled.add(key) else userEnabled.remove(key)
+            } else {
+                if (enabled) userDisabled.remove(key) else userDisabled.add(key)
+                userEnabled.remove(key)
+            }
         }
         persistState()
     }
 
+    @Synchronized
     fun getPersistedDisabled(): Set<String> =
         userDisabled.map { it.toPersistedKey() }.toSet()
 
+    @Synchronized
     fun getPersistedOverrides(): Set<String> =
         userEnabled.map { it.toPersistedKey() }.toSet()
 
+    @Synchronized
     fun applyPersistedState(disabled: Set<String>, enabledOverrides: Set<String>) {
         for (entry in disabled) {
             val key = ToolKey.fromPersistedKey(entry) ?: continue
@@ -366,6 +378,7 @@ class ToolRouter(
         val categoryMatched: Boolean
     )
 
+    @Synchronized
     fun getToolsForQuery(
         query: String,
         serverConfigs: List<McpServerConfig> = emptyList()
@@ -412,10 +425,7 @@ class ToolRouter(
             }
 
             val passesReadOnly = if (readOnlyLabels.isNotEmpty()) {
-                val serverLabel = tool.spec.description
-                    .substringAfter("[", "")
-                    .substringBefore("]", "")
-                if (serverLabel in readOnlyLabels) {
+                if (tool.serverLabel in readOnlyLabels) {
                     WRITE_ACTIONS.none { action -> tool.spec.name.endsWith(action) }
                 } else {
                     true
@@ -456,6 +466,7 @@ class ToolRouter(
             .map { it.first }
     }
 
+    @Synchronized
     fun getAllRegisteredTools(): List<Pair<Tool, ToolSource>> {
         val result = mutableListOf<Pair<Tool, ToolSource>>()
         localTools.forEach { result.add(it to ToolSource.LOCAL) }
