@@ -8,6 +8,7 @@ import io.github.leogallego.ansiblejane.fakes.FakeTokenManager
 import io.github.leogallego.ansiblejane.fakes.FakeUserPreferencesRepository
 import io.github.leogallego.ansiblejane.model.AapInstance
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
+import io.github.leogallego.ansiblejane.assistant.engine.ToolRouter
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
@@ -84,9 +85,9 @@ class SettingsViewModelTest {
         mcpServerManager = mcpServerManager,
         manifestRepository = io.github.leogallego.ansiblejane.fakes.FakeToolManifestRepository(),
         instanceDiscovery = io.github.leogallego.ansiblejane.network.InstanceDiscovery(json),
+        toolRouter = ToolRouter(initialLocalTools = localTools, repository = fakeAssistantRepo),
         httpClient = httpClient,
-        json = json,
-        localTools = localTools
+        json = json
     )
 
     @Test
@@ -231,13 +232,13 @@ class SettingsViewModelTest {
 
     @Test
     fun `init SHOULD load pre-existing disabled tools from repository`() = runTest {
-        fakeAssistantRepo.savedDisabledTools = setOf("LOCAL:list_hosts", "MCP:controller.jobs_list")
+        fakeAssistantRepo.savedDisabledTools = setOf("LOCAL:list_hosts", "MCP:aap:controller.jobs_list")
         val tools = listOf(fakeLocalTool("list_hosts"), fakeLocalTool("list_inventories"))
         val viewModel = createViewModel(localTools = tools)
 
         viewModel.uiState.test {
             val state = awaitItem() as SettingsUiState.Ready
-            assertEquals(setOf("LOCAL:list_hosts", "MCP:controller.jobs_list"), state.disabledTools)
+            assertEquals(setOf("LOCAL:list_hosts", "MCP:aap:controller.jobs_list"), state.disabledTools)
             val hostTool = state.localTools.find { it.name == "list_hosts" }
             assertFalse("list_hosts should be disabled", hostTool?.isEnabled ?: true)
             val invTool = state.localTools.find { it.name == "list_inventories" }
@@ -250,7 +251,7 @@ class SettingsViewModelTest {
         val viewModel = createViewModel()
         viewModel.uiState.test {
             skipItems(1)
-            viewModel.toggleToolEnabled("list_hosts", ToolSource.LOCAL, false)
+            viewModel.toggleToolEnabled("list_hosts", ToolSource.LOCAL, enabled = false)
             val state = awaitItem() as SettingsUiState.Ready
             assertTrue("LOCAL:list_hosts" in state.disabledTools)
             assertTrue("LOCAL:list_hosts" in fakeAssistantRepo.savedDisabledTools)
@@ -263,7 +264,7 @@ class SettingsViewModelTest {
         val viewModel = createViewModel()
         viewModel.uiState.test {
             skipItems(1)
-            viewModel.toggleToolEnabled("list_hosts", ToolSource.LOCAL, true)
+            viewModel.toggleToolEnabled("list_hosts", ToolSource.LOCAL, enabled = true)
             val state = awaitItem() as SettingsUiState.Ready
             assertFalse("LOCAL:list_hosts" in state.disabledTools)
         }
@@ -274,9 +275,9 @@ class SettingsViewModelTest {
         val viewModel = createViewModel()
         viewModel.uiState.test {
             skipItems(1)
-            viewModel.toggleToolEnabled("controller.hosts_list", ToolSource.MCP, false)
+            viewModel.toggleToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", false)
             val state = awaitItem() as SettingsUiState.Ready
-            assertTrue("MCP:controller.hosts_list" in state.disabledTools)
+            assertTrue("MCP:aap:controller.hosts_list" in state.disabledTools)
         }
     }
 

@@ -18,7 +18,6 @@ import io.github.leogallego.ansiblejane.assistant.llm.KoogLlmProvider
 import io.github.leogallego.ansiblejane.assistant.llm.LlmProvider
 import io.github.leogallego.ansiblejane.assistant.tools.CachedMcpTool
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.assistant.tools.local.ListToolsLocalTool
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.data.IToolManifestRepository
@@ -43,6 +42,7 @@ class AssistantViewModel(
     private val repository: IAssistantRepository,
     private val tokenManager: ITokenManager,
     private val manifestRepository: IToolManifestRepository,
+    private val toolRouter: ToolRouter,
     private val localTools: List<LocalTool> = emptyList()
 ) : ViewModel() {
 
@@ -190,19 +190,14 @@ class AssistantViewModel(
 
         generateJob?.cancel()
         generateJob = viewModelScope.launch {
-            val disabledTools = repository.getDisabledTools()
-            val enabledOverrides = repository.getEnabledOverrides()
+            toolRouter.initialize()
 
             mcpServerManager.refreshConnections()
             val mcpTools = mcpServerManager.getAllTools()
             val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
-            val toolRouter = ToolRouter()
-            toolRouter.registerLocalTools(localTools)
             toolRouter.registerMcpTools(mcpTools)
 
-            toolRouter.applyPersistedState(disabledTools, enabledOverrides)
-
-            Log.d(TAG, "ROUTE: query=\"$text\", ${localTools.size} local, ${mcpTools.size} mcp, ${disabledTools.size} disabled")
+            Log.d(TAG, "ROUTE: query=\"$text\", ${localTools.size} local, ${mcpTools.size} mcp")
             val queryResult = toolRouter.getToolsForQuery(text, serverConfigs)
             val mode = config.tokenSavingMode
             Log.d(TAG, "ROUTE: categoryMatched=${queryResult.categoryMatched}, " +
