@@ -339,7 +339,7 @@ class ToolRouter(
     }
 
     suspend fun toggleToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) {
-        synchronized(this) {
+        val snapshot = synchronized(this) {
             val key = ToolKey(toolName, source, serverLabel)
             val isAuto = isAutoDisabledByName(toolName, source)
             if (isAuto) {
@@ -349,8 +349,12 @@ class ToolRouter(
                 if (enabled) userDisabled.remove(key) else userDisabled.add(key)
                 userEnabled.remove(key)
             }
+            Pair(
+                userDisabled.map { it.toPersistedKey() }.toSet(),
+                userEnabled.map { it.toPersistedKey() }.toSet()
+            )
         }
-        persistState()
+        repository?.saveToolState(snapshot.first, snapshot.second)
     }
 
     @Synchronized
