@@ -97,10 +97,6 @@ class SettingsViewModel(
                 val preservedExpandedMcp = (current as? SettingsUiState.Ready)?.expandedMcpServers ?: emptySet()
                 val preservedExpandedCats = (current as? SettingsUiState.Ready)?.expandedCategories ?: emptySet()
                 val preservedLocalTools = (current as? SettingsUiState.Ready)?.localTools ?: initialLocalTools
-                val preservedDisabledTools = (current as? SettingsUiState.Ready)?.disabledTools
-                    ?: toolRouter.getPersistedDisabled()
-                val preservedEnabledOverrides = (current as? SettingsUiState.Ready)?.enabledOverrides
-                    ?: toolRouter.getPersistedOverrides()
 
                 val allMcpTools = mcpServerManager.getAllTools()
                 val mcpServerTools = allMcpTools
@@ -139,9 +135,7 @@ class SettingsViewModel(
                     localTools = preservedLocalTools,
                     mcpServerTools = mcpServerTools,
                     expandedMcpServers = preservedExpandedMcp,
-                    expandedCategories = preservedExpandedCats,
-                    disabledTools = preservedDisabledTools,
-                    enabledOverrides = preservedEnabledOverrides
+                    expandedCategories = preservedExpandedCats
                 )
             }.collect { state ->
                 _uiState.update { state }
@@ -482,12 +476,8 @@ class SettingsViewModel(
     fun toggleToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) {
         viewModelScope.launch {
             toolRouter.toggleToolEnabled(toolName, source, serverLabel, enabled)
-            val updatedDisabled = toolRouter.getPersistedDisabled()
-            val updatedOverrides = toolRouter.getPersistedOverrides()
             updateReady {
                 copy(
-                    disabledTools = updatedDisabled,
-                    enabledOverrides = updatedOverrides,
                     localTools = localTools.map {
                         if (it.name == toolName && source == ToolSource.LOCAL) {
                             it.copy(isEnabled = enabled)

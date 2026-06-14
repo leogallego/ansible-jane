@@ -238,7 +238,6 @@ class SettingsViewModelTest {
 
         viewModel.uiState.test {
             val state = awaitItem() as SettingsUiState.Ready
-            assertEquals(setOf("LOCAL:list_hosts", "MCP:aap:controller.jobs_list"), state.disabledTools)
             val hostTool = state.localTools.find { it.name == "list_hosts" }
             assertFalse("list_hosts should be disabled", hostTool?.isEnabled ?: true)
             val invTool = state.localTools.find { it.name == "list_inventories" }
@@ -248,12 +247,13 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggleToolEnabled SHOULD disable a local tool and persist`() = runTest {
-        val viewModel = createViewModel()
+        val tools = listOf(fakeLocalTool("list_hosts"))
+        val viewModel = createViewModel(localTools = tools)
         viewModel.uiState.test {
             skipItems(1)
             viewModel.toggleToolEnabled("list_hosts", ToolSource.LOCAL, enabled = false)
             val state = awaitItem() as SettingsUiState.Ready
-            assertTrue("LOCAL:list_hosts" in state.disabledTools)
+            assertFalse(state.localTools.find { it.name == "list_hosts" }?.isEnabled ?: true)
             assertTrue("LOCAL:list_hosts" in fakeAssistantRepo.savedDisabledTools)
         }
     }
@@ -261,24 +261,22 @@ class SettingsViewModelTest {
     @Test
     fun `toggleToolEnabled SHOULD re-enable a previously disabled tool`() = runTest {
         fakeAssistantRepo.savedDisabledTools = setOf("LOCAL:list_hosts")
-        val viewModel = createViewModel()
+        val tools = listOf(fakeLocalTool("list_hosts"))
+        val viewModel = createViewModel(localTools = tools)
         viewModel.uiState.test {
             skipItems(1)
             viewModel.toggleToolEnabled("list_hosts", ToolSource.LOCAL, enabled = true)
             val state = awaitItem() as SettingsUiState.Ready
-            assertFalse("LOCAL:list_hosts" in state.disabledTools)
+            assertTrue(state.localTools.find { it.name == "list_hosts" }?.isEnabled ?: false)
+            assertFalse("LOCAL:list_hosts" in fakeAssistantRepo.savedDisabledTools)
         }
     }
 
     @Test
     fun `toggleToolEnabled SHOULD use MCP prefix for MCP tools`() = runTest {
         val viewModel = createViewModel()
-        viewModel.uiState.test {
-            skipItems(1)
-            viewModel.toggleToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", false)
-            val state = awaitItem() as SettingsUiState.Ready
-            assertTrue("MCP:aap:controller.hosts_list" in state.disabledTools)
-        }
+        viewModel.toggleToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", false)
+        assertTrue("MCP:aap:controller.hosts_list" in fakeAssistantRepo.savedDisabledTools)
     }
 
     @Test
