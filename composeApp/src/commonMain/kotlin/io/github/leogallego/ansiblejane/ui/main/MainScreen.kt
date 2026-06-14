@@ -180,7 +180,9 @@ fun MainScreen(
                                 Icon(
                                     imageVector = Icons.Outlined.AutoAwesome,
                                     contentDescription = "AI model",
-                                    tint = if (activeConfig != null)
+                                    tint = if (activeConfig is LlmProviderConfig.OpenAiCompatible &&
+                                        (activeConfig as LlmProviderConfig.OpenAiCompatible).model.isNotBlank()
+                                    )
                                         MaterialTheme.colorScheme.onSurface
                                     else
                                         MaterialTheme.colorScheme.error
