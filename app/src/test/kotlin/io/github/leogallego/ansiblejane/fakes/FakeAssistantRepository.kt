@@ -91,15 +91,7 @@ class FakeAssistantRepository : IAssistantRepository {
         _activeConfigFlow.value = allConfigs[providerKey]
     }
 
-    override suspend fun saveDisabledTools(tools: Set<String>) {
-        savedDisabledTools = tools
-    }
-
     override suspend fun getDisabledTools(): Set<String> = savedDisabledTools
-
-    override suspend fun saveEnabledOverrides(tools: Set<String>) {
-        savedEnabledOverrides = tools
-    }
 
     override suspend fun getEnabledOverrides(): Set<String> = savedEnabledOverrides
 
