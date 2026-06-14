@@ -493,9 +493,9 @@ class SettingsViewModel(
                             it.copy(isEnabled = enabled)
                         } else it
                     },
-                    mcpServerTools = mcpServerTools.mapValues { (_, tools) ->
+                    mcpServerTools = mcpServerTools.mapValues { (server, tools) ->
                         tools.map {
-                            if (it.name == toolName && source == ToolSource.MCP) {
+                            if (it.name == toolName && source == ToolSource.MCP && server == serverLabel) {
                                 it.copy(isEnabled = enabled)
                             } else it
                         }
