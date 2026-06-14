@@ -54,6 +54,10 @@ class SettingsViewModel(
     private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
+    private val autoDisabledMcpNames: Set<String> = localTools
+        .flatMap { ToolRouter.OVERLAP_MAPPING[it.spec.name] ?: emptySet() }
+        .toSet()
+
     init {
         viewModelScope.launch {
             val configs = assistantRepository.loadAllLlmConfigs()
@@ -78,10 +82,11 @@ class SettingsViewModel(
                 userPreferences.timeFormat,
                 mcpServerManager.connections
             ) { instances, active, timezone, timeFormat, connections ->
-                DateFormatter.zoneOverride = timezone?.let {
+                val newZone = timezone?.let {
                     try { TimeZone.of(it) } catch (_: Exception) { null }
                 }
-                DateFormatter.timeFormat = timeFormat
+                if (DateFormatter.zoneOverride != newZone) DateFormatter.zoneOverride = newZone
+                if (DateFormatter.timeFormat != timeFormat) DateFormatter.timeFormat = timeFormat
 
                 val current = _uiState.value
                 val preservedTab = (current as? SettingsUiState.Ready)?.currentTab ?: SettingsTab.General
@@ -98,11 +103,6 @@ class SettingsViewModel(
                 val preservedLocalTools = (current as? SettingsUiState.Ready)?.localTools ?: initialLocalTools
                 val preservedDisabledTools = (current as? SettingsUiState.Ready)?.disabledTools ?: initialDisabledTools
                 val preservedEnabledOverrides = (current as? SettingsUiState.Ready)?.enabledOverrides ?: initialEnabledOverrides
-
-                val activeLocalNames = localTools.map { it.spec.name }.toSet()
-                val autoDisabledMcpNames = activeLocalNames
-                    .flatMap { ToolRouter.OVERLAP_MAPPING[it] ?: emptySet() }
-                    .toSet()
 
                 val allMcpTools = mcpServerManager.getAllTools()
                 val mcpServerTools = allMcpTools
@@ -490,17 +490,16 @@ class SettingsViewModel(
             val currentDisabled = (uiState.value as? SettingsUiState.Ready)?.disabledTools ?: emptySet()
             val currentOverrides = (uiState.value as? SettingsUiState.Ready)?.enabledOverrides ?: emptySet()
 
-            val isAutoDisabled = source == ToolSource.MCP &&
-                toolName in localTools.flatMap { ToolRouter.OVERLAP_MAPPING[it.spec.name] ?: emptySet() }
+            val isAutoDisabled = source == ToolSource.MCP && toolName in autoDisabledMcpNames
 
             val updatedDisabled: Set<String>
             val updatedOverrides: Set<String>
             if (isAutoDisabled) {
-                updatedDisabled = currentDisabled
+                updatedDisabled = currentDisabled - key
                 updatedOverrides = if (enabled) currentOverrides + key else currentOverrides - key
             } else {
                 updatedDisabled = if (enabled) currentDisabled - key else currentDisabled + key
-                updatedOverrides = currentOverrides
+                updatedOverrides = currentOverrides - key
             }
             assistantRepository.saveToolState(updatedDisabled, updatedOverrides)
             updateReady {

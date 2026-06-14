@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.ContextCompat
+import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.assistant.ui.AssistantScreen
 import io.github.leogallego.ansiblejane.navigation.ApprovalDetailRoute
 import io.github.leogallego.ansiblejane.navigation.JobStatusRoute
@@ -80,6 +81,11 @@ class MainActivity : ComponentActivity() {
                 }
             )
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        DateFormatter.systemIs24Hour = android.text.format.DateFormat.is24HourFormat(this)
     }
 
     override fun onNewIntent(intent: Intent) {
