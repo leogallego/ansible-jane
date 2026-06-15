@@ -25,7 +25,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.IOException
+import kotlinx.io.IOException
 
 sealed interface ChatEvent {
     data class TextDelta(val text: String) : ChatEvent

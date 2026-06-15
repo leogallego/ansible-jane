@@ -5,7 +5,7 @@ import ai.koog.prompt.Prompt
 import ai.koog.prompt.streaming.StreamFrame
 import kotlinx.coroutines.flow.Flow
 
-interface LlmProvider : java.io.Closeable {
+interface LlmProvider : AutoCloseable {
     fun generateStream(prompt: Prompt, tools: List<ToolDescriptor>, maxTokens: Int? = null): Flow<StreamFrame>
     fun isAvailable(): Boolean
     fun modelInfo(): ModelInfo

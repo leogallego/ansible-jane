@@ -3,7 +3,7 @@ package io.github.leogallego.ansiblejane
 import android.app.Application
 import android.util.Log
 import io.github.leogallego.ansiblejane.assistant.assistantModule
-import io.github.leogallego.ansiblejane.assistant.localToolsModule
+import io.github.leogallego.ansiblejane.assistant.di.sharedAssistantModule
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -38,7 +38,7 @@ class AnsibleJaneApp : Application() {
         startKoin {
             androidLogger()
             androidContext(this@AnsibleJaneApp)
-            modules(dataModule, presentationModule, localToolsModule, assistantModule)
+            modules(dataModule, presentationModule, sharedAssistantModule, assistantModule)
         }
 
         appScope.launch(Dispatchers.IO) {

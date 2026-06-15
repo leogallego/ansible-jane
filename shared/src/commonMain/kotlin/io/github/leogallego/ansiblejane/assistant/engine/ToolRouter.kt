@@ -1,6 +1,5 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
-import androidx.annotation.VisibleForTesting
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
@@ -8,12 +7,14 @@ import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.model.McpServerConfig
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 class ToolRouter(
     initialLocalTools: List<LocalTool> = emptyList(),
     private val repository: IAssistantRepository? = null
-) {
+) : SynchronizedObject() {
 
     data class ToolKey(val name: String, val source: ToolSource, val serverLabel: String? = null) {
         fun toPersistedKey(): String = when (source) {
@@ -51,7 +52,7 @@ class ToolRouter(
     private val userDisabled = mutableSetOf<ToolKey>()
     private val userEnabled = mutableSetOf<ToolKey>()
 
-    private val initialized = AtomicBoolean(false)
+    private val initialized = atomic(false)
 
     init {
         if (initialLocalTools.isNotEmpty()) {
@@ -295,23 +296,19 @@ class ToolRouter(
         }
     }
 
-    @Synchronized
-    fun registerLocalTools(tools: List<LocalTool>) {
+    fun registerLocalTools(tools: List<LocalTool>) = synchronized(this) {
         localTools.clear()
         localTools.addAll(tools)
         autoDisableOverlappingMcpTools()
     }
 
-    @Synchronized
-    fun registerMcpTools(tools: List<Tool>) {
+    fun registerMcpTools(tools: List<Tool>) = synchronized(this) {
         mcpTools.clear()
         mcpTools.addAll(tools)
         autoDisableOverlappingMcpTools()
     }
 
-    @VisibleForTesting
-    @Synchronized
-    fun setToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) {
+    internal fun setToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) = synchronized(this) {
         val key = ToolKey(toolName, source, serverLabel)
         if (enabled) {
             userDisabled.remove(key)
@@ -322,16 +319,14 @@ class ToolRouter(
         }
     }
 
-    @Synchronized
-    fun isToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null): Boolean {
+    fun isToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null): Boolean = synchronized(this) {
         val key = ToolKey(toolName, source, serverLabel)
         val isAuto = isAutoDisabledByName(toolName, source)
-        return key !in userDisabled && (!isAuto || key in userEnabled)
+        key !in userDisabled && (!isAuto || key in userEnabled)
     }
 
-    @Synchronized
-    fun isAutoDisabled(toolName: String, source: ToolSource, serverLabel: String? = null): Boolean {
-        return isAutoDisabledByName(toolName, source)
+    fun isAutoDisabled(toolName: String, source: ToolSource, serverLabel: String? = null): Boolean = synchronized(this) {
+        isAutoDisabledByName(toolName, source)
     }
 
     private fun isAutoDisabledByName(toolName: String, source: ToolSource): Boolean {
@@ -357,16 +352,15 @@ class ToolRouter(
         repository?.saveToolState(snapshot.first, snapshot.second)
     }
 
-    @Synchronized
-    fun getPersistedDisabled(): Set<String> =
+    fun getPersistedDisabled(): Set<String> = synchronized(this) {
         userDisabled.map { it.toPersistedKey() }.toSet()
+    }
 
-    @Synchronized
-    fun getPersistedOverrides(): Set<String> =
+    fun getPersistedOverrides(): Set<String> = synchronized(this) {
         userEnabled.map { it.toPersistedKey() }.toSet()
+    }
 
-    @Synchronized
-    fun applyPersistedState(disabled: Set<String>, enabledOverrides: Set<String>) {
+    fun applyPersistedState(disabled: Set<String>, enabledOverrides: Set<String>) = synchronized(this) {
         for (entry in disabled) {
             val key = ToolKey.fromPersistedKey(entry) ?: continue
             userDisabled.add(key)
@@ -382,11 +376,10 @@ class ToolRouter(
         val categoryMatched: Boolean
     )
 
-    @Synchronized
     fun getToolsForQuery(
         query: String,
         serverConfigs: List<McpServerConfig> = emptyList()
-    ): QueryResult {
+    ): QueryResult = synchronized(this) {
         val queryWords = query.lowercase().split(Regex("\\W+")).toSet()
         val stemmedQuery = (queryWords - STOP_WORDS).map { stem(it) }.toSet()
         Log.d(TAG, "QUERY: words=$queryWords, stemmed=$stemmedQuery")
@@ -397,7 +390,7 @@ class ToolRouter(
 
         if (matchedCategories.isEmpty()) {
             Log.d(TAG, "QUERY: no categories matched")
-            return QueryResult(emptyList(), categoryMatched = false)
+            return@synchronized QueryResult(emptyList(), categoryMatched = false)
         }
         Log.d(TAG, "QUERY: matched categories=${matchedCategories.map { it.name }}")
 
@@ -447,7 +440,7 @@ class ToolRouter(
         Log.d(TAG, "CHERRY: ${cherryPickedLocal.size} local [${cherryPickedLocal.map { it.spec.name }}], " +
             "${cherryPickedMcp.size} mcp [${cherryPickedMcp.map { it.spec.name }}]")
 
-        return QueryResult(cherryPickedLocal + cherryPickedMcp, categoryMatched = true)
+        QueryResult(cherryPickedLocal + cherryPickedMcp, categoryMatched = true)
     }
 
     private fun cherryPick(tools: List<Tool>, stemmedQuery: Set<String>): List<Tool> {
@@ -470,12 +463,11 @@ class ToolRouter(
             .map { it.first }
     }
 
-    @Synchronized
-    fun getAllRegisteredTools(): List<Pair<Tool, ToolSource>> {
+    fun getAllRegisteredTools(): List<Pair<Tool, ToolSource>> = synchronized(this) {
         val result = mutableListOf<Pair<Tool, ToolSource>>()
         localTools.forEach { result.add(it to ToolSource.LOCAL) }
         mcpTools.forEach { result.add(it to ToolSource.MCP) }
-        return result
+        result
     }
 
     private suspend fun persistState() {

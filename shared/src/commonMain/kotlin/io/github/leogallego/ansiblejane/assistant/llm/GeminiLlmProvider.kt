@@ -16,7 +16,7 @@ import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
-import java.net.SocketTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
 
 class GeminiLlmProvider(
     apiKey: String,
@@ -44,13 +44,13 @@ class GeminiLlmProvider(
         maxTokens: Int?
     ): Flow<StreamFrame> = flow {
         Log.d(TAG, "Request: model=${model.id}, tools=${tools.size}, messages=${prompt.messages.size}")
-        val startTime = System.currentTimeMillis()
+        val startTime = kotlin.time.Clock.System.now().toEpochMilliseconds()
         var frameCount = 0
         client.executeStreaming(prompt, model, tools).collect { frame ->
             frameCount++
             emit(frame)
         }
-        Log.d(TAG, "Complete: ${frameCount} frames in ${System.currentTimeMillis() - startTime}ms")
+        Log.d(TAG, "Complete: ${frameCount} frames in ${kotlin.time.Clock.System.now().toEpochMilliseconds() - startTime}ms")
     }.catch { e ->
         Log.d(TAG, "Error: ${e::class.simpleName}: ${e.message}")
         throw mapException(e)

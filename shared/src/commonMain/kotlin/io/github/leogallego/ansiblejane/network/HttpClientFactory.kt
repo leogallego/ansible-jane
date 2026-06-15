@@ -12,6 +12,8 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.serialization.json.Json
 
 private data class ClientGroup(
@@ -25,31 +27,29 @@ class HttpClientFactory(
     private val tokenManager: ITokenManager,
     private val json: Json,
     private val logLevel: LogLevel = LogLevel.NONE
-) : IAapApiProvider {
+) : IAapApiProvider, SynchronizedObject() {
     private val clientCache = mutableMapOf<String, ClientGroup>()
 
-    @Synchronized
-    override fun getApiService(): AapApiClient {
+    override fun getApiService(): AapApiClient = synchronized(this) {
         val instance = tokenManager.activeInstance.value
             ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
         val cached = clientCache[instance.id]
-        if (cached != null) return cached.controller
+        if (cached != null) return@synchronized cached.controller
 
         val apiVersion = resolveApiVersion(instance.apiVersion)
         val client = buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id)
         val apiClient = AapApiClient(client)
         clientCache[instance.id] = ClientGroup(controller = apiClient, httpClients = listOf(client))
-        return apiClient
+        apiClient
     }
 
-    @Synchronized
-    override fun getEdaApiService(): EdaApiClient {
+    override fun getEdaApiService(): EdaApiClient = synchronized(this) {
         val instance = tokenManager.activeInstance.value
             ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
         val cached = clientCache[instance.id]
-        if (cached?.eda != null) return cached.eda
+        if (cached?.eda != null) return@synchronized cached.eda
 
         val client = buildClient(instance.baseUrl, "/api/eda/v1/", instance.trustSelfSigned, instance.id)
         val edaClient = EdaApiClient(client)
@@ -67,16 +67,15 @@ class HttpClientFactory(
             eda = edaClient,
             httpClients = existingClients + newClients
         )
-        return edaClient
+        edaClient
     }
 
-    @Synchronized
-    override fun getPlatformApiService(): PlatformApiClient {
+    override fun getPlatformApiService(): PlatformApiClient = synchronized(this) {
         val instance = tokenManager.activeInstance.value
             ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
         val cached = clientCache[instance.id]
-        if (cached?.platform != null) return cached.platform
+        if (cached?.platform != null) return@synchronized cached.platform
 
         val client = buildClient(instance.baseUrl, "/api/gateway/v1/", instance.trustSelfSigned, instance.id)
         val platformClient = PlatformApiClient(client)
@@ -94,12 +93,12 @@ class HttpClientFactory(
             platform = platformClient,
             httpClients = existingClients + newClients
         )
-        return platformClient
+        platformClient
     }
 
-    @Synchronized
-    override fun evictInstance(instanceId: String) {
+    override fun evictInstance(instanceId: String) = synchronized(this) {
         clientCache.remove(instanceId)?.httpClients?.forEach { it.close() }
+        Unit
     }
 
     private fun resolveApiVersion(apiVersionStr: String): ApiVersion = try {

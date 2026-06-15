@@ -28,8 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
-import java.io.Closeable
-import java.net.SocketTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
 
 private class FixedOpenAILLMClient(
     apiKey: String,
@@ -81,13 +80,13 @@ private class FixedOpenAILLMClient(
 class KoogLlmProvider(
     private val config: LlmProviderConfig.OpenAiCompatible,
     trustSelfSigned: Boolean = false
-) : LlmProvider, Closeable {
+) : LlmProvider, AutoCloseable {
 
     private val client: OpenAILLMClient = run {
-        val parsed = java.net.URI(config.url.trimEnd('/'))
-        val baseUrl = "${parsed.scheme}://${parsed.host}" +
-            if (parsed.port > 0) ":${parsed.port}" else ""
-        val pathPrefix = parsed.path.trimStart('/').trimEnd('/')
+        val parsed = io.ktor.http.Url(config.url.trimEnd('/'))
+        val baseUrl = "${parsed.protocol.name}://${parsed.host}" +
+            if (parsed.port != parsed.protocol.defaultPort) ":${parsed.port}" else ""
+        val pathPrefix = parsed.encodedPath.trimStart('/').trimEnd('/')
         val chatPath = if (pathPrefix.isNotEmpty()) "$pathPrefix/chat/completions"
             else "v1/chat/completions"
         val settings = OpenAIClientSettings(
@@ -123,13 +122,13 @@ class KoogLlmProvider(
         maxTokens: Int?
     ): Flow<StreamFrame> = flow {
         Log.d(TAG, "Request: model=${config.model}, tools=${tools.size}, messages=${prompt.messages.size}")
-        val startTime = System.currentTimeMillis()
+        val startTime = kotlin.time.Clock.System.now().toEpochMilliseconds()
         var frameCount = 0
         client.executeStreaming(prompt, model, tools).collect { frame ->
             frameCount++
             emit(frame)
         }
-        Log.d(TAG, "Complete: ${frameCount} frames in ${System.currentTimeMillis() - startTime}ms")
+        Log.d(TAG, "Complete: ${frameCount} frames in ${kotlin.time.Clock.System.now().toEpochMilliseconds() - startTime}ms")
     }.catch { e ->
         Log.d(TAG, "Error: ${e::class.simpleName}: ${e.message}")
         throw mapException(e)

@@ -54,6 +54,7 @@ kotlin {
             implementation(libs.koog.google.client)
             implementation(libs.koog.http.ktor)
             implementation(libs.mcp.sdk.client)
+            implementation(libs.kotlinx.atomicfu)
 
             implementation(libs.cryptography.core)
         }
