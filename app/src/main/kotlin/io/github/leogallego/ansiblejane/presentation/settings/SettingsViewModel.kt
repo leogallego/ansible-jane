@@ -98,7 +98,7 @@ class SettingsViewModel(
                 val preservedExpandedCats = (current as? SettingsUiState.Ready)?.expandedCategories ?: emptySet()
                 val preservedLocalTools = (current as? SettingsUiState.Ready)?.localTools ?: initialLocalTools
 
-                val allMcpTools = mcpServerManager.getAllTools()
+                val allMcpTools = mcpServerManager.mcpTools.value
                 val mcpServerTools = allMcpTools
                     .groupBy { it.serverLabel }
                     .filterKeys { it != null }

@@ -196,7 +196,7 @@ class AssistantViewModel(
             toolRouter.initialize()
 
             mcpServerManager.refreshConnections()
-            val mcpTools = mcpServerManager.getAllTools()
+            val mcpTools = mcpServerManager.mcpTools.value
             val serverConfigs = tokenManager.activeInstance.value?.mcpServerUrls ?: emptyList()
             toolRouter.registerMcpTools(mcpTools)
 
@@ -215,7 +215,7 @@ class AssistantViewModel(
             if (noToolsForCategory || generalQueryInToolsOnly) {
                 Log.d(TAG, "ROUTE: no tools path — noToolsForCategory=$noToolsForCategory, " +
                     "generalQueryInToolsOnly=$generalQueryInToolsOnly")
-                val hasMcp = mcpServerManager.getAllTools().isNotEmpty()
+                val hasMcp = mcpServerManager.mcpTools.value.isNotEmpty()
                 val content = if (generalQueryInToolsOnly) {
                     "I can help you query your AAP instance. Try asking about:\n\n" +
                         "- **Inventory** — hosts, groups, inventories\n" +

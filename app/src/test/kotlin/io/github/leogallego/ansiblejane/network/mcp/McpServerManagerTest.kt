@@ -102,7 +102,7 @@ class McpServerManagerTest {
         val instance = createInstance(server.url("/mcp").toString())
         manager.connectAll(instance)
 
-        val tools = manager.getAllTools()
+        val tools = manager.mcpTools.value
         assertEquals(2, tools.size)
         assertTrue(tools.all { it is McpTool })
         assertEquals("controller.jobs_read", tools[0].spec.name)
@@ -136,7 +136,7 @@ class McpServerManagerTest {
         manager.connectAll(instance)
 
         assertTrue(manager.connections.value.isEmpty())
-        assertTrue(manager.getAllTools().isEmpty())
+        assertTrue(manager.mcpTools.value.isEmpty())
     }
 
     // -- disconnectAll --
@@ -151,12 +151,12 @@ class McpServerManagerTest {
 
         val instance = createInstance(server.url("/mcp").toString())
         manager.connectAll(instance)
-        assertEquals(1, manager.getAllTools().size)
+        assertEquals(1, manager.mcpTools.value.size)
 
         manager.disconnectAll()
 
         assertTrue(manager.connections.value.isEmpty())
-        assertTrue(manager.getAllTools().isEmpty())
+        assertTrue(manager.mcpTools.value.isEmpty())
     }
 
     // -- ensureConnected --
@@ -179,7 +179,7 @@ class McpServerManagerTest {
         )
 
         // Tools should be available after connectAll
-        assertEquals(1, manager.getAllTools().size)
+        assertEquals(1, manager.mcpTools.value.size)
     }
 
     // -- reconnectServer --
@@ -194,12 +194,12 @@ class McpServerManagerTest {
 
         val instance = createInstance(server.url("/mcp").toString())
         manager.connectAll(instance)
-        assertEquals(1, manager.getAllTools().size)
+        assertEquals(1, manager.mcpTools.value.size)
 
         // Reconnect — should still have tools
         manager.reconnectServer("test-server")
 
-        val tools = manager.getAllTools()
+        val tools = manager.mcpTools.value
         assertEquals(1, tools.size)
         val state = manager.connections.value["test-server"]
         assertTrue(state is McpConnectionState.Connected)
@@ -279,7 +279,7 @@ class McpServerManagerTest {
         manager.connectAllWithCache(instance, manifest)
 
         // Deferred — cached tools remain from setCachedTools
-        val tools = manager.getAllTools()
+        val tools = manager.mcpTools.value
         assertEquals(1, tools.size)
         assertEquals("cached.tool", tools[0].spec.name)
     }
@@ -309,7 +309,7 @@ class McpServerManagerTest {
         val instance = createInstance(server.url("/mcp").toString())
         manager.connectAllWithCache(instance, manifest, forceRefresh = true)
 
-        val tools = manager.getAllTools()
+        val tools = manager.mcpTools.value
         assertEquals(1, tools.size)
         assertEquals("fresh.tool", tools[0].spec.name)
     }
@@ -376,7 +376,7 @@ class McpServerManagerTest {
         val instance = createInstance(server.url("/mcp").toString())
         manager.connectAllWithCache(instance, manifest)
 
-        val tools = manager.getAllTools()
+        val tools = manager.mcpTools.value
         assertEquals(1, tools.size)
         assertEquals("new.tool", tools[0].spec.name)
     }
@@ -421,7 +421,7 @@ class McpServerManagerTest {
         )
         manager.connectAllWithCache(instance, manifest)
 
-        val tools = manager.getAllTools()
+        val tools = manager.mcpTools.value
         assertEquals(1, tools.size)
         assertEquals("refreshed.tool", tools[0].spec.name)
     }
@@ -446,7 +446,7 @@ class McpServerManagerTest {
         )
         manager.connectAllWithCache(instance)
 
-        val tools = manager.getAllTools()
+        val tools = manager.mcpTools.value
         assertEquals(1, tools.size)
     }
 
@@ -461,7 +461,7 @@ class McpServerManagerTest {
         val instance = createInstance(server.url("/mcp").toString())
         manager.connectAllWithCache(instance, manifest = null)
 
-        val tools = manager.getAllTools()
+        val tools = manager.mcpTools.value
         assertEquals(1, tools.size)
         assertEquals("fresh.tool", tools[0].spec.name)
     }
@@ -506,10 +506,10 @@ class McpServerManagerTest {
 
         val instance = createInstance(server.url("/mcp").toString())
         manager.connectAll(instance)
-        assertEquals(1, manager.getAllTools().size)
+        assertEquals(1, manager.mcpTools.value.size)
 
         manager.setCachedTools(emptyList())
-        assertTrue(manager.getAllTools().isEmpty())
+        assertTrue(manager.mcpTools.value.isEmpty())
     }
 
     // -- helpers --
