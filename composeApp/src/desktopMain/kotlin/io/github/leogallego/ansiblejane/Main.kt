@@ -13,7 +13,10 @@ import org.jetbrains.compose.resources.painterResource
 import io.github.leogallego.ansiblejane.data.sharedRepositoryModule
 import io.github.leogallego.ansiblejane.di.sharedNetworkModule
 import io.github.leogallego.ansiblejane.presentation.presentationModule
+import io.github.leogallego.ansiblejane.presentation.auth.AuthViewModel
+import io.github.leogallego.ansiblejane.ui.settings.SettingsScreen
 import org.koin.compose.KoinContext
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.context.startKoin
 
 fun main() = application {
@@ -36,7 +39,18 @@ fun main() = application {
     ) {
         KoinContext {
             App(
-                assistantContent = { AssistantScreen() }
+                assistantContent = { AssistantScreen() },
+                settingsContent = { onLogout, onNavigateBack, onAddInstance ->
+                    val authViewModel: AuthViewModel = koinViewModel()
+                    SettingsScreen(
+                        onLogout = {
+                            authViewModel.logout()
+                            onLogout()
+                        },
+                        onNavigateBack = onNavigateBack,
+                        onAddInstance = onAddInstance
+                    )
+                }
             )
         }
     }
