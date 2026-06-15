@@ -40,7 +40,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.network.mcp.popularMcpServers
-import io.ktor.http.Url
+import io.ktor.http.parseUrl
 
 private data class HeaderEntry(val key: String = "", val value: String = "")
 
@@ -255,13 +255,7 @@ fun AddMcpServerSheet(
 private fun validateMcpUrl(url: String): String? {
     val sanitized = url.trim().trimEnd('/')
     if (sanitized.isBlank()) return "URL is required"
-    val parsed = try {
-        Url(sanitized)
-    } catch (_: Exception) {
-        return "Invalid URL format"
-    }
-    val scheme = parsed.protocol.name
-    if (scheme !in listOf("https", "wss")) return "Only HTTPS and WSS URLs are supported"
-    if (parsed.host.isBlank()) return "URL must include a hostname"
+    val parsed = parseUrl(sanitized) ?: return "Invalid URL format"
+    if (parsed.protocol.name !in listOf("https", "wss")) return "Only HTTPS and WSS URLs are supported"
     return null
 }

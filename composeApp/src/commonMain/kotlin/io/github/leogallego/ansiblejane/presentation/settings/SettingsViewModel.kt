@@ -22,7 +22,7 @@ import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.http.Url
+import io.ktor.http.parseUrl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -426,13 +426,8 @@ class SettingsViewModel(
         viewModelScope.launch {
             val instance = tokenManager.activeInstance.value ?: return@launch
             val sanitizedUrl = url.trim().trimEnd('/')
-            val isValidScheme = try {
-                val parsed = Url(sanitizedUrl)
-                parsed.protocol.name in listOf("https", "wss")
-            } catch (_: Exception) {
-                false
-            }
-            if (!isValidScheme) return@launch
+            val parsed = parseUrl(sanitizedUrl) ?: return@launch
+            if (parsed.protocol.name !in listOf("https", "wss")) return@launch
             val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
             current.add(
                 McpServerConfig(
