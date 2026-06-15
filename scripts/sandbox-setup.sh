@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # Sandbox environment setup for Claude Code sessions
-# Run this at the start of any sandboxed session to fix common issues.
-# When sandbox is not active, removes any leftover proxy settings.
+#
+# Usage:
+#   ./scripts/sandbox-setup.sh          Auto-detect (add proxy if $HTTP_PROXY set, remove if not)
+#   ./scripts/sandbox-setup.sh on       Force-enable proxy settings
+#   ./scripts/sandbox-setup.sh off      Force-remove proxy settings
 
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
+
+MODE="${1:-auto}"
 
 # 1. Create .tmp dir for java.io.tmpdir (sandbox sets this to .tmp)
 mkdir -p .tmp
@@ -15,26 +20,19 @@ if [ ! -f local.properties ]; then
     echo "Created local.properties with Android SDK path"
 fi
 
-# 3. Manage Gradle proxy settings based on sandbox state
+# 3. Manage Gradle proxy settings
 GRADLE_PROPS="gradle.properties"
-if [ -n "${HTTP_PROXY:-}" ]; then
-    # Sandbox active — add proxy if not already present
-    if ! grep -q "systemProp.http.proxyHost" "$GRADLE_PROPS" 2>/dev/null; then
-        PROXY_HOST=$(echo "$HTTP_PROXY" | sed -E 's|https?://||' | cut -d: -f1)
-        PROXY_PORT=$(echo "$HTTP_PROXY" | sed -E 's|https?://||' | cut -d: -f2)
-        cat >> "$GRADLE_PROPS" <<EOF
-systemProp.http.proxyHost=$PROXY_HOST
-systemProp.http.proxyPort=$PROXY_PORT
-systemProp.https.proxyHost=$PROXY_HOST
-systemProp.https.proxyPort=$PROXY_PORT
-systemProp.http.nonProxyHosts=localhost|127.0.0.1|*.local
-EOF
-        echo "Added Gradle proxy settings (host=$PROXY_HOST, port=$PROXY_PORT)"
-    else
-        echo "Gradle proxy settings already present"
-    fi
-else
-    # No sandbox — remove proxy settings if present
+
+should_enable_proxy() {
+    case "$MODE" in
+        on)   return 0 ;;
+        off)  return 1 ;;
+        auto) [ -n "${HTTP_PROXY:-}" ] ;;
+        *)    echo "Usage: $0 [on|off|auto]"; exit 1 ;;
+    esac
+}
+
+remove_proxy() {
     if grep -q "systemProp.http.proxyHost" "$GRADLE_PROPS" 2>/dev/null; then
         sed -i '/^systemProp\.http\.proxyHost=/d' "$GRADLE_PROPS"
         sed -i '/^systemProp\.http\.proxyPort=/d' "$GRADLE_PROPS"
@@ -43,14 +41,43 @@ else
         sed -i '/^systemProp\.http\.nonProxyHosts=/d' "$GRADLE_PROPS"
         # Remove trailing blank lines
         sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$GRADLE_PROPS"
-        echo "Removed stale Gradle proxy settings (sandbox not active)"
+        echo "Removed Gradle proxy settings"
+    else
+        echo "Gradle proxy settings not present"
     fi
+}
+
+add_proxy() {
+    local proxy_host proxy_port
+    if [ -n "${HTTP_PROXY:-}" ]; then
+        proxy_host=$(echo "$HTTP_PROXY" | sed -E 's|https?://||' | cut -d: -f1)
+        proxy_port=$(echo "$HTTP_PROXY" | sed -E 's|https?://||' | cut -d: -f2)
+    else
+        proxy_host="localhost"
+        proxy_port="3128"
+    fi
+
+    if ! grep -q "systemProp.http.proxyHost" "$GRADLE_PROPS" 2>/dev/null; then
+        cat >> "$GRADLE_PROPS" <<EOF
+systemProp.http.proxyHost=$proxy_host
+systemProp.http.proxyPort=$proxy_port
+systemProp.https.proxyHost=$proxy_host
+systemProp.https.proxyPort=$proxy_port
+systemProp.http.nonProxyHosts=localhost|127.0.0.1|*.local
+EOF
+        echo "Added Gradle proxy settings (host=$proxy_host, port=$proxy_port)"
+    else
+        echo "Gradle proxy settings already present"
+    fi
+}
+
+if should_enable_proxy; then
+    add_proxy
+else
+    remove_proxy
 fi
 
 # 4. Set up Robolectric offline mode jars
-# Robolectric needs pre-instrumented android-all jars in a flat directory.
-# In sandbox mode, it can't create ~/.robolectric-download-lock on the
-# read-only home filesystem, so offline mode with local jars is required.
 ROBO_DEPS="robolectric-deps"
 if [ ! -d "$ROBO_DEPS" ]; then
     M2_ROBO="$HOME/.m2/repository/org/robolectric/android-all-instrumented"
@@ -67,4 +94,4 @@ else
     echo "Robolectric deps directory already exists"
 fi
 
-echo "Sandbox setup complete."
+echo "Sandbox setup complete (mode=$MODE)."
