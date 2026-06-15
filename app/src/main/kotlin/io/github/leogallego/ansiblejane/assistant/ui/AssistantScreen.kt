@@ -279,11 +279,12 @@ private fun ActiveChatContent(
                 }
             }
 
-            if (state.pendingConfirmation != null) {
+            val confirmation = state.pendingConfirmation
+            if (confirmation != null) {
                 item(key = "confirmation", contentType = "confirmation") {
                     ConfirmationCard(
-                        toolName = state.pendingConfirmation.toolName,
-                        description = state.pendingConfirmation.description,
+                        toolName = confirmation.toolName,
+                        description = confirmation.description,
                         onApprove = onConfirmApprove,
                         onDeny = onConfirmDeny,
                         modifier = Modifier.padding(vertical = 4.dp)

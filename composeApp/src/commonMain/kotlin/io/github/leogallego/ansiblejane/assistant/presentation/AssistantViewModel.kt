@@ -422,7 +422,7 @@ class AssistantViewModel(
         cachedProvider?.close()
         cachedProvider = null
         kotlinx.coroutines.CoroutineScope(
-            kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO
+            kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default
         ).launch { mcpServerManager.disconnectAll() }
     }
 
