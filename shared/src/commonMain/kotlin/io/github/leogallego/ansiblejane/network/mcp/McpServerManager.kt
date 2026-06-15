@@ -11,6 +11,7 @@ import io.ktor.client.HttpClient
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import kotlin.concurrent.Volatile
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CancellationException
@@ -240,11 +241,14 @@ class McpServerManager(
         val instance = currentInstance ?: return
         val config = instance.mcpServerUrls?.find { it.label == label } ?: return
 
-        synchronized(this) { clients.remove(label) }?.let { state ->
+        val removedState = synchronized(this) {
+            mcpTools.removeAll { it.serverLabel == label }
+            clients.remove(label)
+        }
+        removedState?.let { state ->
             try { state.client.close() } catch (_: Exception) {}
             try { state.ktorClient.close() } catch (_: Exception) {}
         }
-        synchronized(this) { mcpTools.removeAll { it.serverLabel == label } }
         _connections.update { it + (label to McpConnectionState.Connecting) }
 
         val ktorClient = ktorClientFactory(instance, config)

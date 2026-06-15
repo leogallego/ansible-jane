@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
+import io.github.leogallego.ansiblejane.TestOnly
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
@@ -308,6 +309,7 @@ class ToolRouter(
         autoDisableOverlappingMcpTools()
     }
 
+    @TestOnly
     fun setToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) = synchronized(this) {
         val key = ToolKey(toolName, source, serverLabel)
         if (enabled) {

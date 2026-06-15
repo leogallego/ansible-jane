@@ -1,5 +1,6 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
+import io.github.leogallego.ansiblejane.TestOnly
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
@@ -15,6 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(TestOnly::class)
 class ToolRouterTest {
 
     private lateinit var router: ToolRouter
