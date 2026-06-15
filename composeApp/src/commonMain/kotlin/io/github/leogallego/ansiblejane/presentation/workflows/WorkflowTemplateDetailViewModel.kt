@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.leogallego.ansiblejane.data.IWorkflowRepository
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplateNode
-import java.net.URLDecoder
+import io.ktor.http.decodeURLPart
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,7 +33,7 @@ class WorkflowTemplateDetailViewModel(
 
     val templateId: Int = savedStateHandle.get<Int>("templateId") ?: -1
     val templateName: String = savedStateHandle.get<String>("templateName")?.let {
-        URLDecoder.decode(it, "UTF-8")
+        it.decodeURLPart()
     } ?: ""
 
     private val _uiState = MutableStateFlow<WorkflowTemplateDetailUiState>(WorkflowTemplateDetailUiState.Loading)
