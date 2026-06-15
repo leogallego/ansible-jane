@@ -133,6 +133,8 @@ dependencies {
     implementation(libs.markdown.renderer.m3)
     implementation(libs.markdown.renderer.code)
 
+    testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.ktor.serialization.kotlinx.json)
     testImplementation(libs.junit)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.mockwebserver)

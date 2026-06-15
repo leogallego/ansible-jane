@@ -308,7 +308,7 @@ class ToolRouter(
         autoDisableOverlappingMcpTools()
     }
 
-    internal fun setToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) = synchronized(this) {
+    fun setToolEnabled(toolName: String, source: ToolSource, serverLabel: String? = null, enabled: Boolean) = synchronized(this) {
         val key = ToolKey(toolName, source, serverLabel)
         if (enabled) {
             userDisabled.remove(key)

@@ -50,10 +50,10 @@ kotlin {
 
             implementation(libs.koin.core)
 
-            implementation(libs.koog.openai.client)
-            implementation(libs.koog.google.client)
-            implementation(libs.koog.http.ktor)
-            implementation(libs.mcp.sdk.client)
+            api(libs.koog.openai.client)
+            api(libs.koog.google.client)
+            api(libs.koog.http.ktor)
+            api(libs.mcp.sdk.client)
             implementation(libs.kotlinx.atomicfu)
 
             implementation(libs.cryptography.core)
