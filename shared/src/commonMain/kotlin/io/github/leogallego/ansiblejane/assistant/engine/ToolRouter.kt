@@ -472,10 +472,6 @@ class ToolRouter(
         result
     }
 
-    private suspend fun persistState() {
-        repository?.saveToolState(getPersistedDisabled(), getPersistedOverrides())
-    }
-
     private fun autoDisableOverlappingMcpTools() {
         autoDisabled.clear()
         val activeLocalNames = localTools.map { it.spec.name }.toSet()
