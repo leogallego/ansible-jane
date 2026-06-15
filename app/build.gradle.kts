@@ -115,14 +115,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.koog.openai.client)
-    implementation(libs.koog.google.client)
-    implementation(libs.koog.http.ktor)
     implementation(libs.ktor.client.okhttp)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.serialization.kotlinx.json)
-    implementation(libs.ktor.client.logging)
-    implementation(libs.mcp.sdk.client)
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)
@@ -140,6 +133,8 @@ dependencies {
     implementation(libs.markdown.renderer.m3)
     implementation(libs.markdown.renderer.code)
 
+    testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.ktor.serialization.kotlinx.json)
     testImplementation(libs.junit)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.mockwebserver)

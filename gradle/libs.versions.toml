@@ -26,6 +26,7 @@ markdownRenderer = "0.41.0"
 ktor = "3.5.0"
 koog = "1.0.0"
 koog-google = "1.0.0-beta"
+atomicfu = "0.33.0"
 mcp-sdk = "0.13.0"
 robolectric = "4.16.1"
 androidx-test-runner = "1.7.0"
@@ -112,6 +113,7 @@ koog-openai-client = { group = "ai.koog", name = "prompt-executor-openai-client"
 koog-google-client = { group = "ai.koog", name = "prompt-executor-google-client", version.ref = "koog-google" }
 koog-http-ktor = { group = "ai.koog", name = "http-client-ktor", version.ref = "koog" }
 mcp-sdk-client = { group = "io.modelcontextprotocol", name = "kotlin-sdk-client", version.ref = "mcp-sdk" }
+kotlinx-atomicfu = { group = "org.jetbrains.kotlinx", name = "atomicfu", version.ref = "atomicfu" }
 
 # Markdown
 markdown-renderer = { group = "com.mikepenz", name = "multiplatform-markdown-renderer", version.ref = "markdownRenderer" }
@@ -141,3 +143,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
+kotlin-atomicfu = { id = "org.jetbrains.kotlin.plugin.atomicfu", version.ref = "kotlin" }

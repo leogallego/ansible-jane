@@ -39,7 +39,7 @@ class ToolExecutor(
         val cacheKey = "${toolCall.tool}:${toolCall.args.hashCode()}"
         if (!isDestructive) {
             val cached = resultCache[cacheKey]
-            if (cached != null && System.currentTimeMillis() - cached.first < CACHE_TTL_MS) {
+            if (cached != null && kotlin.time.Clock.System.now().toEpochMilliseconds() - cached.first < CACHE_TTL_MS) {
                 Log.d(TAG, "EXEC: cache hit for ${toolCall.tool}")
                 return cached.second
             }
@@ -57,7 +57,7 @@ class ToolExecutor(
         }
 
         Log.d(TAG, "EXEC: ${toolCall.tool}(${toolCall.args.take(200)})")
-        val startMs = System.currentTimeMillis()
+        val startMs = kotlin.time.Clock.System.now().toEpochMilliseconds()
         val result = try {
             withTimeout(30_000L) {
                 tool.execute(argsJson)
@@ -70,7 +70,7 @@ class ToolExecutor(
                 errorType = ErrorType.TIMEOUT
             )
         }
-        val elapsedMs = System.currentTimeMillis() - startMs
+        val elapsedMs = kotlin.time.Clock.System.now().toEpochMilliseconds() - startMs
         val rawLen = result.data?.length ?: 0
 
         val capped = if (result.data != null) {
@@ -89,7 +89,7 @@ class ToolExecutor(
         Log.d(TAG, "EXEC DATA: ${finalResult.data?.take(500)}")
 
         if (finalResult.success && !isDestructive) {
-            resultCache[cacheKey] = System.currentTimeMillis() to finalResult
+            resultCache[cacheKey] = kotlin.time.Clock.System.now().toEpochMilliseconds() to finalResult
         }
         return finalResult
     }

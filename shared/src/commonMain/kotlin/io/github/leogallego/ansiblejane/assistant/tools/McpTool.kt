@@ -8,8 +8,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.IOException
-import java.net.SocketTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
+import kotlinx.io.IOException
 
 class McpTool(
     private val client: Client,

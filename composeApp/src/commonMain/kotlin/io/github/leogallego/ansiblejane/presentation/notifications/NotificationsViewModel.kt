@@ -35,7 +35,7 @@ class NotificationsViewModel(
     }
 
     fun refreshIfStale(maxAgeMs: Long = 30_000L) {
-        if (System.currentTimeMillis() - lastFetchTime > maxAgeMs) {
+        if (kotlin.time.Clock.System.now().toEpochMilliseconds() - lastFetchTime > maxAgeMs) {
             refresh()
         }
     }
@@ -47,7 +47,7 @@ class NotificationsViewModel(
             _uiState.update { it.copy(isLoading = true, error = null) }
             workflowRepository.getPendingApprovals(pageSize = 50).fold(
                 onSuccess = { result ->
-                    lastFetchTime = System.currentTimeMillis()
+                    lastFetchTime = kotlin.time.Clock.System.now().toEpochMilliseconds()
                     _uiState.update {
                         NotificationsUiState(
                             approvals = result.approvals,

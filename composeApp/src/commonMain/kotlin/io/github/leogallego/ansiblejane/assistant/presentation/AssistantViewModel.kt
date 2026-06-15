@@ -29,7 +29,10 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -421,9 +424,11 @@ class AssistantViewModel(
         backgroundConnectJob?.cancel()
         cachedProvider?.close()
         cachedProvider = null
-        kotlinx.coroutines.CoroutineScope(
-            kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO
-        ).launch { mcpServerManager.disconnectAll() }
+        viewModelScope.launch {
+            withContext(NonCancellable + Dispatchers.Default) {
+                mcpServerManager.disconnectAll()
+            }
+        }
     }
 
     private inline fun updateState(crossinline transform: AssistantUiState.Active.() -> AssistantUiState.Active) {

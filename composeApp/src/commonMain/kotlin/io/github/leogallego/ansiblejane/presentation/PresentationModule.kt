@@ -16,6 +16,7 @@ import io.github.leogallego.ansiblejane.presentation.templates.TemplatesViewMode
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowJobStatusViewModel
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplateDetailViewModel
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplatesViewModel
+import io.github.leogallego.ansiblejane.assistant.presentation.AssistantViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -36,4 +37,5 @@ val presentationModule = module {
     viewModelOf(::InventoryHostsViewModel)
     viewModelOf(::HostsViewModel)
     viewModelOf(::BackupViewModel)
+    viewModelOf(::AssistantViewModel)
 }

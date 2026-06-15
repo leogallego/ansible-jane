@@ -11,7 +11,9 @@ import io.ktor.client.HttpClient
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
-import java.util.concurrent.ConcurrentHashMap
+import kotlin.concurrent.Volatile
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -31,13 +33,13 @@ private data class SdkClientState(
 
 class McpServerManager(
     private val ktorClientFactory: (AapInstance, McpServerConfig) -> HttpClient
-) {
+) : SynchronizedObject() {
     private val _connections = MutableStateFlow<Map<String, McpConnectionState>>(emptyMap())
     val connections: StateFlow<Map<String, McpConnectionState>> = _connections.asStateFlow()
 
-    private val clients = ConcurrentHashMap<String, SdkClientState>()
+    private val clients = mutableMapOf<String, SdkClientState>()
     private val mcpTools = mutableListOf<Tool>()
-    private val connectionMutexes = ConcurrentHashMap<String, Mutex>()
+    private val connectionMutexes = mutableMapOf<String, Mutex>()
     @Volatile
     private var currentInstance: AapInstance? = null
 
@@ -81,38 +83,41 @@ class McpServerManager(
     }
 
     suspend fun disconnectAll() {
-        val count = clients.size
-        clients.values.forEach { state ->
+        val states = synchronized(this) {
+            val s = clients.values.toList()
+            clients.clear()
+            connectionMutexes.clear()
+            mcpTools.clear()
+            s
+        }
+        states.forEach { state ->
             try { state.client.close() } catch (_: Exception) {}
             try { state.ktorClient.close() } catch (_: Exception) {}
         }
-        clients.clear()
-        connectionMutexes.clear()
-        synchronized(mcpTools) { mcpTools.clear() }
         _connections.update { emptyMap() }
-        if (count > 0) Log.d(TAG, "Disconnected $count servers")
+        if (states.isNotEmpty()) Log.d(TAG, "Disconnected ${states.size} servers")
     }
 
-    fun getAllTools(): List<Tool> = synchronized(mcpTools) { mcpTools.toList() }
+    fun getAllTools(): List<Tool> = synchronized(this) { mcpTools.toList() }
 
     fun getToolsForServer(label: String): List<Tool> =
-        synchronized(mcpTools) {
+        synchronized(this) {
             mcpTools.filter { it.serverLabel == label }
         }
 
     fun setCachedTools(tools: List<Tool>) {
-        synchronized(mcpTools) {
+        synchronized(this) {
             mcpTools.clear()
             mcpTools.addAll(tools)
         }
     }
 
     suspend fun ensureConnected(serverLabel: String): Client {
-        clients[serverLabel]?.let { return it.client }
+        synchronized(this) { clients[serverLabel] }?.let { return it.client }
 
-        val mutex = connectionMutexes.getOrPut(serverLabel) { Mutex() }
+        val mutex = synchronized(this) { connectionMutexes.getOrPut(serverLabel) { Mutex() } }
         return mutex.withLock {
-            clients[serverLabel]?.let { return it.client }
+            synchronized(this) { clients[serverLabel] }?.let { return it.client }
 
             val instance = currentInstance
                 ?: throw IllegalStateException("No active instance")
@@ -174,9 +179,9 @@ class McpServerManager(
         coroutineScope {
             dedupedConfigs.map { config ->
                 async {
-                    val mutex = connectionMutexes.getOrPut(config.label) { Mutex() }
+                    val mutex = synchronized(this@McpServerManager) { connectionMutexes.getOrPut(config.label) { Mutex() } }
                     mutex.withLock {
-                        if (clients.containsKey(config.label)) return@async
+                        if (synchronized(this@McpServerManager) { clients.containsKey(config.label) }) return@async
 
                         val cached = cachedByLabel[config.label]
                         val configChanged = cached != null && (
@@ -236,11 +241,14 @@ class McpServerManager(
         val instance = currentInstance ?: return
         val config = instance.mcpServerUrls?.find { it.label == label } ?: return
 
-        clients.remove(label)?.let { state ->
+        val removedState = synchronized(this) {
+            mcpTools.removeAll { it.serverLabel == label }
+            clients.remove(label)
+        }
+        removedState?.let { state ->
             try { state.client.close() } catch (_: Exception) {}
             try { state.ktorClient.close() } catch (_: Exception) {}
         }
-        synchronized(mcpTools) { mcpTools.removeAll { it.serverLabel == label } }
         _connections.update { it + (label to McpConnectionState.Connecting) }
 
         val ktorClient = ktorClientFactory(instance, config)
@@ -248,7 +256,7 @@ class McpServerManager(
     }
 
     fun refreshConnections() {
-        clients.forEach { (label, state) ->
+        synchronized(this) { clients.toMap() }.forEach { (label, state) ->
             _connections.update {
                 it + (label to McpConnectionState.Connected(
                     serverInfo = state.serverInfo,
@@ -270,9 +278,10 @@ class McpServerManager(
             .map { it.serverLabel }
             .distinct()
 
+        val clientsSnapshot = synchronized(this) { clients.toMap() }
         val serverCaches = serverLabels.mapNotNull { label ->
             val config = configByLabel[label] ?: return@mapNotNull null
-            val state = clients[label] ?: return@mapNotNull null
+            val state = clientsSnapshot[label] ?: return@mapNotNull null
 
             ServerToolCache(
                 serverUrl = config.url,
@@ -289,7 +298,7 @@ class McpServerManager(
         return ToolManifest(
             instanceId = instance.id,
             servers = serverCaches,
-            cachedAt = System.currentTimeMillis()
+            cachedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
         )
     }
 
@@ -328,9 +337,9 @@ class McpServerManager(
     }
 
     private fun registerServer(label: String, state: SdkClientState, toolset: String?) {
-        clients[label] = state
         val tools = state.toolDefs.map { McpTool(state.client, it, label, toolset) }
-        synchronized(mcpTools) {
+        synchronized(this) {
+            clients[label] = state
             mcpTools.removeAll { it.serverLabel == label }
             mcpTools.addAll(tools)
         }
