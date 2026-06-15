@@ -24,9 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.presentation.settings.LocalToolUiState
 
 private val CATEGORY_ORDER = listOf(
@@ -36,14 +34,14 @@ private val CATEGORY_ORDER = listOf(
 
 @Composable
 private fun categoryDisplayName(category: String): String = when (category) {
-    "JOBS" -> stringResource(R.string.tools_category_jobs)
-    "INVENTORY" -> stringResource(R.string.tools_category_inventory)
-    "MONITORING" -> stringResource(R.string.tools_category_monitoring)
-    "USERS" -> stringResource(R.string.tools_category_users)
-    "SECURITY" -> stringResource(R.string.tools_category_security)
-    "CONFIGURATION" -> stringResource(R.string.tools_category_configuration)
-    "EDA" -> stringResource(R.string.tools_category_eda)
-    "PLATFORM" -> stringResource(R.string.tools_category_platform)
+    "JOBS" -> "Jobs"
+    "INVENTORY" -> "Inventory"
+    "MONITORING" -> "Monitoring"
+    "USERS" -> "Users"
+    "SECURITY" -> "Security"
+    "CONFIGURATION" -> "Configuration"
+    "EDA" -> "EDA"
+    "PLATFORM" -> "Platform"
     else -> category
 }
 
@@ -62,12 +60,12 @@ fun LocalToolsSection(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = stringResource(R.string.tools_local_title),
+            text = "Local Tools",
             style = MaterialTheme.typography.titleMedium
         )
 
         Text(
-            text = stringResource(R.string.tools_local_description, tools.size, grouped.size),
+            text = "Built-in tools that call AAP APIs directly",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
