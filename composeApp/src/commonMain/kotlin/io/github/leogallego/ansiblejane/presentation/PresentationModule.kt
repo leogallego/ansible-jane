@@ -17,6 +17,8 @@ import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowJobStatus
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplateDetailViewModel
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplatesViewModel
 import io.github.leogallego.ansiblejane.assistant.presentation.AssistantViewModel
+import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -37,5 +39,14 @@ val presentationModule = module {
     viewModelOf(::InventoryHostsViewModel)
     viewModelOf(::HostsViewModel)
     viewModelOf(::BackupViewModel)
-    viewModelOf(::AssistantViewModel)
+    viewModel {
+        AssistantViewModel(
+            mcpServerManager = get(),
+            repository = get(),
+            tokenManager = get(),
+            manifestRepository = get(),
+            toolRouter = get(),
+            localTools = getAll<LocalTool>()
+        )
+    }
 }

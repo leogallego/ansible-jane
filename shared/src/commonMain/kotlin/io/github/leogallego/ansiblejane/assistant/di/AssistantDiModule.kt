@@ -127,5 +127,5 @@ val sharedAssistantModule = module {
     single { ListEdaUsersLocalTool(get()) } bind LocalTool::class
 
     // Meta
-    single { ListToolsLocalTool(get()) } bind LocalTool::class
+    single { ListToolsLocalTool { get<ToolRouter>().getAllRegisteredTools() } } bind LocalTool::class
 }
