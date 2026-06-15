@@ -56,9 +56,11 @@ class ToolRouter(
     private val initialized = atomic(false)
 
     init {
-        if (initialLocalTools.isNotEmpty()) {
-            localTools.addAll(initialLocalTools)
-            autoDisableOverlappingMcpTools()
+        synchronized(this) {
+            if (initialLocalTools.isNotEmpty()) {
+                localTools.addAll(initialLocalTools)
+                autoDisableOverlappingMcpTools()
+            }
         }
     }
 

@@ -37,8 +37,10 @@ class McpServerManager(
     private val _connections = MutableStateFlow<Map<String, McpConnectionState>>(emptyMap())
     val connections: StateFlow<Map<String, McpConnectionState>> = _connections.asStateFlow()
 
+    private val _mcpTools = MutableStateFlow<List<Tool>>(emptyList())
+    val mcpTools: StateFlow<List<Tool>> = _mcpTools.asStateFlow()
+
     private val clients = mutableMapOf<String, SdkClientState>()
-    private val mcpTools = mutableListOf<Tool>()
     private val connectionMutexes = mutableMapOf<String, Mutex>()
     @Volatile
     private var currentInstance: AapInstance? = null
@@ -87,9 +89,9 @@ class McpServerManager(
             val s = clients.values.toList()
             clients.clear()
             connectionMutexes.clear()
-            mcpTools.clear()
             s
         }
+        _mcpTools.value = emptyList()
         states.forEach { state ->
             try { state.client.close() } catch (_: Exception) {}
             try { state.ktorClient.close() } catch (_: Exception) {}
@@ -98,18 +100,11 @@ class McpServerManager(
         if (states.isNotEmpty()) Log.d(TAG, "Disconnected ${states.size} servers")
     }
 
-    fun getAllTools(): List<Tool> = synchronized(this) { mcpTools.toList() }
-
     fun getToolsForServer(label: String): List<Tool> =
-        synchronized(this) {
-            mcpTools.filter { it.serverLabel == label }
-        }
+        _mcpTools.value.filter { it.serverLabel == label }
 
     fun setCachedTools(tools: List<Tool>) {
-        synchronized(this) {
-            mcpTools.clear()
-            mcpTools.addAll(tools)
-        }
+        _mcpTools.value = tools
     }
 
     suspend fun ensureConnected(serverLabel: String): Client {
@@ -241,8 +236,8 @@ class McpServerManager(
         val instance = currentInstance ?: return
         val config = instance.mcpServerUrls?.find { it.label == label } ?: return
 
+        _mcpTools.update { current -> current.filter { it.serverLabel != label } }
         val removedState = synchronized(this) {
-            mcpTools.removeAll { it.serverLabel == label }
             clients.remove(label)
         }
         removedState?.let { state ->
@@ -267,7 +262,7 @@ class McpServerManager(
     }
 
     fun buildManifest(instance: AapInstance): ToolManifest? {
-        val allTools = getAllTools()
+        val allTools = _mcpTools.value
         if (allTools.isEmpty()) return null
 
         val configs = instance.mcpServerUrls?.filter { it.enabled } ?: return null
@@ -340,9 +335,8 @@ class McpServerManager(
         val tools = state.toolDefs.map { McpTool(state.client, it, label, toolset) }
         synchronized(this) {
             clients[label] = state
-            mcpTools.removeAll { it.serverLabel == label }
-            mcpTools.addAll(tools)
         }
+        _mcpTools.update { current -> current.filter { it.serverLabel != label } + tools }
         _connections.update {
             it + (label to McpConnectionState.Connected(
                 serverInfo = state.serverInfo,
