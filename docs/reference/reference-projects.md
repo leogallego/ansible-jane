@@ -68,6 +68,73 @@ Discovered from [privacytoolslist.com/ai](https://privacytoolslist.com/ai/) (202
 |---------|----------|-------|-----------------|---------|------|
 | **RamaLama** | Python | — | Local AI model runner from Red Hat/Fedora ecosystem, container-based | Apache 2.0 | [GitHub](https://github.com/containers/ramalama) |
 
+## Dependencies (Upstream Repos)
+
+Direct dependencies from `gradle/libs.versions.toml`. Check these repos (issues, PRs, source) before claiming an API doesn't exist or proposing workarounds.
+
+### Core Platform
+
+| Dependency | Version | Repo |
+|------------|---------|------|
+| Kotlin | 2.4.0 | [GitHub](https://github.com/JetBrains/kotlin) |
+| Compose Multiplatform | 1.11.1 | [GitHub](https://github.com/JetBrains/compose-multiplatform) |
+| Compose Material 3 | 1.12.0-alpha01 | [GitHub](https://github.com/JetBrains/compose-multiplatform) |
+| CMP Navigation | 2.9.2 | [GitHub](https://github.com/JetBrains/compose-multiplatform) |
+| CMP Lifecycle | 2.11.0-beta01 | [GitHub](https://github.com/JetBrains/compose-multiplatform) |
+| Android Gradle Plugin | 9.2.1 | [GitHub](https://github.com/Android/Android) |
+
+### Networking
+
+| Dependency | Version | Repo |
+|------------|---------|------|
+| Ktor | 3.5.0 | [GitHub](https://github.com/ktorio/ktor) |
+| OkHttp | 5.4.0 | [GitHub](https://github.com/square/okhttp) |
+
+### Serialization & Data
+
+| Dependency | Version | Repo |
+|------------|---------|------|
+| kotlinx-serialization-json | 1.11.0 | [GitHub](https://github.com/Kotlin/kotlinx.serialization) |
+| kotlinx-datetime | 0.8.0 | [GitHub](https://github.com/Kotlin/kotlinx-datetime) |
+| kotlinx-collections-immutable | 0.5.0 | [GitHub](https://github.com/Kotlin/kotlinx.collections.immutable) |
+| kotlinx-coroutines | 1.11.0 | [GitHub](https://github.com/Kotlin/kotlinx.coroutines) |
+| kotlinx-atomicfu | 0.33.0 | [GitHub](https://github.com/Kotlin/kotlinx-atomicfu) |
+| DataStore Preferences | 1.2.1 | [GitHub](https://github.com/androidx/androidx) |
+
+### DI
+
+| Dependency | Version | Repo |
+|------------|---------|------|
+| Koin | 4.2.1 | [GitHub](https://github.com/InsertKoinIO/koin) |
+
+### AI / LLM
+
+| Dependency | Version | Repo |
+|------------|---------|------|
+| Koog (JetBrains) | 1.0.0 | [GitHub](https://github.com/JetBrains/koog) |
+| Koog Google client | 1.0.0-beta | [GitHub](https://github.com/JetBrains/koog) |
+| MCP Kotlin SDK | 0.13.0 | [GitHub](https://github.com/modelcontextprotocol/kotlin-sdk) |
+
+### Security
+
+| Dependency | Version | Repo |
+|------------|---------|------|
+| cryptography-kotlin | 0.6.0 | [GitHub](https://github.com/whyoleg/cryptography-kotlin) |
+| Tink Android | 1.21.0 | [GitHub](https://github.com/tink-crypto/tink-java) |
+
+### UI
+
+| Dependency | Version | Repo |
+|------------|---------|------|
+| Multiplatform Markdown Renderer | 0.41.0 | [GitHub](https://github.com/mikepenz/multiplatform-markdown-renderer) |
+
+### Testing
+
+| Dependency | Version | Repo |
+|------------|---------|------|
+| Turbine | 1.2.1 | [GitHub](https://github.com/cashapp/turbine) |
+| Robolectric | 4.16.1 | [GitHub](https://github.com/robolectric/robolectric) |
+
 ## See Also
 
 - `docs/mcp-proxy-research.md` — MCP proxy/router solutions relevant to ToolRouter optimization
