@@ -13,6 +13,7 @@ import org.jetbrains.compose.resources.painterResource
 import io.github.leogallego.ansiblejane.data.sharedRepositoryModule
 import io.github.leogallego.ansiblejane.di.sharedNetworkModule
 import io.github.leogallego.ansiblejane.presentation.presentationModule
+import org.koin.compose.KoinContext
 import org.koin.core.context.startKoin
 
 fun main() = application {
@@ -33,8 +34,10 @@ fun main() = application {
         icon = painterResource(Res.drawable.icon),
         state = WindowState(width = 1200.dp, height = 800.dp)
     ) {
-        App(
-            assistantContent = { AssistantScreen() }
-        )
+        KoinContext {
+            App(
+                assistantContent = { AssistantScreen() }
+            )
+        }
     }
 }
