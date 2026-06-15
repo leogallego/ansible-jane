@@ -133,6 +133,19 @@ kotlin {
     }
 }
 
+// Force transitive androidx.lifecycle artifacts to match the JetBrains lifecycle
+// version declared in libs.versions.toml. Without this, a Dependabot bump to
+// compose-material3 or compose-ui can pull a newer androidx.lifecycle transitively,
+// putting two LocalViewModelStoreOwner implementations on the Desktop classpath
+// and causing a StackOverflowError. See #301.
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "androidx.lifecycle") {
+            useVersion(libs.versions.lifecycle.get())
+        }
+    }
+}
+
 compose.desktop {
     application {
         mainClass = "io.github.leogallego.ansiblejane.MainKt"

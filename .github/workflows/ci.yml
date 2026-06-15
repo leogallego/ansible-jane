@@ -54,3 +54,16 @@ jobs:
 
       - name: Run Desktop UI tests
         run: ./gradlew :composeApp:desktopTest --no-daemon --stacktrace
+
+      - name: Check for lifecycle artifact version drift
+        run: |
+          echo "Checking desktopRuntimeClasspath for dual lifecycle artifacts..."
+          DEPS=$(./gradlew :composeApp:dependencies --configuration desktopRuntimeClasspath --no-daemon -q 2>/dev/null)
+          ANDROIDX=$(echo "$DEPS" | grep -oP 'androidx\.lifecycle:lifecycle-viewmodel-compose-desktop:\K[^\s]+' | head -1)
+          JETBRAINS=$(echo "$DEPS" | grep -oP 'org\.jetbrains\.androidx\.lifecycle:lifecycle-viewmodel-compose-desktop:\K[^\s]+' | head -1)
+          if [ -n "$ANDROIDX" ] && [ -n "$JETBRAINS" ] && [ "$ANDROIDX" != "$JETBRAINS" ]; then
+            echo "::error::Lifecycle version drift detected! androidx.lifecycle=$ANDROIDX vs org.jetbrains.androidx.lifecycle=$JETBRAINS"
+            echo "Fix: align lifecycle version in gradle/libs.versions.toml or check resolution strategy in composeApp/build.gradle.kts"
+            exit 1
+          fi
+          echo "OK: no lifecycle version drift (androidx=${ANDROIDX:-none} jetbrains=${JETBRAINS:-none})"
