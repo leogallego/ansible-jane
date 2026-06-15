@@ -96,9 +96,10 @@ class HttpClientFactory(
         platformClient
     }
 
-    override fun evictInstance(instanceId: String) = synchronized(this) {
-        clientCache.remove(instanceId)?.httpClients?.forEach { it.close() }
-        Unit
+    override fun evictInstance(instanceId: String) {
+        synchronized(this) {
+            clientCache.remove(instanceId)?.httpClients?.forEach { it.close() }
+        }
     }
 
     private fun resolveApiVersion(apiVersionStr: String): ApiVersion = try {
