@@ -79,9 +79,9 @@ fun ToolsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Enable MCP", style = MaterialTheme.typography.bodyMedium)
+                Text("Enable AAP MCP", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    "Auto-detect AAP MCP endpoints",
+                    "Auto-detect at {instance}/{toolset}/mcp",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -126,7 +126,7 @@ fun ToolsTab(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        "Add Server",
+                        "Add MCP Server",
                         modifier = Modifier.padding(start = 4.dp)
                     )
                 }

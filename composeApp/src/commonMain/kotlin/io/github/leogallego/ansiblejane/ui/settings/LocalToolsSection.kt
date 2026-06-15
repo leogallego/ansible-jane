@@ -65,7 +65,7 @@ fun LocalToolsSection(
         )
 
         Text(
-            text = "Built-in tools that call AAP APIs directly",
+            text = "${tools.size} tools across ${grouped.size} categories",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
