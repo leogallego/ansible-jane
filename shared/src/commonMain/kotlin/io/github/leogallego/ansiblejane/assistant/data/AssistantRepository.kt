@@ -178,6 +178,7 @@ class AssistantRepository(
                 )
                 val config = configs[key] ?: return@map null
                 val apiKey = tokenManager.loadLlmApiKey(key)
+                DebugLog.d(TAG, "ACTIVE_FLOW: provider=$key, apiKeyPresent=${apiKey != null}")
                 if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
             } catch (e: Exception) {
                 DebugLog.w(TAG, "Failed to deserialize active config from flow: ${e.message}")
