@@ -363,14 +363,28 @@ class TokenManager(
     }
 
     override suspend fun saveLlmApiKey(providerKey: String, apiKey: String) {
+        Log.d(TAG, "SAVE_KEY: provider=$providerKey, keyLen=${apiKey.length}")
         val keys = readEncryptedLlmApiKeys().toMutableMap()
         keys[providerKey] = encrypt(apiKey)
         writeEncryptedLlmApiKeys(keys)
+        Log.d(TAG, "SAVE_KEY: done, ${keys.size} keys stored")
     }
 
     override suspend fun loadLlmApiKey(providerKey: String): String? {
-        val encrypted = readEncryptedLlmApiKeys()[providerKey] ?: return null
-        return try { decrypt(encrypted) } catch (_: Exception) { null }
+        val allKeys = readEncryptedLlmApiKeys()
+        Log.d(TAG, "LOAD_KEY: provider=$providerKey, storedKeys=${allKeys.keys}")
+        val encrypted = allKeys[providerKey] ?: run {
+            Log.d(TAG, "LOAD_KEY: NOT FOUND for $providerKey")
+            return null
+        }
+        return try {
+            val decrypted = decrypt(encrypted)
+            Log.d(TAG, "LOAD_KEY: OK, decryptedLen=${decrypted.length}")
+            decrypted
+        } catch (e: Exception) {
+            Log.d(TAG, "LOAD_KEY: DECRYPT FAILED: ${e::class.simpleName}: ${e.message}")
+            null
+        }
     }
 
     override suspend fun loadAllLlmApiKeys(): Map<String, String> {

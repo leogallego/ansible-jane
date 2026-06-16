@@ -389,6 +389,7 @@ class AssistantViewModel(
         config: LlmProviderConfig.OpenAiCompatible,
         trustSelfSigned: Boolean
     ): LlmProvider {
+        Log.d(TAG, "PROVIDER: apiKeyPresent=${config.apiKey != null}, model=${config.model}")
         val key = "${config.url}|${config.model}|${config.apiKey}|$trustSelfSigned"
         cachedProvider?.let { if (cachedProviderKey == key) return it }
         cachedProvider?.close()
