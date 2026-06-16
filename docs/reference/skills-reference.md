@@ -1,114 +1,118 @@
 # Skills Reference
 
-Skills that must be loaded for Android/Kotlin development sessions. Tell Claude to load the relevant ones before starting work.
+How skills are organized, loaded, and when to use them.
 
-Note: Project skills (in `skills/`) are reference files read directly -- they are NOT invocable via the Skill tool. Only global skills (`~/.claude/skills/`) can be invoked with the Skill tool.
+## How Skills Work
 
-## Mandatory (every session)
+There are three tiers of skills, each loaded differently:
 
-| Skill | Invoke with | Purpose |
-|-------|-------------|---------|
-| `android-cli` | `Skill: android-cli` | Android CLI tool for deploy, emulator, screenshots, layout inspection, SDK management. **Always load at session start.** |
+| Tier | Location | How to load | When loaded |
+|------|----------|-------------|-------------|
+| **Plugins** | Installed via Claude Code plugin system | Automatic — always available as invocable skills | Session start |
+| **User skills** | `~/.claude/skills/` | `Skill: <name>` (invocable via Skill tool) | On demand |
+| **Project skills** | `skills/` in repo | `Read` the SKILL.md file directly | On demand, before relevant work |
 
-## Global skills (~/.claude/skills/)
+**Key distinction:** Plugin and user skills are invocable via the `Skill` tool. Project skills are reference files — read them with the `Read` tool before doing related work.
 
-Installed globally, available in all projects. Invoke via the Skill tool.
+## Loading Protocol
 
-| Skill | Invoke with | Purpose |
-|-------|-------------|---------|
-| `android-cli` | `Skill: android-cli` | Deploy apps, manage emulators, capture screenshots, inspect layouts, manage SDKs |
-| `ai-gitignore` | `Skill: ai-gitignore` | Create/maintain .gitignore for AI-generated content |
-| `appfunctions` | `Skill: appfunctions` | Analyze apps to identify key user workflows for AppFunctions |
-| `r8-analyzer` | `Skill: r8-analyzer` | Analyze build files and R8 keep rules for redundancies |
-| `styles` | `Skill: styles` | Integrate Jetpack Compose Styles API |
-| `testing-setup` | `Skill: testing-setup` | Analyze and create testing strategy for native Android apps |
-| `verified-email` | `Skill: verified-email` | Implement verified email retrieval workflow |
+### Every session
+1. Load `android-cli` skill (invocable, user-level) — required for any device interaction
 
-## Project skills (skills/)
+### Before implementation work
+1. Read relevant project skills from `skills/` (see lookup table below)
+2. Plugin skills (superpowers, code-review, etc.) are already available
 
-Bundled with this repo. Read directly as reference files, not invocable via Skill tool.
+### Before code review
+1. Read `skills/kotlin-kmp-code-review/SKILL.md` for KMP review checklist
+2. Read domain-specific skills for the area under review (Compose, coroutines, etc.)
 
-### Compose & UI (android-community)
+### Adding new skills
+Official Google/Android skills can be installed via:
+```bash
+android skills list          # see available skills
+android skills add --skill=<name> --project=.  # install to project
+```
 
-| Skill | File | When to use |
-|-------|------|-------------|
-| `compose-skill` | `compose-skill/compose-skill.md` | Comprehensive Compose guide (has sub-references for performance, coroutines, Koin, testing, anti-patterns, DataStore, navigation, Material Design) |
-| `compose-editor` | `android-community/compose-editor.md` | Creating new screens/components, reviewing or refactoring Compose code |
-| `compose-performance-auditor` | `android-community/compose-performance-auditor.md` | Diagnosing slow rendering, janky scrolling, excessive recompositions |
+## Plugins (always available)
 
-### Compose (chrisbanes)
+Configured in `~/.claude/settings.json`. These provide invocable skills and tools.
 
-Source: [chrisbanes/skills](https://github.com/chrisbanes/skills) (Apache-2.0)
+| Plugin | Source | Key Skills |
+|--------|--------|------------|
+| `superpowers` | claude-plugins-official | TDD, debugging, brainstorming, git worktrees, code review, plan writing |
+| `code-review` | claude-plugins-official | PR review workflows |
+| `commit-commands` | claude-plugins-official | Commit, push, PR creation |
+| `feature-dev` | claude-plugins-official | Guided feature development |
+| `code-simplifier` | claude-plugins-official | Code quality and simplification |
+| `claude-code-setup` | claude-plugins-official | Automation recommendations |
+| `claude-md-management` | claude-plugins-official | CLAUDE.md audit and improvement |
+| `security-guidance` | claude-plugins-official | Security review |
+| `context7` | claude-plugins-official | Library documentation lookup |
+| `github` | claude-plugins-official | GitHub MCP (issues, PRs, code search) |
+| `playwright` | claude-plugins-official | Browser automation and E2E testing |
+| `ansible-*` (6 plugins) | claude-ansible-skills | Ansible development (docs, scaffolding, review, zen) |
 
-| Skill | Directory | When to use |
-|-------|-----------|-------------|
-| `compose-animations` | `compose-animations/` | AnimatedVisibility, animate*AsState, rememberTransition, AnimatedContent, Crossfade, enter/exit transitions |
-| `compose-focus-navigation` | `compose-focus-navigation/` | TV/keyboard/desktop focus, D-pad navigation, FocusRequester, focusProperties, key events |
-| `compose-modifier-and-layout-style` | `compose-modifier-and-layout-style/` | Modifier chains, layout APIs, modifier parameters, root layout decisions |
-| `compose-recomposition-performance` | `compose-recomposition-performance/` | Recomposition counts, skippable/restartable composables, compiler reports, Layout Inspector |
-| `compose-side-effects` | `compose-side-effects/` | LaunchedEffect, DisposableEffect, SideEffect, rememberCoroutineScope, rememberUpdatedState, snapshotFlow |
-| `compose-slot-api-pattern` | `compose-slot-api-pattern/` | Designing reusable components with slot APIs instead of boolean flags |
-| `compose-stability-diagnostics` | `compose-stability-diagnostics/` | Parameter stability, compiler reports, skippability, unstable classes, strong skipping (Kotlin 2.0+) |
-| `compose-state-authoring` | `compose-state-authoring/` | mutableStateOf, remember, mutableStateListOf/mutableStateMapOf, local state patterns |
-| `compose-state-deferred-reads` | `compose-state-deferred-reads/` | Deferring scroll/animation/gesture state reads to layout/draw phase, avoiding composition reads |
-| `compose-state-hoisting` | `compose-state-hoisting/` | Where to put state: local remember, hoisted params, state holder class, or ViewModel |
-| `compose-state-holder-ui-split` | `compose-state-holder-ui-split/` | Splitting screen composables into state-collecting wrapper + pure UI composable |
-| `compose-ui-testing-patterns` | `compose-ui-testing-patterns/` | UI tests, screenshot tests, semantics assertions, keyboard input, focus assertions |
+## User Skills (~/.claude/skills/)
 
-### Kotlin (android-community)
+Installed globally, available in all projects. Invoke via `Skill: <name>`.
 
-| Skill | File | When to use |
-|-------|------|-------------|
-| `kotlin-convention` | `android-community/kotlin-convention.md` | Reviewing Kotlin code style, applying language best practices |
-| `kotlin-coroutines` | `android-community/kotlin-coroutines.md` | Async operations, Flow/StateFlow/SharedFlow, coroutine correctness |
+| Skill | Source | Purpose |
+|-------|--------|---------|
+| `android-cli` | [android/skills](https://github.com/android/skills) | Deploy apps, manage emulators, screenshots, layout inspection, SDK management |
+| `ai-gitignore` | — | Create/maintain .gitignore for AI-generated content |
+| `appfunctions` | [android/skills](https://github.com/android/skills) | Identify key user workflows for Android AppFunctions |
+| `r8-analyzer` | [android/skills](https://github.com/android/skills) | Analyze build files and R8 keep rules for redundancies |
+| `styles` | [android/skills](https://github.com/android/skills) | Integrate Jetpack Compose Styles API |
+| `testing-setup` | [android/skills](https://github.com/android/skills) | Create testing strategy for native Android apps |
+| `verified-email` | [android/skills](https://github.com/android/skills) | Implement verified email retrieval with Credential Manager |
 
-### Kotlin (chrisbanes)
+## Project Skills (skills/)
 
-| Skill | Directory | When to use |
-|-------|-----------|-------------|
-| `kotlin-coroutines-structured-concurrency` | `kotlin-coroutines-structured-concurrency/` | CoroutineScope storage, launching from init/non-suspending APIs, runBlocking, exception handling |
-| `kotlin-flow-state-event-modeling` | `kotlin-flow-state-event-modeling/` | StateFlow vs SharedFlow vs Channel, MutableStateFlow.update, stateIn, SharingStarted, one-shot events |
-| `kotlin-multiplatform-expect-actual` | `kotlin-multiplatform-expect-actual/` | KMP expect/actual, interface boundaries, source sets, platform interop |
-| `kotlin-types-value-class` | `kotlin-types-value-class/` | @JvmInline value class vs data class, Compose stability implications |
+Bundled with this repo. Read with `Read` tool before relevant work.
 
-### Architecture & DI
+### Quick Lookup by Task
 
-| Skill | File | When to use |
-|-------|------|-------------|
-| `koin-editor` | `android-community/koin-editor.md` | Koin DI setup, modules, scopes, testing, troubleshooting |
+| Task | Skills to read |
+|------|---------------|
+| **Compose UI/state/layout** | `compose-expert/`, `compose-state-authoring/`, `compose-state-hoisting/`, `compose-modifier-and-layout-style/` |
+| **Compose performance** | `compose-recomposition-performance/`, `compose-stability-diagnostics/`, `compose-state-deferred-reads/` |
+| **Compose animations** | `compose-animations/` |
+| **Compose side effects** | `compose-side-effects/` |
+| **Compose testing** | `compose-ui-testing-patterns/`, `android-community/android-unit-test-editor.md` |
+| **Coroutines/Flow** | `kotlin-coroutines-structured-concurrency/`, `kotlin-flow-state-event-modeling/` |
+| **Koin DI** | `android-community/koin-editor.md` |
+| **KMP architecture** | `kotlin-multiplatform-expect-actual/`, `kotlin-types-value-class/`, `kotlin-kmp-abstraction-decision/` |
+| **KMP refactoring** | `kotlin-kmp-refactor-safety/` |
+| **KMP code review** | `kotlin-kmp-code-review/` |
+| **KMP Gradle/build** | `kotlin-build-kmp-gradle-governance/` |
+| **KMP testing** | `kotlin-testing-kmp/` |
+| **Navigation** | `kotlin-navigation-compose-multiplatform/`, `android-official/navigation-3.md` |
+| **Edge-to-edge** | `android-official/edge-to-edge.md` |
+| **Gradle config** | `android-community/gradle-configuration.md` |
+| **Architecture review** | `kotlin-project-architecture-review/` |
+| **Feature implementation** | `kotlin-project-feature-implementation/` |
+| **Bug fixing** | `kotlin-project-bugfix/` |
 
-### Build
+### Sources
 
-| Skill | File | When to use |
-|-------|------|-------------|
-| `gradle-configuration` | `android-community/gradle-configuration.md` | Adding dependencies, version catalogs, build optimization |
+Project skills come from these repos:
 
-### Testing
+| Source | Skills | License | Link |
+|--------|--------|---------|------|
+| **android/skills** (Google) | `android-official/` — adaptive, edge-to-edge, migration, navigation-3, theming | Apache 2.0 | [GitHub](https://github.com/android/skills) |
+| **aldefy/compose-skill** | `compose-expert/` — comprehensive Compose/CMP expert with 27 source-code reference files from `androidx/androidx` | Apache 2.0 | [GitHub](https://github.com/aldefy/compose-skill) |
+| **chrisbanes/skills** | 12 `compose-*` + 4 `kotlin-*` skills — animations, focus, modifiers, performance, side effects, state, testing, coroutines, flow, expect/actual, value class | Apache 2.0 | [GitHub](https://github.com/chrisbanes/skills) |
+| **mmiani/kotlin-kmp-claude-agent-skills** | 15 `kotlin-*` skills — KMP architecture, code review, refactor safety, Gradle governance, testing, navigation, bridges, modularization | Apache 2.0 | [GitHub](https://github.com/mmiani/kotlin-kmp-claude-agent-skills) |
+| **javiercamarenatriguero/android-skills** | `android-community/` — Compose editor, Koin, coroutines, Kotlin convention, unit testing, Gradle, performance auditor | Apache 2.0 | [GitHub](https://github.com/javiercamarenatriguero/android-skills) |
+| **Meet-Miyani/compose-skill** | `compose-skill/` — comprehensive Compose/KMP with 12 sub-references (MVI, Nav, Ktor, DataStore, Paging, Coil) | MIT | [GitHub](https://github.com/Meet-Miyani/compose-skill) |
+| **anhvt52/jetpack-compose-skills** | Compose best practices + M3 migration + accessibility. Used: accessibility reference | MIT | [GitHub](https://github.com/anhvt52/jetpack-compose-skills) |
+| **new-silvermoon/awesome-android-agent-skills** | 16 Android agent skills. Used: Retrofit networking, Gradle build performance | Apache 2.0 | [GitHub](https://github.com/new-silvermoon/awesome-android-agent-skills) |
 
-| Skill | File | When to use |
-|-------|------|-------------|
-| `android-unit-test-editor` | `android-community/android-unit-test-editor.md` | Unit tests for ViewModels, repositories, utilities (MockK, Coroutines Test) |
+### Skills available but not yet imported
 
-### Platform (android-official)
-
-| Skill | File | When to use |
-|-------|------|-------------|
-| `edge-to-edge` | `android-official/edge-to-edge.md` | Migrate to adaptive edge-to-edge display |
-| `navigation-3` | `android-official/navigation-3.md` | Install and migrate to Jetpack Navigation 3 |
-
-## Compose-skill sub-references
-
-The `compose-skill` has detailed reference docs at `skills/compose-skill/references/`:
-
-- `performance.md` - Compose performance optimization
-- `coroutines-flow.md` - Coroutines and Flow patterns
-- `koin.md` - Koin DI with Compose
-- `testing.md` - Compose testing
-- `anti-patterns.md` - Common Compose mistakes to avoid
-- `architecture.md` - App architecture patterns
-- `compose-essentials.md` - Core Compose concepts
-- `datastore.md` - DataStore usage
-- `lists-grids.md` - LazyColumn/LazyGrid patterns
-- `material-design.md` - Material 3 components
-- `mvi.md` - MVI pattern
-- `navigation-2.md` - Navigation Compose (v2)
+| Source | What's new for us | Link |
+|--------|------------------|------|
+| **Kotlin/kotlin-agent-skills** (official) | AGP 9 migration, immutable collections 0.5.x migration, Java→Kotlin | [GitHub](https://github.com/Kotlin/kotlin-agent-skills) |
+| **skydoves/compose-performance-skills** | CI stability enforcement with ComposeGuard for CMP | [GitHub](https://github.com/skydoves/compose-performance-skills) |
+| **vitorpamplona/amethyst** | `desktop-expert` skill from a real KMP Desktop app (rare) | [GitHub](https://github.com/vitorpamplona/amethyst/tree/main/.claude/skills) |
