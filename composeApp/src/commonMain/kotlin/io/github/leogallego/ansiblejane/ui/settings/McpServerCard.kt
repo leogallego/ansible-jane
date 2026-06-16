@@ -34,10 +34,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
 import io.github.leogallego.ansiblejane.presentation.settings.McpToolUiState
@@ -67,10 +65,10 @@ fun McpServerCard(
     }
 
     val statusText = when (connectionState) {
-        is McpConnectionState.Connected -> stringResource(R.string.tools_mcp_status_connected)
-        is McpConnectionState.Connecting -> stringResource(R.string.tools_mcp_status_connecting)
-        is McpConnectionState.Error -> stringResource(R.string.tools_mcp_status_error)
-        else -> stringResource(R.string.tools_mcp_status_disconnected)
+        is McpConnectionState.Connected -> "Connected"
+        is McpConnectionState.Connecting -> "Connecting…"
+        is McpConnectionState.Error -> "Connection error"
+        else -> "Not connected"
     }
 
     Card(
@@ -156,7 +154,7 @@ fun McpServerCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(R.string.tools_mcp_read_only),
+                            text = "Read Only",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Switch(
@@ -173,7 +171,7 @@ fun McpServerCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = stringResource(R.string.tools_mcp_use_instance_auth),
+                                text = "Use instance auth",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Switch(
@@ -186,7 +184,7 @@ fun McpServerCard(
 
                     if (server.headers.isNotEmpty()) {
                         Text(
-                            text = stringResource(R.string.tools_mcp_headers_count, server.headers.size),
+                            text = "${server.headers.size} custom header(s)",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.tertiary
                         )
@@ -202,7 +200,7 @@ fun McpServerCard(
                         ) {
                             Icon(
                                 Icons.Default.Refresh,
-                                contentDescription = stringResource(R.string.tools_mcp_refresh)
+                                contentDescription = "Refresh"
                             )
                         }
                         if (!server.isAutoDetected) {
@@ -212,7 +210,7 @@ fun McpServerCard(
                             ) {
                                 Icon(
                                     Icons.Default.Delete,
-                                    contentDescription = stringResource(R.string.tools_mcp_remove),
+                                    contentDescription = "Remove",
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }
@@ -221,7 +219,7 @@ fun McpServerCard(
 
                     if (connectionState is McpConnectionState.Error) {
                         Text(
-                            text = stringResource(R.string.tools_mcp_error_retry),
+                            text = "Tap Refresh to retry",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -231,7 +229,7 @@ fun McpServerCard(
                         HorizontalDivider()
                         if (tools.isEmpty()) {
                             Text(
-                                text = stringResource(R.string.tools_mcp_no_tools),
+                                text = "No tools discovered",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

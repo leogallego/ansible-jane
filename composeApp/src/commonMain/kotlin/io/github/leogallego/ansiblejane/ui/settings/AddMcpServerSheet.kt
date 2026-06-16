@@ -37,12 +37,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.github.leogallego.ansiblejane.R
 import io.github.leogallego.ansiblejane.network.mcp.popularMcpServers
-import java.net.URI
+import io.ktor.http.parseUrl
 
 private data class HeaderEntry(val key: String = "", val value: String = "")
 
@@ -71,14 +69,14 @@ fun AddMcpServerSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = stringResource(R.string.tools_mcp_add_server),
+                text = "Add MCP Server",
                 style = MaterialTheme.typography.titleMedium
             )
 
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(stringResource(R.string.tools_mcp_server_name)) },
+                label = { Text("Server name") },
                 placeholder = { Text("knowledge") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -89,7 +87,7 @@ fun AddMcpServerSheet(
             OutlinedTextField(
                 value = url,
                 onValueChange = { url = it; urlError = null },
-                label = { Text(stringResource(R.string.tools_mcp_server_url)) },
+                label = { Text("Server URL") },
                 placeholder = { Text("https://mcp-server:3000/mcp") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,7 +100,7 @@ fun AddMcpServerSheet(
             OutlinedTextField(
                 value = toolset,
                 onValueChange = { toolset = it },
-                label = { Text(stringResource(R.string.tools_mcp_server_toolset)) },
+                label = { Text("Toolset (optional)") },
                 placeholder = { Text("job_management") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -116,7 +114,7 @@ fun AddMcpServerSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(R.string.tools_mcp_use_instance_auth),
+                    text = "Use instance auth",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Switch(
@@ -132,7 +130,7 @@ fun AddMcpServerSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(R.string.tools_mcp_custom_headers),
+                    text = "Custom headers",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 TextButton(
@@ -141,7 +139,7 @@ fun AddMcpServerSheet(
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                     Text(
-                        stringResource(R.string.tools_mcp_add_header),
+                        "Add header",
                         modifier = Modifier.padding(start = 4.dp)
                     )
                 }
@@ -156,7 +154,7 @@ fun AddMcpServerSheet(
                     OutlinedTextField(
                         value = entry.key,
                         onValueChange = { headers[index] = entry.copy(key = it) },
-                        label = { Text(stringResource(R.string.tools_mcp_header_name)) },
+                        label = { Text("Header name") },
                         placeholder = { Text("Authorization") },
                         modifier = Modifier
                             .weight(1f)
@@ -166,7 +164,7 @@ fun AddMcpServerSheet(
                     OutlinedTextField(
                         value = entry.value,
                         onValueChange = { headers[index] = entry.copy(value = it) },
-                        label = { Text(stringResource(R.string.tools_mcp_header_value)) },
+                        label = { Text("Header value") },
                         placeholder = { Text("Bearer xxx") },
                         modifier = Modifier
                             .weight(1f)
@@ -179,7 +177,7 @@ fun AddMcpServerSheet(
                     ) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = stringResource(R.string.tools_mcp_remove_header),
+                            contentDescription = "Remove header",
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -193,7 +191,7 @@ fun AddMcpServerSheet(
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
-                ) { Text(stringResource(R.string.action_cancel)) }
+                ) { Text("Cancel") }
                 Button(
                     onClick = {
                         val error = validateMcpUrl(url)
@@ -211,13 +209,13 @@ fun AddMcpServerSheet(
                         .weight(1f)
                         .testTag("button_add_mcp_server"),
                     enabled = name.isNotBlank() && url.isNotBlank()
-                ) { Text(stringResource(R.string.tools_mcp_add_server)) }
+                ) { Text("Add MCP Server") }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
             Text(
-                text = stringResource(R.string.tools_mcp_popular_servers),
+                text = "Popular Servers",
                 style = MaterialTheme.typography.titleSmall
             )
 
@@ -257,13 +255,7 @@ fun AddMcpServerSheet(
 private fun validateMcpUrl(url: String): String? {
     val sanitized = url.trim().trimEnd('/')
     if (sanitized.isBlank()) return "URL is required"
-    val uri = try {
-        URI(sanitized)
-    } catch (_: Exception) {
-        return "Invalid URL format"
-    }
-    val scheme = uri.scheme?.lowercase()
-    if (scheme !in listOf("https", "wss")) return "Only HTTPS and WSS URLs are supported"
-    if (uri.host.isNullOrBlank()) return "URL must include a hostname"
+    val parsed = parseUrl(sanitized) ?: return "Invalid URL format"
+    if (parsed.protocol.name !in listOf("https", "wss")) return "Only HTTPS and WSS URLs are supported"
     return null
 }

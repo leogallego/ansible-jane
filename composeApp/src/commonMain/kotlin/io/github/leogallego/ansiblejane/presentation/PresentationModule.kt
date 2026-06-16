@@ -18,8 +18,11 @@ import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplateD
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplatesViewModel
 import io.github.leogallego.ansiblejane.assistant.presentation.AssistantViewModel
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
+import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
+import io.github.leogallego.ansiblejane.network.networkJson
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val presentationModule = module {
@@ -47,6 +50,20 @@ val presentationModule = module {
             manifestRepository = get(),
             toolRouter = get(),
             localTools = getAll<LocalTool>()
+        )
+    }
+    viewModel {
+        SettingsViewModel(
+            tokenManager = get(),
+            apiProvider = get(),
+            userPreferences = get(),
+            assistantRepository = get(),
+            mcpServerManager = get(),
+            manifestRepository = get(),
+            instanceDiscovery = get(),
+            toolRouter = get(),
+            httpClient = get(named("llm")),
+            json = networkJson
         )
     }
 }

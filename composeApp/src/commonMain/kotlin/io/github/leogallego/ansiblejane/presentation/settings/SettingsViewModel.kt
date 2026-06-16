@@ -22,7 +22,7 @@ import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
-import java.util.concurrent.atomic.AtomicBoolean
+import io.ktor.http.parseUrl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -426,8 +426,8 @@ class SettingsViewModel(
         viewModelScope.launch {
             val instance = tokenManager.activeInstance.value ?: return@launch
             val sanitizedUrl = url.trim().trimEnd('/')
-            val uri = try { java.net.URI(sanitizedUrl) } catch (_: Exception) { return@launch }
-            if (uri.scheme?.lowercase() !in listOf("https", "wss")) return@launch
+            val parsed = parseUrl(sanitizedUrl) ?: return@launch
+            if (parsed.protocol.name !in listOf("https", "wss")) return@launch
             val current = instance.mcpServerUrls?.toMutableList() ?: mutableListOf()
             current.add(
                 McpServerConfig(
@@ -503,7 +503,7 @@ class SettingsViewModel(
         updateReady { copy(expandedCategories = expandedCategories.toggled(category)) }
     }
 
-    private val isRefreshing = AtomicBoolean(false)
+    private val _isRefreshing = MutableStateFlow(false)
 
     fun refreshMcpServer(label: String) {
         viewModelScope.launch {
@@ -512,7 +512,7 @@ class SettingsViewModel(
     }
 
     fun refreshAllTools() {
-        if (!isRefreshing.compareAndSet(false, true)) return
+        if (!_isRefreshing.compareAndSet(expect = false, update = true)) return
         viewModelScope.launch {
             try {
                 val instance = tokenManager.activeInstance.value ?: return@launch
@@ -523,7 +523,7 @@ class SettingsViewModel(
                 }
             } finally {
                 updateReady { copy(isRefreshingTools = false) }
-                isRefreshing.set(false)
+                _isRefreshing.value = false
             }
         }
     }
