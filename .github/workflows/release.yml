@@ -51,18 +51,140 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Build Desktop uber JAR
-        run: ./gradlew :composeApp:packageUberJarForCurrentOS --no-daemon --stacktrace
-
       - name: Rename APK
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           mv app/build/outputs/apk/release/app-release.apk "ansible-jane-${VERSION}.apk"
 
-      - name: Rename Desktop JAR
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: ansible-jane-*.apk
+
+  desktop-linux:
+    name: Build Desktop Linux packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: jetbrains
+          java-version: "21"
+
+      - name: Install RPM tools
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
+      - name: Set execution flag for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Desktop uber JAR
+        run: ./gradlew :composeApp:packageUberJarForCurrentOS --no-daemon --stacktrace
+
+      - name: Build DEB package
+        run: ./gradlew :composeApp:packageDeb --no-daemon --stacktrace
+
+      - name: Build RPM package
+        run: ./gradlew :composeApp:packageRpm --no-daemon --stacktrace
+
+      - name: Rename artifacts
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           mv composeApp/build/compose/jars/AnsibleJane-*.jar "ansible-jane-desktop-linux-${VERSION}.jar"
+          mv composeApp/build/compose/binaries/main/deb/*.deb "ansible-jane-desktop-linux-${VERSION}.deb"
+          mv composeApp/build/compose/binaries/main/rpm/*.rpm "ansible-jane-desktop-linux-${VERSION}.rpm"
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux
+          path: |
+            ansible-jane-desktop-linux-*.jar
+            ansible-jane-desktop-linux-*.deb
+            ansible-jane-desktop-linux-*.rpm
+
+  desktop-macos:
+    name: Build Desktop macOS package
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: jetbrains
+          java-version: "21"
+
+      - name: Set execution flag for gradlew
+        run: chmod +x gradlew
+
+      - name: Build DMG package
+        run: ./gradlew :composeApp:packageDmg --no-daemon --stacktrace
+
+      - name: Rename artifact
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mv composeApp/build/compose/binaries/main/dmg/*.dmg "ansible-jane-desktop-macos-${VERSION}.dmg"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-macos
+          path: ansible-jane-desktop-macos-*.dmg
+
+  desktop-windows:
+    name: Build Desktop Windows package
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: jetbrains
+          java-version: "21"
+
+      - name: Build MSI package
+        run: ./gradlew :composeApp:packageMsi --no-daemon --stacktrace
+
+      - name: Rename artifact
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mv composeApp/build/compose/binaries/main/msi/*.msi "ansible-jane-desktop-windows-${VERSION}.msi"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows
+          path: ansible-jane-desktop-windows-*.msi
+
+  release:
+    name: Create GitHub Release
+    needs: [apk, desktop-linux, desktop-macos, desktop-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
 
       - name: Extract changelog
         run: |
@@ -81,4 +203,8 @@ jobs:
           files: |
             ansible-jane-*.apk
             ansible-jane-desktop-linux-*.jar
+            ansible-jane-desktop-linux-*.deb
+            ansible-jane-desktop-linux-*.rpm
+            ansible-jane-desktop-macos-*.dmg
+            ansible-jane-desktop-windows-*.msi
           prerelease: ${{ contains(github.ref_name, '-') }}

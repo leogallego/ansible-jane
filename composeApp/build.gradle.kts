@@ -151,11 +151,19 @@ compose.desktop {
         mainClass = "io.github.leogallego.ansiblejane.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Deb, TargetFormat.Rpm)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm)
             packageName = "AnsibleJane"
             packageVersion = providers.gradleProperty("appVersionName").get().substringBefore("-")
 
+            macOS {
+                iconFile.set(project.file("icon.icns"))
+            }
+            windows {
+                iconFile.set(project.file("icon.ico"))
+                menuGroup = "Ansible Jane"
+            }
             linux {
+                iconFile.set(project.file("icon.png"))
                 modules("jdk.security.auth")
             }
         }
