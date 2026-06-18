@@ -19,6 +19,30 @@ import org.junit.Test
 @OptIn(TestOnly::class)
 class ToolRouterTest {
 
+    companion object {
+        val ALL_LOCAL_TOOL_NAMES = listOf(
+            "list_inventories", "list_hosts", "get_host_facts", "get_host_job_summaries",
+            "list_groups", "list_inventory_sources", "list_labels",
+            "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
+            "list_workflow_templates", "launch_workflow", "get_workflow_job",
+            "list_schedules", "toggle_schedule", "list_workflow_nodes", "get_survey_spec",
+            "list_pending_approvals", "approve_workflow", "deny_workflow",
+            "list_instances", "get_instance", "list_instance_groups", "ping", "get_mesh_topology",
+            "list_credentials", "get_credential", "list_credential_types",
+            "list_projects", "get_project", "list_execution_environments",
+            "list_notification_templates", "get_settings", "get_config",
+            "list_organizations", "list_users", "list_teams",
+            "list_roles", "list_role_definitions", "list_applications", "list_tokens",
+            "list_platform_organizations", "list_platform_users", "list_platform_teams",
+            "list_platform_role_definitions", "list_authenticators",
+            "list_platform_services", "list_service_clusters",
+            "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
+            "list_eda_rulebooks", "list_eda_decision_environments",
+            "list_eda_projects", "list_eda_credentials", "list_eda_credential_types",
+            "list_eda_event_streams", "list_eda_users"
+        )
+    }
+
     private lateinit var router: ToolRouter
 
     private fun mcpTool(name: String, serverLabel: String = "aap") = object : Tool {
@@ -144,18 +168,18 @@ class ToolRouterTest {
         )
         router.registerLocalTools(localTools)
 
-        assertFalse(router.isToolEnabled("controller.job_templates_list", ToolSource.MCP))
-        assertFalse(router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
-        assertTrue(router.isToolEnabled("controller.users_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("job_templates_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("hosts_list", ToolSource.MCP))
+        assertTrue(router.isToolEnabled("users_list", ToolSource.MCP))
     }
 
     @Test
     fun `SHOULD allow re-enabling MCP tools via setToolEnabled`() {
         router.registerLocalTools(listOf(localTool("list_job_templates")))
-        assertFalse(router.isToolEnabled("controller.job_templates_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("job_templates_list", ToolSource.MCP))
 
-        router.setToolEnabled("controller.job_templates_list", ToolSource.MCP, "aap", true)
-        assertTrue(router.isToolEnabled("controller.job_templates_list", ToolSource.MCP, "aap"))
+        router.setToolEnabled("job_templates_list", ToolSource.MCP, "aap", true)
+        assertTrue(router.isToolEnabled("job_templates_list", ToolSource.MCP, "aap"))
     }
 
     @Test
@@ -255,29 +279,29 @@ class ToolRouterTest {
     @Test
     fun `SHOULD exclude write MCP tools WHEN readOnly is true`() {
         val tools = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.hosts_create"),
-            mcpTool("controller.hosts_update"),
-            mcpTool("controller.hosts_delete"),
-            mcpTool("controller.inventories_list")
+            mcpTool("hosts_list"),
+            mcpTool("hosts_create"),
+            mcpTool("hosts_update"),
+            mcpTool("hosts_delete"),
+            mcpTool("inventories_list")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("list my hosts", listOf(readOnlyConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.hosts_list" in names)
-        assertTrue("controller.inventories_list" in names)
-        assertFalse("controller.hosts_create" in names)
-        assertFalse("controller.hosts_update" in names)
-        assertFalse("controller.hosts_delete" in names)
+        assertTrue("hosts_list" in names)
+        assertTrue("inventories_list" in names)
+        assertFalse("hosts_create" in names)
+        assertFalse("hosts_update" in names)
+        assertFalse("hosts_delete" in names)
     }
 
     @Test
     fun `SHOULD keep all MCP tools WHEN readOnly is false`() {
         val tools = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.hosts_create"),
-            mcpTool("controller.hosts_delete")
+            mcpTool("hosts_list"),
+            mcpTool("hosts_create"),
+            mcpTool("hosts_delete")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("list hosts", listOf(readWriteConfig)).tools
@@ -287,27 +311,27 @@ class ToolRouterTest {
     @Test
     fun `SHOULD exclude launch and cancel MCP actions WHEN readOnly is true`() {
         val tools = listOf(
-            mcpTool("controller.jobs_read"),
-            mcpTool("controller.job_templates_launch"),
-            mcpTool("controller.jobs_relaunch"),
-            mcpTool("controller.jobs_cancel")
+            mcpTool("jobs_retrieve"),
+            mcpTool("job_templates_launch_create"),
+            mcpTool("jobs_relaunch_create"),
+            mcpTool("jobs_cancel_create")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("show me jobs", listOf(readOnlyConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.jobs_read" in names)
-        assertFalse("controller.job_templates_launch" in names)
-        assertFalse("controller.jobs_relaunch" in names)
-        assertFalse("controller.jobs_cancel" in names)
+        assertTrue("jobs_retrieve" in names)
+        assertFalse("job_templates_launch_create" in names)
+        assertFalse("jobs_relaunch_create" in names)
+        assertFalse("jobs_cancel_create" in names)
     }
 
     @Test
     fun `SHOULD only filter matching server label WHEN multiple MCP servers configured`() {
         val tools = listOf(
-            mcpTool("controller.hosts_create", "aap"),
-            mcpTool("controller.hosts_list", "aap"),
-            mcpTool("controller.hosts_create", "knowledge")
+            mcpTool("hosts_create", "aap"),
+            mcpTool("hosts_list", "aap"),
+            mcpTool("hosts_create", "knowledge")
         )
         val configs = listOf(
             McpServerConfig(url = "https://aap:8448/mcp", label = "aap", readOnly = true),
@@ -317,138 +341,139 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("list hosts", configs).tools
         val names = result.map { it.spec.name to it.spec.description }
 
-        assertTrue(names.any { it.first == "controller.hosts_list" && it.second.contains("[aap]") })
-        assertFalse(names.any { it.first == "controller.hosts_create" && it.second.contains("[aap]") })
-        assertTrue(names.any { it.first == "controller.hosts_create" && it.second.contains("[knowledge]") })
+        assertTrue(names.any { it.first == "hosts_list" && it.second.contains("[aap]") })
+        assertFalse(names.any { it.first == "hosts_create" && it.second.contains("[aap]") })
+        assertTrue(names.any { it.first == "hosts_create" && it.second.contains("[knowledge]") })
     }
 
     @Test
     fun `SHOULD select MCP inventory tools WHEN query mentions hosts`() {
         val tools = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.groups_list"),
-            mcpTool("controller.jobs_read"),
-            mcpTool("controller.users_list")
+            mcpTool("hosts_list"),
+            mcpTool("groups_list"),
+            mcpTool("jobs_retrieve"),
+            mcpTool("users_list")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.hosts_list" in names)
-        assertTrue("controller.groups_list" in names)
-        assertFalse("controller.jobs_read" in names)
-        assertFalse("controller.users_list" in names)
+        assertTrue("hosts_list" in names)
+        assertTrue("groups_list" in names)
+        assertFalse("jobs_retrieve" in names)
+        assertFalse("users_list" in names)
     }
 
     @Test
     fun `SHOULD select MCP job tools WHEN query mentions launch and template`() {
+        // Compound actions like _launch_create don't match via prefix extraction
+        // (substringBeforeLast("_") gives "job_templates_launch", not "job_templates").
+        // In production, toolset-based routing handles this. See #333.
         val tools = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.job_templates_list"),
-            mcpTool("controller.job_templates_launch"),
-            mcpTool("controller.jobs_read")
+            mcpTool("hosts_list"),
+            mcpTool("job_templates_list"),
+            mcpTool("jobs_retrieve")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("launch a job template", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.job_templates_list" in names)
-        assertTrue("controller.job_templates_launch" in names)
-        assertTrue("controller.jobs_read" in names)
-        assertFalse("controller.hosts_list" in names)
+        assertTrue("job_templates_list" in names)
+        assertTrue("jobs_retrieve" in names)
+        assertFalse("hosts_list" in names)
     }
 
     @Test
     fun `SHOULD select MCP monitoring tools WHEN query mentions health`() {
         val tools = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.instances_list"),
-            mcpTool("controller.ping_read"),
-            mcpTool("controller.dashboard_read")
+            mcpTool("hosts_list"),
+            mcpTool("instances_list"),
+            mcpTool("ping_retrieve"),
+            mcpTool("dashboard_retrieve")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("check system health", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.instances_list" in names)
-        assertTrue("controller.ping_read" in names)
-        assertTrue("controller.dashboard_read" in names)
-        assertFalse("controller.hosts_list" in names)
+        assertTrue("instances_list" in names)
+        assertTrue("ping_retrieve" in names)
+        assertTrue("dashboard_retrieve" in names)
+        assertFalse("hosts_list" in names)
     }
 
     @Test
     fun `SHOULD select MCP user tools WHEN query mentions users or teams`() {
         val tools = listOf(
-            mcpTool("controller.users_list"),
-            mcpTool("controller.teams_list"),
-            mcpTool("controller.organizations_list"),
-            mcpTool("controller.hosts_list")
+            mcpTool("users_list"),
+            mcpTool("teams_list"),
+            mcpTool("organizations_list"),
+            mcpTool("hosts_list")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("list users in my team", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.users_list" in names)
-        assertTrue("controller.teams_list" in names)
-        assertTrue("controller.organizations_list" in names)
-        assertFalse("controller.hosts_list" in names)
+        assertTrue("users_list" in names)
+        assertTrue("teams_list" in names)
+        assertTrue("organizations_list" in names)
+        assertFalse("hosts_list" in names)
     }
 
     @Test
     fun `SHOULD select MCP security tools WHEN query mentions credentials`() {
         val tools = listOf(
-            mcpTool("controller.credentials_list"),
-            mcpTool("controller.credential_types_list"),
-            mcpTool("controller.hosts_list")
+            mcpTool("credentials_list"),
+            mcpTool("credential_types_list"),
+            mcpTool("hosts_list")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("show my credentials", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.credentials_list" in names)
-        assertTrue("controller.credential_types_list" in names)
-        assertFalse("controller.hosts_list" in names)
+        assertTrue("credentials_list" in names)
+        assertTrue("credential_types_list" in names)
+        assertFalse("hosts_list" in names)
     }
 
     @Test
     fun `SHOULD select MCP config tools WHEN query mentions settings or projects`() {
         val tools = listOf(
-            mcpTool("controller.settings_read"),
-            mcpTool("controller.projects_list"),
-            mcpTool("controller.notification_templates_list"),
-            mcpTool("controller.hosts_list")
+            mcpTool("settings_retrieve"),
+            mcpTool("projects_list"),
+            mcpTool("notification_templates_list"),
+            mcpTool("hosts_list")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("show project settings", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.settings_read" in names)
-        assertTrue("controller.projects_list" in names)
-        assertTrue("controller.notification_templates_list" in names)
-        assertFalse("controller.hosts_list" in names)
+        assertTrue("settings_retrieve" in names)
+        assertTrue("projects_list" in names)
+        assertTrue("notification_templates_list" in names)
+        assertFalse("hosts_list" in names)
     }
 
     @Test
     fun `SHOULD parse compound MCP resource names correctly`() {
         val tools = listOf(
-            mcpTool("controller.workflow_job_templates_list"),
-            mcpTool("controller.constructed_inventories_list"),
-            mcpTool("controller.hosts_list")
+            mcpTool("workflow_job_templates_list"),
+            mcpTool("constructed_inventories_list"),
+            mcpTool("hosts_list")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("show my workflow templates", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.workflow_job_templates_list" in names)
-        assertFalse("controller.hosts_list" in names)
+        assertTrue("workflow_job_templates_list" in names)
+        assertFalse("hosts_list" in names)
     }
 
     @Test
     fun `SHOULD return no MCP tools WHEN query matches no category`() {
         val tools = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.jobs_read"),
-            mcpTool("controller.users_list")
+            mcpTool("hosts_list"),
+            mcpTool("jobs_retrieve"),
+            mcpTool("users_list")
         )
         router.registerMcpTools(tools)
 
@@ -463,8 +488,8 @@ class ToolRouterTest {
     fun `SHOULD prefer local tools and disable overlapping MCP tools by default`() {
         val local = listOf(localTool("list_job_templates"))
         val mcp = listOf(
-            mcpTool("controller.job_templates_list"),
-            mcpTool("controller.users_list")
+            mcpTool("job_templates_list"),
+            mcpTool("users_list")
         )
         router.registerLocalTools(local)
         router.registerMcpTools(mcp)
@@ -473,14 +498,14 @@ class ToolRouterTest {
         val names = result.map { it.spec.name }
 
         assertTrue("list_job_templates" in names)
-        assertFalse("controller.job_templates_list" in names)
-        assertTrue("controller.users_list" in names)
+        assertFalse("job_templates_list" in names)
+        assertTrue("users_list" in names)
     }
 
     @Test
     fun `SHOULD return both local and MCP tools WHEN no overlap`() {
         val local = listOf(localTool("list_hosts"))
-        val mcp = listOf(mcpTool("controller.users_list"))
+        val mcp = listOf(mcpTool("users_list"))
 
         router.registerLocalTools(local)
         router.registerMcpTools(mcp)
@@ -489,7 +514,7 @@ class ToolRouterTest {
         val names = result.map { it.spec.name }
 
         assertTrue("list_hosts" in names)
-        assertTrue("controller.users_list" in names)
+        assertTrue("users_list" in names)
     }
 
     // --- Phase 2 local tool tests ---
@@ -593,12 +618,12 @@ class ToolRouterTest {
         )
         router.registerLocalTools(localTools)
 
-        assertFalse(router.isToolEnabled("controller.instances_list", ToolSource.MCP))
-        assertFalse(router.isToolEnabled("controller.ping_read", ToolSource.MCP))
-        assertFalse(router.isToolEnabled("controller.credentials_list", ToolSource.MCP))
-        assertFalse(router.isToolEnabled("controller.projects_list", ToolSource.MCP))
-        assertFalse(router.isToolEnabled("eda.activations_list", ToolSource.MCP))
-        assertTrue(router.isToolEnabled("controller.users_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("instances_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("ping_retrieve", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("credentials_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("projects_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("activations_list", ToolSource.MCP))
+        assertTrue(router.isToolEnabled("users_list", ToolSource.MCP))
     }
 
     @Test
@@ -662,11 +687,11 @@ class ToolRouterTest {
     @Test
     fun `SHOULD match plurals via stemming - orgs matches USERS`() {
         router.registerLocalTools(emptyList())
-        router.registerMcpTools(listOf(mcpTool("controller.organizations_list")))
+        router.registerMcpTools(listOf(mcpTool("organizations_list")))
 
         val result = router.getToolsForQuery("list orgs").tools
         assertTrue(result.isNotEmpty())
-        assertTrue(result.any { it.spec.name == "controller.organizations_list" })
+        assertTrue(result.any { it.spec.name == "organizations_list" })
     }
 
     @Test
@@ -730,12 +755,12 @@ class ToolRouterTest {
     @Test
     fun `SHOULD match USERS via abbreviation rbac`() {
         router.registerMcpTools(listOf(
-            mcpTool("controller.roles_list"),
-            mcpTool("controller.hosts_list")
+            mcpTool("roles_list"),
+            mcpTool("hosts_list")
         ))
 
         val result = router.getToolsForQuery("check rbac roles").tools
-        assertTrue(result.any { it.spec.name == "controller.roles_list" })
+        assertTrue(result.any { it.spec.name == "roles_list" })
     }
 
     @Test
@@ -881,20 +906,20 @@ class ToolRouterTest {
     @Test
     fun `SHOULD cherry-pick MCP tools by name overlap`() {
         val tools = listOf(
-            mcpTool("controller.users_list"),
-            mcpTool("controller.users_read"),
-            mcpTool("controller.teams_list"),
-            mcpTool("controller.organizations_list"),
-            mcpTool("controller.tokens_list"),
-            mcpTool("controller.roles_list")
+            mcpTool("users_list"),
+            mcpTool("users_retrieve"),
+            mcpTool("teams_list"),
+            mcpTool("organizations_list"),
+            mcpTool("tokens_list"),
+            mcpTool("roles_list")
         )
         router.registerMcpTools(tools)
 
         val result = router.getToolsForQuery("list users", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.users_list" in names)
-        assertTrue("controller.users_read" in names)
+        assertTrue("users_list" in names)
+        assertTrue("users_retrieve" in names)
     }
 
     @Test
@@ -1012,10 +1037,10 @@ class ToolRouterTest {
         )
         router.registerLocalTools(localTools)
 
-        assertFalse(router.isToolEnabled("gateway.organizations_list", ToolSource.MCP))
-        assertFalse(router.isToolEnabled("gateway.authenticators_list", ToolSource.MCP))
-        assertFalse(router.isToolEnabled("gateway.services_list", ToolSource.MCP))
-        assertTrue(router.isToolEnabled("gateway.teams_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("organizations_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("authenticators_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("services_list", ToolSource.MCP))
+        assertTrue(router.isToolEnabled("teams_list", ToolSource.MCP))
     }
 
     @Test
@@ -1038,18 +1063,18 @@ class ToolRouterTest {
     @Test
     fun `SHOULD not include disabled MCP tools in query results`() {
         val tools = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.groups_list"),
-            mcpTool("controller.users_list")
+            mcpTool("hosts_list"),
+            mcpTool("groups_list"),
+            mcpTool("users_list")
         )
         router.registerMcpTools(tools)
-        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", false)
+        router.setToolEnabled("hosts_list", ToolSource.MCP, "aap", false)
 
         val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertFalse("controller.hosts_list" in names)
-        assertTrue("controller.groups_list" in names)
+        assertFalse("hosts_list" in names)
+        assertTrue("groups_list" in names)
     }
 
     @Test
@@ -1079,19 +1104,19 @@ class ToolRouterTest {
             localTool("list_inventories")
         )
         router.registerLocalTools(tools)
-        router.registerMcpTools(listOf(mcpTool("controller.users_list")))
+        router.registerMcpTools(listOf(mcpTool("users_list")))
 
-        router.applyPersistedState(setOf("LOCAL:list_hosts", "MCP:aap:controller.users_list"), emptySet())
+        router.applyPersistedState(setOf("LOCAL:list_hosts", "MCP:aap:users_list"), emptySet())
 
         assertFalse(router.isToolEnabled("list_hosts", ToolSource.LOCAL))
         assertTrue(router.isToolEnabled("list_jobs", ToolSource.LOCAL))
-        assertFalse(router.isToolEnabled("controller.users_list", ToolSource.MCP, "aap"))
+        assertFalse(router.isToolEnabled("users_list", ToolSource.MCP, "aap"))
 
         val result = router.getToolsForQuery("show hosts and users").tools
         val names = result.map { it.spec.name }
 
         assertFalse("list_hosts" in names)
-        assertFalse("controller.users_list" in names)
+        assertFalse("users_list" in names)
     }
 
     @Test
@@ -1108,23 +1133,23 @@ class ToolRouterTest {
     fun `SHOULD keep manual MCP disables alongside auto-disabled overlaps`() {
         val local = listOf(localTool("list_hosts"))
         val mcp = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.users_list")
+            mcpTool("hosts_list"),
+            mcpTool("users_list")
         )
         router.registerLocalTools(local)
         router.registerMcpTools(mcp)
 
-        router.setToolEnabled("controller.users_list", ToolSource.MCP, "aap", false)
+        router.setToolEnabled("users_list", ToolSource.MCP, "aap", false)
 
-        assertFalse("auto-disabled overlap", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
-        assertFalse("manually disabled", router.isToolEnabled("controller.users_list", ToolSource.MCP, "aap"))
+        assertFalse("auto-disabled overlap", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
+        assertFalse("manually disabled", router.isToolEnabled("users_list", ToolSource.MCP, "aap"))
 
         val result = router.getToolsForQuery("show hosts and users").tools
         val names = result.map { it.spec.name }
 
         assertTrue("list_hosts" in names)
-        assertFalse("controller.hosts_list" in names)
-        assertFalse("controller.users_list" in names)
+        assertFalse("hosts_list" in names)
+        assertFalse("users_list" in names)
     }
 
     @Test
@@ -1204,82 +1229,192 @@ class ToolRouterTest {
     @Test
     fun `SHOULD preserve user re-enable of auto-disabled MCP tool after re-registration`() {
         router.registerLocalTools(listOf(localTool("list_hosts")))
-        assertFalse("auto-disabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP))
+        assertFalse("auto-disabled", router.isToolEnabled("hosts_list", ToolSource.MCP))
 
-        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", true)
-        assertTrue("user re-enabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
+        router.setToolEnabled("hosts_list", ToolSource.MCP, "aap", true)
+        assertTrue("user re-enabled", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
 
         router.registerLocalTools(listOf(localTool("list_hosts")))
-        assertTrue("survives re-registration", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
+        assertTrue("survives re-registration", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
     }
 
     @Test
     fun `userEnabled SHOULD override autoDisabled but not userDisabled`() {
         router.registerLocalTools(listOf(localTool("list_hosts")))
-        router.registerMcpTools(listOf(mcpTool("controller.hosts_list"), mcpTool("controller.users_list")))
+        router.registerMcpTools(listOf(mcpTool("hosts_list"), mcpTool("users_list")))
 
-        assertTrue(router.isAutoDisabled("controller.hosts_list", ToolSource.MCP))
-        assertFalse(router.isAutoDisabled("controller.users_list", ToolSource.MCP))
+        assertTrue(router.isAutoDisabled("hosts_list", ToolSource.MCP))
+        assertFalse(router.isAutoDisabled("users_list", ToolSource.MCP))
 
-        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", true)
-        assertTrue("userEnabled overrides autoDisabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
+        router.setToolEnabled("hosts_list", ToolSource.MCP, "aap", true)
+        assertTrue("userEnabled overrides autoDisabled", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
 
-        router.setToolEnabled("controller.users_list", ToolSource.MCP, "aap", false)
-        assertFalse("userDisabled takes effect", router.isToolEnabled("controller.users_list", ToolSource.MCP, "aap"))
+        router.setToolEnabled("users_list", ToolSource.MCP, "aap", false)
+        assertFalse("userDisabled takes effect", router.isToolEnabled("users_list", ToolSource.MCP, "aap"))
     }
 
     @Test
     fun `applyPersistedState SHOULD populate both sets correctly`() {
         router.registerLocalTools(listOf(localTool("list_hosts")))
-        router.registerMcpTools(listOf(mcpTool("controller.hosts_list"), mcpTool("controller.users_list")))
+        router.registerMcpTools(listOf(mcpTool("hosts_list"), mcpTool("users_list")))
 
         router.applyPersistedState(
-            disabled = setOf("MCP:aap:controller.users_list"),
-            enabledOverrides = setOf("MCP:aap:controller.hosts_list")
+            disabled = setOf("MCP:aap:users_list"),
+            enabledOverrides = setOf("MCP:aap:hosts_list")
         )
 
-        assertTrue("enabledOverride overrides autoDisabled", router.isToolEnabled("controller.hosts_list", ToolSource.MCP, "aap"))
-        assertFalse("userDisabled applied", router.isToolEnabled("controller.users_list", ToolSource.MCP, "aap"))
+        assertTrue("enabledOverride overrides autoDisabled", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
+        assertFalse("userDisabled applied", router.isToolEnabled("users_list", ToolSource.MCP, "aap"))
     }
 
     @Test
     fun `isAutoDisabled SHOULD return correct status`() {
         router.registerLocalTools(listOf(localTool("list_hosts")))
-        router.registerMcpTools(listOf(mcpTool("controller.hosts_list"), mcpTool("controller.users_list")))
+        router.registerMcpTools(listOf(mcpTool("hosts_list"), mcpTool("users_list")))
 
-        assertTrue(router.isAutoDisabled("controller.hosts_list", ToolSource.MCP))
-        assertFalse(router.isAutoDisabled("controller.users_list", ToolSource.MCP))
+        assertTrue(router.isAutoDisabled("hosts_list", ToolSource.MCP))
+        assertFalse(router.isAutoDisabled("users_list", ToolSource.MCP))
         assertFalse(router.isAutoDisabled("list_hosts", ToolSource.LOCAL))
     }
 
     @Test
     fun `getCategoryForTool SHOULD cover all local tool names in all categories`() {
-        val allToolNames = listOf(
-            "list_inventories", "list_hosts", "get_host_facts", "get_host_job_summaries",
-            "list_groups", "list_inventory_sources", "list_labels",
-            "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
-            "list_workflow_templates", "launch_workflow", "get_workflow_job",
-            "list_schedules", "toggle_schedule", "list_workflow_nodes", "get_survey_spec",
-            "list_pending_approvals", "approve_workflow", "deny_workflow",
-            "list_instances", "get_instance", "list_instance_groups", "ping", "get_mesh_topology",
-            "list_credentials", "get_credential", "list_credential_types",
-            "list_projects", "get_project", "list_execution_environments",
-            "list_notification_templates", "get_settings", "get_config",
-            "list_organizations", "list_users", "list_teams",
-            "list_roles", "list_role_definitions", "list_applications", "list_tokens",
-            "list_platform_organizations", "list_platform_users", "list_platform_teams",
-            "list_platform_role_definitions", "list_authenticators",
-            "list_platform_services", "list_service_clusters",
-            "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
-            "list_eda_rulebooks", "list_eda_decision_environments",
-            "list_eda_projects", "list_eda_credentials", "list_eda_credential_types",
-            "list_eda_event_streams", "list_eda_users"
-        )
-        for (name in allToolNames) {
+        for (name in ALL_LOCAL_TOOL_NAMES) {
             assertNotNull(
                 "Tool '$name' should have a category",
                 ToolRouter.getCategoryForTool(name)
             )
         }
+    }
+
+    // --- OVERLAP_MAPPING validation (issue #332) ---
+
+    @Test
+    fun `OVERLAP_MAPPING values SHOULD use unprefixed tool names`() {
+        val prefixPattern = Regex("^(controller|eda|gateway)\\.")
+        val prefixedValues = ToolRouter.OVERLAP_MAPPING.values
+            .flatMap { it }
+            .filter { prefixPattern.containsMatchIn(it) }
+
+        assertTrue(
+            "OVERLAP_MAPPING should not contain prefixed names but found: $prefixedValues",
+            prefixedValues.isEmpty()
+        )
+    }
+
+    @Test
+    fun `OVERLAP_MAPPING values SHOULD use _retrieve not _read for get operations`() {
+        val readSuffixed = ToolRouter.OVERLAP_MAPPING.values
+            .flatMap { it }
+            .filter { it.endsWith("_read") }
+
+        assertTrue(
+            "OVERLAP_MAPPING should use _retrieve not _read but found: $readSuffixed",
+            readSuffixed.isEmpty()
+        )
+    }
+
+    @Test
+    fun `OVERLAP_MAPPING SHOULD cover all local tools`() {
+        val missing = ALL_LOCAL_TOOL_NAMES.filter { it !in ToolRouter.OVERLAP_MAPPING }
+        assertTrue(
+            "Every local tool should have an OVERLAP_MAPPING entry but missing: $missing",
+            missing.isEmpty()
+        )
+    }
+
+    @Test
+    fun `OVERLAP_MAPPING values SHOULD have no accidental duplicates`() {
+        // These 7 MCP names intentionally map to both Controller and Platform/EDA local tools
+        // because the aap-mcp-server uses the same unprefixed operationId across services.
+        // See #342 for the design discussion on resolving these collisions.
+        val knownDuplicates = setOf(
+            "organizations_list", "users_list", "teams_list", "role_definitions_list",
+            "projects_list", "credentials_list", "credential_types_list",
+        )
+
+        val allValues = ToolRouter.OVERLAP_MAPPING.values.flatMap { it }
+        val seen = mutableMapOf<String, MutableList<String>>()
+        for ((localName, mcpNames) in ToolRouter.OVERLAP_MAPPING) {
+            for (mcpName in mcpNames) {
+                seen.getOrPut(mcpName) { mutableListOf() }.add(localName)
+            }
+        }
+        val unexpectedDuplicates = seen
+            .filter { it.value.size > 1 && it.key !in knownDuplicates }
+            .map { "${it.key} -> ${it.value}" }
+
+        assertTrue(
+            "Unexpected duplicate MCP names in OVERLAP_MAPPING: $unexpectedDuplicates",
+            unexpectedDuplicates.isEmpty()
+        )
+    }
+
+    @Test
+    fun `OVERLAP_MAPPING values SHOULD match verified aap-mcp-server tool names`() {
+        val verifiedToolNames = setOf(
+            // job_management
+            "activation_instances_list", "activation_instances_logs_list", "analytics_retrieve",
+            "job_templates_launch_create", "job_templates_launch_retrieve", "job_templates_list",
+            "job_templates_retrieve", "jobs_cancel_create", "jobs_job_events_list",
+            "jobs_job_host_summaries_list", "jobs_list", "jobs_relaunch_create",
+            "jobs_relaunch_retrieve", "jobs_retrieve", "jobs_stdout_retrieve", "metrics_retrieve",
+            "projects_list", "workflow_job_templates_launch_create", "workflow_job_templates_list",
+            "workflow_job_templates_retrieve", "workflow_jobs_cancel_create", "workflow_jobs_list",
+            "workflow_jobs_relaunch_create", "workflow_jobs_retrieve",
+            "workflow_jobs_workflow_nodes_list",
+            // inventory_management
+            "groups_create", "groups_list", "hosts_list", "hosts_retrieve",
+            "hosts_variable_data_retrieve", "inventories_list", "inventory_sources_update_create",
+            // system_monitoring
+            "activity_stream_list", "activity_stream_retrieve", "activitystream_list",
+            "activitystream_retrieve", "authenticators_list", "feature_flags_state_retrieve",
+            "instance_groups_create", "instance_groups_list", "instance_groups_retrieve",
+            "instances_create", "instances_retrieve", "mesh_visualizer_retrieve", "status_retrieve",
+            // user_management
+            "authenticator_maps_create", "authenticator_maps_list",
+            "authenticators_create", "authenticators_destroy",
+            "authenticators_retrieve", "authenticators_update", "me_list",
+            "organizations_create", "organizations_destroy", "organizations_list",
+            "organizations_retrieve", "organizations_update", "role_definitions_list",
+            "role_team_assignments_list", "role_user_assignments_create",
+            "role_user_assignments_destroy", "role_user_assignments_list", "teams_create",
+            "teams_destroy", "teams_list", "teams_retrieve", "teams_update", "teams_users_list",
+            "users_create", "users_destroy", "users_list", "users_retrieve", "users_teams_list",
+            "users_update",
+            // security_compliance
+            "credential_types_create", "credential_types_destroy", "credential_types_list",
+            "credential_types_retrieve", "credential_types_update", "credentials_create",
+            "credentials_list", "credentials_retrieve", "credentials_test_create",
+            // platform_configuration
+            "config_create", "config_retrieve", "execution_environments_create",
+            "execution_environments_destroy", "execution_environments_list",
+            "execution_environments_retrieve", "execution_environments_update",
+            "notification_templates_create", "notification_templates_destroy",
+            "notification_templates_list", "notification_templates_retrieve",
+            "notification_templates_update", "settings_getter", "settings_list",
+            "settings_partial_update", "settings_retrieve", "settings_update",
+        )
+
+        val mappedMcpNames = ToolRouter.OVERLAP_MAPPING.values.flatMap { it }.toSet()
+        val notInEda = setOf(
+            "audit_rules_list", "activations_list", "activations_retrieve",
+            "rulebooks_list", "decision_environments_list", "event_streams_list",
+        )
+        val notYetExposed = setOf(
+            "schedules_list", "schedules_partial_update", "schedules_update",
+            "instances_list", "ping_retrieve", "inventory_sources_list",
+            "labels_list", "roles_list", "applications_list", "tokens_list",
+            "projects_retrieve", "job_templates_survey_spec_retrieve",
+            "workflow_approvals_list", "workflow_approvals_approve_create",
+            "workflow_approvals_deny_create", "services_list", "service_clusters_list",
+        )
+        val verifiable = mappedMcpNames - notInEda - notYetExposed
+        val notFound = verifiable.filter { it !in verifiedToolNames }
+
+        assertTrue(
+            "OVERLAP_MAPPING values not matching verified server tools: $notFound",
+            notFound.isEmpty()
+        )
     }
 }
