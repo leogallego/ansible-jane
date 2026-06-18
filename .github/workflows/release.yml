@@ -129,6 +129,14 @@ jobs:
       - name: Build DMG package
         run: ./gradlew :composeApp:packageDmg --no-daemon --stacktrace
 
+      - name: Print jpackage logs on failure
+        if: failure()
+        run: |
+          for log in composeApp/build/compose/logs/**/*.txt; do
+            echo "=== $log ==="
+            cat "$log"
+          done
+
       - name: Rename artifact
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
@@ -172,6 +180,7 @@ jobs:
 
   release:
     name: Create GitHub Release
+    if: always() && !cancelled()
     needs: [apk, desktop-linux, desktop-macos, desktop-windows]
     runs-on: ubuntu-latest
     steps:
