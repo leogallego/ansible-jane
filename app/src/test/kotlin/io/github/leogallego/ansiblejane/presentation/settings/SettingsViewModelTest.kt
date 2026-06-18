@@ -39,9 +39,6 @@ class SettingsViewModelTest {
     private lateinit var fakeUserPreferences: FakeUserPreferencesRepository
     private lateinit var fakeAssistantRepo: FakeAssistantRepository
     private lateinit var mcpServerManager: McpServerManager
-    private val httpClient = HttpClient(MockEngine) {
-        engine { addHandler { respond("{}") } }
-    }
     private val json = Json { ignoreUnknownKeys = true }
 
     private val instance1 = AapInstance(
@@ -86,7 +83,6 @@ class SettingsViewModelTest {
         manifestRepository = io.github.leogallego.ansiblejane.fakes.FakeToolManifestRepository(),
         instanceDiscovery = io.github.leogallego.ansiblejane.network.InstanceDiscovery(json),
         toolRouter = ToolRouter(initialLocalTools = localTools, repository = fakeAssistantRepo),
-        httpClient = httpClient,
         json = json
     )
 

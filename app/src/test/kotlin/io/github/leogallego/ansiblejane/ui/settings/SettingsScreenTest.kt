@@ -82,7 +82,6 @@ class SettingsScreenTest {
             manifestRepository = io.github.leogallego.ansiblejane.fakes.FakeToolManifestRepository(),
             instanceDiscovery = io.github.leogallego.ansiblejane.network.InstanceDiscovery(json),
             toolRouter = io.github.leogallego.ansiblejane.assistant.engine.ToolRouter(repository = fakeAssistantRepo),
-            httpClient = HttpClient(MockEngine) { engine { addHandler { respond("{}") } } },
             json = json
         )
         composeTestRule.setContent {
