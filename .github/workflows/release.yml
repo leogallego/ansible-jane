@@ -114,6 +114,9 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
+      - name: Fix git safe.directory in container
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Set execution flag for gradlew
         run: chmod +x gradlew
 

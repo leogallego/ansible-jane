@@ -35,8 +35,9 @@ android {
         debug {
             val gitSha = providers.exec {
                 commandLine("git", "rev-parse", "--short", "HEAD")
-            }.standardOutput.asText.get().trim()
-            versionNameSuffix = "-dev+$gitSha"
+                isIgnoreExitValue = true
+            }.standardOutput.asText.map { it.trim().ifEmpty { "unknown" } }
+            versionNameSuffix = "-dev+${gitSha.get()}"
         }
         release {
             isMinifyEnabled = true
