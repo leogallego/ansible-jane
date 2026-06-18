@@ -17,7 +17,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
-          fetch-depth: 0
 
       - name: Setup JDK
         uses: actions/setup-java@v5
@@ -36,13 +35,13 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 --decode > /tmp/release.jks
 
       - name: Run unit tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+        run: ./gradlew testDebugUnitTest --stacktrace
 
       - name: Run shared JVM tests
-        run: ./gradlew :shared:jvmTest --no-daemon --stacktrace
+        run: ./gradlew :shared:jvmTest --stacktrace
 
       - name: Build release APK
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: ./gradlew assembleRelease --stacktrace
         env:
           KEYSTORE_FILE: /tmp/release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -83,16 +82,16 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Desktop UI tests
-        run: ./gradlew :composeApp:desktopTest --no-daemon --stacktrace
+        run: ./gradlew :composeApp:desktopTest --stacktrace
 
       - name: Build Desktop uber JAR
-        run: ./gradlew :composeApp:packageUberJarForCurrentOS --no-daemon --stacktrace
+        run: ./gradlew :composeApp:packageUberJarForCurrentOS --stacktrace
 
       - name: Build DEB package
-        run: ./gradlew :composeApp:packageDeb --no-daemon --stacktrace
+        run: ./gradlew :composeApp:packageDeb --stacktrace
 
       - name: Build RPM package
-        run: ./gradlew :composeApp:packageRpm --no-daemon --stacktrace
+        run: ./gradlew :composeApp:packageRpm --stacktrace
 
       - name: Rename artifacts
         run: |
@@ -112,6 +111,7 @@ jobs:
 
   desktop-macos:
     name: Build Desktop macOS package
+    if: ${{ !contains(github.ref_name, '-') }}
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -130,7 +130,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build DMG package
-        run: ./gradlew :composeApp:packageDmg --no-daemon --stacktrace
+        run: ./gradlew :composeApp:packageDmg --stacktrace
 
       - name: Print jpackage logs on failure
         if: failure()
@@ -153,6 +153,7 @@ jobs:
 
   desktop-windows:
     name: Build Desktop Windows package
+    if: ${{ !contains(github.ref_name, '-') }}
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -168,7 +169,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build MSI package
-        run: ./gradlew :composeApp:packageMsi --no-daemon --stacktrace
+        run: ./gradlew :composeApp:packageMsi --stacktrace
 
       - name: Rename artifact
         shell: bash
