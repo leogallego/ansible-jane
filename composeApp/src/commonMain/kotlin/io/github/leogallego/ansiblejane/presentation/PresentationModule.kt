@@ -22,7 +22,6 @@ import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
 import io.github.leogallego.ansiblejane.network.networkJson
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
-import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val presentationModule = module {
@@ -62,7 +61,6 @@ val presentationModule = module {
             manifestRepository = get(),
             instanceDiscovery = get(),
             toolRouter = get(),
-            httpClient = get(named("llm")),
             json = networkJson
         )
     }
