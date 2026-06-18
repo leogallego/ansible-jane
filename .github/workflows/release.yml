@@ -254,6 +254,7 @@ jobs:
 
   desktop-linux-flatpak:
     name: Build Flatpak
+    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
     needs: [desktop-linux-tar]
     runs-on: ubuntu-latest
     steps:
@@ -385,14 +386,14 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           merge-multiple: true
-          pattern: "apk|desktop-linux-deb|desktop-linux-rpm|desktop-macos|desktop-windows"
+          pattern: "apk|desktop-linux-deb|desktop-linux-rpm|desktop-macos|desktop-windows|desktop-linux-flatpak"
 
       - name: Download optional artifacts
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           merge-multiple: true
-          pattern: "desktop-linux-tar|desktop-linux-appimage|desktop-linux-flatpak"
+          pattern: "desktop-linux-tar|desktop-linux-appimage"
 
       - name: Extract changelog
         run: |
