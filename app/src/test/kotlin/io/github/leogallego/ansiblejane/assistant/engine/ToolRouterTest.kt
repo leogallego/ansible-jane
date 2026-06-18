@@ -19,6 +19,30 @@ import org.junit.Test
 @OptIn(TestOnly::class)
 class ToolRouterTest {
 
+    companion object {
+        val ALL_LOCAL_TOOL_NAMES = listOf(
+            "list_inventories", "list_hosts", "get_host_facts", "get_host_job_summaries",
+            "list_groups", "list_inventory_sources", "list_labels",
+            "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
+            "list_workflow_templates", "launch_workflow", "get_workflow_job",
+            "list_schedules", "toggle_schedule", "list_workflow_nodes", "get_survey_spec",
+            "list_pending_approvals", "approve_workflow", "deny_workflow",
+            "list_instances", "get_instance", "list_instance_groups", "ping", "get_mesh_topology",
+            "list_credentials", "get_credential", "list_credential_types",
+            "list_projects", "get_project", "list_execution_environments",
+            "list_notification_templates", "get_settings", "get_config",
+            "list_organizations", "list_users", "list_teams",
+            "list_roles", "list_role_definitions", "list_applications", "list_tokens",
+            "list_platform_organizations", "list_platform_users", "list_platform_teams",
+            "list_platform_role_definitions", "list_authenticators",
+            "list_platform_services", "list_service_clusters",
+            "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
+            "list_eda_rulebooks", "list_eda_decision_environments",
+            "list_eda_projects", "list_eda_credentials", "list_eda_credential_types",
+            "list_eda_event_streams", "list_eda_users"
+        )
+    }
+
     private lateinit var router: ToolRouter
 
     private fun mcpTool(name: String, serverLabel: String = "aap") = object : Tool {
@@ -1255,28 +1279,7 @@ class ToolRouterTest {
 
     @Test
     fun `getCategoryForTool SHOULD cover all local tool names in all categories`() {
-        val allToolNames = listOf(
-            "list_inventories", "list_hosts", "get_host_facts", "get_host_job_summaries",
-            "list_groups", "list_inventory_sources", "list_labels",
-            "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
-            "list_workflow_templates", "launch_workflow", "get_workflow_job",
-            "list_schedules", "toggle_schedule", "list_workflow_nodes", "get_survey_spec",
-            "list_pending_approvals", "approve_workflow", "deny_workflow",
-            "list_instances", "get_instance", "list_instance_groups", "ping", "get_mesh_topology",
-            "list_credentials", "get_credential", "list_credential_types",
-            "list_projects", "get_project", "list_execution_environments",
-            "list_notification_templates", "get_settings", "get_config",
-            "list_organizations", "list_users", "list_teams",
-            "list_roles", "list_role_definitions", "list_applications", "list_tokens",
-            "list_platform_organizations", "list_platform_users", "list_platform_teams",
-            "list_platform_role_definitions", "list_authenticators",
-            "list_platform_services", "list_service_clusters",
-            "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
-            "list_eda_rulebooks", "list_eda_decision_environments",
-            "list_eda_projects", "list_eda_credentials", "list_eda_credential_types",
-            "list_eda_event_streams", "list_eda_users"
-        )
-        for (name in allToolNames) {
+        for (name in ALL_LOCAL_TOOL_NAMES) {
             assertNotNull(
                 "Tool '$name' should have a category",
                 ToolRouter.getCategoryForTool(name)
@@ -1313,31 +1316,37 @@ class ToolRouterTest {
 
     @Test
     fun `OVERLAP_MAPPING SHOULD cover all local tools`() {
-        val allLocalToolNames = listOf(
-            "list_inventories", "list_hosts", "get_host_facts", "get_host_job_summaries",
-            "list_groups", "list_inventory_sources", "list_labels",
-            "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
-            "list_workflow_templates", "launch_workflow", "get_workflow_job",
-            "list_schedules", "toggle_schedule", "list_workflow_nodes", "get_survey_spec",
-            "list_pending_approvals", "approve_workflow", "deny_workflow",
-            "list_instances", "get_instance", "list_instance_groups", "ping", "get_mesh_topology",
-            "list_credentials", "get_credential", "list_credential_types",
-            "list_projects", "get_project", "list_execution_environments",
-            "list_notification_templates", "get_settings", "get_config",
-            "list_organizations", "list_users", "list_teams",
-            "list_roles", "list_role_definitions", "list_applications", "list_tokens",
-            "list_platform_organizations", "list_platform_users", "list_platform_teams",
-            "list_platform_role_definitions", "list_authenticators",
-            "list_platform_services", "list_service_clusters",
-            "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
-            "list_eda_rulebooks", "list_eda_decision_environments",
-            "list_eda_projects", "list_eda_credentials", "list_eda_credential_types",
-            "list_eda_event_streams", "list_eda_users"
-        )
-        val missing = allLocalToolNames.filter { it !in ToolRouter.OVERLAP_MAPPING }
+        val missing = ALL_LOCAL_TOOL_NAMES.filter { it !in ToolRouter.OVERLAP_MAPPING }
         assertTrue(
             "Every local tool should have an OVERLAP_MAPPING entry but missing: $missing",
             missing.isEmpty()
+        )
+    }
+
+    @Test
+    fun `OVERLAP_MAPPING values SHOULD have no accidental duplicates`() {
+        // These 7 MCP names intentionally map to both Controller and Platform/EDA local tools
+        // because the aap-mcp-server uses the same unprefixed operationId across services.
+        // See #342 for the design discussion on resolving these collisions.
+        val knownDuplicates = setOf(
+            "organizations_list", "users_list", "teams_list", "role_definitions_list",
+            "projects_list", "credentials_list", "credential_types_list",
+        )
+
+        val allValues = ToolRouter.OVERLAP_MAPPING.values.flatMap { it }
+        val seen = mutableMapOf<String, MutableList<String>>()
+        for ((localName, mcpNames) in ToolRouter.OVERLAP_MAPPING) {
+            for (mcpName in mcpNames) {
+                seen.getOrPut(mcpName) { mutableListOf() }.add(localName)
+            }
+        }
+        val unexpectedDuplicates = seen
+            .filter { it.value.size > 1 && it.key !in knownDuplicates }
+            .map { "${it.key} -> ${it.value}" }
+
+        assertTrue(
+            "Unexpected duplicate MCP names in OVERLAP_MAPPING: $unexpectedDuplicates",
+            unexpectedDuplicates.isEmpty()
         )
     }
 

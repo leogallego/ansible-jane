@@ -427,7 +427,6 @@ class ToolRouter(
                 matchedCategories.any { it in toolsetCategories }
             } else {
                 val resource = tool.spec.name
-                    .substringAfter(".")
                     .substringBeforeLast("_")
                 resource in matchedPrefixes
             }
