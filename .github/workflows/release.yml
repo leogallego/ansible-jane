@@ -54,7 +54,7 @@ jobs:
           mv app/build/outputs/apk/release/app-release.apk "ansible-jane-${VERSION}.apk"
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: apk
           path: ansible-jane-*.apk
@@ -94,7 +94,7 @@ jobs:
           mv composeApp/build/compose/binaries/main/deb/*.deb "ansible-jane-desktop-linux-${VERSION}.deb"
 
       - name: Upload DEB + JAR artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: desktop-linux-deb
           path: |
@@ -102,28 +102,28 @@ jobs:
             ansible-jane-desktop-linux-*.deb
 
   desktop-linux-rpm:
-    name: Build Desktop RPM (Fedora)
+    name: Build Desktop RPM
     runs-on: ubuntu-latest
-    container: fedora:44
     steps:
-      - name: Install build dependencies
-        run: dnf -y install java-25-openjdk-devel rpm-build findutils which git
-
       - name: Checkout
         uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
 
-      - name: Fix git safe.directory in container
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
 
       - name: Set execution flag for gradlew
         run: chmod +x gradlew
 
+      - name: Install RPM build tools
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
       - name: Build RPM package
         run: ./gradlew :composeApp:packageRpm --stacktrace
-        env:
-          JAVA_HOME: /usr/lib/jvm/java-25-openjdk
 
       - name: Rename artifact
         run: |
@@ -131,10 +131,160 @@ jobs:
           mv composeApp/build/compose/binaries/main/rpm/*.rpm "ansible-jane-desktop-linux-${VERSION}.rpm"
 
       - name: Upload RPM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: desktop-linux-rpm
           path: ansible-jane-desktop-linux-*.rpm
+
+  desktop-linux-tar:
+    name: Build Linux Tarball
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set execution flag for gradlew
+        run: chmod +x gradlew
+
+      - name: Build application distribution
+        run: ./gradlew :composeApp:createDistributable --stacktrace
+
+      - name: Create tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd composeApp/build/compose/binaries/main/app
+          tar czf "$GITHUB_WORKSPACE/ansible-jane-desktop-linux-${VERSION}.tar.gz" ansible-jane
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: desktop-linux-tar
+          path: ansible-jane-desktop-linux-*.tar.gz
+
+  desktop-linux-appimage:
+    name: Build AppImage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set execution flag for gradlew
+        run: chmod +x gradlew
+
+      - name: Install AppImage tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 file
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+
+      - name: Build application distribution
+        run: ./gradlew :composeApp:createDistributable --stacktrace
+
+      - name: Create AppDir structure
+        run: |
+          APP_NAME="ansible-jane"
+          mkdir -p AppDir/usr/lib
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+          cp -r "composeApp/build/compose/binaries/main/app/${APP_NAME}/." AppDir/usr/lib/
+          cp composeApp/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/ansible-jane.png
+          cp composeApp/icon.png AppDir/ansible-jane.png
+
+          cat > AppDir/ansible-jane.desktop << 'DESKTOP'
+          [Desktop Entry]
+          Name=Ansible Jane
+          Comment=Manage Ansible Automation Platform with an AI assistant
+          Exec=ansible-jane
+          Icon=ansible-jane
+          Type=Application
+          Categories=Utility;Network;
+          Keywords=Ansible;AAP;Automation;AI;
+          StartupWMClass=compose-window
+          Terminal=false
+          DESKTOP
+          cp AppDir/ansible-jane.desktop AppDir/usr/share/applications/
+
+          cat > AppDir/AppRun << 'APPRUN'
+          #!/bin/bash
+          SELF=$(readlink -f "$0")
+          HERE=${SELF%/*}
+          export PATH="${HERE}/usr/lib/bin:${PATH}"
+          export LD_LIBRARY_PATH="${HERE}/usr/lib/lib/runtime/lib:${LD_LIBRARY_PATH}"
+          exec "${HERE}/usr/lib/bin/ansible-jane" "$@"
+          APPRUN
+          chmod +x AppDir/AppRun
+
+      - name: Build AppImage
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir "ansible-jane-desktop-linux-${VERSION}.AppImage"
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: desktop-linux-appimage
+          path: ansible-jane-desktop-linux-*.AppImage
+
+  desktop-linux-flatpak:
+    name: Build Flatpak
+    needs: [desktop-linux-tar]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Download Linux tarball
+        uses: actions/download-artifact@v5
+        with:
+          name: desktop-linux-tar
+
+      - name: Install Flatpak and Builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
+
+      - name: Build Flatpak
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TARBALL="ansible-jane-desktop-linux-${VERSION}.tar.gz"
+
+          cp "${TARBALL}" flatpak/
+          SHA256=$(sha256sum "${TARBALL}" | cut -d' ' -f1)
+
+          cd flatpak
+          sed -i "s|url: .*tar\.gz|path: ${TARBALL}|" io.github.leogallego.ansiblejane.yaml
+          sed -i "s|sha256: .*|sha256: ${SHA256}|" io.github.leogallego.ansiblejane.yaml
+
+          flatpak-builder --repo=repo --force-clean build-dir io.github.leogallego.ansiblejane.yaml
+          flatpak build-bundle repo "../ansible-jane-desktop-linux-${VERSION}.flatpak" io.github.leogallego.ansiblejane
+
+      - name: Upload Flatpak artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: desktop-linux-flatpak
+          path: ansible-jane-desktop-linux-*.flatpak
 
   desktop-macos:
     name: Build Desktop macOS package
@@ -173,7 +323,7 @@ jobs:
           mv composeApp/build/compose/binaries/main/dmg/*.dmg "ansible-jane-desktop-macos-${VERSION}.dmg"
 
       - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: desktop-macos
           path: ansible-jane-desktop-macos-*.dmg
@@ -205,7 +355,7 @@ jobs:
           mv composeApp/build/compose/binaries/main/msi/*.msi "ansible-jane-desktop-windows-${VERSION}.msi"
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: desktop-windows
           path: ansible-jane-desktop-windows-*.msi
@@ -213,7 +363,7 @@ jobs:
   release:
     name: Create GitHub Release
     if: always() && !cancelled()
-    needs: [apk, desktop-linux-deb, desktop-linux-rpm, desktop-macos, desktop-windows]
+    needs: [apk, desktop-linux-deb, desktop-linux-rpm, desktop-macos, desktop-windows, desktop-linux-tar, desktop-linux-appimage, desktop-linux-flatpak]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -222,10 +372,18 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
+      - name: Download required artifacts
+        uses: actions/download-artifact@v5
         with:
           merge-multiple: true
+          pattern: "apk|desktop-linux-deb|desktop-linux-rpm|desktop-macos|desktop-windows"
+
+      - name: Download optional artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          merge-multiple: true
+          pattern: "desktop-linux-tar|desktop-linux-appimage|desktop-linux-flatpak"
 
       - name: Extract changelog
         run: |
@@ -237,7 +395,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v4
         with:
           name: Release ${{ github.ref_name }}
           body_path: changelog.txt
@@ -246,6 +404,9 @@ jobs:
             ansible-jane-desktop-linux-*.jar
             ansible-jane-desktop-linux-*.deb
             ansible-jane-desktop-linux-*.rpm
+            ansible-jane-desktop-linux-*.tar.gz
+            ansible-jane-desktop-linux-*.AppImage
+            ansible-jane-desktop-linux-*.flatpak
             ansible-jane-desktop-macos-*.dmg
             ansible-jane-desktop-windows-*.msi
           prerelease: ${{ contains(github.ref_name, '-') }}

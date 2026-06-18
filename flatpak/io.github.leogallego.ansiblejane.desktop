@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Ansible Jane
+Comment=Manage Ansible Automation Platform with an AI assistant
+Exec=ansible-jane-wrapper
+Icon=io.github.leogallego.ansiblejane
+Type=Application
+Categories=Utility;Network;
+Keywords=Ansible;AAP;Automation;AI;
+StartupWMClass=compose-window
+Terminal=false

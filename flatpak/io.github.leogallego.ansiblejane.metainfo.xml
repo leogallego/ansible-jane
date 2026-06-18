@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.leogallego.ansiblejane</id>
+
+  <name>Ansible Jane</name>
+  <summary>Manage Ansible Automation Platform with an AI assistant</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <developer id="io.github.leogallego">
+    <name>Leonardo Gallego</name>
+  </developer>
+
+  <description>
+    <p>
+      Ansible Jane is a multiplatform app for managing Ansible Automation Platform (AAP).
+      Authenticate with your AAP instance, browse job templates, launch playbooks, monitor
+      job status, handle workflow approvals, and interact with Jane, an AI assistant that
+      works with local models (Ollama) or frontier providers through tool-use and MCP.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Connect to multiple AAP instances simultaneously</li>
+      <li>Browse and launch job templates and workflows</li>
+      <li>Monitor job status with live polling and stdout output</li>
+      <li>Workflow visualization with node cards and connectors</li>
+      <li>Workflow approvals with push notifications</li>
+      <li>AI assistant with 61 local tools for natural-language AAP interaction</li>
+      <li>MCP integration for extended tool coverage</li>
+      <li>Available on Android and Desktop</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.leogallego.ansiblejane.desktop</launchable>
+
+  <url type="homepage">https://github.com/leogallego/ansible-jane</url>
+  <url type="bugtracker">https://github.com/leogallego/ansible-jane/issues</url>
+  <url type="vcs-browser">https://github.com/leogallego/ansible-jane</url>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#e8f5e9</color>
+    <color type="primary" scheme_preference="dark">#1b5e20</color>
+  </branding>
+
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-chat">moderate</content_attribute>
+  </content_rating>
+
+  <requires>
+    <internet>always</internet>
+  </requires>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+
+  <releases>
+    <release version="0.8.4-alpha.6" date="2026-06-18">
+      <url type="details">https://github.com/leogallego/ansible-jane/releases/tag/v0.8.4-alpha.6</url>
+    </release>
+  </releases>
+</component>
