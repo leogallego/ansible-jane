@@ -239,7 +239,7 @@ class ToolRouter(
             "get_project" to setOf("projects_retrieve"),
             "list_execution_environments" to setOf("execution_environments_list"),
             "list_notification_templates" to setOf("notification_templates_list"),
-            "get_settings" to setOf("settings_list", "settings_getter"),
+            "get_settings" to setOf("settings_list", "settings_getter", "settings_retrieve"),
             "get_config" to setOf("config_retrieve"),
             // Users & RBAC
             "list_organizations" to setOf("organizations_list"),
@@ -269,9 +269,6 @@ class ToolRouter(
             "list_eda_event_streams" to setOf("event_streams_list"),
             "list_eda_users" to setOf("users_list"),
         )
-
-        private val MCP_TOOLS_WITH_LOCAL_OVERLAP: Set<String> =
-            OVERLAP_MAPPING.values.flatten().toSet()
 
         private val WRITE_ACTIONS = Tool.WRITE_SUFFIXES
 
