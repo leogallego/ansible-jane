@@ -45,6 +45,7 @@ class SettingsViewModel(
     private val manifestRepository: IToolManifestRepository,
     private val instanceDiscovery: InstanceDiscovery,
     private val toolRouter: ToolRouter,
+    private val httpClient: HttpClient,
     private val json: Json
 ) : ViewModel() {
 
