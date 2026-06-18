@@ -72,6 +72,13 @@ enum class KnownProvider(
         requiresApiKey = true,
         urlEditable = false
     ),
+    ABBENAY(
+        displayName = "Abbenay",
+        baseUrl = "http://localhost:8787/v1",
+        defaultModels = emptyList(),
+        requiresApiKey = false,
+        urlEditable = true
+    ),
     CUSTOM(
         displayName = "Custom",
         baseUrl = "",
