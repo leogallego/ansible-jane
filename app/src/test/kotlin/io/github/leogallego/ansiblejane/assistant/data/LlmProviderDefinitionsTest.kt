@@ -39,6 +39,11 @@ class LlmProviderDefinitionsTest {
     }
 
     @Test
+    fun `SHOULD return ABBENAY WHEN url matches Abbenay GIVEN localhost url`() {
+        assertEquals(KnownProvider.ABBENAY, KnownProvider.fromUrl("http://localhost:8787/v1"))
+    }
+
+    @Test
     fun `SHOULD return CUSTOM WHEN url is unknown GIVEN arbitrary url`() {
         assertEquals(KnownProvider.CUSTOM, KnownProvider.fromUrl("https://my-server.com/v1"))
     }
@@ -56,7 +61,7 @@ class LlmProviderDefinitionsTest {
     @Test
     fun `SHOULD have non-empty defaultModels WHEN provider is known GIVEN all known providers`() {
         KnownProvider.entries
-            .filter { it != KnownProvider.CUSTOM }
+            .filter { it != KnownProvider.CUSTOM && it != KnownProvider.ABBENAY }
             .forEach { provider ->
                 assert(provider.defaultModels.isNotEmpty()) {
                     "${provider.displayName} should have default models"
