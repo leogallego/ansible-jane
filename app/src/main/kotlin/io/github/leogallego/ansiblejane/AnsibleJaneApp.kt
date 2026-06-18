@@ -35,6 +35,9 @@ class AnsibleJaneApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        io.github.leogallego.ansiblejane.assistant.engine.DebugLog.enabled =
+            BuildConfig.DEBUG || BuildConfig.VERSION_NAME.contains("-")
+
         startKoin {
             androidLogger()
             androidContext(this@AnsibleJaneApp)

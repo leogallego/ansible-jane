@@ -17,9 +17,13 @@ import io.github.leogallego.ansiblejane.presentation.auth.AuthViewModel
 import io.github.leogallego.ansiblejane.ui.settings.SettingsScreen
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
+import io.github.leogallego.ansiblejane.assistant.engine.DebugLog
 import org.koin.core.context.startKoin
 
 fun main() = application {
+    DebugLog.enabled = AppVersion.name.contains("-") ||
+        System.getProperty("ansiblejane.debug") != null
+
     startKoin {
         modules(
             desktopPlatformModule,
