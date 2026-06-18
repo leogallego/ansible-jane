@@ -161,7 +161,7 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           cd composeApp/build/compose/binaries/main/app
-          tar czf "$GITHUB_WORKSPACE/ansible-jane-desktop-linux-${VERSION}.tar.gz" "Ansible Jane"
+          tar czf "$GITHUB_WORKSPACE/ansible-jane-desktop-linux-${VERSION}.tar.gz" ansible-jane
 
       - name: Upload tarball artifact
         uses: actions/upload-artifact@v4
@@ -199,7 +199,7 @@ jobs:
 
       - name: Create AppDir structure
         run: |
-          APP_NAME="Ansible Jane"
+          APP_NAME="ansible-jane"
           mkdir -p AppDir/usr/lib
           mkdir -p AppDir/usr/share/applications
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
@@ -228,7 +228,7 @@ jobs:
           HERE=${SELF%/*}
           export PATH="${HERE}/usr/lib/bin:${PATH}"
           export LD_LIBRARY_PATH="${HERE}/usr/lib/lib/runtime/lib:${LD_LIBRARY_PATH}"
-          exec "${HERE}/usr/lib/bin/Ansible Jane" "$@"
+          exec "${HERE}/usr/lib/bin/ansible-jane" "$@"
           APPRUN
           chmod +x AppDir/AppRun
 

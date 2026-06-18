@@ -19,7 +19,7 @@ modules:
     build-commands:
       - tar xf ansible-jane-desktop-linux-*.tar.gz
       - mkdir -p /app/lib/ansible-jane
-      - cp -r "Ansible Jane"/. /app/lib/ansible-jane/
+      - cp -r ansible-jane/. /app/lib/ansible-jane/
 
       - install -Dm755 ansible-jane-wrapper.sh /app/bin/ansible-jane-wrapper
 
@@ -52,4 +52,4 @@ modules:
         commands:
           - export PATH="/app/lib/ansible-jane/bin:${PATH}"
           - export LD_LIBRARY_PATH="/app/lib/ansible-jane/lib/runtime/lib:${LD_LIBRARY_PATH}"
-          - exec "/app/lib/ansible-jane/bin/Ansible Jane" "$@"
+          - exec /app/lib/ansible-jane/bin/ansible-jane "$@"

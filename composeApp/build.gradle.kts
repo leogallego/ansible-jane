@@ -152,7 +152,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm)
-            packageName = "Ansible Jane"
+            packageName = "ansible-jane"
             packageVersion = providers.gradleProperty("appVersionName").get().substringBefore("-")
 
             macOS {
