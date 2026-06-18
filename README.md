@@ -59,7 +59,12 @@ A multiplatform app (Android and Desktop) for managing [Ansible Automation Platf
 
 ## Screenshots
 
-*Coming soon*
+<p align="center">
+  <img src="site/img/screen-dashboard.png" alt="Dashboard" width="24%">
+  <img src="site/img/screen-templates.png" alt="Templates" width="24%">
+  <img src="site/img/screen-activity.png" alt="Activity" width="24%">
+  <img src="site/img/screen-jane.png" alt="Jane AI Assistant" width="24%">
+</p>
 
 ## Tech Stack
 
