@@ -164,7 +164,7 @@ compose.desktop {
             }
             linux {
                 iconFile.set(project.file("icon.png"))
-                modules("jdk.security.auth")
+                modules("jdk.security.auth", "jdk.unsupported")
             }
         }
     }

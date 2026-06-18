@@ -63,7 +63,7 @@ jobs:
           mv app/build/outputs/apk/release/app-release.apk "ansible-jane-${VERSION}.apk"
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: apk
           path: ansible-jane-*.apk
@@ -103,7 +103,7 @@ jobs:
           mv composeApp/build/compose/binaries/main/deb/*.deb "ansible-jane-desktop-linux-${VERSION}.deb"
 
       - name: Upload DEB + JAR artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-linux-deb
           path: |
@@ -140,7 +140,7 @@ jobs:
           mv composeApp/build/compose/binaries/main/rpm/*.rpm "ansible-jane-desktop-linux-${VERSION}.rpm"
 
       - name: Upload RPM artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-linux-rpm
           path: ansible-jane-desktop-linux-*.rpm
@@ -173,7 +173,7 @@ jobs:
           tar czf "$GITHUB_WORKSPACE/ansible-jane-desktop-linux-${VERSION}.tar.gz" ansible-jane
 
       - name: Upload tarball artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-linux-tar
           path: ansible-jane-desktop-linux-*.tar.gz
@@ -247,13 +247,14 @@ jobs:
           ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir "ansible-jane-desktop-linux-${VERSION}.AppImage"
 
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-linux-appimage
           path: ansible-jane-desktop-linux-*.AppImage
 
   desktop-linux-flatpak:
     name: Build Flatpak
+    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
     needs: [desktop-linux-tar]
     runs-on: ubuntu-latest
     steps:
@@ -263,7 +264,7 @@ jobs:
           ref: refs/tags/${{ env.RELEASE_TAG }}
 
       - name: Download Linux tarball
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: desktop-linux-tar
 
@@ -290,7 +291,7 @@ jobs:
           flatpak build-bundle repo "../ansible-jane-desktop-linux-${VERSION}.flatpak" io.github.leogallego.ansiblejane
 
       - name: Upload Flatpak artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-linux-flatpak
           path: ansible-jane-desktop-linux-*.flatpak
@@ -332,7 +333,7 @@ jobs:
           mv composeApp/build/compose/binaries/main/dmg/*.dmg "ansible-jane-desktop-macos-${VERSION}.dmg"
 
       - name: Upload macOS artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-macos
           path: ansible-jane-desktop-macos-*.dmg
@@ -364,7 +365,7 @@ jobs:
           mv composeApp/build/compose/binaries/main/msi/*.msi "ansible-jane-desktop-windows-${VERSION}.msi"
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-windows
           path: ansible-jane-desktop-windows-*.msi
@@ -382,17 +383,17 @@ jobs:
           fetch-depth: 0
 
       - name: Download required artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           merge-multiple: true
-          pattern: "apk|desktop-linux-deb|desktop-linux-rpm|desktop-macos|desktop-windows"
+          pattern: "apk|desktop-linux-deb|desktop-linux-rpm|desktop-macos|desktop-windows|desktop-linux-flatpak"
 
       - name: Download optional artifacts
         continue-on-error: true
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           merge-multiple: true
-          pattern: "desktop-linux-tar|desktop-linux-appimage|desktop-linux-flatpak"
+          pattern: "desktop-linux-tar|desktop-linux-appimage"
 
       - name: Extract changelog
         run: |
@@ -404,7 +405,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v4
+        uses: softprops/action-gh-release@v3
         with:
           name: Release ${{ env.RELEASE_TAG }}
           body_path: changelog.txt
