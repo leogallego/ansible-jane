@@ -128,6 +128,12 @@ See `skills/README.md` for sources and licenses.
 
 - **MUST** create all temporary files and directories inside the project directory (e.g., `.tmp/`). NEVER use `/tmp`, `$TMPDIR`, or any system temp directory. Clean up temp files when done.
 
+## Sandbox & Gradle Rules
+
+- **MUST** use `--no-daemon` on ALL Gradle commands when running inside the Claude Code sandbox. The sandbox uses a PID namespace — Gradle daemons acquire `~/.gradle/caches/*.lock` files with sandbox PIDs that become stale and unreleasable from either side, blocking all subsequent Gradle operations. Fix requires manual host-side cleanup: `find ~/.gradle -name "*.lock" -type f -delete`.
+- **NEVER** launch long-running Gradle processes (e.g., `composeApp:run`) from the sandbox without `--no-daemon`. Prefer asking the user to run the app from their terminal instead.
+- If Gradle fails with `LockTimeoutException` referencing a PID that doesn't exist, the locks are stale from a previous sandbox session. Ask the user to run: `find ~/.gradle -name "*.lock" -type f -delete`
+
 ## Reference Projects
 
 - **Kai 9000** — source code is available at `tmp/Kai/`. When the user refers to "Kai", look at this directory for architecture, UI patterns, and implementation reference. It's a KMP project; main code is in `tmp/Kai/composeApp/src/commonMain/`.
