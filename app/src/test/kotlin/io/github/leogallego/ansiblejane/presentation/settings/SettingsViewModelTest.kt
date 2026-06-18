@@ -228,7 +228,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `init SHOULD load pre-existing disabled tools from repository`() = runTest {
-        fakeAssistantRepo.savedDisabledTools = setOf("LOCAL:list_hosts", "MCP:aap:controller.jobs_list")
+        fakeAssistantRepo.savedDisabledTools = setOf("LOCAL:list_hosts", "MCP:aap:jobs_list")
         val tools = listOf(fakeLocalTool("list_hosts"), fakeLocalTool("list_inventories"))
         val viewModel = createViewModel(localTools = tools)
 
@@ -271,8 +271,8 @@ class SettingsViewModelTest {
     @Test
     fun `toggleToolEnabled SHOULD use MCP prefix for MCP tools`() = runTest {
         val viewModel = createViewModel()
-        viewModel.toggleToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", false)
-        assertTrue("MCP:aap:controller.hosts_list" in fakeAssistantRepo.savedDisabledTools)
+        viewModel.toggleToolEnabled("hosts_list", ToolSource.MCP, "aap", false)
+        assertTrue("MCP:aap:hosts_list" in fakeAssistantRepo.savedDisabledTools)
     }
 
     @Test
