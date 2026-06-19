@@ -4,7 +4,6 @@ import io.github.leogallego.ansiblejane.TestOnly
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.model.McpServerConfig
@@ -423,11 +422,16 @@ class ToolRouter(
             } else true
             if (!passesReadOnly) continue
 
-            val toolsetCategories = (tool as? McpTool)?.toolset?.let { TOOLSET_CATEGORY_MAP[it] }
+            val toolToolset = tool.toolset
+            val toolsetCategories = toolToolset?.let { TOOLSET_CATEGORY_MAP[it] }
             when {
                 toolsetCategories != null && matchedCategories.any { it in toolsetCategories } ->
                     routedMcp.add(tool)
-                toolsetCategories == null ->
+                toolToolset != null && toolsetCategories == null -> {
+                    Log.d(TAG, "FILTER: unknown toolset '${toolToolset}' for ${tool.spec.name}, treating as unrouted")
+                    unroutedMcp.add(tool)
+                }
+                else ->
                     unroutedMcp.add(tool)
             }
         }
