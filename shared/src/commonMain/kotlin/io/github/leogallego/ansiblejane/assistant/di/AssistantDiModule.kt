@@ -126,16 +126,6 @@ val sharedAssistantModule = module {
     single { ListEdaEventStreamsLocalTool(get()) } bind LocalTool::class
     single { ListEdaUsersLocalTool(get()) } bind LocalTool::class
 
-    // Hub
-    single { ListHubCollectionsLocalTool(get(), get()) } bind LocalTool::class
-    single { ListHubNamespacesLocalTool(get(), get()) } bind LocalTool::class
-    single { ListHubApprovalsLocalTool(get(), get()) } bind LocalTool::class
-    single { ListHubEeRepositoriesLocalTool(get(), get()) } bind LocalTool::class
-    single { ListHubEeRegistriesLocalTool(get(), get()) } bind LocalTool::class
-    single { ListHubUsersLocalTool(get(), get()) } bind LocalTool::class
-    single { ListHubGroupsLocalTool(get(), get()) } bind LocalTool::class
-    single { ListHubRolesLocalTool(get(), get()) } bind LocalTool::class
-
     // Meta
     single { ListToolsLocalTool { get<ToolRouter>().getAllRegisteredTools() } } bind LocalTool::class
 }

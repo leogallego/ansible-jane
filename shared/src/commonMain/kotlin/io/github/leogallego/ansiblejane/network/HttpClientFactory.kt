@@ -20,7 +20,6 @@ private data class ClientGroup(
     val controller: AapApiClient,
     val eda: EdaApiClient? = null,
     val platform: PlatformApiClient? = null,
-    val hub: HubApiClient? = null,
     val httpClients: List<HttpClient> = emptyList()
 )
 
@@ -95,32 +94,6 @@ class HttpClientFactory(
             httpClients = existingClients + newClients
         )
         platformClient
-    }
-
-    override fun getHubApiService(): HubApiClient = synchronized(this) {
-        val instance = tokenManager.activeInstance.value
-            ?: throw IllegalStateException("No active AAP instance. Please log in first.")
-
-        val cached = clientCache[instance.id]
-        if (cached?.hub != null) return@synchronized cached.hub
-
-        val client = buildClient(instance.baseUrl, "/api/galaxy/", instance.trustSelfSigned, instance.id)
-        val hubClient = HubApiClient(client)
-
-        val existingClients = cached?.httpClients ?: emptyList()
-        val newClients = mutableListOf(client)
-        val controllerClient = cached?.controller ?: run {
-            val apiVersion = resolveApiVersion(instance.apiVersion)
-            val ctrlHttp = buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id)
-            newClients.add(ctrlHttp)
-            AapApiClient(ctrlHttp)
-        }
-        val base = cached ?: ClientGroup(controller = controllerClient)
-        clientCache[instance.id] = base.copy(
-            hub = hubClient,
-            httpClients = existingClients + newClients
-        )
-        hubClient
     }
 
     override fun evictInstance(instanceId: String) {
