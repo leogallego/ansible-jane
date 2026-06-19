@@ -8,13 +8,13 @@ import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import kotlinx.serialization.json.JsonObject
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 
 @OptIn(TestOnly::class)
 class ToolRouterTest {
@@ -61,7 +61,7 @@ class ToolRouterTest {
         override suspend fun execute(args: JsonObject) = ToolResult(success = true)
     }
 
-    @Before
+    @BeforeTest
     fun setup() {
         router = ToolRouter()
     }
@@ -500,8 +500,7 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("show me all assets", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("Non-AAP tool with query overlap should be included",
-            "query_cmdb_assets" in names)
+        assertTrue("query_cmdb_assets" in names, "Non-AAP tool with query overlap should be included")
     }
 
     @Test
@@ -515,9 +514,8 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("show me all hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("AAP tool should be included", "controller.hosts_list" in names)
-        assertFalse("Non-AAP tool with no query overlap should be excluded by cherry-pick",
-            "query_cmdb_assets" in names)
+        assertTrue("controller.hosts_list" in names, "AAP tool should be included")
+        assertFalse("query_cmdb_assets" in names, "Non-AAP tool with no query overlap should be excluded by cherry-pick")
     }
 
     @Test
@@ -530,8 +528,7 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("show me all hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertFalse("Non-AAP tool should be excluded despite list bonus (no word overlap)",
-            "list_network_devices" in names)
+        assertFalse("list_network_devices" in names, "Non-AAP tool should be excluded despite list bonus (no word overlap)")
     }
 
     @Test
@@ -544,8 +541,7 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("list hosts and network devices", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("Non-AAP tool with word overlap should be included",
-            "list_network_devices" in names)
+        assertTrue("list_network_devices" in names, "Non-AAP tool with word overlap should be included")
     }
 
     @Test
@@ -559,10 +555,8 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("show me hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("hosts_list should be included for host query",
-            "hosts_list" in names)
-        assertFalse("jobs_list should be excluded by toolset category mismatch",
-            "jobs_list" in names)
+        assertTrue("hosts_list" in names, "hosts_list should be included for host query")
+        assertFalse("jobs_list" in names, "jobs_list should be excluded by toolset category mismatch")
     }
 
     @Test
@@ -576,10 +570,8 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("hosts_list should be included for host query",
-            "hosts_list" in names)
-        assertFalse("hosts_job_host_summaries_list should be excluded despite name overlap",
-            "hosts_job_host_summaries_list" in names)
+        assertTrue("hosts_list" in names, "hosts_list should be included for host query")
+        assertFalse("hosts_job_host_summaries_list" in names, "hosts_job_host_summaries_list should be excluded despite name overlap")
     }
 
     // --- Mixed local + MCP tests ---
@@ -1229,7 +1221,7 @@ class ToolRouterTest {
 
         assertFalse("hosts_list" in names)
         assertTrue("groups_list" in names)
-        assertFalse("users_list should be excluded by category", "users_list" in names)
+        assertFalse("users_list" in names, "users_list should be excluded by category")
     }
 
     @Test
@@ -1296,8 +1288,8 @@ class ToolRouterTest {
 
         router.setToolEnabled("users_list", ToolSource.MCP, "aap", false)
 
-        assertFalse("auto-disabled overlap", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
-        assertFalse("manually disabled", router.isToolEnabled("users_list", ToolSource.MCP, "aap"))
+        assertFalse(router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"), "auto-disabled overlap")
+        assertFalse(router.isToolEnabled("users_list", ToolSource.MCP, "aap"), "manually disabled")
 
         val result = router.getToolsForQuery("show hosts and users").tools
         val names = result.map { it.spec.name }
@@ -1313,7 +1305,7 @@ class ToolRouterTest {
 
         router.applyPersistedState(setOf("INVALID:list_hosts", "list_hosts", ":list_hosts"), emptySet())
 
-        assertTrue("valid tool unaffected by invalid keys", router.isToolEnabled("list_hosts", ToolSource.LOCAL))
+        assertTrue(router.isToolEnabled("list_hosts", ToolSource.LOCAL), "valid tool unaffected by invalid keys")
     }
 
     @Test
@@ -1348,8 +1340,8 @@ class ToolRouterTest {
 
         val result = router.getToolsForQuery("show my hosts")
 
-        assertTrue("category should match", result.categoryMatched)
-        assertTrue("tools should be empty", result.tools.isEmpty())
+        assertTrue(result.categoryMatched, "category should match")
+        assertTrue(result.tools.isEmpty(), "tools should be empty")
     }
 
     // --- getCategoryForTool ---
@@ -1384,13 +1376,13 @@ class ToolRouterTest {
     @Test
     fun `SHOULD preserve user re-enable of auto-disabled MCP tool after re-registration`() {
         router.registerLocalTools(listOf(localTool("list_hosts")))
-        assertFalse("auto-disabled", router.isToolEnabled("hosts_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("hosts_list", ToolSource.MCP), "auto-disabled")
 
         router.setToolEnabled("hosts_list", ToolSource.MCP, "aap", true)
-        assertTrue("user re-enabled", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
+        assertTrue(router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"), "user re-enabled")
 
         router.registerLocalTools(listOf(localTool("list_hosts")))
-        assertTrue("survives re-registration", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
+        assertTrue(router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"), "survives re-registration")
     }
 
     @Test
@@ -1402,10 +1394,10 @@ class ToolRouterTest {
         assertFalse(router.isAutoDisabled("users_list", ToolSource.MCP))
 
         router.setToolEnabled("hosts_list", ToolSource.MCP, "aap", true)
-        assertTrue("userEnabled overrides autoDisabled", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
+        assertTrue(router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"), "userEnabled overrides autoDisabled")
 
         router.setToolEnabled("users_list", ToolSource.MCP, "aap", false)
-        assertFalse("userDisabled takes effect", router.isToolEnabled("users_list", ToolSource.MCP, "aap"))
+        assertFalse(router.isToolEnabled("users_list", ToolSource.MCP, "aap"), "userDisabled takes effect")
     }
 
     @Test
@@ -1418,8 +1410,8 @@ class ToolRouterTest {
             enabledOverrides = setOf("MCP:aap:hosts_list")
         )
 
-        assertTrue("enabledOverride overrides autoDisabled", router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"))
-        assertFalse("userDisabled applied", router.isToolEnabled("users_list", ToolSource.MCP, "aap"))
+        assertTrue(router.isToolEnabled("hosts_list", ToolSource.MCP, "aap"), "enabledOverride overrides autoDisabled")
+        assertFalse(router.isToolEnabled("users_list", ToolSource.MCP, "aap"), "userDisabled applied")
     }
 
     @Test
@@ -1436,8 +1428,8 @@ class ToolRouterTest {
     fun `getCategoryForTool SHOULD cover all local tool names in all categories`() {
         for (name in ALL_LOCAL_TOOL_NAMES) {
             assertNotNull(
-                "Tool '$name' should have a category",
-                ToolRouter.getCategoryForTool(name)
+                ToolRouter.getCategoryForTool(name),
+                "Tool '$name' should have a category"
             )
         }
     }
@@ -1452,8 +1444,8 @@ class ToolRouterTest {
             .filter { prefixPattern.containsMatchIn(it) }
 
         assertTrue(
-            "OVERLAP_MAPPING should not contain prefixed names but found: $prefixedValues",
-            prefixedValues.isEmpty()
+            prefixedValues.isEmpty(),
+            "OVERLAP_MAPPING should not contain prefixed names but found: $prefixedValues"
         )
     }
 
@@ -1464,8 +1456,8 @@ class ToolRouterTest {
             .filter { it.endsWith("_read") }
 
         assertTrue(
-            "OVERLAP_MAPPING should use _retrieve not _read but found: $readSuffixed",
-            readSuffixed.isEmpty()
+            readSuffixed.isEmpty(),
+            "OVERLAP_MAPPING should use _retrieve not _read but found: $readSuffixed"
         )
     }
 
@@ -1473,8 +1465,8 @@ class ToolRouterTest {
     fun `OVERLAP_MAPPING SHOULD cover all local tools`() {
         val missing = ALL_LOCAL_TOOL_NAMES.filter { it !in ToolRouter.OVERLAP_MAPPING }
         assertTrue(
-            "Every local tool should have an OVERLAP_MAPPING entry but missing: $missing",
-            missing.isEmpty()
+            missing.isEmpty(),
+            "Every local tool should have an OVERLAP_MAPPING entry but missing: $missing"
         )
     }
 
@@ -1500,8 +1492,8 @@ class ToolRouterTest {
             .map { "${it.key} -> ${it.value}" }
 
         assertTrue(
-            "Unexpected duplicate MCP names in OVERLAP_MAPPING: $unexpectedDuplicates",
-            unexpectedDuplicates.isEmpty()
+            unexpectedDuplicates.isEmpty(),
+            "Unexpected duplicate MCP names in OVERLAP_MAPPING: $unexpectedDuplicates"
         )
     }
 
@@ -1572,8 +1564,8 @@ class ToolRouterTest {
         val notFound = verifiable.filter { it !in verifiedToolNames }
 
         assertTrue(
-            "OVERLAP_MAPPING values not matching verified server tools: $notFound",
-            notFound.isEmpty()
+            notFound.isEmpty(),
+            "OVERLAP_MAPPING values not matching verified server tools: $notFound"
         )
     }
 }

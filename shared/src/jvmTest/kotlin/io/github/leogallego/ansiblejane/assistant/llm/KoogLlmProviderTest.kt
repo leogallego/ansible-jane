@@ -14,18 +14,18 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class KoogLlmProviderTest {
 
     private lateinit var server: MockWebServer
     private lateinit var provider: KoogLlmProvider
 
-    @Before
+    @BeforeTest
     fun setup() {
         server = MockWebServer()
         server.start()
@@ -38,7 +38,7 @@ class KoogLlmProviderTest {
         provider = KoogLlmProvider(config)
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         provider.close()
         server.shutdown()

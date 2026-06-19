@@ -150,7 +150,7 @@ class KoogLlmProvider(
         private const val TAG = "KoogLlmProvider"
     }
 
-    fun mapException(e: Throwable): Throwable = when (e) {
+    internal fun mapException(e: Throwable): Throwable = when (e) {
         is LlmAuthException, is LlmRateLimitException,
         is LlmServerException, is LlmTimeoutException -> e
         is LLMClientException -> {
