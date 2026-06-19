@@ -7,7 +7,9 @@ import io.github.leogallego.ansiblejane.data.ControllerReadOnlyRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListWorkflowNodesLocalTool(
     private val repository: ControllerReadOnlyRepository
@@ -35,9 +37,9 @@ class ListWorkflowNodesLocalTool(
             pageSize = pageSize,
             workflowJobTemplate = args.workflowJobTemplate
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "workflow_nodes" to networkJson.encodeToString(result.items)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("workflow_nodes", networkJson.encodeToJsonElement(result.items))
+        }.toString()
     }
 }

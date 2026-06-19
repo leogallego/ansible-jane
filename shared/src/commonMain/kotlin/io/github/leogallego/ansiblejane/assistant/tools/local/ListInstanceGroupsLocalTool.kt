@@ -7,7 +7,9 @@ import io.github.leogallego.ansiblejane.data.InfrastructureRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListInstanceGroupsLocalTool(
     private val repository: InfrastructureRepository
@@ -31,9 +33,9 @@ class ListInstanceGroupsLocalTool(
             page = args.page.coerceAtLeast(1),
             pageSize = pageSize
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "instance_groups" to networkJson.encodeToString(result.instanceGroups)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("instance_groups", networkJson.encodeToJsonElement(result.instanceGroups))
+        }.toString()
     }
 }

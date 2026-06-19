@@ -7,7 +7,9 @@ import io.github.leogallego.ansiblejane.data.ControllerReadOnlyRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListCredentialTypesLocalTool(
     private val repository: ControllerReadOnlyRepository
@@ -34,9 +36,9 @@ class ListCredentialTypesLocalTool(
             pageSize = pageSize,
             search = args.search
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "credential_types" to networkJson.encodeToString(result.items)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("credential_types", networkJson.encodeToJsonElement(result.items))
+        }.toString()
     }
 }

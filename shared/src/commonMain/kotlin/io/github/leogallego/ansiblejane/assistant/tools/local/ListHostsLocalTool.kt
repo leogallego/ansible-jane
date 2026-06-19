@@ -7,7 +7,9 @@ import io.github.leogallego.ansiblejane.data.HostRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListHostsLocalTool(
     private val repository: HostRepository
@@ -45,9 +47,9 @@ class ListHostsLocalTool(
             )
         }.getOrThrow()
 
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "hosts" to networkJson.encodeToString(result.hosts)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("hosts", networkJson.encodeToJsonElement(result.hosts))
+        }.toString()
     }
 }

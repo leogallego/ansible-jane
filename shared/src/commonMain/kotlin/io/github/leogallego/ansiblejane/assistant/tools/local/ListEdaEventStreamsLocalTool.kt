@@ -7,7 +7,9 @@ import io.github.leogallego.ansiblejane.data.EdaReadOnlyRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListEdaEventStreamsLocalTool(
     private val repository: EdaReadOnlyRepository
@@ -35,9 +37,9 @@ class ListEdaEventStreamsLocalTool(
             pageSize = pageSize,
             name = args.name
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "event_streams" to networkJson.encodeToString(result.items)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("event_streams", networkJson.encodeToJsonElement(result.items))
+        }.toString()
     }
 }

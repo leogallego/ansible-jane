@@ -103,16 +103,19 @@ class ToolExecutor(
         fun capResultArray(data: String): String {
             val parsed = try { json.parseToJsonElement(data) } catch (_: Exception) { return data }
             if (parsed !is JsonObject) return data
-            val results = parsed["results"]
-            if (results !is JsonArray || results.size <= MAX_ARRAY_ITEMS) return data
-            val total = parsed["count"]?.jsonPrimitive?.intOrNull ?: results.size
+            val (arrayKey, results) = parsed.entries
+                .firstOrNull { it.value is JsonArray } ?: return data
+            val arrayValue = results as JsonArray
+            if (arrayValue.size <= MAX_ARRAY_ITEMS) return data
+            val total = parsed["count"]?.jsonPrimitive?.intOrNull ?: arrayValue.size
             val capped = buildJsonObject {
                 parsed.forEach { (k, v) ->
-                    when (k) {
-                        "results" -> put("results", buildJsonArray {
-                            results.take(MAX_ARRAY_ITEMS).forEach { add(it) }
+                    if (k == arrayKey) {
+                        put(k, buildJsonArray {
+                            arrayValue.take(MAX_ARRAY_ITEMS).forEach { add(it) }
                         })
-                        else -> put(k, v)
+                    } else {
+                        put(k, v)
                     }
                 }
                 put("_showing", MAX_ARRAY_ITEMS)

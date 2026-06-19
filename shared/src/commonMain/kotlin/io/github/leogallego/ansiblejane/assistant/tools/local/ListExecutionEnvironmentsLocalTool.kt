@@ -7,7 +7,9 @@ import io.github.leogallego.ansiblejane.data.ProjectRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListExecutionEnvironmentsLocalTool(
     private val repository: ProjectRepository
@@ -31,9 +33,9 @@ class ListExecutionEnvironmentsLocalTool(
             page = args.page.coerceAtLeast(1),
             pageSize = pageSize
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "execution_environments" to networkJson.encodeToString(result.executionEnvironments)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("execution_environments", networkJson.encodeToJsonElement(result.executionEnvironments))
+        }.toString()
     }
 }
