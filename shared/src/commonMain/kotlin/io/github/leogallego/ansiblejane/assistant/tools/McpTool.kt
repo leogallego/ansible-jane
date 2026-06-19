@@ -27,7 +27,7 @@ class McpTool(
         fun forTest(name: String, serverLabel: String, toolset: String? = null): McpTool =
             McpTool(
                 client = null,
-                mcpToolDef = McpToolDefinition(name, "[$serverLabel] $name"),
+                mcpToolDef = McpToolDefinition(name, name),
                 serverLabel = serverLabel,
                 toolset = toolset
             )

@@ -286,11 +286,11 @@ class ToolRouterTest {
     @Test
     fun `SHOULD exclude write MCP tools WHEN readOnly is true`() {
         val tools = listOf(
-            mcpTool("hosts_list"),
-            mcpTool("hosts_create"),
-            mcpTool("hosts_update"),
-            mcpTool("hosts_delete"),
-            mcpTool("inventories_list")
+            mcpToolWithToolset("hosts_list", toolset = "inventory_management"),
+            mcpToolWithToolset("hosts_create", toolset = "inventory_management"),
+            mcpToolWithToolset("hosts_update", toolset = "inventory_management"),
+            mcpToolWithToolset("hosts_delete", toolset = "inventory_management"),
+            mcpToolWithToolset("inventories_list", toolset = "inventory_management")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("list my hosts", listOf(readOnlyConfig)).tools
@@ -524,7 +524,7 @@ class ToolRouterTest {
     }
 
     @Test
-    fun `SHOULD include non-AAP MCP tool with list in name for any category query`() {
+    fun `SHOULD exclude non-AAP MCP tool with list bonus WHEN no query word overlap`() {
         val tools = listOf(
             mcpTool("list_network_devices", "netbox"),
         )
@@ -533,7 +533,21 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("show me all hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("Non-AAP tool with 'list' bonus should pass cherry-pick",
+        assertFalse("Non-AAP tool should be excluded despite list bonus (no word overlap)",
+            "list_network_devices" in names)
+    }
+
+    @Test
+    fun `SHOULD include non-AAP MCP tool with list in name WHEN query words overlap`() {
+        val tools = listOf(
+            mcpTool("list_network_devices", "netbox"),
+        )
+        router.registerMcpTools(tools)
+
+        val result = router.getToolsForQuery("list hosts and network devices", listOf(readWriteConfig)).tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("Non-AAP tool with word overlap should be included",
             "list_network_devices" in names)
     }
 
@@ -759,7 +773,7 @@ class ToolRouterTest {
     @Test
     fun `SHOULD match plurals via stemming - orgs matches USERS`() {
         router.registerLocalTools(emptyList())
-        router.registerMcpTools(listOf(mcpTool("organizations_list")))
+        router.registerMcpTools(listOf(mcpToolWithToolset("organizations_list", toolset = "user_management")))
 
         val result = router.getToolsForQuery("list orgs").tools
         assertTrue(result.isNotEmpty())
@@ -1189,9 +1203,9 @@ class ToolRouterTest {
     @Test
     fun `SHOULD not include disabled MCP tools in query results`() {
         val tools = listOf(
-            mcpTool("hosts_list"),
-            mcpTool("groups_list"),
-            mcpTool("users_list")
+            mcpToolWithToolset("hosts_list", toolset = "inventory_management"),
+            mcpToolWithToolset("groups_list", toolset = "inventory_management"),
+            mcpToolWithToolset("users_list", toolset = "user_management")
         )
         router.registerMcpTools(tools)
         router.setToolEnabled("hosts_list", ToolSource.MCP, "aap", false)
@@ -1201,6 +1215,7 @@ class ToolRouterTest {
 
         assertFalse("hosts_list" in names)
         assertTrue("groups_list" in names)
+        assertFalse("users_list should be excluded by category", "users_list" in names)
     }
 
     @Test
