@@ -4,7 +4,6 @@ import io.github.leogallego.ansiblejane.TestOnly
 import io.github.leogallego.ansiblejane.assistant.data.IAssistantRepository
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.McpTool
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.model.McpServerConfig
@@ -74,7 +73,6 @@ class ToolRouter(
 
     private enum class Category(
         val keywords: Set<String>,
-        val resourcePrefixes: Set<String>,
         val localToolNames: Set<String>
     ) {
         INVENTORY(
@@ -84,7 +82,6 @@ class ToolRouter(
                 "machine", "machines", "asset", "assets", "source", "sources",
                 "label", "labels", "tag", "tags", "summary", "summaries"
             ),
-            resourcePrefixes = setOf("hosts", "groups", "inventories", "constructed_inventories", "inventory_sources", "labels"),
             localToolNames = setOf(
                 "list_inventories", "list_hosts", "get_host_facts", "get_host_job_summaries",
                 "list_groups", "list_inventory_sources", "list_labels"
@@ -100,7 +97,6 @@ class ToolRouter(
                 "survey", "node", "nodes", "prompt", "variable", "variables",
                 "approval", "approvals", "approve", "deny", "pending"
             ),
-            resourcePrefixes = setOf("jobs", "job_templates", "workflow_jobs", "workflow_job_templates", "workflow_job_nodes", "workflow_job_template_nodes", "schedules", "ad_hoc_commands", "workflow_approvals"),
             localToolNames = setOf(
                 "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
                 "list_workflow_templates", "launch_workflow", "get_workflow_job",
@@ -117,7 +113,6 @@ class ToolRouter(
                 "monitoring", "healthy", "overview", "nodes", "workers",
                 "alive", "up", "down", "diagnostics", "group"
             ),
-            resourcePrefixes = setOf("dashboard", "ping", "config", "instances", "instance_groups", "metrics", "mesh_visualizer"),
             localToolNames = setOf("list_instances", "get_instance", "list_instance_groups", "ping", "get_mesh_topology")
         ),
         USERS(
@@ -128,7 +123,6 @@ class ToolRouter(
                 "application", "applications", "app", "apps", "access", "rbac",
                 "definition", "definitions", "oauth"
             ),
-            resourcePrefixes = setOf("users", "teams", "organizations", "roles", "role_definitions", "tokens", "applications"),
             localToolNames = setOf(
                 "list_organizations", "list_users", "list_teams",
                 "list_roles", "list_role_definitions",
@@ -142,7 +136,6 @@ class ToolRouter(
                 "password", "passwords", "key", "keys", "cert", "certs",
                 "type", "types"
             ),
-            resourcePrefixes = setOf("credentials", "credential_types", "credential_input_sources"),
             localToolNames = setOf("list_credentials", "get_credential", "list_credential_types")
         ),
         CONFIGURATION(
@@ -153,7 +146,6 @@ class ToolRouter(
                 "ees", "scm", "repo", "repos", "repository", "alert", "alerts",
                 "tag", "tags", "license", "subscription", "version"
             ),
-            resourcePrefixes = setOf("settings", "notification_templates", "notifications", "labels", "execution_environments", "projects", "config"),
             localToolNames = setOf(
                 "list_projects", "get_project", "list_execution_environments",
                 "list_notification_templates", "get_settings", "get_config"
@@ -166,7 +158,6 @@ class ToolRouter(
                 "stream", "streams", "decision", "driven", "rulebooks",
                 "activations", "events", "environment"
             ),
-            resourcePrefixes = setOf("audit_rules", "activations", "decision_environments", "rulebooks", "event_streams", "eda_credentials", "eda_credential_types", "eda_projects", "eda_users"),
             localToolNames = setOf(
                 "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
                 "list_eda_rulebooks", "list_eda_decision_environments",
@@ -180,11 +171,25 @@ class ToolRouter(
                 "service", "services", "sso", "saml", "ldap",
                 "identity", "authentication", "provider", "providers"
             ),
-            resourcePrefixes = setOf("organizations", "users", "teams", "role_definitions", "authenticators", "services", "service_clusters"),
             localToolNames = setOf(
                 "list_platform_organizations", "list_platform_users", "list_platform_teams",
                 "list_platform_role_definitions", "list_authenticators",
                 "list_platform_services", "list_service_clusters"
+            )
+        ),
+        HUB(
+            keywords = setOf(
+                "hub", "galaxy", "collection", "collections", "namespace", "namespaces",
+                "registry", "registries", "certified", "validated", "published",
+                "container", "image", "images",
+                "approval", "approvals",
+                "role", "roles",
+                "ee", "execution", "environment"
+            ),
+            localToolNames = setOf(
+                "list_hub_collections", "list_hub_namespaces", "list_hub_approvals",
+                "list_hub_ee_repositories", "list_hub_ee_registries",
+                "list_hub_users", "list_hub_groups", "list_hub_roles"
             )
         );
 
@@ -196,72 +201,88 @@ class ToolRouter(
     companion object {
         private const val TAG = "ToolRouter"
 
+        // MCP tool names use unprefixed operationIds from the OpenAPI spec.
+        // Verified against aap-mcp-server (2026-06-18): no controller./eda./gateway. prefix on wire.
+        // Action suffix is _retrieve (not _read) per OpenAPI convention.
         val OVERLAP_MAPPING = mapOf(
-            "list_job_templates" to setOf("controller.job_templates_list"),
-            "launch_job" to setOf("controller.job_templates_launch_create"),
-            "get_job" to setOf("controller.jobs_read"),
-            "get_job_stdout" to setOf("controller.jobs_stdout_read"),
-            "list_jobs" to setOf("controller.jobs_list"),
-            "list_workflow_templates" to setOf("controller.workflow_job_templates_list"),
-            "launch_workflow" to setOf("controller.workflow_job_templates_launch_create"),
-            "get_workflow_job" to setOf("controller.workflow_jobs_read"),
-            "list_inventories" to setOf("controller.inventories_list"),
-            "list_hosts" to setOf("controller.hosts_list"),
-            "get_host_facts" to setOf("controller.hosts_ansible_facts_read"),
-            "list_schedules" to setOf("controller.schedules_list"),
-            "toggle_schedule" to setOf("controller.schedules_partial_update", "controller.schedules_update"),
-            "list_eda_audit_rules" to setOf("eda.audit_rules_list"),
-            "list_instances" to setOf("controller.instances_list"),
-            "get_instance" to setOf("controller.instances_read"),
-            "list_instance_groups" to setOf("controller.instance_groups_list"),
-            "ping" to setOf("controller.ping_read"),
-            "get_mesh_topology" to setOf("controller.mesh_visualizer_read"),
-            "list_credentials" to setOf("controller.credentials_list"),
-            "get_credential" to setOf("controller.credentials_read"),
-            "list_projects" to setOf("controller.projects_list"),
-            "get_project" to setOf("controller.projects_read"),
-            "list_execution_environments" to setOf("controller.execution_environments_list"),
-            "list_eda_activations" to setOf("eda.activations_list"),
-            "get_eda_activation" to setOf("eda.activations_read"),
-            "list_organizations" to setOf("controller.organizations_list"),
-            "list_users" to setOf("controller.users_list"),
-            "list_teams" to setOf("controller.teams_list"),
-            "list_roles" to setOf("controller.roles_list"),
-            "list_role_definitions" to setOf("controller.role_definitions_list"),
-            "list_groups" to setOf("controller.groups_list"),
-            "list_inventory_sources" to setOf("controller.inventory_sources_list"),
-            "list_labels" to setOf("controller.labels_list"),
-            "get_host_job_summaries" to setOf("controller.hosts_job_host_summaries_list"),
-            "list_credential_types" to setOf("controller.credential_types_list"),
-            "list_notification_templates" to setOf("controller.notification_templates_list"),
-            "list_applications" to setOf("controller.applications_list"),
-            "list_tokens" to setOf("controller.tokens_list"),
-            "get_settings" to setOf("controller.settings_list"),
-            "get_config" to setOf("controller.config_read"),
-            "list_workflow_nodes" to setOf("controller.workflow_job_template_nodes_list"),
-            "get_survey_spec" to setOf("controller.job_templates_survey_spec_read"),
-            "list_pending_approvals" to setOf("controller.workflow_approvals_list"),
-            "approve_workflow" to setOf("controller.workflow_approvals_approve_create"),
-            "deny_workflow" to setOf("controller.workflow_approvals_deny_create"),
-            "list_eda_rulebooks" to setOf("eda.rulebooks_list"),
-            "list_eda_decision_environments" to setOf("eda.decision_environments_list"),
-            "list_eda_projects" to setOf("eda.projects_list"),
-            "list_eda_credentials" to setOf("eda.credentials_list"),
-            "list_eda_credential_types" to setOf("eda.credential_types_list"),
-            "list_eda_event_streams" to setOf("eda.event_streams_list"),
-            "list_eda_users" to setOf("eda.users_list"),
+            // Jobs & Templates
+            "list_job_templates" to setOf("job_templates_list"),
+            "launch_job" to setOf("job_templates_launch_create"),
+            "get_job" to setOf("jobs_retrieve"),
+            "get_job_stdout" to setOf("jobs_stdout_retrieve"),
+            "list_jobs" to setOf("jobs_list"),
+            "list_workflow_templates" to setOf("workflow_job_templates_list"),
+            "launch_workflow" to setOf("workflow_job_templates_launch_create"),
+            "get_workflow_job" to setOf("workflow_jobs_retrieve"),
+            "list_workflow_nodes" to setOf("workflow_jobs_workflow_nodes_list"),
+            "get_survey_spec" to setOf("job_templates_survey_spec_retrieve"),
+            "list_pending_approvals" to setOf("workflow_approvals_list"),
+            "approve_workflow" to setOf("workflow_approvals_approve_create"),
+            "deny_workflow" to setOf("workflow_approvals_deny_create"),
+            "list_schedules" to setOf("schedules_list"),
+            "toggle_schedule" to setOf("schedules_partial_update", "schedules_update"),
+            // Inventory
+            "list_inventories" to setOf("inventories_list"),
+            "list_hosts" to setOf("hosts_list"),
+            "get_host_facts" to setOf("hosts_variable_data_retrieve"),
+            "get_host_job_summaries" to setOf("jobs_job_host_summaries_list"),
+            "list_groups" to setOf("groups_list"),
+            "list_inventory_sources" to setOf("inventory_sources_list"),
+            "list_labels" to setOf("labels_list"),
+            // Monitoring
+            "list_instances" to setOf("instances_list"),
+            "get_instance" to setOf("instances_retrieve"),
+            "list_instance_groups" to setOf("instance_groups_list"),
+            "ping" to setOf("ping_retrieve"),
+            "get_mesh_topology" to setOf("mesh_visualizer_retrieve"),
+            // Credentials & Security
+            "list_credentials" to setOf("credentials_list"),
+            "get_credential" to setOf("credentials_retrieve"),
+            "list_credential_types" to setOf("credential_types_list"),
+            // Configuration
+            "list_projects" to setOf("projects_list"),
+            "get_project" to setOf("projects_retrieve"),
+            "list_execution_environments" to setOf("execution_environments_list"),
+            "list_notification_templates" to setOf("notification_templates_list"),
+            "get_settings" to setOf("settings_list", "settings_getter", "settings_retrieve"),
+            "get_config" to setOf("config_retrieve"),
+            // Users & RBAC
+            "list_organizations" to setOf("organizations_list"),
+            "list_users" to setOf("users_list"),
+            "list_teams" to setOf("teams_list"),
+            "list_roles" to setOf("roles_list"),
+            "list_role_definitions" to setOf("role_definitions_list"),
+            "list_applications" to setOf("applications_list"),
+            "list_tokens" to setOf("tokens_list"),
+            // Hub (no MCP server exists yet — names are speculative)
+            "list_hub_collections" to setOf("collections_list"),
+            "list_hub_namespaces" to setOf("namespaces_list"),
+            "list_hub_approvals" to setOf("collection_versions_list"),
+            "list_hub_ee_repositories" to setOf("execution_environments_repositories_list"),
+            "list_hub_ee_registries" to setOf("execution_environments_registries_list"),
+            "list_hub_users" to setOf("hub_users_list"),
+            "list_hub_groups" to setOf("hub_groups_list"),
+            "list_hub_roles" to setOf("hub_role_definitions_list"),
             // Platform / Gateway
-            "list_platform_organizations" to setOf("gateway.organizations_list"),
-            "list_platform_users" to setOf("gateway.users_list"),
-            "list_platform_teams" to setOf("gateway.teams_list"),
-            "list_platform_role_definitions" to setOf("gateway.role_definitions_list"),
-            "list_authenticators" to setOf("gateway.authenticators_list"),
-            "list_platform_services" to setOf("gateway.services_list"),
-            "list_service_clusters" to setOf("gateway.service_clusters_list"),
+            "list_platform_organizations" to setOf("organizations_list"),
+            "list_platform_users" to setOf("users_list"),
+            "list_platform_teams" to setOf("teams_list"),
+            "list_platform_role_definitions" to setOf("role_definitions_list"),
+            "list_authenticators" to setOf("authenticators_list"),
+            "list_platform_services" to setOf("services_list"),
+            "list_service_clusters" to setOf("service_clusters_list"),
+            // EDA (Phase 3 in aap-mcp-server, not yet exposed)
+            "list_eda_audit_rules" to setOf("audit_rules_list"),
+            "list_eda_activations" to setOf("activations_list"),
+            "get_eda_activation" to setOf("activations_retrieve"),
+            "list_eda_rulebooks" to setOf("rulebooks_list"),
+            "list_eda_decision_environments" to setOf("decision_environments_list"),
+            "list_eda_projects" to setOf("projects_list"),
+            "list_eda_credentials" to setOf("credentials_list"),
+            "list_eda_credential_types" to setOf("credential_types_list"),
+            "list_eda_event_streams" to setOf("event_streams_list"),
+            "list_eda_users" to setOf("users_list"),
         )
-
-        private val MCP_TOOLS_WITH_LOCAL_OVERLAP: Set<String> =
-            OVERLAP_MAPPING.values.flatten().toSet()
 
         private val WRITE_ACTIONS = Tool.WRITE_SUFFIXES
 
@@ -283,6 +304,7 @@ class ToolRouter(
             "event_management" to setOf(Category.EDA),
             "integration" to setOf(Category.CONFIGURATION, Category.SECURITY, Category.USERS),
             "developer_integration" to setOf(Category.JOBS, Category.MONITORING),
+            "hub_management" to setOf(Category.HUB),
         )
 
         fun getCategoryForTool(toolName: String): String? {
@@ -399,7 +421,6 @@ class ToolRouter(
         Log.d(TAG, "QUERY: matched categories=${matchedCategories.map { it.name }}")
 
         val matchedLocalNames = matchedCategories.flatMap { it.localToolNames }.toSet()
-        val matchedPrefixes = matchedCategories.flatMap { it.resourcePrefixes }.toSet()
 
         val readOnlyLabels = serverConfigs
             .filter { it.readOnly }
@@ -411,43 +432,49 @@ class ToolRouter(
                 isToolEnabled(tool.spec.name, ToolSource.LOCAL)
         }
 
-        val filteredMcp = mcpTools.filter { tool ->
-            val isEnabled = isToolEnabled(tool.spec.name, ToolSource.MCP, tool.serverLabel)
+        val routedMcp = mutableListOf<Tool>()
+        val unroutedMcp = mutableListOf<Tool>()
 
-            val toolToolset = (tool as? McpTool)?.toolset
+        for (tool in mcpTools) {
+            if (!isToolEnabled(tool.spec.name, ToolSource.MCP, tool.serverLabel)) continue
+
+            val passesReadOnly = tool.serverLabel !in readOnlyLabels ||
+                WRITE_ACTIONS.none { action -> tool.spec.name.endsWith(action) }
+            if (!passesReadOnly) continue
+
+            val toolToolset = tool.toolset
             val toolsetCategories = toolToolset?.let { TOOLSET_CATEGORY_MAP[it] }
-            val matchesCategory = if (toolsetCategories != null) {
-                matchedCategories.any { it in toolsetCategories }
-            } else {
-                val resource = tool.spec.name
-                    .substringAfter(".")
-                    .substringBeforeLast("_")
-                resource in matchedPrefixes
-            }
-
-            val passesReadOnly = if (readOnlyLabels.isNotEmpty()) {
-                if (tool.serverLabel in readOnlyLabels) {
-                    WRITE_ACTIONS.none { action -> tool.spec.name.endsWith(action) }
-                } else {
-                    true
+            when {
+                toolsetCategories != null && matchedCategories.any { it in toolsetCategories } ->
+                    routedMcp.add(tool)
+                toolsetCategories != null -> { }
+                toolToolset != null -> {
+                    Log.d(TAG, "FILTER: unknown toolset '${toolToolset}' for ${tool.spec.name}, treating as unrouted")
+                    unroutedMcp.add(tool)
                 }
-            } else {
-                true
+                else ->
+                    unroutedMcp.add(tool)
             }
-
-            matchesCategory && isEnabled && passesReadOnly
         }
 
-        Log.d(TAG, "FILTER: ${filteredLocal.size} local, ${filteredMcp.size} mcp after category+enable+readOnly filter")
+        Log.d(TAG, "FILTER: ${filteredLocal.size} local, ${routedMcp.size} routed mcp, ${unroutedMcp.size} unrouted mcp")
         val cherryPickedLocal = cherryPick(filteredLocal, stemmedQuery)
-        val cherryPickedMcp = cherryPick(filteredMcp, stemmedQuery)
-        Log.d(TAG, "CHERRY: ${cherryPickedLocal.size} local [${cherryPickedLocal.map { it.spec.name }}], " +
-            "${cherryPickedMcp.size} mcp [${cherryPickedMcp.map { it.spec.name }}]")
+        val cherryPickedRouted = cherryPick(routedMcp, stemmedQuery)
+        val cherryPickedUnrouted = cherryPick(unroutedMcp, stemmedQuery, requireOverlap = true)
+        val allCherryPicked = cherryPickedLocal + cherryPickedRouted + cherryPickedUnrouted
+        Log.d(TAG, "CHERRY: ${cherryPickedLocal.size} local, ${cherryPickedRouted.size} routed, " +
+            "${cherryPickedUnrouted.size} unrouted [${allCherryPicked.map { it.spec.name }}]")
 
-        QueryResult(cherryPickedLocal + cherryPickedMcp, categoryMatched = true)
+        QueryResult(allCherryPicked, categoryMatched = true)
     }
 
-    private fun cherryPick(tools: List<Tool>, stemmedQuery: Set<String>): List<Tool> {
+    private data class ScoredTool(val tool: Tool, val score: Int, val overlap: Int)
+
+    private fun cherryPick(
+        tools: List<Tool>,
+        stemmedQuery: Set<String>,
+        requireOverlap: Boolean = false
+    ): List<Tool> {
         val scored = tools.map { tool ->
             val nameParts = tool.spec.name
                 .split(".", "_")
@@ -456,15 +483,15 @@ class ToolRouter(
             val overlap = (nameParts intersect stemmedQuery).size
             var score = overlap * 10
             if (tool.spec.name.contains("list") || tool.spec.name.contains("ping")) score += 3
-            if (tool.spec.name.contains("get") || tool.spec.name.contains("read")) score += 1
+            if (tool.spec.name.contains("get") || tool.spec.name.contains("read") || tool.spec.name.contains("retrieve")) score += 1
             if (overlap > 0 && tool.isDestructive) score -= 5
-            tool to score
+            ScoredTool(tool, score, overlap)
         }
-        Log.d(TAG, "SCORES: ${scored.map { "${it.first.spec.name}=${it.second}" }}")
+        Log.d(TAG, "SCORES: ${scored.map { "${it.tool.spec.name}=${it.score}" }}")
         return scored
-            .filter { it.second > 0 }
-            .sortedByDescending { it.second }
-            .map { it.first }
+            .filter { it.score > 0 && (!requireOverlap || it.overlap > 0) }
+            .sortedByDescending { it.score }
+            .map { it.tool }
     }
 
     fun getAllRegisteredTools(): List<Pair<Tool, ToolSource>> = synchronized(this) {

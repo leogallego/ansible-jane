@@ -7,6 +7,7 @@ import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.platform.DataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -180,6 +181,8 @@ class AssistantRepository(
                 val apiKey = tokenManager.loadLlmApiKey(key)
                 DebugLog.d(TAG, "ACTIVE_FLOW: provider=$key, apiKeyPresent=${apiKey != null}")
                 if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 DebugLog.w(TAG, "Failed to deserialize active config from flow: ${e.message}")
                 null
@@ -199,6 +202,8 @@ class AssistantRepository(
                     val apiKey = keys[providerKey]
                     if (apiKey != null) mergeApiKeyValue(config, apiKey) else config
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 DebugLog.w(TAG, "Failed to deserialize saved configs from flow: ${e.message}")
                 emptyMap()

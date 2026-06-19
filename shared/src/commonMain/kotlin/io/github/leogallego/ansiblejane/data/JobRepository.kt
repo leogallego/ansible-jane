@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.data
 import io.github.leogallego.ansiblejane.model.Job
 import io.github.leogallego.ansiblejane.model.JobStatus
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -12,6 +13,8 @@ class JobRepository(private val apiProvider: IAapApiProvider) : IJobRepository {
     override suspend fun getJobStatus(jobId: Int): Result<Job> {
         return try {
             Result.success(apiProvider.getApiService().getJob(jobId))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -34,6 +37,8 @@ class JobRepository(private val apiProvider: IAapApiProvider) : IJobRepository {
         return try {
             val response = apiProvider.getApiService().getJobStdout(jobId)
             Result.success(response)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -73,6 +78,8 @@ class JobRepository(private val apiProvider: IAapApiProvider) : IJobRepository {
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }

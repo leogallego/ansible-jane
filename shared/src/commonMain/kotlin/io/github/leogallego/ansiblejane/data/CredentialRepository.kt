@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.Credential
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import kotlin.coroutines.cancellation.CancellationException
 
 class CredentialRepository(private val apiProvider: IAapApiProvider) : ICredentialRepository {
 
@@ -23,6 +24,8 @@ class CredentialRepository(private val apiProvider: IAapApiProvider) : ICredenti
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -31,6 +34,8 @@ class CredentialRepository(private val apiProvider: IAapApiProvider) : ICredenti
     override suspend fun getCredential(id: Int): Result<Credential> {
         return try {
             Result.success(apiProvider.getApiService().getCredential(id))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }

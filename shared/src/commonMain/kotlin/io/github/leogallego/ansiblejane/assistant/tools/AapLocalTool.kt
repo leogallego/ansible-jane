@@ -5,6 +5,7 @@ import ai.koog.agents.core.tools.ToolDescriptor
 import ai.koog.agents.core.tools.ToolParameterDescriptor
 import ai.koog.agents.core.tools.ToolParameterType
 import ai.koog.serialization.TypeToken
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.Serializable
@@ -41,6 +42,8 @@ abstract class AapLocalTool<TArgs : Any>(
             data = "$fields required but missing",
             errorType = ErrorType.NOT_FOUND
         )
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         ToolResult(
             success = false,

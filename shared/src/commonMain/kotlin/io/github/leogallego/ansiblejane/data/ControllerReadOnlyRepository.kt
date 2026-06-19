@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.data
 import io.github.leogallego.ansiblejane.model.*
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import kotlinx.serialization.json.JsonElement
+import kotlin.coroutines.cancellation.CancellationException
 
 class ControllerReadOnlyRepository(private val apiProvider: IAapApiProvider) {
 
@@ -103,12 +104,16 @@ class ControllerReadOnlyRepository(private val apiProvider: IAapApiProvider) {
 
     suspend fun getSettings(): Result<JsonElement> = try {
         Result.success(apiProvider.getApiService().getSettings())
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Result.failure(e)
     }
 
     suspend fun getConfig(): Result<JsonElement> = try {
         Result.success(apiProvider.getApiService().getConfig())
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Result.failure(e)
     }
@@ -123,6 +128,8 @@ class ControllerReadOnlyRepository(private val apiProvider: IAapApiProvider) {
 
     suspend fun getSurveySpec(id: Int): Result<SurveySpec> = try {
         Result.success(apiProvider.getApiService().getSurveySpec(id))
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Result.failure(e)
     }
@@ -138,6 +145,8 @@ class ControllerReadOnlyRepository(private val apiProvider: IAapApiProvider) {
                 totalCount = response.count
             )
         )
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Result.failure(e)
     }

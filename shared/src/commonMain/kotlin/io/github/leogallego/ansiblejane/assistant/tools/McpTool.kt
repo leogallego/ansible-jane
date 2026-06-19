@@ -9,13 +9,14 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import io.ktor.client.network.sockets.SocketTimeoutException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.io.IOException
 
 class McpTool(
     private val client: Client,
     private val mcpToolDef: McpToolDefinition,
     override val serverLabel: String,
-    val toolset: String? = null
+    override val toolset: String? = null
 ) : Tool {
 
     companion object {
@@ -50,6 +51,8 @@ class McpTool(
             } else {
                 ToolResult(success = true, data = text)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: SocketTimeoutException) {
             ToolResult(success = false, data = "Tool call timed out", errorType = ErrorType.TIMEOUT)
         } catch (e: IOException) {
