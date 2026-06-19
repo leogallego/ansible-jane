@@ -37,4 +37,5 @@ val sharedRepositoryModule = module {
     single { ControllerReadOnlyRepository(get<IAapApiProvider>()) }
     single { EdaReadOnlyRepository(get<IAapApiProvider>()) }
     single { PlatformRepository(get<IAapApiProvider>()) }
+    single { HubRepository(get<IAapApiProvider>()) }
 }
