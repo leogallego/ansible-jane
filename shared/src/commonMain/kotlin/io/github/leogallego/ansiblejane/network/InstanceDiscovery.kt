@@ -6,6 +6,7 @@ import io.github.leogallego.ansiblejane.model.InstanceInfo
 import io.github.leogallego.ansiblejane.model.PlatformType
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import kotlin.coroutines.cancellation.CancellationException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -144,6 +145,8 @@ class InstanceDiscovery(private val json: Json) {
         } else {
             null
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Log.d(TAG, "Version probe $url failed: ${e.message}")
         null
@@ -173,6 +176,8 @@ class InstanceDiscovery(private val json: Json) {
         } else {
             null
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Log.d(TAG, "Config probe failed: ${e.message}")
         null
@@ -184,6 +189,8 @@ class InstanceDiscovery(private val json: Json) {
     ): Boolean = try {
         val response = client.get(url)
         response.status.isSuccess()
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Log.d(TAG, "Probe $url failed: ${e.message}")
         false

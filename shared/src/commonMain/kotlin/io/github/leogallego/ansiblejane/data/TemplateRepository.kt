@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.data
 import io.github.leogallego.ansiblejane.model.JobTemplate
 import io.github.leogallego.ansiblejane.model.LaunchRequest
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import kotlin.coroutines.cancellation.CancellationException
 
 class TemplateRepository(private val apiProvider: IAapApiProvider) : ITemplateRepository {
 
@@ -24,6 +25,8 @@ class TemplateRepository(private val apiProvider: IAapApiProvider) : ITemplateRe
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -34,6 +37,8 @@ class TemplateRepository(private val apiProvider: IAapApiProvider) : ITemplateRe
             val request = LaunchRequest(extraVars = extraVars)
             val response = apiProvider.getApiService().launchJob(templateId, request)
             Result.success(response.job)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
