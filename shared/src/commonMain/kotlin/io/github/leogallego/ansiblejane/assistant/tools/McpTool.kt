@@ -9,6 +9,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import io.ktor.client.network.sockets.SocketTimeoutException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.io.IOException
 
 class McpTool(
@@ -58,6 +59,8 @@ class McpTool(
                 data = "Connection error: ${e.message}",
                 errorType = ErrorType.CONNECTION_ERROR
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             ToolResult(
                 success = false,

@@ -74,6 +74,8 @@ class McpServerManager(
             val state = connectAndDiscover(config.url, ktorClient)
             Log.d(TAG, "Connected '${config.label}': ${state.toolDefs.size} tools, server=${state.serverInfo.name}/${state.serverInfo.version}")
             registerServer(config.label, state, config.toolset)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "Failed to connect '${config.label}': ${e.message}")
             _connections.update {
@@ -212,6 +214,9 @@ class McpServerManager(
                                 SdkClientState(sdkClient, ktorClient, serverInfo, toolDefs),
                                 config.toolset
                             )
+                        } catch (e: CancellationException) {
+                            closeSafely(sdkClient, ktorClient)
+                            throw e
                         } catch (e: Exception) {
                             closeSafely(sdkClient, ktorClient)
                             _connections.update {

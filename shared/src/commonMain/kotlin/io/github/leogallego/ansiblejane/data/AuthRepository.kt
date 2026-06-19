@@ -52,6 +52,8 @@ class AuthRepository(
             launchDiscovery(instanceId, baseUrl, token, apiVersion, trustSelfSigned)
 
             Result.success(user)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -85,6 +87,8 @@ class AuthRepository(
             launchDiscovery(instanceId, instance.baseUrl, newToken, apiVersion, trustSelfSigned)
 
             Result.success(user)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -110,6 +114,8 @@ class AuthRepository(
                 Exception("No user data returned")
             )
             CredentialStatus.Valid(user)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             CredentialStatus.ValidationFailed(e)
         }

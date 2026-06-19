@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.assistant.tools
 
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.github.leogallego.ansiblejane.network.mcp.McpServerManager
+import kotlin.coroutines.cancellation.CancellationException
 import io.github.leogallego.ansiblejane.network.mcp.McpToolDefinition
 import kotlinx.serialization.json.JsonObject
 
@@ -40,6 +41,8 @@ class CachedMcpTool(
             } else {
                 ToolResult(success = true, data = text)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             ToolResult(
                 success = false,

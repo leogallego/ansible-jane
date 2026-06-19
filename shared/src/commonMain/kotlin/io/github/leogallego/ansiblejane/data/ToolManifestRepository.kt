@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.leogallego.ansiblejane.model.ToolManifest
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlin.time.Clock
 import kotlinx.serialization.encodeToString
@@ -48,6 +49,8 @@ class ToolManifestRepository(
                 }
                 else -> manifest
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "Failed to deserialize manifest for $instanceId: ${e.message}")
             deleteManifest(instanceId)
