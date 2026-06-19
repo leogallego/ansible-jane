@@ -4,5 +4,6 @@ interface IAapApiProvider {
     fun getApiService(): AapApiClient
     fun getEdaApiService(): EdaApiClient
     fun getPlatformApiService(): PlatformApiClient
+    fun getHubApiService(): HubApiClient
     fun evictInstance(instanceId: String)
 }
