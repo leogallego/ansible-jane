@@ -73,7 +73,6 @@ class ToolRouter(
 
     private enum class Category(
         val keywords: Set<String>,
-        val resourcePrefixes: Set<String>,
         val localToolNames: Set<String>
     ) {
         INVENTORY(
@@ -83,7 +82,6 @@ class ToolRouter(
                 "machine", "machines", "asset", "assets", "source", "sources",
                 "label", "labels", "tag", "tags", "summary", "summaries"
             ),
-            resourcePrefixes = setOf("hosts", "groups", "inventories", "constructed_inventories", "inventory_sources", "labels"),
             localToolNames = setOf(
                 "list_inventories", "list_hosts", "get_host_facts", "get_host_job_summaries",
                 "list_groups", "list_inventory_sources", "list_labels"
@@ -99,7 +97,6 @@ class ToolRouter(
                 "survey", "node", "nodes", "prompt", "variable", "variables",
                 "approval", "approvals", "approve", "deny", "pending"
             ),
-            resourcePrefixes = setOf("jobs", "job_templates", "workflow_jobs", "workflow_job_templates", "workflow_job_nodes", "workflow_job_template_nodes", "schedules", "ad_hoc_commands", "workflow_approvals"),
             localToolNames = setOf(
                 "list_job_templates", "launch_job", "get_job", "get_job_stdout", "list_jobs",
                 "list_workflow_templates", "launch_workflow", "get_workflow_job",
@@ -116,7 +113,6 @@ class ToolRouter(
                 "monitoring", "healthy", "overview", "nodes", "workers",
                 "alive", "up", "down", "diagnostics", "group"
             ),
-            resourcePrefixes = setOf("dashboard", "ping", "config", "instances", "instance_groups", "metrics", "mesh_visualizer"),
             localToolNames = setOf("list_instances", "get_instance", "list_instance_groups", "ping", "get_mesh_topology")
         ),
         USERS(
@@ -127,7 +123,6 @@ class ToolRouter(
                 "application", "applications", "app", "apps", "access", "rbac",
                 "definition", "definitions", "oauth"
             ),
-            resourcePrefixes = setOf("users", "teams", "organizations", "roles", "role_definitions", "tokens", "applications"),
             localToolNames = setOf(
                 "list_organizations", "list_users", "list_teams",
                 "list_roles", "list_role_definitions",
@@ -141,7 +136,6 @@ class ToolRouter(
                 "password", "passwords", "key", "keys", "cert", "certs",
                 "type", "types"
             ),
-            resourcePrefixes = setOf("credentials", "credential_types", "credential_input_sources"),
             localToolNames = setOf("list_credentials", "get_credential", "list_credential_types")
         ),
         CONFIGURATION(
@@ -152,7 +146,6 @@ class ToolRouter(
                 "ees", "scm", "repo", "repos", "repository", "alert", "alerts",
                 "tag", "tags", "license", "subscription", "version"
             ),
-            resourcePrefixes = setOf("settings", "notification_templates", "notifications", "labels", "execution_environments", "projects", "config"),
             localToolNames = setOf(
                 "list_projects", "get_project", "list_execution_environments",
                 "list_notification_templates", "get_settings", "get_config"
@@ -165,7 +158,6 @@ class ToolRouter(
                 "stream", "streams", "decision", "driven", "rulebooks",
                 "activations", "events", "environment"
             ),
-            resourcePrefixes = setOf("audit_rules", "activations", "decision_environments", "rulebooks", "event_streams", "eda_credentials", "eda_credential_types", "eda_projects", "eda_users"),
             localToolNames = setOf(
                 "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
                 "list_eda_rulebooks", "list_eda_decision_environments",
@@ -179,7 +171,6 @@ class ToolRouter(
                 "service", "services", "sso", "saml", "ldap",
                 "identity", "authentication", "provider", "providers"
             ),
-            resourcePrefixes = setOf("organizations", "users", "teams", "role_definitions", "authenticators", "services", "service_clusters"),
             localToolNames = setOf(
                 "list_platform_organizations", "list_platform_users", "list_platform_teams",
                 "list_platform_role_definitions", "list_authenticators",
@@ -258,9 +249,6 @@ class ToolRouter(
             "list_platform_services" to setOf("gateway.services_list"),
             "list_service_clusters" to setOf("gateway.service_clusters_list"),
         )
-
-        private val MCP_TOOLS_WITH_LOCAL_OVERLAP: Set<String> =
-            OVERLAP_MAPPING.values.flatten().toSet()
 
         private val WRITE_ACTIONS = Tool.WRITE_SUFFIXES
 
@@ -415,11 +403,8 @@ class ToolRouter(
         for (tool in mcpTools) {
             if (!isToolEnabled(tool.spec.name, ToolSource.MCP, tool.serverLabel)) continue
 
-            val passesReadOnly = if (readOnlyLabels.isNotEmpty()) {
-                if (tool.serverLabel in readOnlyLabels) {
-                    WRITE_ACTIONS.none { action -> tool.spec.name.endsWith(action) }
-                } else true
-            } else true
+            val passesReadOnly = tool.serverLabel !in readOnlyLabels ||
+                WRITE_ACTIONS.none { action -> tool.spec.name.endsWith(action) }
             if (!passesReadOnly) continue
 
             val toolToolset = tool.toolset
@@ -427,7 +412,8 @@ class ToolRouter(
             when {
                 toolsetCategories != null && matchedCategories.any { it in toolsetCategories } ->
                     routedMcp.add(tool)
-                toolToolset != null && toolsetCategories == null -> {
+                toolsetCategories != null -> { }
+                toolToolset != null -> {
                     Log.d(TAG, "FILTER: unknown toolset '${toolToolset}' for ${tool.spec.name}, treating as unrouted")
                     unroutedMcp.add(tool)
                 }
@@ -447,6 +433,8 @@ class ToolRouter(
         QueryResult(allCherryPicked, categoryMatched = true)
     }
 
+    private data class ScoredTool(val tool: Tool, val score: Int, val overlap: Int)
+
     private fun cherryPick(
         tools: List<Tool>,
         stemmedQuery: Set<String>,
@@ -462,13 +450,13 @@ class ToolRouter(
             if (tool.spec.name.contains("list") || tool.spec.name.contains("ping")) score += 3
             if (tool.spec.name.contains("get") || tool.spec.name.contains("read")) score += 1
             if (overlap > 0 && tool.isDestructive) score -= 5
-            Triple(tool, score, overlap)
+            ScoredTool(tool, score, overlap)
         }
-        Log.d(TAG, "SCORES: ${scored.map { "${it.first.spec.name}=${it.second}" }}")
+        Log.d(TAG, "SCORES: ${scored.map { "${it.tool.spec.name}=${it.score}" }}")
         return scored
-            .filter { it.second > 0 && (!requireOverlap || it.third > 0) }
-            .sortedByDescending { it.second }
-            .map { it.first }
+            .filter { it.score > 0 && (!requireOverlap || it.overlap > 0) }
+            .sortedByDescending { it.score }
+            .map { it.tool }
     }
 
     fun getAllRegisteredTools(): List<Pair<Tool, ToolSource>> = synchronized(this) {

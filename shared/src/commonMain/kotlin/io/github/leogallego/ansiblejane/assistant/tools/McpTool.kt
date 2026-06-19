@@ -1,6 +1,5 @@
 package io.github.leogallego.ansiblejane.assistant.tools
 
-import io.github.leogallego.ansiblejane.TestOnly
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.github.leogallego.ansiblejane.network.mcp.McpToolDefinition
@@ -13,7 +12,7 @@ import io.ktor.client.network.sockets.SocketTimeoutException
 import kotlinx.io.IOException
 
 class McpTool(
-    private val client: Client?,
+    private val client: Client,
     private val mcpToolDef: McpToolDefinition,
     override val serverLabel: String,
     override val toolset: String? = null
@@ -22,15 +21,6 @@ class McpTool(
     companion object {
         const val MAX_PAGE_SIZE = 10
         private val WRITE_SUFFIXES = Tool.WRITE_SUFFIXES
-
-        @TestOnly
-        fun forTest(name: String, serverLabel: String, toolset: String? = null): McpTool =
-            McpTool(
-                client = null,
-                mcpToolDef = McpToolDefinition(name, name),
-                serverLabel = serverLabel,
-                toolset = toolset
-            )
     }
 
     override val isDestructive: Boolean =
@@ -43,8 +33,6 @@ class McpTool(
     )
 
     override suspend fun execute(args: JsonObject): ToolResult {
-        val client = this.client
-            ?: return ToolResult(success = false, data = "No client (test-only instance)")
         return try {
             val cappedArgs = capPageSize(args)
             val result = client.callTool(mcpToolDef.name, cappedArgs)
