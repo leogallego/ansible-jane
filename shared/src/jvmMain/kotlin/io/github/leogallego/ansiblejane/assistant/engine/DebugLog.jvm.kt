@@ -9,9 +9,7 @@ actual object DebugLog {
         if (enabled) println("W/$tag: $msg")
     }
     actual fun e(tag: String, msg: String, t: Throwable?) {
-        if (enabled) {
-            System.err.println("E/$tag: $msg")
-            t?.printStackTrace(System.err)
-        }
+        System.err.println("E/$tag: $msg")
+        t?.printStackTrace(System.err)
     }
 }

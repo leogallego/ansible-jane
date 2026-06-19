@@ -11,8 +11,6 @@ actual object DebugLog {
         if (enabled) Log.w(tag, msg)
     }
     actual fun e(tag: String, msg: String, t: Throwable?) {
-        if (enabled) {
-            if (t != null) Log.e(tag, msg, t) else Log.e(tag, msg)
-        }
+        if (t != null) Log.e(tag, msg, t) else Log.e(tag, msg)
     }
 }
