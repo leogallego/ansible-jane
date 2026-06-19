@@ -1428,8 +1428,8 @@ class ToolRouterTest {
     fun `getCategoryForTool SHOULD cover all local tool names in all categories`() {
         for (name in ALL_LOCAL_TOOL_NAMES) {
             assertNotNull(
-                "Tool '$name' should have a category",
-                ToolRouter.getCategoryForTool(name)
+                ToolRouter.getCategoryForTool(name),
+                "Tool '$name' should have a category"
             )
         }
     }

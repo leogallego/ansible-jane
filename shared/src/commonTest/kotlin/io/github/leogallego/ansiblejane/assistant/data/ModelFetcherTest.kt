@@ -2,25 +2,38 @@ package io.github.leogallego.ansiblejane.assistant.data
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Url
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class ModelFetcherTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
+    private fun assertSuccess(result: ModelFetcher.Result): List<String> {
+        assertIs<ModelFetcher.Result.Success>(result)
+        return result.models
+    }
+
+    private fun assertError(result: ModelFetcher.Result, substring: String) {
+        assertIs<ModelFetcher.Result.Error>(result)
+        assertTrue(result.message.contains(substring), "Expected error containing '$substring', got: ${result.message}")
+    }
+
     private fun createFetcher(
         statusCode: HttpStatusCode = HttpStatusCode.OK,
         responseBody: String = """{"data":[]}""",
-        assertRequest: ((io.ktor.client.engine.mock.MockRequestHandleScope, io.ktor.http.Url, io.ktor.http.Headers) -> Unit)? = null
+        assertRequest: ((MockRequestHandleScope, Url, Headers) -> Unit)? = null
     ): ModelFetcher {
         val engine = MockEngine { request ->
             assertRequest?.invoke(this, request.url, request.headers)
@@ -42,8 +55,7 @@ class ModelFetcherTest {
             responseBody = """{"data":[{"id":"zmodel","object":"model"},{"id":"amodel","object":"model"}]}"""
         )
         val result = fetcher.fetchModels("https://example.com/v1", "test-key")
-        assertTrue(result is ModelFetcher.Result.Success)
-        assertEquals(listOf("amodel", "zmodel"), (result as ModelFetcher.Result.Success).models)
+        assertEquals(listOf("amodel", "zmodel"), assertSuccess(result))
     }
 
     @Test
@@ -72,40 +84,35 @@ class ModelFetcherTest {
     fun `SHOULD return auth error WHEN server returns 401 GIVEN invalid key`() = runTest {
         val fetcher = createFetcher(statusCode = HttpStatusCode.Unauthorized, responseBody = "")
         val result = fetcher.fetchModels("https://example.com/v1", "bad-key")
-        assertTrue(result is ModelFetcher.Result.Error)
-        assertTrue((result as ModelFetcher.Result.Error).message.contains("Authentication"))
+        assertError(result, "Authentication")
     }
 
     @Test
     fun `SHOULD return auth error WHEN server returns 403 GIVEN forbidden key`() = runTest {
         val fetcher = createFetcher(statusCode = HttpStatusCode.Forbidden, responseBody = "")
         val result = fetcher.fetchModels("https://example.com/v1", "bad-key")
-        assertTrue(result is ModelFetcher.Result.Error)
-        assertTrue((result as ModelFetcher.Result.Error).message.contains("Authentication"))
+        assertError(result, "Authentication")
     }
 
     @Test
     fun `SHOULD return empty list WHEN data array is empty GIVEN valid response`() = runTest {
         val fetcher = createFetcher(responseBody = """{"data":[]}""")
         val result = fetcher.fetchModels("https://example.com/v1", "key")
-        assertTrue(result is ModelFetcher.Result.Success)
-        assertTrue((result as ModelFetcher.Result.Success).models.isEmpty())
+        assertTrue(assertSuccess(result).isEmpty())
     }
 
     @Test
     fun `SHOULD return error WHEN response is malformed JSON GIVEN broken server`() = runTest {
         val fetcher = createFetcher(responseBody = "not json at all")
         val result = fetcher.fetchModels("https://example.com/v1", "key")
-        assertTrue(result is ModelFetcher.Result.Error)
-        assertTrue((result as ModelFetcher.Result.Error).message.contains("parse"))
+        assertError(result, "parse")
     }
 
     @Test
     fun `SHOULD return server error WHEN status is 500 GIVEN server error`() = runTest {
         val fetcher = createFetcher(statusCode = HttpStatusCode.InternalServerError, responseBody = "")
         val result = fetcher.fetchModels("https://example.com/v1", "key")
-        assertTrue(result is ModelFetcher.Result.Error)
-        assertTrue((result as ModelFetcher.Result.Error).message.contains("500"))
+        assertError(result, "500")
     }
 
     @Test
