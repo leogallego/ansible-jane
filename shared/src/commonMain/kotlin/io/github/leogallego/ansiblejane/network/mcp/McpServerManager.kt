@@ -14,7 +14,7 @@ import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlin.concurrent.Volatile
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
-import kotlinx.coroutines.CancellationException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -128,6 +128,8 @@ class McpServerManager(
                 val state = connectAndDiscover(config.url, ktorClient)
                 registerServer(config.label, state, config.toolset)
                 state.client
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _connections.update {
                     it + (serverLabel to McpConnectionState.Error(

@@ -8,6 +8,7 @@ import dev.whyoleg.cryptography.algorithms.SHA256
 import dev.whyoleg.cryptography.random.CryptographyRandom
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.model.AapInstance
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlinx.serialization.json.Json
 
@@ -39,6 +40,8 @@ class BackupManager {
     suspend fun importBackup(data: ByteArray, password: String): BackupEnvelope {
         val plaintext = try {
             decrypt(data, password)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             throw BackupDecryptionException("Incorrect password or corrupted backup")
         }

@@ -51,6 +51,8 @@ class McpTool(
             } else {
                 ToolResult(success = true, data = text)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: SocketTimeoutException) {
             ToolResult(success = false, data = "Tool call timed out", errorType = ErrorType.TIMEOUT)
         } catch (e: IOException) {
@@ -59,8 +61,6 @@ class McpTool(
                 data = "Connection error: ${e.message}",
                 errorType = ErrorType.CONNECTION_ERROR
             )
-        } catch (e: CancellationException) {
-            throw e
         } catch (e: Exception) {
             ToolResult(
                 success = false,
