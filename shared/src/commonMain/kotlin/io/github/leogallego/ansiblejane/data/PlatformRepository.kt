@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.*
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import kotlin.coroutines.cancellation.CancellationException
 
 class PlatformRepository(private val apiProvider: IAapApiProvider) {
 
@@ -69,6 +70,8 @@ class PlatformRepository(private val apiProvider: IAapApiProvider) {
                 totalCount = response.count
             )
         )
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Result.failure(e)
     }

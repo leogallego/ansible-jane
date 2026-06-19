@@ -5,6 +5,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -28,6 +29,8 @@ class ModelFetcher(
                     header(HttpHeaders.Authorization, "Bearer $apiKey")
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             return Result.Error("Could not reach server: ${e.message}")
         }
