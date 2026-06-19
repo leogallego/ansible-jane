@@ -2,10 +2,10 @@ package io.github.leogallego.ansiblejane.assistant.llm
 
 import ai.koog.http.client.KoogHttpClientException
 import ai.koog.prompt.executor.clients.LLMClientException
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
-import java.net.SocketTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class GeminiLlmProviderTest {
 
@@ -79,7 +79,7 @@ class GeminiLlmProviderTest {
 
     @Test
     fun `SHOULD throw LlmTimeoutException WHEN SocketTimeoutException`() {
-        val ex = SocketTimeoutException("timed out")
+        val ex = SocketTimeoutException()
         val mapped = provider.mapException(ex)
         assertTrue(mapped is LlmTimeoutException)
     }
@@ -102,7 +102,7 @@ class GeminiLlmProviderTest {
 
     @Test
     fun `SHOULD unwrap LLMClientException WHEN cause is SocketTimeoutException`() {
-        val inner = SocketTimeoutException("Request timed out")
+        val inner = SocketTimeoutException()
         val ex = LLMClientException("google", "LLM timeout", inner)
         val mapped = provider.mapException(ex)
         assertTrue(mapped is LlmTimeoutException)

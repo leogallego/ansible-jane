@@ -1,9 +1,8 @@
 package io.github.leogallego.ansiblejane.assistant.data
 
 import kotlinx.serialization.json.Json
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class TokenSavingModeTest {
 

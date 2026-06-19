@@ -139,6 +139,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.mockwebserver)
+    testImplementation(libs.mcp.sdk.client)
     testImplementation(libs.turbine)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.robolectric)

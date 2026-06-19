@@ -51,10 +51,10 @@ kotlin {
 
             implementation(libs.koin.core)
 
-            api(libs.koog.openai.client)
-            api(libs.koog.google.client)
-            api(libs.koog.http.ktor)
-            api(libs.mcp.sdk.client)
+            implementation(libs.koog.openai.client)
+            implementation(libs.koog.google.client)
+            implementation(libs.koog.http.ktor)
+            implementation(libs.mcp.sdk.client)
             implementation(libs.kotlinx.atomicfu)
 
             implementation(libs.cryptography.core)
@@ -64,6 +64,14 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.coroutines.test)
             implementation(libs.turbine)
+            implementation(libs.ktor.client.mock)
+        }
+
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.mockwebserver)
+                implementation(libs.ktor.client.okhttp)
+            }
         }
 
         androidMain.dependencies {

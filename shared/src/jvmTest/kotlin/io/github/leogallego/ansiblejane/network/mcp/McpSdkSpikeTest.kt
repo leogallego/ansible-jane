@@ -16,12 +16,12 @@ import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import kotlin.test.AfterTest
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import java.net.Proxy
 
 /**
@@ -32,12 +32,12 @@ class McpSdkSpikeTest {
 
     private lateinit var server: MockWebServer
 
-    @Before
+    @BeforeTest
     fun setup() {
         server = MockWebServer()
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.shutdown()
     }

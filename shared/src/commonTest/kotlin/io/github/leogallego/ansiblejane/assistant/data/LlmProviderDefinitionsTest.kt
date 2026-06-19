@@ -1,7 +1,7 @@
 package io.github.leogallego.ansiblejane.assistant.data
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class LlmProviderDefinitionsTest {
 

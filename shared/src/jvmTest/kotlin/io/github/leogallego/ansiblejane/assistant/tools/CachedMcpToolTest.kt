@@ -15,20 +15,20 @@ import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
 import java.net.Proxy
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class CachedMcpToolTest {
 
     private lateinit var server: MockWebServer
     private lateinit var manager: McpServerManager
 
-    @Before
+    @BeforeTest
     fun setup() {
         server = MockWebServer()
         manager = McpServerManager(
@@ -41,7 +41,7 @@ class CachedMcpToolTest {
         )
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.shutdown()
         runBlocking { manager.disconnectAll() }
