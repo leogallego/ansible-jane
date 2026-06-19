@@ -103,6 +103,7 @@ class ToolExecutor(
         fun capResultArray(data: String): String {
             val parsed = try { json.parseToJsonElement(data) } catch (_: Exception) { return data }
             if (parsed !is JsonObject) return data
+            if ("count" !in parsed) return data
             val (arrayKey, results) = parsed.entries
                 .firstOrNull { it.value is JsonArray } ?: return data
             val arrayValue = results as JsonArray
