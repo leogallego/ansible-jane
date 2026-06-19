@@ -45,15 +45,42 @@ class HttpClientFactory(
         apiClient
     }
 
-    override fun getEdaApiService(): EdaApiClient = synchronized(this) {
+    override fun getEdaApiService(): EdaApiClient = getOrCreateSecondaryService(
+        basePath = "/api/eda/v1/",
+        getCached = { it.eda },
+        createClient = { EdaApiClient(it) },
+        updateGroup = { group, client, clients -> group.copy(eda = client, httpClients = clients) }
+    )
+
+    override fun getPlatformApiService(): PlatformApiClient = getOrCreateSecondaryService(
+        basePath = "/api/gateway/v1/",
+        getCached = { it.platform },
+        createClient = { PlatformApiClient(it) },
+        updateGroup = { group, client, clients -> group.copy(platform = client, httpClients = clients) }
+    )
+
+    override fun getHubApiService(): HubApiClient = getOrCreateSecondaryService(
+        basePath = "/api/galaxy/",
+        getCached = { it.hub },
+        createClient = { HubApiClient(it) },
+        updateGroup = { group, client, clients -> group.copy(hub = client, httpClients = clients) }
+    )
+
+    private fun <T> getOrCreateSecondaryService(
+        basePath: String,
+        getCached: (ClientGroup) -> T?,
+        createClient: (HttpClient) -> T,
+        updateGroup: (ClientGroup, T, List<HttpClient>) -> ClientGroup
+    ): T = synchronized(this) {
         val instance = tokenManager.activeInstance.value
             ?: throw IllegalStateException("No active AAP instance. Please log in first.")
 
         val cached = clientCache[instance.id]
-        if (cached?.eda != null) return@synchronized cached.eda
+        val existing = cached?.let(getCached)
+        if (existing != null) return@synchronized existing
 
-        val client = buildClient(instance.baseUrl, "/api/eda/v1/", instance.trustSelfSigned, instance.id)
-        val edaClient = EdaApiClient(client)
+        val client = buildClient(instance.baseUrl, basePath, instance.trustSelfSigned, instance.id)
+        val serviceClient = createClient(client)
 
         val existingClients = cached?.httpClients ?: emptyList()
         val newClients = mutableListOf(client)
@@ -64,63 +91,8 @@ class HttpClientFactory(
             AapApiClient(ctrlHttp)
         }
         val base = cached ?: ClientGroup(controller = controllerClient)
-        clientCache[instance.id] = base.copy(
-            eda = edaClient,
-            httpClients = existingClients + newClients
-        )
-        edaClient
-    }
-
-    override fun getPlatformApiService(): PlatformApiClient = synchronized(this) {
-        val instance = tokenManager.activeInstance.value
-            ?: throw IllegalStateException("No active AAP instance. Please log in first.")
-
-        val cached = clientCache[instance.id]
-        if (cached?.platform != null) return@synchronized cached.platform
-
-        val client = buildClient(instance.baseUrl, "/api/gateway/v1/", instance.trustSelfSigned, instance.id)
-        val platformClient = PlatformApiClient(client)
-
-        val existingClients = cached?.httpClients ?: emptyList()
-        val newClients = mutableListOf(client)
-        val controllerClient = cached?.controller ?: run {
-            val apiVersion = resolveApiVersion(instance.apiVersion)
-            val ctrlHttp = buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id)
-            newClients.add(ctrlHttp)
-            AapApiClient(ctrlHttp)
-        }
-        val base = cached ?: ClientGroup(controller = controllerClient)
-        clientCache[instance.id] = base.copy(
-            platform = platformClient,
-            httpClients = existingClients + newClients
-        )
-        platformClient
-    }
-
-    override fun getHubApiService(): HubApiClient = synchronized(this) {
-        val instance = tokenManager.activeInstance.value
-            ?: throw IllegalStateException("No active AAP instance. Please log in first.")
-
-        val cached = clientCache[instance.id]
-        if (cached?.hub != null) return@synchronized cached.hub
-
-        val client = buildClient(instance.baseUrl, "/api/galaxy/", instance.trustSelfSigned, instance.id)
-        val hubClient = HubApiClient(client)
-
-        val existingClients = cached?.httpClients ?: emptyList()
-        val newClients = mutableListOf(client)
-        val controllerClient = cached?.controller ?: run {
-            val apiVersion = resolveApiVersion(instance.apiVersion)
-            val ctrlHttp = buildClient(instance.baseUrl, apiVersion.prefix, instance.trustSelfSigned, instance.id)
-            newClients.add(ctrlHttp)
-            AapApiClient(ctrlHttp)
-        }
-        val base = cached ?: ClientGroup(controller = controllerClient)
-        clientCache[instance.id] = base.copy(
-            hub = hubClient,
-            httpClients = existingClients + newClients
-        )
-        hubClient
+        clientCache[instance.id] = updateGroup(base, serviceClient, existingClients + newClients)
+        serviceClient
     }
 
     override fun evictInstance(instanceId: String) {
