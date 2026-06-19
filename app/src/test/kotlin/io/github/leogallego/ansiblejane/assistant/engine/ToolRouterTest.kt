@@ -1061,6 +1061,60 @@ class ToolRouterTest {
         assertFalse("list_hosts" in names)
     }
 
+    // --- Hub routing tests ---
+
+    @Test
+    fun `SHOULD select hub tools WHEN query mentions hub or collections`() {
+        val tools = listOf(
+            localTool("list_hub_collections"),
+            localTool("list_hub_namespaces"),
+            localTool("list_hub_ee_repositories"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show hub collections").tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_hub_collections" in names)
+        assertTrue("list_hub_namespaces" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD select hub tools WHEN query mentions galaxy or namespaces`() {
+        val tools = listOf(
+            localTool("list_hub_namespaces"),
+            localTool("list_hub_collections"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("list galaxy namespaces").tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_hub_namespaces" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD auto-disable hub MCP overlaps WHEN local tools registered`() {
+        val localTools = listOf(
+            localTool("list_hub_collections"),
+            localTool("list_hub_users"),
+            localTool("list_hub_ee_repositories")
+        )
+        router.registerLocalTools(localTools)
+
+        assertFalse(router.isToolEnabled("collections_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("hub_users_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("execution_environments_repositories_list", ToolSource.MCP))
+        assertTrue(router.isToolEnabled("hub_groups_list", ToolSource.MCP))
+    }
+
+    @Test
+    fun `getCategoryForTool SHOULD return HUB for list_hub_collections`() {
+        assertEquals("HUB", ToolRouter.getCategoryForTool("list_hub_collections"))
+    }
+
     // --- Disabled tools filtering (issue #282) ---
 
     @Test
