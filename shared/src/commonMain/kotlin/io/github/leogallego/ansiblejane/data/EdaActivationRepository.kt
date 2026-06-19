@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.EdaActivation
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import kotlin.coroutines.cancellation.CancellationException
 
 class EdaActivationRepository(private val apiProvider: IAapApiProvider) : IEdaActivationRepository {
 
@@ -21,6 +22,8 @@ class EdaActivationRepository(private val apiProvider: IAapApiProvider) : IEdaAc
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -29,6 +32,8 @@ class EdaActivationRepository(private val apiProvider: IAapApiProvider) : IEdaAc
     override suspend fun getActivation(id: Int): Result<EdaActivation> {
         return try {
             Result.success(apiProvider.getEdaApiService().getActivation(id))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
