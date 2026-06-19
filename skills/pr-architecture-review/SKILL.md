@@ -1,6 +1,7 @@
 ---
 name: pr-architecture-review
 description: Use when reviewing PRs for architecture contract compliance in Ansible Jane. Checks layer discipline, interface contracts, module boundaries, state management, DI patterns, and naming conventions against docs/architecture/service-contracts.md. Auto-loads relevant Kotlin/Android skills based on changed files.
+license: Apache-2.0
 metadata:
   version: "1.0.0"
 ---
@@ -107,7 +108,7 @@ For any new or modified repository:
 - Verify the interface is in the same package as the implementation
 
 For any new tool:
-- Verify it extends `LocalTool` or implements `McpTool`
+- Verify it implements the `LocalTool` interface
 - Verify it is registered in `AssistantDiModule` with `bind LocalTool::class`
 
 #### 5c. Module boundaries
@@ -247,7 +248,7 @@ Examples:
 
 ## What this skill does NOT cover
 
-- **Line-level code quality** — use `kotlin-project-code-review` skill
+- **Line-level code quality** — use `kotlin-kmp-code-review` skill
 - **Compose recomposition performance** — use `compose-recomposition-performance` skill
 - **Ansible content quality** — use CLAUDE.md Ansible rules
 - **General PR correctness** — use the `code-review` superpowers skill

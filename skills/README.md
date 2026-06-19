@@ -86,6 +86,10 @@ From [mmiani/kotlin-kmp-claude-agent-skills](https://github.com/mmiani/kotlin-km
 - **kotlin-kmp-refactor-safety** - 4-phase refactoring, parallel implementation prevention, rollback
 - **kotlin-kmp-code-review** - 24-priority architect-level review, escalation criteria
 
+### `pr-architecture-review/` - Project Architecture Contract Review
+Project-specific (Apache 2.0)
+- **pr-architecture-review** - PR review skill that checks changes against `docs/architecture/service-contracts.md`. Verifies layer discipline, interface contracts, module boundaries, state management, DI patterns. Auto-loads relevant Kotlin/Android skills based on changed files.
+
 ### `kotlin-kmp-abstraction-decision/` - KMP Abstraction Decision Framework
 From [vitorpamplona/amethyst](https://github.com/vitorpamplona/amethyst) (MIT)
 - **kotlin-kmp-abstraction-decision** - Decision tree for platform abstraction: what goes in commonMain vs expect/actual vs platform-specific. Abstraction tiers (always/sometimes/rarely/never), mechanism selection order, common pitfalls

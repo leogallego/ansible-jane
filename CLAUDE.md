@@ -85,7 +85,7 @@ Formal contracts are documented in `docs/architecture/service-contracts.md`. Key
 - **Interface requirement**: Every repository must have an `IXxxRepository` interface. Koin binds to interfaces, never concrete types.
 - **Module isolation**: `shared/` has zero dependencies on `app/` or `composeApp/`. `commonMain` never imports Android/JVM APIs.
 - **State exposure**: ViewModels expose `StateFlow<XxxUiState>`, never `MutableStateFlow`. UiState uses sealed classes with `Idle`/`Loading`/`Success`/`Error`.
-- **Tool contracts**: Local tools extend `LocalTool`. MCP tools implement `McpTool`. Both satisfy the `Tool` sealed interface.
+- **Tool contracts**: Local tools implement the `LocalTool` interface. MCP tools are instances of the `McpTool` class. Both satisfy the `Tool` interface.
 
 When reviewing PRs, load the `skills/pr-architecture-review/SKILL.md` skill to check changes against these contracts. It auto-loads relevant Kotlin/Android skills based on which files changed.
 

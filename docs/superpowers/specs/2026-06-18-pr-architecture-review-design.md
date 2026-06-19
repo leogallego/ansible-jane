@@ -82,7 +82,7 @@ The codebase audit found the architecture is already in excellent shape:
 - **17 repository interfaces** with consistent IXxxRepository naming
 - **Clean 6-layer separation** with no layer skipping
 - **1 intentional violation** (SettingsViewModel ModelFetcher) — documented as exception
-- **5 files over 300 LOC** — all justified (ChatEngine, ToolRouter, AapApiClient,
+- **5 files over 400 LOC** — all justified (ChatEngine, ToolRouter, AapApiClient,
   TokenManager, McpServerManager)
 - **Consistent Koin DI** with 4 modules and interface bindings
 - **Perfect platform isolation** — no Android/JVM imports in commonMain

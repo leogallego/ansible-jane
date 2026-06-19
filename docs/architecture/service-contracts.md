@@ -36,15 +36,17 @@ layers below it. No layer skipping is permitted.
 │ May depend on: Model, Platform                      │
 ├─────────────────────────────────────────────────────┤
 │ Layer 1: Platform & Models                          │
-│ Domain models, expect/actual, error types            │
+│ Domain models (accessible to all layers above)      │
+│ Platform expect/actual (restricted to Repository+)  │
 │ May depend on: Kotlin stdlib only                   │
 └─────────────────────────────────────────────────────┘
 ```
 
 ### Hard Rules
 
-- **No layer skipping.** UI must not import from Repository, Network, or Platform.
-  ViewModels must not import from Network. Repositories must not import from Presentation.
+- **No layer skipping.** UI must not import from Repository, Network, or Platform
+  (domain models in `model/` are accessible to all layers). ViewModels must not import
+  from Network. Repositories must not import from Presentation.
 - **No upward dependencies.** Network never imports from Presentation or UI.
   Repository never imports from Presentation or UI.
 - **Composables never call repository or network methods directly.** All data access
@@ -97,9 +99,10 @@ for one-shot discovery of external endpoints would be over-engineering.
 
 ### Tool Contracts
 
-- Local tools must extend `LocalTool` abstract class.
-- MCP tools implement `McpTool`.
-- Both satisfy the `Tool` sealed interface defined in `shared/.../tools/ToolSpec.kt`.
+- Local tools implement the `LocalTool` interface (which extends `Tool`).
+- MCP tools are instances of the `McpTool` concrete class, constructed from MCP server
+  discovery data at runtime. You do not subclass `McpTool`.
+- Both satisfy the `Tool` interface defined in `shared/.../tools/ToolSpec.kt`.
 - New local tools must be registered in `AssistantDiModule` with `bind LocalTool::class`.
 
 ---
@@ -205,8 +208,8 @@ for one-shot discovery of external endpoints would be over-engineering.
 ### Hard Rules
 
 - **Interfaces:** `IXxxRepository`, `IXxxManager` (prefix `I`)
-- **Internal variables:** `__prefix` double-underscore for non-public internal state
-  (follows Ansible convention for role variables)
+- **Backing fields:** `_prefix` single-underscore for private mutable backing fields
+  (standard Kotlin convention, e.g., `private val _uiState`)
 - **Files:** `snake_case` for Ansible content, `PascalCase` for Kotlin files
 - **Packages:** `lowercase` following Kotlin conventions
 
