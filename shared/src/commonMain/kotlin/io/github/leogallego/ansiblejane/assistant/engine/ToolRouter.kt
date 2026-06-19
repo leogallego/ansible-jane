@@ -449,12 +449,11 @@ class ToolRouter(
 
             val toolToolset = (tool as? McpTool)?.toolset
             val toolsetCategories = toolToolset?.let { TOOLSET_CATEGORY_MAP[it] }
-            val matchesCategory = if (toolsetCategories != null) {
-                matchedCategories.any { it in toolsetCategories }
-            } else {
-                val resource = tool.spec.name
-                    .substringBeforeLast("_")
-                resource in matchedPrefixes
+            val matchesCategory = when {
+                toolsetCategories != null ->
+                    matchedCategories.any { it in toolsetCategories }
+                else ->
+                    true // no toolset or unknown toolset: pass through to cherry-pick
             }
 
             val passesReadOnly = if (readOnlyLabels.isNotEmpty()) {
