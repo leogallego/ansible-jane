@@ -48,8 +48,9 @@ class ToolRouterTest {
 
     private lateinit var router: ToolRouter
 
-    private fun mcpTool(name: String, serverLabel: String = "aap") = object : Tool {
+    private fun mcpTool(name: String, serverLabel: String = "aap", toolset: String? = null) = object : Tool {
         override val serverLabel: String = serverLabel
+        override val toolset: String? = toolset
         override val spec = ToolSpec(name, "[$serverLabel] description of $name", JsonObject(emptyMap()))
         override suspend fun execute(args: JsonObject) = ToolResult(success = true)
     }
@@ -282,11 +283,11 @@ class ToolRouterTest {
     @Test
     fun `SHOULD exclude write MCP tools WHEN readOnly is true`() {
         val tools = listOf(
-            mcpTool("hosts_list"),
-            mcpTool("hosts_create"),
-            mcpTool("hosts_update"),
-            mcpTool("hosts_delete"),
-            mcpTool("inventories_list")
+            mcpTool("hosts_list", toolset = "inventory_management"),
+            mcpTool("hosts_create", toolset = "inventory_management"),
+            mcpTool("hosts_update", toolset = "inventory_management"),
+            mcpTool("hosts_delete", toolset = "inventory_management"),
+            mcpTool("inventories_list", toolset = "inventory_management")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("list my hosts", listOf(readOnlyConfig)).tools
@@ -352,10 +353,10 @@ class ToolRouterTest {
     @Test
     fun `SHOULD select MCP inventory tools WHEN query mentions hosts`() {
         val tools = listOf(
-            mcpTool("hosts_list"),
-            mcpTool("groups_list"),
-            mcpTool("jobs_retrieve"),
-            mcpTool("users_list")
+            mcpTool("hosts_list", toolset = "inventory_management"),
+            mcpTool("groups_list", toolset = "inventory_management"),
+            mcpTool("jobs_retrieve", toolset = "job_management"),
+            mcpTool("users_list", toolset = "user_management")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig)).tools
@@ -373,15 +374,17 @@ class ToolRouterTest {
         // (substringBeforeLast("_") gives "job_templates_launch", not "job_templates").
         // In production, toolset-based routing handles this. See #333.
         val tools = listOf(
-            mcpTool("hosts_list"),
-            mcpTool("job_templates_list"),
-            mcpTool("jobs_retrieve")
+            mcpTool("hosts_list", toolset = "inventory_management"),
+            mcpTool("job_templates_list", toolset = "job_management"),
+            mcpTool("job_templates_launch_create", toolset = "job_management"),
+            mcpTool("jobs_retrieve", toolset = "job_management")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("launch a job template", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
         assertTrue("job_templates_list" in names)
+        assertTrue("job_templates_launch_create" in names)
         assertTrue("jobs_retrieve" in names)
         assertFalse("hosts_list" in names)
     }
@@ -389,10 +392,10 @@ class ToolRouterTest {
     @Test
     fun `SHOULD select MCP monitoring tools WHEN query mentions health`() {
         val tools = listOf(
-            mcpTool("hosts_list"),
-            mcpTool("instances_list"),
-            mcpTool("ping_retrieve"),
-            mcpTool("dashboard_retrieve")
+            mcpTool("hosts_list", toolset = "inventory_management"),
+            mcpTool("instances_list", toolset = "system_monitoring"),
+            mcpTool("ping_retrieve", toolset = "system_monitoring"),
+            mcpTool("mesh_visualizer_retrieve", toolset = "system_monitoring")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("check system health", listOf(readWriteConfig)).tools
@@ -400,17 +403,16 @@ class ToolRouterTest {
 
         assertTrue("instances_list" in names)
         assertTrue("ping_retrieve" in names)
-        assertTrue("dashboard_retrieve" in names)
         assertFalse("hosts_list" in names)
     }
 
     @Test
     fun `SHOULD select MCP user tools WHEN query mentions users or teams`() {
         val tools = listOf(
-            mcpTool("users_list"),
-            mcpTool("teams_list"),
-            mcpTool("organizations_list"),
-            mcpTool("hosts_list")
+            mcpTool("users_list", toolset = "user_management"),
+            mcpTool("teams_list", toolset = "user_management"),
+            mcpTool("organizations_list", toolset = "user_management"),
+            mcpTool("hosts_list", toolset = "inventory_management")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("list users in my team", listOf(readWriteConfig)).tools
@@ -425,9 +427,9 @@ class ToolRouterTest {
     @Test
     fun `SHOULD select MCP security tools WHEN query mentions credentials`() {
         val tools = listOf(
-            mcpTool("credentials_list"),
-            mcpTool("credential_types_list"),
-            mcpTool("hosts_list")
+            mcpTool("credentials_list", toolset = "security_compliance"),
+            mcpTool("credential_types_list", toolset = "security_compliance"),
+            mcpTool("hosts_list", toolset = "inventory_management")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("show my credentials", listOf(readWriteConfig)).tools
@@ -441,10 +443,10 @@ class ToolRouterTest {
     @Test
     fun `SHOULD select MCP config tools WHEN query mentions settings or projects`() {
         val tools = listOf(
-            mcpTool("settings_retrieve"),
-            mcpTool("projects_list"),
-            mcpTool("notification_templates_list"),
-            mcpTool("hosts_list")
+            mcpTool("settings_retrieve", toolset = "platform_configuration"),
+            mcpTool("projects_list", toolset = "platform_configuration"),
+            mcpTool("notification_templates_list", toolset = "platform_configuration"),
+            mcpTool("hosts_list", toolset = "inventory_management")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("show project settings", listOf(readWriteConfig)).tools
@@ -457,11 +459,11 @@ class ToolRouterTest {
     }
 
     @Test
-    fun `SHOULD parse compound MCP resource names correctly`() {
+    fun `SHOULD select MCP tools by toolset WHEN compound names used`() {
         val tools = listOf(
-            mcpTool("workflow_job_templates_list"),
-            mcpTool("constructed_inventories_list"),
-            mcpTool("hosts_list")
+            mcpTool("workflow_job_templates_list", toolset = "job_management"),
+            mcpTool("inventories_list", toolset = "inventory_management"),
+            mcpTool("hosts_list", toolset = "inventory_management")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("show my workflow templates", listOf(readWriteConfig)).tools
@@ -483,6 +485,101 @@ class ToolRouterTest {
         assertTrue(router.getToolsForQuery("hi", listOf(readWriteConfig)).tools.isEmpty())
         assertTrue(router.getToolsForQuery("hello there", listOf(readWriteConfig)).tools.isEmpty())
         assertTrue(router.getToolsForQuery("thanks", listOf(readWriteConfig)).tools.isEmpty())
+    }
+
+    // --- Non-AAP MCP tool passthrough (issue #333) ---
+
+    @Test
+    fun `SHOULD include non-AAP MCP tool WHEN query words overlap with tool name`() {
+        val tools = listOf(
+            mcpTool("query_cmdb_assets", "cmdb-server"),
+            mcpTool("controller.hosts_list")
+        )
+        router.registerMcpTools(tools)
+
+        val result = router.getToolsForQuery("show me all assets", listOf(readWriteConfig)).tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("Non-AAP tool with query overlap should be included",
+            "query_cmdb_assets" in names)
+    }
+
+    @Test
+    fun `SHOULD exclude non-AAP MCP tool WHEN no query word overlap (cherry-pick filters)`() {
+        val tools = listOf(
+            mcpTool("query_cmdb_assets", "cmdb-server"),
+            mcpTool("controller.hosts_list")
+        )
+        router.registerMcpTools(tools)
+
+        val result = router.getToolsForQuery("show me all hosts", listOf(readWriteConfig)).tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("AAP tool should be included", "controller.hosts_list" in names)
+        assertFalse("Non-AAP tool with no query overlap should be excluded by cherry-pick",
+            "query_cmdb_assets" in names)
+    }
+
+    @Test
+    fun `SHOULD exclude non-AAP MCP tool with list bonus WHEN no query word overlap`() {
+        val tools = listOf(
+            mcpTool("list_network_devices", "netbox"),
+        )
+        router.registerMcpTools(tools)
+
+        val result = router.getToolsForQuery("show me all hosts", listOf(readWriteConfig)).tools
+        val names = result.map { it.spec.name }
+
+        assertFalse("Non-AAP tool should be excluded despite list bonus (no word overlap)",
+            "list_network_devices" in names)
+    }
+
+    @Test
+    fun `SHOULD include non-AAP MCP tool with list in name WHEN query words overlap`() {
+        val tools = listOf(
+            mcpTool("list_network_devices", "netbox"),
+        )
+        router.registerMcpTools(tools)
+
+        val result = router.getToolsForQuery("list hosts and network devices", listOf(readWriteConfig)).tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("Non-AAP tool with word overlap should be included",
+            "list_network_devices" in names)
+    }
+
+    @Test
+    fun `SHOULD still filter AAP MCP tools by toolset category`() {
+        val tools = listOf(
+            mcpTool("hosts_list", toolset = "inventory_management"),
+            mcpTool("jobs_list", toolset = "job_management")
+        )
+        router.registerMcpTools(tools)
+
+        val result = router.getToolsForQuery("show me hosts", listOf(readWriteConfig)).tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("hosts_list should be included for host query",
+            "hosts_list" in names)
+        assertFalse("jobs_list should be excluded by toolset category mismatch",
+            "jobs_list" in names)
+    }
+
+    @Test
+    fun `SHOULD exclude known-toolset tool with name overlap WHEN category does not match query`() {
+        val tools = listOf(
+            mcpTool("hosts_job_host_summaries_list", toolset = "job_management"),
+            mcpTool("hosts_list", toolset = "inventory_management")
+        )
+        router.registerMcpTools(tools)
+
+        val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig)).tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("hosts_list should be included for host query",
+            "hosts_list" in names)
+        assertFalse("hosts_job_host_summaries_list should be excluded despite name overlap",
+            "hosts_job_host_summaries_list" in names)
     }
 
     // --- Mixed local + MCP tests ---
@@ -690,7 +787,7 @@ class ToolRouterTest {
     @Test
     fun `SHOULD match plurals via stemming - orgs matches USERS`() {
         router.registerLocalTools(emptyList())
-        router.registerMcpTools(listOf(mcpTool("organizations_list")))
+        router.registerMcpTools(listOf(mcpTool("organizations_list", toolset = "user_management")))
 
         val result = router.getToolsForQuery("list orgs").tools
         assertTrue(result.isNotEmpty())
@@ -1120,9 +1217,9 @@ class ToolRouterTest {
     @Test
     fun `SHOULD not include disabled MCP tools in query results`() {
         val tools = listOf(
-            mcpTool("hosts_list"),
-            mcpTool("groups_list"),
-            mcpTool("users_list")
+            mcpTool("hosts_list", toolset = "inventory_management"),
+            mcpTool("groups_list", toolset = "inventory_management"),
+            mcpTool("users_list", toolset = "user_management")
         )
         router.registerMcpTools(tools)
         router.setToolEnabled("hosts_list", ToolSource.MCP, "aap", false)
@@ -1132,6 +1229,7 @@ class ToolRouterTest {
 
         assertFalse("hosts_list" in names)
         assertTrue("groups_list" in names)
+        assertFalse("users_list should be excluded by category", "users_list" in names)
     }
 
     @Test

@@ -15,7 +15,7 @@ class McpTool(
     private val client: Client,
     private val mcpToolDef: McpToolDefinition,
     override val serverLabel: String,
-    val toolset: String? = null
+    override val toolset: String? = null
 ) : Tool {
 
     companion object {

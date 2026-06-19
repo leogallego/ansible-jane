@@ -14,6 +14,8 @@ interface Tool {
         get() = false
     val serverLabel: String?
         get() = null
+    val toolset: String?
+        get() = null
     suspend fun execute(args: JsonObject): ToolResult
 
     companion object {

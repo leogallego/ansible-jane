@@ -8,7 +8,7 @@ import kotlinx.serialization.json.JsonObject
 class CachedMcpTool(
     private val mcpToolDef: McpToolDefinition,
     override val serverLabel: String,
-    val toolset: String? = null,
+    override val toolset: String? = null,
     val readOnly: Boolean = false,
     private val serverManager: McpServerManager
 ) : Tool {
