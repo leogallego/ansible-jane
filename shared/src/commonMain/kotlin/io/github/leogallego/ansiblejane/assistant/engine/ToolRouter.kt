@@ -399,7 +399,6 @@ class ToolRouter(
         Log.d(TAG, "QUERY: matched categories=${matchedCategories.map { it.name }}")
 
         val matchedLocalNames = matchedCategories.flatMap { it.localToolNames }.toSet()
-        val matchedPrefixes = matchedCategories.flatMap { it.resourcePrefixes }.toSet()
 
         val readOnlyLabels = serverConfigs
             .filter { it.readOnly }
@@ -411,41 +410,44 @@ class ToolRouter(
                 isToolEnabled(tool.spec.name, ToolSource.LOCAL)
         }
 
-        val filteredMcp = mcpTools.filter { tool ->
-            val isEnabled = isToolEnabled(tool.spec.name, ToolSource.MCP, tool.serverLabel)
+        val routedMcp = mutableListOf<Tool>()
+        val unroutedMcp = mutableListOf<Tool>()
 
-            val toolToolset = (tool as? McpTool)?.toolset
-            val toolsetCategories = toolToolset?.let { TOOLSET_CATEGORY_MAP[it] }
-            val matchesCategory = when {
-                toolsetCategories != null ->
-                    matchedCategories.any { it in toolsetCategories }
-                else ->
-                    true // no toolset or unknown toolset: pass through to cherry-pick
-            }
+        for (tool in mcpTools) {
+            if (!isToolEnabled(tool.spec.name, ToolSource.MCP, tool.serverLabel)) continue
 
             val passesReadOnly = if (readOnlyLabels.isNotEmpty()) {
                 if (tool.serverLabel in readOnlyLabels) {
                     WRITE_ACTIONS.none { action -> tool.spec.name.endsWith(action) }
-                } else {
-                    true
-                }
-            } else {
-                true
-            }
+                } else true
+            } else true
+            if (!passesReadOnly) continue
 
-            matchesCategory && isEnabled && passesReadOnly
+            val toolsetCategories = (tool as? McpTool)?.toolset?.let { TOOLSET_CATEGORY_MAP[it] }
+            when {
+                toolsetCategories != null && matchedCategories.any { it in toolsetCategories } ->
+                    routedMcp.add(tool)
+                toolsetCategories == null ->
+                    unroutedMcp.add(tool)
+            }
         }
 
-        Log.d(TAG, "FILTER: ${filteredLocal.size} local, ${filteredMcp.size} mcp after category+enable+readOnly filter")
+        Log.d(TAG, "FILTER: ${filteredLocal.size} local, ${routedMcp.size} routed mcp, ${unroutedMcp.size} unrouted mcp")
         val cherryPickedLocal = cherryPick(filteredLocal, stemmedQuery)
-        val cherryPickedMcp = cherryPick(filteredMcp, stemmedQuery)
-        Log.d(TAG, "CHERRY: ${cherryPickedLocal.size} local [${cherryPickedLocal.map { it.spec.name }}], " +
-            "${cherryPickedMcp.size} mcp [${cherryPickedMcp.map { it.spec.name }}]")
+        val cherryPickedRouted = cherryPick(routedMcp, stemmedQuery)
+        val cherryPickedUnrouted = cherryPick(unroutedMcp, stemmedQuery, requireOverlap = true)
+        val allCherryPicked = cherryPickedLocal + cherryPickedRouted + cherryPickedUnrouted
+        Log.d(TAG, "CHERRY: ${cherryPickedLocal.size} local, ${cherryPickedRouted.size} routed, " +
+            "${cherryPickedUnrouted.size} unrouted [${allCherryPicked.map { it.spec.name }}]")
 
-        QueryResult(cherryPickedLocal + cherryPickedMcp, categoryMatched = true)
+        QueryResult(allCherryPicked, categoryMatched = true)
     }
 
-    private fun cherryPick(tools: List<Tool>, stemmedQuery: Set<String>): List<Tool> {
+    private fun cherryPick(
+        tools: List<Tool>,
+        stemmedQuery: Set<String>,
+        requireOverlap: Boolean = false
+    ): List<Tool> {
         val scored = tools.map { tool ->
             val nameParts = tool.spec.name
                 .split(".", "_")
@@ -456,11 +458,11 @@ class ToolRouter(
             if (tool.spec.name.contains("list") || tool.spec.name.contains("ping")) score += 3
             if (tool.spec.name.contains("get") || tool.spec.name.contains("read")) score += 1
             if (overlap > 0 && tool.isDestructive) score -= 5
-            tool to score
+            Triple(tool, score, overlap)
         }
         Log.d(TAG, "SCORES: ${scored.map { "${it.first.spec.name}=${it.second}" }}")
         return scored
-            .filter { it.second > 0 }
+            .filter { it.second > 0 && (!requireOverlap || it.third > 0) }
             .sortedByDescending { it.second }
             .map { it.first }
     }

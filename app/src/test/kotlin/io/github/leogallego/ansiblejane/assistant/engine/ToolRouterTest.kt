@@ -259,21 +259,21 @@ class ToolRouterTest {
     @Test
     fun `SHOULD exclude write MCP tools WHEN readOnly is true`() {
         val tools = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.hosts_create"),
-            mcpTool("controller.hosts_update"),
-            mcpTool("controller.hosts_delete"),
-            mcpTool("controller.inventories_list")
+            mcpToolWithToolset("hosts_list", toolset = "inventory_management"),
+            mcpToolWithToolset("hosts_create", toolset = "inventory_management"),
+            mcpToolWithToolset("hosts_update", toolset = "inventory_management"),
+            mcpToolWithToolset("hosts_delete", toolset = "inventory_management"),
+            mcpToolWithToolset("inventories_list", toolset = "inventory_management")
         )
         router.registerMcpTools(tools)
         val result = router.getToolsForQuery("list my hosts", listOf(readOnlyConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("controller.hosts_list" in names)
-        assertTrue("controller.inventories_list" in names)
-        assertFalse("controller.hosts_create" in names)
-        assertFalse("controller.hosts_update" in names)
-        assertFalse("controller.hosts_delete" in names)
+        assertTrue("hosts_list" in names)
+        assertTrue("inventories_list" in names)
+        assertFalse("hosts_create" in names)
+        assertFalse("hosts_update" in names)
+        assertFalse("hosts_delete" in names)
     }
 
     @Test
@@ -494,7 +494,7 @@ class ToolRouterTest {
     }
 
     @Test
-    fun `SHOULD include non-AAP MCP tool with list in name for any category query`() {
+    fun `SHOULD exclude non-AAP MCP tool with list bonus WHEN no query word overlap`() {
         val tools = listOf(
             mcpTool("list_network_devices", "netbox"),
         )
@@ -503,7 +503,21 @@ class ToolRouterTest {
         val result = router.getToolsForQuery("show me all hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertTrue("Non-AAP tool with 'list' bonus should pass cherry-pick",
+        assertFalse("Non-AAP tool should be excluded despite list bonus (no word overlap)",
+            "list_network_devices" in names)
+    }
+
+    @Test
+    fun `SHOULD include non-AAP MCP tool with list in name WHEN query words overlap`() {
+        val tools = listOf(
+            mcpTool("list_network_devices", "netbox"),
+        )
+        router.registerMcpTools(tools)
+
+        val result = router.getToolsForQuery("list hosts and network devices", listOf(readWriteConfig)).tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("Non-AAP tool with word overlap should be included",
             "list_network_devices" in names)
     }
 
@@ -729,11 +743,11 @@ class ToolRouterTest {
     @Test
     fun `SHOULD match plurals via stemming - orgs matches USERS`() {
         router.registerLocalTools(emptyList())
-        router.registerMcpTools(listOf(mcpTool("controller.organizations_list")))
+        router.registerMcpTools(listOf(mcpToolWithToolset("organizations_list", toolset = "user_management")))
 
         val result = router.getToolsForQuery("list orgs").tools
         assertTrue(result.isNotEmpty())
-        assertTrue(result.any { it.spec.name == "controller.organizations_list" })
+        assertTrue(result.any { it.spec.name == "organizations_list" })
     }
 
     @Test
@@ -1105,18 +1119,19 @@ class ToolRouterTest {
     @Test
     fun `SHOULD not include disabled MCP tools in query results`() {
         val tools = listOf(
-            mcpTool("controller.hosts_list"),
-            mcpTool("controller.groups_list"),
-            mcpTool("controller.users_list")
+            mcpToolWithToolset("hosts_list", toolset = "inventory_management"),
+            mcpToolWithToolset("groups_list", toolset = "inventory_management"),
+            mcpToolWithToolset("users_list", toolset = "user_management")
         )
         router.registerMcpTools(tools)
-        router.setToolEnabled("controller.hosts_list", ToolSource.MCP, "aap", false)
+        router.setToolEnabled("hosts_list", ToolSource.MCP, "aap", false)
 
         val result = router.getToolsForQuery("list my hosts", listOf(readWriteConfig)).tools
         val names = result.map { it.spec.name }
 
-        assertFalse("controller.hosts_list" in names)
-        assertTrue("controller.groups_list" in names)
+        assertFalse("hosts_list" in names)
+        assertTrue("groups_list" in names)
+        assertFalse("users_list should be excluded by category", "users_list" in names)
     }
 
     @Test
