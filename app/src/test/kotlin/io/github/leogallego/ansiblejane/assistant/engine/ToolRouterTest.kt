@@ -39,7 +39,10 @@ class ToolRouterTest {
             "list_eda_audit_rules", "list_eda_activations", "get_eda_activation",
             "list_eda_rulebooks", "list_eda_decision_environments",
             "list_eda_projects", "list_eda_credentials", "list_eda_credential_types",
-            "list_eda_event_streams", "list_eda_users"
+            "list_eda_event_streams", "list_eda_users",
+            "list_hub_collections", "list_hub_namespaces", "list_hub_approvals",
+            "list_hub_ee_repositories", "list_hub_ee_registries",
+            "list_hub_users", "list_hub_groups", "list_hub_roles"
         )
     }
 
@@ -1058,6 +1061,60 @@ class ToolRouterTest {
         assertFalse("list_hosts" in names)
     }
 
+    // --- Hub routing tests ---
+
+    @Test
+    fun `SHOULD select hub tools WHEN query mentions hub or collections`() {
+        val tools = listOf(
+            localTool("list_hub_collections"),
+            localTool("list_hub_namespaces"),
+            localTool("list_hub_ee_repositories"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("show hub collections").tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_hub_collections" in names)
+        assertTrue("list_hub_namespaces" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD select hub tools WHEN query mentions galaxy or namespaces`() {
+        val tools = listOf(
+            localTool("list_hub_namespaces"),
+            localTool("list_hub_collections"),
+            localTool("list_hosts")
+        )
+        router.registerLocalTools(tools)
+        val result = router.getToolsForQuery("list galaxy namespaces").tools
+        val names = result.map { it.spec.name }
+
+        assertTrue("list_hub_namespaces" in names)
+        assertFalse("list_hosts" in names)
+    }
+
+    @Test
+    fun `SHOULD auto-disable hub MCP overlaps WHEN local tools registered`() {
+        val localTools = listOf(
+            localTool("list_hub_collections"),
+            localTool("list_hub_users"),
+            localTool("list_hub_ee_repositories")
+        )
+        router.registerLocalTools(localTools)
+
+        assertFalse(router.isToolEnabled("collections_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("hub_users_list", ToolSource.MCP))
+        assertFalse(router.isToolEnabled("execution_environments_repositories_list", ToolSource.MCP))
+        assertTrue(router.isToolEnabled("hub_groups_list", ToolSource.MCP))
+    }
+
+    @Test
+    fun `getCategoryForTool SHOULD return HUB for list_hub_collections`() {
+        assertEquals("HUB", ToolRouter.getCategoryForTool("list_hub_collections"))
+    }
+
     // --- Disabled tools filtering (issue #282) ---
 
     @Test
@@ -1408,6 +1465,10 @@ class ToolRouterTest {
             "projects_retrieve", "job_templates_survey_spec_retrieve",
             "workflow_approvals_list", "workflow_approvals_approve_create",
             "workflow_approvals_deny_create", "services_list", "service_clusters_list",
+            // Hub — no MCP server exists yet
+            "collections_list", "namespaces_list", "collection_versions_list",
+            "execution_environments_repositories_list", "execution_environments_registries_list",
+            "hub_users_list", "hub_groups_list", "hub_role_definitions_list",
         )
         val verifiable = mappedMcpNames - notInEda - notYetExposed
         val notFound = verifiable.filter { it !in verifiedToolNames }
