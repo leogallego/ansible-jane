@@ -186,22 +186,6 @@ class ToolRouter(
                 "list_platform_role_definitions", "list_authenticators",
                 "list_platform_services", "list_service_clusters"
             )
-        ),
-        HUB(
-            keywords = setOf(
-                "hub", "galaxy", "collection", "collections", "namespace", "namespaces",
-                "registry", "registries", "certified", "validated", "published",
-                "container", "image", "images",
-                "approval", "approvals",
-                "role", "roles",
-                "ee", "execution", "environment"
-            ),
-            resourcePrefixes = setOf("hub_collections", "hub_namespaces", "hub_ee", "hub_users", "hub_groups", "hub_roles"),
-            localToolNames = setOf(
-                "list_hub_collections", "list_hub_namespaces", "list_hub_approvals",
-                "list_hub_ee_repositories", "list_hub_ee_registries",
-                "list_hub_users", "list_hub_groups", "list_hub_roles"
-            )
         );
 
         val stemmedKeywords: Set<String> by lazy {
@@ -265,15 +249,6 @@ class ToolRouter(
             "list_role_definitions" to setOf("role_definitions_list"),
             "list_applications" to setOf("applications_list"),
             "list_tokens" to setOf("tokens_list"),
-            // Hub (no MCP server exists yet — names are speculative)
-            "list_hub_collections" to setOf("collections_list"),
-            "list_hub_namespaces" to setOf("namespaces_list"),
-            "list_hub_approvals" to setOf("collection_versions_list"),
-            "list_hub_ee_repositories" to setOf("execution_environments_repositories_list"),
-            "list_hub_ee_registries" to setOf("execution_environments_registries_list"),
-            "list_hub_users" to setOf("hub_users_list"),
-            "list_hub_groups" to setOf("hub_groups_list"),
-            "list_hub_roles" to setOf("hub_role_definitions_list"),
             // Platform / Gateway
             "list_platform_organizations" to setOf("organizations_list"),
             "list_platform_users" to setOf("users_list"),
@@ -315,7 +290,6 @@ class ToolRouter(
             "event_management" to setOf(Category.EDA),
             "integration" to setOf(Category.CONFIGURATION, Category.SECURITY, Category.USERS),
             "developer_integration" to setOf(Category.JOBS, Category.MONITORING),
-            "hub_management" to setOf(Category.HUB),
         )
 
         fun getCategoryForTool(toolName: String): String? {

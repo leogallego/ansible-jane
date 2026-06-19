@@ -14,7 +14,6 @@ import io.github.leogallego.ansiblejane.model.PaginatedResponse
 import io.github.leogallego.ansiblejane.model.WorkflowApproval
 import io.github.leogallego.ansiblejane.network.AapApiClient
 import io.github.leogallego.ansiblejane.network.EdaApiClient
-import io.github.leogallego.ansiblejane.network.HubApiClient
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
 import io.github.leogallego.ansiblejane.network.PlatformApiClient
 import io.github.leogallego.ansiblejane.notification.IApprovalNotificationManager
@@ -105,7 +104,6 @@ class ApprovalPollingWorkerTest {
             override fun getApiService() = apiClient
             override fun getEdaApiService(): EdaApiClient = throw UnsupportedOperationException()
             override fun getPlatformApiService(): PlatformApiClient = throw UnsupportedOperationException()
-            override fun getHubApiService(): HubApiClient = throw UnsupportedOperationException()
             override fun evictInstance(instanceId: String) {}
         }
     }
