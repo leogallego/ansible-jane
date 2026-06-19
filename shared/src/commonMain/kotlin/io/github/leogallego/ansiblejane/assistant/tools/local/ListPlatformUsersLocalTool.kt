@@ -4,7 +4,7 @@ import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.serialization.typeToken
 import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.PlatformRepository
-import io.github.leogallego.ansiblejane.data.TokenManager
+import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.model.AapComponent
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
@@ -13,7 +13,7 @@ import kotlinx.serialization.encodeToString
 
 class ListPlatformUsersLocalTool(
     private val repository: PlatformRepository,
-    private val tokenManager: TokenManager
+    private val tokenManager: ITokenManager
 ) : AapLocalTool<ListPlatformUsersLocalTool.Args>(
     typeToken<Args>(), Args.serializer(),
     name = "list_platform_users",
