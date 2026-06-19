@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.Inventory
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import kotlin.coroutines.cancellation.CancellationException
 
 class InventoryRepository(private val apiProvider: IAapApiProvider) : IInventoryRepository {
 
@@ -23,6 +24,8 @@ class InventoryRepository(private val apiProvider: IAapApiProvider) : IInventory
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -31,6 +34,8 @@ class InventoryRepository(private val apiProvider: IAapApiProvider) : IInventory
     override suspend fun getInventory(id: Int): Result<Inventory> {
         return try {
             Result.success(apiProvider.getApiService().getInventory(id))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }

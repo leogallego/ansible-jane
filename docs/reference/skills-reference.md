@@ -91,6 +91,7 @@ Bundled with this repo. Read with `Read` tool before relevant work.
 | **Edge-to-edge** | `android-official/edge-to-edge.md` |
 | **Gradle config** | `android-community/gradle-configuration.md` |
 | **Architecture review** | `kotlin-project-architecture-review/` |
+| **PR contract review** | `pr-architecture-review/` (project-specific, checks `docs/architecture/service-contracts.md`) |
 | **Feature implementation** | `kotlin-project-feature-implementation/` |
 | **Bug fixing** | `kotlin-project-bugfix/` |
 

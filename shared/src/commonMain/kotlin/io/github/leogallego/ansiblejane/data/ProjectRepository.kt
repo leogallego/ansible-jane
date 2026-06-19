@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.data
 import io.github.leogallego.ansiblejane.model.ExecutionEnvironment
 import io.github.leogallego.ansiblejane.model.Project
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import kotlin.coroutines.cancellation.CancellationException
 
 class ProjectRepository(private val apiProvider: IAapApiProvider) : IProjectRepository {
 
@@ -24,6 +25,8 @@ class ProjectRepository(private val apiProvider: IAapApiProvider) : IProjectRepo
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -32,6 +35,8 @@ class ProjectRepository(private val apiProvider: IAapApiProvider) : IProjectRepo
     override suspend fun getProject(id: Int): Result<Project> {
         return try {
             Result.success(apiProvider.getApiService().getProject(id))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -53,6 +58,8 @@ class ProjectRepository(private val apiProvider: IAapApiProvider) : IProjectRepo
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }

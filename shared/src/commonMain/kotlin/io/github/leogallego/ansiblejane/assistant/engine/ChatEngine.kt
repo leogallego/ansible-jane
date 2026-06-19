@@ -14,7 +14,7 @@ import io.github.leogallego.ansiblejane.assistant.llm.LlmTimeoutException
 import io.github.leogallego.ansiblejane.assistant.engine.DebugLog as Log
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
 import io.github.leogallego.ansiblejane.assistant.tools.toToolDescriptor
-import kotlinx.coroutines.CancellationException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

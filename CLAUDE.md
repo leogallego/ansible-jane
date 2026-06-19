@@ -77,6 +77,18 @@ Rules:
 - **Presentation:** ViewModels with `StateFlow<UiState>` (Idle, Loading, Success, Error pattern) in `composeApp`.
 - **Platform abstractions (`shared/.../platform/`):** `expect`/`actual` classes for `SecureKeyStorage`, `DataStoreFactory`, `ConnectivityObserver`, `BackgroundWorker`, `PlatformUtils`, `NotificationManager`, `TlsTrustManager`, `HttpEngine`.
 
+## Kotlin Architecture Contracts
+
+Formal contracts are documented in `docs/architecture/service-contracts.md`. Key rules enforced during PR review:
+
+- **Layer discipline**: UI → Presentation → Engine → Repository → Network → Platform. No skipping.
+- **Interface requirement**: Every repository must have an `IXxxRepository` interface. Koin binds to interfaces, never concrete types.
+- **Module isolation**: `shared/` has zero dependencies on `app/` or `composeApp/`. `commonMain` never imports Android/JVM APIs.
+- **State exposure**: ViewModels expose `StateFlow<XxxUiState>`, never `MutableStateFlow`. UiState uses sealed classes with `Idle`/`Loading`/`Success`/`Error`.
+- **Tool contracts**: Local tools implement the `LocalTool` interface. MCP tools are instances of the `McpTool` class. Both satisfy the `Tool` interface.
+
+When reviewing PRs, load the `skills/pr-architecture-review/SKILL.md` skill to check changes against these contracts. It auto-loads relevant Kotlin/Android skills based on which files changed.
+
 ## AI Assistant Architecture
 
 The AI assistant (`assistant/` package in `app/` module, Android-only for now) provides natural-language interaction with AAP via tool-use LLMs. The engine, LLM providers, and tools have zero Android dependencies and are planned to move to `shared/commonMain` (#243). Full pipeline flow with component responsibilities is documented in `docs/reference/tool-pipeline-architecture.md`.

@@ -3,6 +3,7 @@ package io.github.leogallego.ansiblejane.data
 import io.github.leogallego.ansiblejane.model.Host
 import io.github.leogallego.ansiblejane.model.JobHostSummary
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.json.JsonElement
 
 class HostRepository(private val apiProvider: IAapApiProvider) : IHostRepository {
@@ -25,6 +26,8 @@ class HostRepository(private val apiProvider: IAapApiProvider) : IHostRepository
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -50,6 +53,8 @@ class HostRepository(private val apiProvider: IAapApiProvider) : IHostRepository
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -58,6 +63,8 @@ class HostRepository(private val apiProvider: IAapApiProvider) : IHostRepository
     override suspend fun getHostFacts(hostId: Int): Result<Map<String, JsonElement>> {
         return try {
             Result.success(apiProvider.getApiService().getHostFacts(hostId))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -81,6 +88,8 @@ class HostRepository(private val apiProvider: IAapApiProvider) : IHostRepository
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }

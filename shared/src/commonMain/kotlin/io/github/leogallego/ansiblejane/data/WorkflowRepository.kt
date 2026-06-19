@@ -2,6 +2,7 @@ package io.github.leogallego.ansiblejane.data
 
 import io.github.leogallego.ansiblejane.model.LaunchRequest
 import io.github.leogallego.ansiblejane.model.WorkflowApproval
+import kotlin.coroutines.cancellation.CancellationException
 import io.github.leogallego.ansiblejane.model.WorkflowJob
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplate
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplateNode
@@ -31,6 +32,8 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -41,6 +44,8 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
             val request = LaunchRequest(extraVars = extraVars)
             val response = apiProvider.getApiService().launchWorkflowJob(templateId, request)
             Result.success(response.workflowJob)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -49,6 +54,8 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
     override suspend fun getWorkflowJobStatus(workflowJobId: Int): Result<WorkflowJob> {
         return try {
             Result.success(apiProvider.getApiService().getWorkflowJob(workflowJobId))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -73,6 +80,8 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
                 page++
             } while (response.next != null)
             Result.success(all)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -92,6 +101,8 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
                 page++
             } while (response.next != null)
             Result.success(all)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -100,6 +111,8 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
     override suspend fun getWorkflowApproval(approvalId: Int): Result<WorkflowApproval> {
         return try {
             Result.success(apiProvider.getApiService().getWorkflowApproval(approvalId))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -119,6 +132,8 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -128,6 +143,8 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
         return try {
             apiProvider.getApiService().approveWorkflow(approvalId)
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -137,6 +154,8 @@ class WorkflowRepository(private val apiProvider: IAapApiProvider) : IWorkflowRe
         return try {
             apiProvider.getApiService().denyWorkflow(approvalId)
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }

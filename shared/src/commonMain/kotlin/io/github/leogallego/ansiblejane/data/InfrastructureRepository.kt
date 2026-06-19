@@ -4,6 +4,7 @@ import io.github.leogallego.ansiblejane.model.Instance
 import io.github.leogallego.ansiblejane.model.InstanceGroup
 import io.github.leogallego.ansiblejane.model.PingResponse
 import io.github.leogallego.ansiblejane.network.IAapApiProvider
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.json.JsonElement
 
 class InfrastructureRepository(private val apiProvider: IAapApiProvider) : IInfrastructureRepository {
@@ -24,6 +25,8 @@ class InfrastructureRepository(private val apiProvider: IAapApiProvider) : IInfr
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -32,6 +35,8 @@ class InfrastructureRepository(private val apiProvider: IAapApiProvider) : IInfr
     override suspend fun getInstance(id: Int): Result<Instance> {
         return try {
             Result.success(apiProvider.getApiService().getInstance(id))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -53,6 +58,8 @@ class InfrastructureRepository(private val apiProvider: IAapApiProvider) : IInfr
                     totalCount = response.count
                 )
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -61,6 +68,8 @@ class InfrastructureRepository(private val apiProvider: IAapApiProvider) : IInfr
     override suspend fun ping(): Result<PingResponse> {
         return try {
             Result.success(apiProvider.getApiService().ping())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -69,6 +78,8 @@ class InfrastructureRepository(private val apiProvider: IAapApiProvider) : IInfr
     override suspend fun getMeshTopology(): Result<JsonElement> {
         return try {
             Result.success(apiProvider.getApiService().getMeshTopology())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
