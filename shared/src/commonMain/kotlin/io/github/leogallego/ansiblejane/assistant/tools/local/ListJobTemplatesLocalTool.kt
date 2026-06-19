@@ -6,7 +6,9 @@ import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.TemplateRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListJobTemplatesLocalTool(
     private val repository: TemplateRepository
@@ -32,9 +34,9 @@ class ListJobTemplatesLocalTool(
             search = args.search,
             labelFilter = args.labels
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "templates" to networkJson.encodeToString(result.templates)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("templates", networkJson.encodeToJsonElement(result.templates))
+        }.toString()
     }
 }

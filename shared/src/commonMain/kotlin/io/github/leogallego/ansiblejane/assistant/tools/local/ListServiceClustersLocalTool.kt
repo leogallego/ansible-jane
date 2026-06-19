@@ -9,7 +9,9 @@ import io.github.leogallego.ansiblejane.model.AapComponent
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListServiceClustersLocalTool(
     private val repository: PlatformRepository,
@@ -37,9 +39,9 @@ class ListServiceClustersLocalTool(
             page = args.page.coerceAtLeast(1),
             pageSize = args.pageSize.coerceIn(1, 25)
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "service_clusters" to networkJson.encodeToString(result.items)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("service_clusters", networkJson.encodeToJsonElement(result.items))
+        }.toString()
     }
 }

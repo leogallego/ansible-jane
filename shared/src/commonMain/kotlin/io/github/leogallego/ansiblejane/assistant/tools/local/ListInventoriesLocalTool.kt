@@ -6,7 +6,9 @@ import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.InventoryRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListInventoriesLocalTool(
     private val repository: InventoryRepository
@@ -28,9 +30,9 @@ class ListInventoriesLocalTool(
             page = args.page.coerceAtLeast(1),
             search = args.search
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "inventories" to networkJson.encodeToString(result.inventories)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("inventories", networkJson.encodeToJsonElement(result.inventories))
+        }.toString()
     }
 }

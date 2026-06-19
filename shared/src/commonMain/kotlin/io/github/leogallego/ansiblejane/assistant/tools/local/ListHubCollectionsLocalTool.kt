@@ -9,7 +9,9 @@ import io.github.leogallego.ansiblejane.model.AapComponent
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListHubCollectionsLocalTool(
     private val repository: HubRepository,
@@ -40,9 +42,9 @@ class ListHubCollectionsLocalTool(
             pageSize = args.pageSize.coerceIn(1, 20),
             search = args.search
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "collections" to networkJson.encodeToString(result.items)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("collections", networkJson.encodeToJsonElement(result.items))
+        }.toString()
     }
 }

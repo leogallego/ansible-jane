@@ -9,7 +9,9 @@ import io.github.leogallego.ansiblejane.model.AapComponent
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListHubRolesLocalTool(
     private val repository: HubRepository,
@@ -37,9 +39,9 @@ class ListHubRolesLocalTool(
             page = args.page.coerceAtLeast(1),
             pageSize = args.pageSize.coerceIn(1, 20)
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "role_definitions" to networkJson.encodeToString(result.items)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("role_definitions", networkJson.encodeToJsonElement(result.items))
+        }.toString()
     }
 }

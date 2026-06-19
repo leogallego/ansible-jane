@@ -7,7 +7,9 @@ import io.github.leogallego.ansiblejane.data.CredentialRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListCredentialsLocalTool(
     private val repository: CredentialRepository
@@ -34,9 +36,9 @@ class ListCredentialsLocalTool(
             pageSize = pageSize,
             search = args.search
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "credentials" to networkJson.encodeToString(result.credentials)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("credentials", networkJson.encodeToJsonElement(result.credentials))
+        }.toString()
     }
 }

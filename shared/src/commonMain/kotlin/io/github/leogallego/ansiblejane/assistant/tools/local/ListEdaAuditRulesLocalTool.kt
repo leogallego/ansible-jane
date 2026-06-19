@@ -7,7 +7,9 @@ import io.github.leogallego.ansiblejane.data.EdaAuditRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListEdaAuditRulesLocalTool(
     private val repository: EdaAuditRepository
@@ -32,9 +34,9 @@ class ListEdaAuditRulesLocalTool(
             page = args.page.coerceAtLeast(1),
             pageSize = pageSize
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "audit_rules" to networkJson.encodeToString(result.auditRules)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("audit_rules", networkJson.encodeToJsonElement(result.auditRules))
+        }.toString()
     }
 }

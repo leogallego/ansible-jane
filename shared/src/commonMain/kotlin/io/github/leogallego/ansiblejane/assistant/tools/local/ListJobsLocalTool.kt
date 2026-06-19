@@ -8,7 +8,9 @@ import io.github.leogallego.ansiblejane.model.JobStatus
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListJobsLocalTool(
     private val repository: JobRepository
@@ -39,9 +41,9 @@ class ListJobsLocalTool(
             pageSize = pageSize,
             statusFilters = statusFilter
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "jobs" to networkJson.encodeToString(result.jobs)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("jobs", networkJson.encodeToJsonElement(result.jobs))
+        }.toString()
     }
 }

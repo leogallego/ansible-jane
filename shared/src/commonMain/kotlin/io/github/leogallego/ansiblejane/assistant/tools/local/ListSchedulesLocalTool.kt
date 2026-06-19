@@ -6,7 +6,9 @@ import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
 import io.github.leogallego.ansiblejane.data.ScheduleRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListSchedulesLocalTool(
     private val repository: ScheduleRepository
@@ -26,9 +28,9 @@ class ListSchedulesLocalTool(
         val result = repository.getSchedules(
             page = args.page.coerceAtLeast(1)
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "schedules" to networkJson.encodeToString(result.schedules)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("schedules", networkJson.encodeToJsonElement(result.schedules))
+        }.toString()
     }
 }

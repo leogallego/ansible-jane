@@ -7,7 +7,8 @@ import io.github.leogallego.ansiblejane.data.WorkflowRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
 
 class GetWorkflowJobLocalTool(
     private val repository: WorkflowRepository
@@ -25,9 +26,9 @@ class GetWorkflowJobLocalTool(
     override suspend fun execute(args: Args): String {
         val job = repository.getWorkflowJobStatus(args.workflowJobId).getOrThrow()
         val nodes = repository.getWorkflowNodes(args.workflowJobId).getOrElse { emptyList() }
-        return networkJson.encodeToString(mapOf(
-            "workflow_job" to networkJson.encodeToString(job),
-            "nodes" to networkJson.encodeToString(nodes)
-        ))
+        return buildJsonObject {
+            put("workflow_job", networkJson.encodeToJsonElement(job))
+            put("nodes", networkJson.encodeToJsonElement(nodes))
+        }.toString()
     }
 }

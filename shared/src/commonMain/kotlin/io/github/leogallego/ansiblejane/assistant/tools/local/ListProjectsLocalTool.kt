@@ -7,7 +7,9 @@ import io.github.leogallego.ansiblejane.data.ProjectRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class ListProjectsLocalTool(
     private val repository: ProjectRepository
@@ -34,9 +36,9 @@ class ListProjectsLocalTool(
             pageSize = pageSize,
             search = args.search
         ).getOrThrow()
-        return networkJson.encodeToString(mapOf(
-            "count" to result.totalCount.toString(),
-            "projects" to networkJson.encodeToString(result.projects)
-        ))
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("projects", networkJson.encodeToJsonElement(result.projects))
+        }.toString()
     }
 }
