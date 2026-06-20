@@ -1,8 +1,8 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
 import io.github.leogallego.ansiblejane.TestOnly
+import io.github.leogallego.ansiblejane.assistant.tools.ToolStub
 import io.github.leogallego.ansiblejane.assistant.tools.LocalTool
-import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
@@ -48,12 +48,9 @@ class ToolRouterTest {
 
     private lateinit var router: ToolRouter
 
-    private fun mcpTool(name: String, serverLabel: String = "aap", toolset: String? = null) = object : Tool {
-        override val serverLabel: String = serverLabel
-        override val toolset: String? = toolset
-        override val spec = ToolSpec(name, "[$serverLabel] description of $name", JsonObject(emptyMap()))
-        override suspend fun execute(args: JsonObject) = ToolResult(success = true)
-    }
+    private fun mcpTool(name: String, serverLabel: String = "aap", toolset: String? = null) =
+        ToolStub(name, serverLabel = serverLabel, toolset = toolset,
+            description = "[$serverLabel] description of $name")
 
     private fun localTool(name: String, destructive: Boolean = false) = object : LocalTool {
         override val spec = ToolSpec(name, "Local: $name", JsonObject(emptyMap()))

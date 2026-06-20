@@ -6,17 +6,18 @@ import ai.koog.prompt.streaming.StreamFrame
 import app.cash.turbine.test
 import io.github.leogallego.ansiblejane.assistant.llm.LlmProvider
 import io.github.leogallego.ansiblejane.assistant.llm.ModelInfo
+import io.github.leogallego.ansiblejane.TestOnly
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import io.github.leogallego.ansiblejane.assistant.tools.ToolStub
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@OptIn(TestOnly::class)
 class ChatEngineStreamingTest {
 
     @Test
@@ -30,7 +31,7 @@ class ChatEngineStreamingTest {
                 StreamFrame.End(finishReason = "stop")
             )
         ))
-        val tool = FakeStreamTool("list_hosts", """[{"id":1,"name":"host1"}]""")
+        val tool = ToolStub("list_hosts", ToolResult(success = true, data = """[{"id":1,"name":"host1"}]"""))
         val engine = ChatEngine(provider, ToolExecutor(listOf<Tool>(tool)))
 
         engine.processMessage("list hosts", emptyList(), emptyList()).test {
@@ -69,8 +70,8 @@ class ChatEngineStreamingTest {
             )
         ))
         val tools = listOf<Tool>(
-            FakeStreamTool("list_hosts", """[{"id":1}]"""),
-            FakeStreamTool("list_groups", """[{"id":2}]""")
+            ToolStub("list_hosts", ToolResult(success = true, data = """[{"id":1}]""")),
+            ToolStub("list_groups", ToolResult(success = true, data = """[{"id":2}]"""))
         )
         val engine = ChatEngine(provider, ToolExecutor(tools))
 
@@ -107,7 +108,7 @@ class ChatEngineStreamingTest {
                 StreamFrame.End(finishReason = "stop")
             )
         ))
-        val tool = FakeStreamTool("list_jobs", """[{"id":1},{"id":2},{"id":3}]""")
+        val tool = ToolStub("list_jobs", ToolResult(success = true, data = """[{"id":1},{"id":2},{"id":3}]"""))
         val engine = ChatEngine(provider, ToolExecutor(listOf<Tool>(tool)))
 
         engine.processMessage("show failed jobs", emptyList(), emptyList()).test {
@@ -142,7 +143,7 @@ class ChatEngineStreamingTest {
                 StreamFrame.End(finishReason = "stop")
             )
         ))
-        val tool = FakeStreamTool("ping", """{"status":"ok"}""")
+        val tool = ToolStub("ping", ToolResult(success = true, data = """{"status":"ok"}"""))
         val engine = ChatEngine(provider, ToolExecutor(listOf<Tool>(tool)))
 
         engine.processMessage("ping", emptyList(), emptyList()).test {
@@ -173,7 +174,7 @@ class ChatEngineStreamingTest {
                 StreamFrame.End(finishReason = "stop")
             )
         ))
-        val tool = FakeStreamTool("ping", """{"status":"ok"}""")
+        val tool = ToolStub("ping", ToolResult(success = true, data = """{"status":"ok"}"""))
         val engine = ChatEngine(provider, ToolExecutor(listOf<Tool>(tool)))
 
         engine.processMessage("check status", emptyList(), emptyList()).test {
@@ -213,13 +214,4 @@ private class StreamingFakeProvider(
     override fun isAvailable(): Boolean = true
     override fun modelInfo(): ModelInfo = ModelInfo("test-streaming")
     override fun close() {}
-}
-
-private class FakeStreamTool(
-    name: String,
-    private val responseData: String
-) : Tool {
-    override val spec = ToolSpec(name, "Test tool", JsonObject(emptyMap()))
-    override suspend fun execute(args: JsonObject): ToolResult =
-        ToolResult(success = true, data = responseData)
 }

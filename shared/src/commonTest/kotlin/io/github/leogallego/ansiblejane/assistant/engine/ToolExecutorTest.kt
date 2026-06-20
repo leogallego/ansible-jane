@@ -1,10 +1,11 @@
 package io.github.leogallego.ansiblejane.assistant.engine
 
 import ai.koog.prompt.message.MessagePart
+import io.github.leogallego.ansiblejane.TestOnly
 import io.github.leogallego.ansiblejane.assistant.tools.ErrorType
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import io.github.leogallego.ansiblejane.assistant.tools.ToolStub
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
@@ -17,6 +18,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+@OptIn(TestOnly::class)
 class ToolExecutorTest {
 
     private fun toolCall(name: String, args: String = "{}"): MessagePart.Tool.Call =
@@ -24,8 +26,8 @@ class ToolExecutorTest {
 
     @Test
     fun `execute dispatches to correct tool by name`() = runTest {
-        val tool1 = StubTool("tool_a", ToolResult(success = true, data = "result_a"))
-        val tool2 = StubTool("tool_b", ToolResult(success = true, data = "result_b"))
+        val tool1 = ToolStub("tool_a", ToolResult(success = true, data = "result_a"))
+        val tool2 = ToolStub("tool_b", ToolResult(success = true, data = "result_b"))
         val executor = ToolExecutor(listOf<Tool>(tool1, tool2))
 
         val result = executor.execute(toolCall("tool_b"))
@@ -48,7 +50,7 @@ class ToolExecutorTest {
     @Test
     fun `execute truncates result exceeding maxResultChars`() = runTest {
         val longData = "x".repeat(30_000)
-        val tool = StubTool("big_tool", ToolResult(success = true, data = longData))
+        val tool = ToolStub("big_tool", ToolResult(success = true, data = longData))
         val executor = ToolExecutor(listOf<Tool>(tool), maxResultChars = 20_000)
 
         val result = executor.execute(toolCall("big_tool"))
@@ -61,7 +63,7 @@ class ToolExecutorTest {
     @Test
     fun `execute does not truncate result within limit`() = runTest {
         val data = "short result"
-        val tool = StubTool("small_tool", ToolResult(success = true, data = data))
+        val tool = ToolStub("small_tool", ToolResult(success = true, data = data))
         val executor = ToolExecutor(listOf<Tool>(tool))
 
         val result = executor.execute(toolCall("small_tool"))
@@ -89,12 +91,8 @@ class ToolExecutorTest {
     @Test
     fun `execute passes arguments to tool`() = runTest {
         var capturedArgs: JsonObject? = null
-        val tool = object : Tool {
-            override val spec = ToolSpec("arg_tool", "desc", JsonObject(emptyMap()))
-            override suspend fun execute(args: JsonObject): ToolResult {
-                capturedArgs = args
-                return ToolResult(success = true, data = "ok")
-            }
+        val tool = ToolStub("arg_tool", ToolResult(success = true, data = "ok")) { args ->
+            capturedArgs = args
         }
         val executor = ToolExecutor(listOf<Tool>(tool))
 
@@ -109,12 +107,4 @@ class ToolExecutorTest {
         assertEquals(42, capturedArgs!!["count"]!!.jsonPrimitive.int)
         assertEquals(true, capturedArgs!!["enabled"]!!.jsonPrimitive.boolean)
     }
-}
-
-private class StubTool(
-    name: String,
-    private val result: ToolResult
-) : Tool {
-    override val spec = ToolSpec(name, "Fake tool", JsonObject(emptyMap()))
-    override suspend fun execute(args: JsonObject): ToolResult = result
 }
