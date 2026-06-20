@@ -6,9 +6,10 @@ import ai.koog.prompt.streaming.StreamFrame
 import app.cash.turbine.test
 import io.github.leogallego.ansiblejane.assistant.llm.LlmProvider
 import io.github.leogallego.ansiblejane.assistant.llm.ModelInfo
+import io.github.leogallego.ansiblejane.TestOnly
 import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
-import io.github.leogallego.ansiblejane.assistant.tools.ToolSpec
+import io.github.leogallego.ansiblejane.assistant.tools.ToolStub
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
@@ -17,6 +18,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@OptIn(TestOnly::class)
 class ChatEngineTest {
 
     @Test
@@ -51,9 +53,10 @@ class ChatEngineTest {
             )),
             FakeResponse(text = "Found 3 failed jobs.")
         ))
-        val fakeTool = FakeTool(
-            spec = ToolSpec("list_jobs", "List jobs", JsonObject(emptyMap())),
-            result = ToolResult(success = true, data = "[{\"id\":1},{\"id\":2},{\"id\":3}]")
+        val fakeTool = ToolStub(
+            "list_jobs",
+            ToolResult(success = true, data = "[{\"id\":1},{\"id\":2},{\"id\":3}]"),
+            "List jobs"
         )
         val executor = ToolExecutor(listOf<Tool>(fakeTool))
         val engine = ChatEngine(provider, executor)
@@ -90,9 +93,10 @@ class ChatEngineTest {
                 ))
             }
         )
-        val fakeTool = FakeTool(
-            spec = ToolSpec("loop_tool", "Loops", JsonObject(emptyMap())),
-            result = ToolResult(success = true, data = "ok")
+        val fakeTool = ToolStub(
+            "loop_tool",
+            ToolResult(success = true, data = "ok"),
+            "Loops"
         )
         val executor = ToolExecutor(listOf<Tool>(fakeTool))
         val engine = ChatEngine(provider, executor, maxIterations = 3)
@@ -167,11 +171,4 @@ private class FakeLlmProvider(
     override fun isAvailable(): Boolean = true
     override fun modelInfo(): ModelInfo = ModelInfo("fake-model")
     override fun close() {}
-}
-
-private class FakeTool(
-    override val spec: ToolSpec,
-    private val result: ToolResult
-) : Tool {
-    override suspend fun execute(args: JsonObject): ToolResult = result
 }

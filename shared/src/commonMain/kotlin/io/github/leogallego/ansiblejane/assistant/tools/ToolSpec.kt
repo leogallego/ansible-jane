@@ -8,7 +8,7 @@ data class ToolSpec(
     val parametersSchema: JsonObject
 )
 
-interface Tool {
+sealed interface Tool {
     val spec: ToolSpec
     val isDestructive: Boolean
         get() = false

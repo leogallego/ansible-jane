@@ -99,11 +99,17 @@ for one-shot discovery of external endpoints would be over-engineering.
 
 ### Tool Contracts
 
+- `Tool` is a **sealed interface** (`shared/.../tools/ToolSpec.kt`). All direct subtypes
+  must live in the same package (`assistant.tools`) and module (`shared`). This enables
+  exhaustive `when` matching on tool types and catches missing branches at compile time.
 - Local tools implement the `LocalTool` interface (which extends `Tool`).
 - MCP tools are instances of the `McpTool` concrete class, constructed from MCP server
   discovery data at runtime. You do not subclass `McpTool`.
-- Both satisfy the `Tool` interface defined in `shared/.../tools/ToolSpec.kt`.
+- `CachedMcpTool` is a lazy-connection variant of `McpTool` that also directly extends `Tool`.
 - New local tools must be registered in `AssistantDiModule` with `bind LocalTool::class`.
+- Test-only tool stubs use the `@TestOnly` `ToolStub` open class
+  (`shared/.../tools/ToolStub.kt`) — a direct subtype of `Tool` in the same package,
+  satisfying the sealed constraint while keeping test support out of production paths.
 
 ---
 
@@ -287,3 +293,4 @@ rationale for the change. The PR review skill checks against the version in `mai
 | Version | Date | Change |
 |---------|------|--------|
 | 1.0.0 | 2026-06-18 | Initial contracts derived from codebase audit |
+| 1.1.0 | 2026-06-20 | Tool interface sealed (#364), test helpers documented |
