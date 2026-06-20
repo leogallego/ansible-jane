@@ -13,26 +13,26 @@ import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
 import java.net.Proxy
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class McpServerManagerTest {
 
     private lateinit var server: MockWebServer
     private lateinit var manager: McpServerManager
 
-    @Before
+    @BeforeTest
     fun setup() {
         server = MockWebServer()
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.shutdown()
         runBlocking { manager.disconnectAll() }
@@ -173,12 +173,10 @@ class McpServerManagerTest {
         manager.connectAll(instance)
         manager.disconnectAll()
 
-        // Re-set instance so ensureConnected can find config
         manager.connectAll(
             instance.copy(mcpServerUrls = instance.mcpServerUrls)
         )
 
-        // Tools should be available after connectAll
         assertEquals(1, manager.mcpTools.value.size)
     }
 
@@ -196,7 +194,6 @@ class McpServerManagerTest {
         manager.connectAll(instance)
         assertEquals(1, manager.mcpTools.value.size)
 
-        // Reconnect — should still have tools
         manager.reconnectServer("test-server")
 
         val tools = manager.mcpTools.value
@@ -278,7 +275,6 @@ class McpServerManagerTest {
         )
         manager.connectAllWithCache(instance, manifest)
 
-        // Deferred — cached tools remain from setCachedTools
         val tools = manager.mcpTools.value
         assertEquals(1, tools.size)
         assertEquals("cached.tool", tools[0].spec.name)
@@ -347,7 +343,6 @@ class McpServerManagerTest {
 
         manager.connectAllWithCache(instance, manifest)
 
-        // No connections made — deferred to lazy ensureConnected
         assertTrue(manager.connections.value.isEmpty())
     }
 
