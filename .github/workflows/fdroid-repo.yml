@@ -72,6 +72,21 @@ jobs:
           mkdir -p fdroid/repo/icons
           cp fastlane/metadata/android/en-US/images/icon.png fdroid/repo/icons/icon.png
 
+      - name: Create app metadata
+        run: |
+          mkdir -p fdroid/metadata
+          cat > fdroid/metadata/io.github.leogallego.ansiblejane.yml <<'META'
+          Categories:
+            - System
+          License: GPL-3.0-only
+          AuthorName: Leonardo Gallego
+          WebSite: https://jane.ansible.ar
+          SourceCode: https://github.com/leogallego/ansible-jane
+          IssueTracker: https://github.com/leogallego/ansible-jane/issues
+          Changelog: https://github.com/leogallego/ansible-jane/releases
+          META
+          sed -i 's/^          //' fdroid/metadata/io.github.leogallego.ansiblejane.yml
+
       - name: Generate repo index
         working-directory: fdroid
         run: fdroid update --create-metadata
