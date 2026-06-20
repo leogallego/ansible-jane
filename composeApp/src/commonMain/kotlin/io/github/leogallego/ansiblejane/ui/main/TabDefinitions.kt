@@ -72,7 +72,7 @@ sealed class TopLevelTab(
 
     data object Assistant : TopLevelTab(
         route = "main/assistant",
-        label = "Jane",
+        label = "Jane AI",
         icon = Icons.Outlined.Assistant,
         selectedIcon = Icons.Filled.Assistant,
         segments = listOf(
