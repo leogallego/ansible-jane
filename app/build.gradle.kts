@@ -69,16 +69,37 @@ android {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
             all {
-                val roboDepsDir = file("${rootProject.projectDir}/robolectric-deps")
-                if (roboDepsDir.exists()) {
-                    it.systemProperty("robolectric.offline", "true")
-                    it.systemProperty("robolectric.dependency.dir", roboDepsDir.absolutePath)
-                }
                 val tmpDir = file("${rootProject.projectDir}/.tmp")
                 if (tmpDir.exists()) {
                     it.systemProperty("java.io.tmpdir", tmpDir.absolutePath)
                 }
             }
+        }
+    }
+}
+
+val robolectricDepsDir = File(rootProject.projectDir, "robolectric-deps")
+val m2RobolectricDir = File(System.getProperty("user.home"), ".m2/repository/org/robolectric/android-all-instrumented")
+
+val prepareRobolectricDeps by tasks.registering {
+    outputs.dir(robolectricDepsDir)
+    doLast {
+        robolectricDepsDir.mkdirs()
+        if (robolectricDepsDir.listFiles()?.any { it.extension == "jar" } == true) return@doLast
+        if (m2RobolectricDir.isDirectory) {
+            m2RobolectricDir.walkTopDown().filter { it.extension == "jar" }.forEach { jar ->
+                jar.copyTo(File(robolectricDepsDir, jar.name), overwrite = false)
+            }
+        }
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    dependsOn(prepareRobolectricDeps)
+    doFirst {
+        if (robolectricDepsDir.listFiles()?.any { it.extension == "jar" } == true) {
+            systemProperty("robolectric.offline", "true")
+            systemProperty("robolectric.dependency.dir", robolectricDepsDir.absolutePath)
         }
     }
 }
