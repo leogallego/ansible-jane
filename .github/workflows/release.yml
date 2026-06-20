@@ -386,14 +386,14 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           merge-multiple: true
-          pattern: "apk|desktop-linux-deb|desktop-linux-rpm|desktop-macos|desktop-windows|desktop-linux-flatpak"
+          pattern: "{apk,desktop-linux-deb,desktop-linux-rpm,desktop-macos,desktop-windows,desktop-linux-flatpak}"
 
       - name: Download optional artifacts
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           merge-multiple: true
-          pattern: "desktop-linux-tar|desktop-linux-appimage"
+          pattern: "{desktop-linux-tar,desktop-linux-appimage}"
 
       - name: Extract changelog
         run: |
