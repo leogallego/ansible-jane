@@ -1,9 +1,29 @@
+import org.gradle.api.provider.Property
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.screenshot)
     jacoco
+}
+
+abstract class PrepareRobolectricDeps : DefaultTask() {
+    @get:Input abstract val m2Path: Property<String>
+    @get:OutputDirectory abstract val destDir: DirectoryProperty
+
+    @TaskAction
+    fun execute() {
+        val dest = destDir.get().asFile
+        dest.mkdirs()
+        if (dest.listFiles()?.any { it.extension == "jar" } == true) return
+        val m2 = File(m2Path.get())
+        if (m2.isDirectory) {
+            m2.walkTopDown().filter { it.extension == "jar" }.forEach { jar ->
+                jar.copyTo(File(dest, jar.name), overwrite = false)
+            }
+        }
+    }
 }
 
 android {
@@ -78,28 +98,21 @@ android {
     }
 }
 
-val robolectricDepsDir = File(rootProject.projectDir, "robolectric-deps")
-val m2RobolectricDir = File(System.getProperty("user.home"), ".m2/repository/org/robolectric/android-all-instrumented")
+val robolectricDepsPath = File(rootProject.projectDir, "robolectric-deps").absolutePath
 
-val prepareRobolectricDeps by tasks.registering {
-    outputs.dir(robolectricDepsDir)
-    doLast {
-        robolectricDepsDir.mkdirs()
-        if (robolectricDepsDir.listFiles()?.any { it.extension == "jar" } == true) return@doLast
-        if (m2RobolectricDir.isDirectory) {
-            m2RobolectricDir.walkTopDown().filter { it.extension == "jar" }.forEach { jar ->
-                jar.copyTo(File(robolectricDepsDir, jar.name), overwrite = false)
-            }
-        }
-    }
+val prepareRobolectricDeps by tasks.registering(PrepareRobolectricDeps::class) {
+    m2Path.set(File(System.getProperty("user.home"), ".m2/repository/org/robolectric/android-all-instrumented").absolutePath)
+    destDir.set(file(robolectricDepsPath))
 }
 
 tasks.withType<Test>().configureEach {
     dependsOn(prepareRobolectricDeps)
+    val roboDepsPath = robolectricDepsPath
     doFirst {
-        if (robolectricDepsDir.listFiles()?.any { it.extension == "jar" } == true) {
+        val dir = File(roboDepsPath)
+        if (dir.listFiles()?.any { it.extension == "jar" } == true) {
             systemProperty("robolectric.offline", "true")
-            systemProperty("robolectric.dependency.dir", robolectricDepsDir.absolutePath)
+            systemProperty("robolectric.dependency.dir", dir.absolutePath)
         }
     }
 }
