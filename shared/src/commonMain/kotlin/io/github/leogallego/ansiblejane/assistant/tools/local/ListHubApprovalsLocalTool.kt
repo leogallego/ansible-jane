@@ -3,15 +3,12 @@ package io.github.leogallego.ansiblejane.assistant.tools.local
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.serialization.typeToken
 import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.listToolJson
 import io.github.leogallego.ansiblejane.data.HubRepository
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.model.AapComponent
-import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 class ListHubApprovalsLocalTool(
     private val repository: HubRepository,
@@ -42,9 +39,6 @@ class ListHubApprovalsLocalTool(
             pageSize = args.pageSize.coerceIn(1, 20),
             status = args.status
         ).getOrThrow()
-        return buildJsonObject {
-            put("count", result.totalCount)
-            put("collection_versions", networkJson.encodeToJsonElement(result.items))
-        }.toString()
+        return listToolJson("collection_versions", result.totalCount, result.items)
     }
 }

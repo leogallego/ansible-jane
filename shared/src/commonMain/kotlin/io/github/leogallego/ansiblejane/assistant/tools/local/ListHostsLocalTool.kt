@@ -3,13 +3,10 @@ package io.github.leogallego.ansiblejane.assistant.tools.local
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.serialization.typeToken
 import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.listToolJson
 import io.github.leogallego.ansiblejane.data.HostRepository
-import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 class ListHostsLocalTool(
     private val repository: HostRepository
@@ -47,9 +44,6 @@ class ListHostsLocalTool(
             )
         }.getOrThrow()
 
-        return buildJsonObject {
-            put("count", result.totalCount)
-            put("hosts", networkJson.encodeToJsonElement(result.hosts))
-        }.toString()
+        return listToolJson("hosts", result.totalCount, result.hosts)
     }
 }

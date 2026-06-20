@@ -7,10 +7,9 @@ import io.github.leogallego.ansiblejane.data.IWorkflowRepository
 import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.put
 
 class ListPendingApprovalsLocalTool(
     private val repository: IWorkflowRepository
@@ -33,14 +32,10 @@ class ListPendingApprovalsLocalTool(
             page = args.page.coerceAtLeast(1),
             pageSize = args.pageSize.coerceIn(1, 100)
         ).getOrThrow()
-        val resultsArray = networkJson.encodeToJsonElement(
-            kotlinx.serialization.builtins.ListSerializer(io.github.leogallego.ansiblejane.model.WorkflowApproval.serializer()),
-            result.approvals
-        )
-        return JsonObject(mapOf(
-            "count" to JsonPrimitive(result.totalCount),
-            "has_more" to JsonPrimitive(result.hasMore),
-            "results" to resultsArray
-        )).toString()
+        return buildJsonObject {
+            put("count", result.totalCount)
+            put("has_more", result.hasMore)
+            put("results", networkJson.encodeToJsonElement(result.approvals))
+        }.toString()
     }
 }

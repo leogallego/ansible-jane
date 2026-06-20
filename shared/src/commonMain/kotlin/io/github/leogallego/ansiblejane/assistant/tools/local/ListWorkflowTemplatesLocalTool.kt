@@ -3,12 +3,9 @@ package io.github.leogallego.ansiblejane.assistant.tools.local
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.serialization.typeToken
 import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.listToolJson
 import io.github.leogallego.ansiblejane.data.WorkflowRepository
-import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 class ListWorkflowTemplatesLocalTool(
     private val repository: WorkflowRepository
@@ -34,9 +31,6 @@ class ListWorkflowTemplatesLocalTool(
             search = args.search,
             labelFilter = args.labels
         ).getOrThrow()
-        return buildJsonObject {
-            put("count", result.totalCount)
-            put("templates", networkJson.encodeToJsonElement(result.templates))
-        }.toString()
+        return listToolJson("templates", result.totalCount, result.templates)
     }
 }

@@ -3,12 +3,9 @@ package io.github.leogallego.ansiblejane.assistant.tools.local
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.serialization.typeToken
 import io.github.leogallego.ansiblejane.assistant.tools.AapLocalTool
+import io.github.leogallego.ansiblejane.assistant.tools.listToolJson
 import io.github.leogallego.ansiblejane.data.InventoryRepository
-import io.github.leogallego.ansiblejane.network.networkJson
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 class ListInventoriesLocalTool(
     private val repository: InventoryRepository
@@ -30,9 +27,6 @@ class ListInventoriesLocalTool(
             page = args.page.coerceAtLeast(1),
             search = args.search
         ).getOrThrow()
-        return buildJsonObject {
-            put("count", result.totalCount)
-            put("inventories", networkJson.encodeToJsonElement(result.inventories))
-        }.toString()
+        return listToolJson("inventories", result.totalCount, result.inventories)
     }
 }
