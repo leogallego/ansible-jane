@@ -10,7 +10,7 @@ A multiplatform app (Android and Desktop) for managing [Ansible Automation Platf
 
 ### Android
 
-- **F-Droid** - add this repo to your F-Droid client: `https://leogallego.github.io/ansible-jane/fdroid/repo`
+- **F-Droid** - add this repo to your F-Droid client: `https://jane.ansible.ar/fdroid/repo`
 - **GitHub Releases** - download the latest APK from [Releases](https://github.com/leogallego/ansible-jane/releases/latest)
 - **Obtainium** - point [Obtainium](https://github.com/ImranR98/Obtainium) to this repo for automatic updates
 

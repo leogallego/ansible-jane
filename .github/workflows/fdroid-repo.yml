@@ -41,7 +41,7 @@ jobs:
           mkdir -p fdroid/repo
           echo "$FDROID_KEYSTORE_B64" | base64 -d > fdroid/keystore.p12
           cat > fdroid/config.yml <<'CONF'
-          repo_url: https://leogallego.github.io/ansible-jane/fdroid/repo
+          repo_url: https://jane.ansible.ar/fdroid/repo
           repo_name: Ansible Jane F-Droid Repo
           repo_description: Self-hosted F-Droid repository for Ansible Jane, a remote control app for Ansible Automation Platform.
           repo_icon: icon.png
@@ -50,7 +50,7 @@ jobs:
           echo "keystorepass: $FDROID_KEYSTORE_PASS" >> fdroid/config.yml
           echo "keypass: $FDROID_KEY_PASS" >> fdroid/config.yml
           echo "repo_keyalias: $FDROID_KEY_ALIAS" >> fdroid/config.yml
-          echo "keydname: CN=leogallego.github.io, OU=F-Droid Repo, O=Ansible Jane" >> fdroid/config.yml
+          echo "keydname: CN=jane.ansible.ar, OU=F-Droid Repo, O=Ansible Jane" >> fdroid/config.yml
           sed -i 's/^          //' fdroid/config.yml
           chmod 0600 fdroid/config.yml
         env:
