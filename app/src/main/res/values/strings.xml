@@ -7,7 +7,7 @@
     <string name="tab_templates">Templates</string>
     <string name="tab_infrastructure">Infrastructure</string>
     <string name="tab_activity">Activity</string>
-    <string name="tab_assistant">Jane</string>
+    <string name="tab_assistant">Jane AI</string>
 
     <!-- Tab segments -->
     <string name="segment_overview">Overview</string>
