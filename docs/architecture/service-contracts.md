@@ -297,9 +297,10 @@ for one-shot discovery of external endpoints would be over-engineering.
   | Shared logic (repos, network, engine, tools) | `shared/src/commonTest/` | `kotlin.test` |
   | JVM-specific shared logic (MCP, TLS) | `shared/src/jvmTest/` | `kotlin.test` |
   | ViewModel tests | `composeApp/src/commonTest/` | `kotlin.test` |
-  | Compose Desktop screen smoke tests | `composeApp/src/desktopTest/` | `kotlin.test` + Compose MP test API |
+  | Shared-layer integration tests (backup, serialization) | `composeApp/src/commonTest/` | `kotlin.test` |
+  | Compose Desktop screen smoke tests (planned, #372 Phase 2) | `composeApp/src/desktopTest/` | `kotlin.test` + Compose MP test API |
   | Android-only features (AppFunctions, widgets, WorkManager) | `app/src/test/` | JUnit4 |
-  | Robolectric screen tests (legacy, being replaced) | `app/src/test/` | JUnit4 + Robolectric |
+  | Robolectric screen tests (legacy — do not add new; migrate to `composeApp/`) | `app/src/test/` | JUnit4 + Robolectric |
 
 - **`kotlin.test` in all KMP-compatible source sets.** `commonTest`, `jvmTest`, and
   `desktopTest` must use `kotlin.test` annotations (`@Test`, `@BeforeTest`, `@AfterTest`).
@@ -360,17 +361,20 @@ for one-shot discovery of external endpoints would be over-engineering.
   Cross-module fake sharing is not possible due to Gradle module boundaries — duplication
   is accepted until `testFixtures` consolidation is evaluated.
 
-- **No test code in production source sets** except `ToolStub`. The `@TestOnly`-annotated
-  `ToolStub` class in `shared/commonMain` is the sole exception — it satisfies the `Tool`
-  sealed interface constraint while keeping test support accessible to all modules.
+- **No test classes in production source sets** except `ToolStub`. The
+  `@TestOnly`-annotated `ToolStub` class in `shared/commonMain` is the sole class-level
+  exception — it satisfies the `Tool` sealed interface constraint while keeping test
+  support accessible to all modules. Individual `@TestOnly`-annotated methods on
+  production classes (e.g., `ToolRouter.setToolEnabled()`) are permitted when they
+  expose test-only configuration that cannot be achieved through constructor injection.
 
 ### Soft Guidelines
 
 - Prefer a `TestData` object with factory methods (`TestData.createInventory()`,
   `TestData.createHost()`) over inline data construction. Centralized factories reduce
   duplication and make test data consistent.
-- Use `TestKoinModule` (or equivalent) for wiring fakes into Koin in test setup.
-  Default parameters for all fakes keep individual tests concise.
+- Use a `testKoinModule()` factory function (or equivalent) for wiring fakes into
+  Koin in test setup. Default parameters for all fakes keep individual tests concise.
 - When migrating tests from `app/` to `composeApp/commonTest/`, verify they compile
   on both Android and Desktop targets before merging.
 - Aim for test names that describe the scenario and expected outcome:
