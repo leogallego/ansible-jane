@@ -643,3 +643,152 @@ Use the same `reviewer-prompt.md` template but scope the diff to just the fix co
 Phase 6 must NOT change the scope of the implementation. Fixes address specific review findings — they don't redesign the approach. If a review finding reveals that the approach is fundamentally wrong, that's a **chain failure**, not a redesign opportunity.
 
 ---
+
+## Phase 7: Create PR
+
+Packages the work into a reviewable PR with full documentation.
+
+### Step 1 — Commit
+
+If there are uncommitted changes, commit them. Use the conventional commit format:
+
+```
+<type>: <imperative description> (#NNN)
+
+<optional body explaining why, not what>
+
+Assisted-by: <model name> <noreply@anthropic.com>
+```
+
+Types: `feat`, `fix`, `test`, `chore`, `perf`, `refactor`, `docs`.
+
+Use the project's attribution trailer format (check project instructions). If none specified, use `Assisted-by:`.
+
+### Step 2 — Push Branch
+
+```bash
+git push -u origin pipeline/issue-NNN-<slug>
+```
+
+### Step 3 — Create PR
+
+The PR target depends on position in chain:
+- **First issue in chain** → targets `main` (or project default branch).
+- **Subsequent issues in chain** → targets the previous issue's branch (stacked PR).
+- **Standalone issues** → targets `main`.
+
+PR title format: `<type>: <description> (#NNN)`
+
+Use `gh pr create` or GitHub MCP `create_pull_request`.
+
+### Step 4 — PR Body
+
+Use the template at `templates/pr-body.md`. Fill in all `{{placeholder}}` fields from:
+- The assessment report (Phase 1)
+- The plan (Phase 3)
+- The review findings (Phases 3.5 and 5)
+- The fix actions (Phase 6)
+- The test results (Phases 4 and 6)
+
+### Step 5 — Post Review Summary Comment
+
+Post a comment on the PR using the template at `templates/review-summary.md`. This consolidates all review rounds into one comment, satisfying the rule: "Before merging any PR, ALWAYS post a review summary comment."
+
+Use `gh pr comment <N> --body "<comment>"` or GitHub MCP `add_issue_comment` (with PR number as issue number).
+
+### Step 6 — Update GitHub Issue
+
+1. Post a comment on the issue linking to the PR: `Implementation PR: #<pr_number>`
+2. Replace the `pipeline/in-progress` label with `pipeline/awaiting-merge`.
+   - Remove: `gh issue edit <N> --remove-label "pipeline/in-progress"`
+   - Add: `gh issue edit <N> --add-label "pipeline/awaiting-merge"`
+   - If `pipeline/awaiting-merge` doesn't exist, create it (color: `#1D76DB`, description: "Pipeline PR created, awaiting human merge").
+
+---
+
+## Phase 8: Merge Gate
+
+The only human checkpoint. The pipeline does NOT wait for the merge — after creating the PR, it immediately moves to the next issue.
+
+### Merge Order
+
+PRs within a chain must be merged in order (first to last). The PR body's "Stack position" section makes the merge order explicit. When the base PR merges, GitHub auto-retargets the next PR in the stack.
+
+Standalone PRs can be merged in any order.
+
+### What the Human Checks
+
+- The diff
+- The review summary comment on the PR
+- CI status (must be green)
+- Whether the changes match the issue requirements
+
+### If the Human Requests Changes
+
+The pipeline has moved on. The human either:
+1. Makes the changes themselves on the branch.
+2. Re-invokes the pipeline with just that issue number to apply fixes.
+
+### If the Human Rejects a PR Mid-Chain
+
+Downstream PRs in the same chain become invalid. The human closes them and can re-invoke the pipeline with the remaining issues as a fresh batch.
+
+---
+
+## Phase 9: Cleanup
+
+Runs after each issue completes (or is skipped/failed), regardless of outcome.
+
+### Step 1 — Worktree Handling
+
+- **PR created** → keep the worktree alive (the branch needs it).
+- **Skipped** (no PR created) → clean up the worktree.
+- **Failed** (no PR created) → clean up the worktree.
+
+In Claude Code: use `ExitWorktree` with `action: "keep"` for PRs, `action: "remove"` for skips/failures.
+
+In other environments: `git worktree remove <path>` for skips/failures.
+
+### Step 2 — Update Issue Labels
+
+| Outcome | Label |
+|---------|-------|
+| PR created | `pipeline/awaiting-merge` (already set in Phase 7) |
+| Skipped | `pipeline/skipped` (color: `#E4E669`, description: "Skipped by pipeline") |
+| Failed | `pipeline/failed` (color: `#D93F0B`, description: "Pipeline processing failed") |
+
+Create labels if they don't exist.
+
+### Step 3 — Log Result
+
+Append to the pipeline run summary (held in memory, reported at completion):
+
+```
+Issue #NNN: PR #XXX created (chain C, position P/T)
+Issue #NNN: SKIPPED — <reason>
+Issue #NNN: FAILED — <phase>, <error summary>
+```
+
+### Step 4 — Move to Next Issue
+
+Check the execution plan:
+- **Next issue in current chain** → branch from current issue's branch (stacked PR).
+- **Current chain complete** → start next chain from `main`.
+- **All chains and standalones complete** → produce the completion report.
+
+---
+
+## Pipeline Completion Report
+
+When all issues are processed, output the completion report using the template at `templates/completion-report.md`.
+
+The report includes:
+- All PRs created, organized by chain with merge order
+- All skipped issues with reasons
+- All failed issues with failure details
+- Merge instructions (chain order, standalone flexibility)
+- Risk levels for each chain
+
+Display the report to the user. This is the final output of the pipeline.
+
+---
