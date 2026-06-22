@@ -57,6 +57,7 @@ Loaded once at pipeline start, carried through all phases and passed to every su
 | 12 | `skills/` live scan (first 10 lines of each `SKILL.md`) | ~500 | Dynamic skill index — extract name, description, and when-to-use from each skill's header |
 | 13 | Module/source-set map (precomputed) | ~30 | Where code and tests go per module |
 | 14 | Test infrastructure map (precomputed) | ~50 | Where fakes, fixtures, and base test classes live |
+| 15 | Lint/format commands (discovered) | ~50 | Project linter commands, discovered from CI config, Makefile, package.json, or common tool configs |
 
 **Module/source-set map** (precomputed at pipeline start by scanning the directory tree):
 ```
@@ -71,6 +72,12 @@ Fakes: app/src/test/kotlin/.../fakes/, composeApp/src/commonTest/kotlin/.../fake
 Fixtures: TestData.kt in both app/test and composeApp/commonTest
 Coroutine test setup: MainDispatcherRule.kt in app/test
 ```
+
+**Lint/format commands** (discovered at pipeline start by scanning project config):
+- Check CI workflow for lint steps (e.g., `ruff check`, `ktlint`, `detekt`, `eslint`)
+- Check for config files: `.ruff.toml`, `.editorconfig`, `detekt.yml`, `.eslintrc.*`
+- Check `Makefile`, `package.json` scripts, or `scripts/` for lint commands
+- Record discovered commands for use in Phase 4
 
 ### On-demand (loaded during specific phases when issue keywords match)
 
@@ -189,16 +196,24 @@ Runs at the start of each issue. Verifies the issue is still actionable against 
 - `*Test.kt` in `commonTest` → `kotlin-testing-kmp`
 - etc.
 
-**Step 5 — On-demand context loading.** Based on issue keywords and files:
+**Step 5 — On-demand context loading.** Three sources:
+
+*Keyword matching:*
 - Load matching specs/plans from `docs/superpowers/`
 - Load matching memory files
 - Load `tool-pipeline-architecture.md` if issue touches assistant/engine/tools
+
+*File path extraction:* Parse the issue body for explicit file path references (patterns like `src/...`, `app/...`, `*.kt`, `*.yml`, backtick-quoted paths). Read each referenced file directly — this is more reliable than keyword heuristics and ensures the skill sees exactly what the issue author intended.
+
+*Recently merged context:* If the issue body references merged PRs (`PR #NNN`, `#NNN merged`), read their diffs via `gh pr diff #NNN` to understand what recently landed. This provides the "previous session state" that manual prompts carry but automated pipelines normally miss.
 
 **Step 6 — Risk assessment.**
 - Does this touch security-sensitive code?
 - Does this change public API surface?
 - Does this touch CI/CD configuration?
 - Could this break existing tests?
+
+**Step 7 — Scope exclusion.** Identify related issues referenced in the body that are NOT in the input list. Record them explicitly as **out of scope** to prevent implementation drift. Example: if issue #71 mentions "follow-up issue #108 exists but is separate," record #108 as excluded. These exclusions are passed to implementation subagents so they don't accidentally address related-but-separate work.
 
 ### Output
 
@@ -212,6 +227,7 @@ Assessment:
   on_demand_context_loaded: [list of additional docs loaded]
   risks: [list of identified risks]
   blockers_found: [list of unexpected blockers]
+  out_of_scope: [list of related issue numbers explicitly excluded]
 ```
 
 ### Decision point
@@ -345,17 +361,22 @@ Each subagent receives: the full plan (or its assigned section), relevant skill 
 - `./gradlew --no-daemon :composeApp:desktopTest` for desktop tests
 - If CI-only changes: validate workflow syntax with `actionlint` if available
 
-**Step 5 — Test result gate.**
-- All tests pass → proceed to Phase 5.
-- Tests fail → **Retry loop** (max 2 attempts):
+**Step 5 — Run linters.** Execute the lint commands discovered in Phase 0:
+- Run each discovered linter on changed files
+- Auto-fix formatting issues where the linter supports it (e.g., `ruff check --fix`, `ktlint -F`)
+- Lint failures that can't be auto-fixed are treated the same as test failures
+
+**Step 6 — Verification gate.**
+- All tests and linters pass → proceed to Phase 5.
+- Tests or linters fail → **Retry loop** (max 2 attempts):
   1. Analyze failure output.
-  2. Determine if it's a test bug or implementation bug.
+  2. Determine if it's a test bug, lint issue, or implementation bug.
   3. Fix and re-run.
 - Still failing after 2 retries → **chain failure** (stop chain, detach, comment on issue).
 
 ### Output
 
-Working implementation on the worktree branch, all tests passing.
+Working implementation on the worktree branch, all tests and linters passing.
 
 ---
 
