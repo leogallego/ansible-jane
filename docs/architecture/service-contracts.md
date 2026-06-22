@@ -285,6 +285,99 @@ for one-shot discovery of external endpoints would be over-engineering.
 
 ---
 
+## 10. Test Infrastructure
+
+### Hard Rules
+
+- **Test placement by module and source set.** Tests go in the source set matching
+  their dependency scope:
+
+  | Test type | Source set | Framework |
+  |-----------|-----------|-----------|
+  | Shared logic (repos, network, engine, tools) | `shared/src/commonTest/` | `kotlin.test` |
+  | JVM-specific shared logic (MCP, TLS) | `shared/src/jvmTest/` | `kotlin.test` |
+  | ViewModel tests | `composeApp/src/commonTest/` | `kotlin.test` |
+  | Compose Desktop screen smoke tests | `composeApp/src/desktopTest/` | `kotlin.test` + Compose MP test API |
+  | Android-only features (AppFunctions, widgets, WorkManager) | `app/src/test/` | JUnit4 |
+  | Robolectric screen tests (legacy, being replaced) | `app/src/test/` | JUnit4 + Robolectric |
+
+- **`kotlin.test` in all KMP-compatible source sets.** `commonTest`, `jvmTest`, and
+  `desktopTest` must use `kotlin.test` annotations (`@Test`, `@BeforeTest`, `@AfterTest`).
+  JUnit4 annotations (`@Before`, `@After`, `@Rule`, `@RunWith`) are prohibited in these
+  source sets — they break desktop compilation.
+
+  ```kotlin
+  // ✅ Correct — commonTest / jvmTest / desktopTest
+  import kotlin.test.Test
+  import kotlin.test.BeforeTest
+  import kotlin.test.assertEquals
+
+  // ❌ Wrong — JUnit4 in KMP source sets
+  import org.junit.Test
+  import org.junit.Before
+  import org.junit.Rule
+  ```
+
+- **JUnit4 is restricted to `app/src/test/`.** Only Android-only tests that require
+  Robolectric, Android Compose test rules (`createComposeRule()`), or Android-specific
+  test infrastructure may use JUnit4.
+
+- **MainDispatcher setup follows the source set.** KMP-compatible tests use the
+  `setupMainDispatcher()` / `tearDownMainDispatcher()` utility functions in `@BeforeTest` /
+  `@AfterTest`. The `MainDispatcherRule` JUnit4 `TestRule` is only for `app/src/test/`.
+
+  ```kotlin
+  // ✅ Correct — commonTest ViewModel test
+  @BeforeTest
+  fun setUp() {
+      setupMainDispatcher()
+  }
+
+  @AfterTest
+  fun tearDown() {
+      tearDownMainDispatcher()
+  }
+
+  // ❌ Wrong — JUnit4 rule in commonTest
+  @get:Rule
+  val mainDispatcherRule = MainDispatcherRule()
+  ```
+
+- **Fakes implement interfaces.** Every fake must implement the corresponding
+  `IXxxRepository` or `IXxxManager` interface. Fakes that bypass the interface
+  contract cannot catch interface-breaking changes.
+
+  ```kotlin
+  // ✅ Correct
+  class FakeJobRepository : IJobRepository { ... }
+
+  // ❌ Wrong — no interface
+  class FakeJobRepository { ... }
+  ```
+
+- **Fakes live alongside their consumers.** Fakes in `app/src/test/fakes/` serve
+  `app/` tests. Fakes in `composeApp/src/commonTest/fakes/` serve `composeApp/` tests.
+  Cross-module fake sharing is not possible due to Gradle module boundaries — duplication
+  is accepted until `testFixtures` consolidation is evaluated.
+
+- **No test code in production source sets** except `ToolStub`. The `@TestOnly`-annotated
+  `ToolStub` class in `shared/commonMain` is the sole exception — it satisfies the `Tool`
+  sealed interface constraint while keeping test support accessible to all modules.
+
+### Soft Guidelines
+
+- Prefer a `TestData` object with factory methods (`TestData.createInventory()`,
+  `TestData.createHost()`) over inline data construction. Centralized factories reduce
+  duplication and make test data consistent.
+- Use `TestKoinModule` (or equivalent) for wiring fakes into Koin in test setup.
+  Default parameters for all fakes keep individual tests concise.
+- When migrating tests from `app/` to `composeApp/commonTest/`, verify they compile
+  on both Android and Desktop targets before merging.
+- Aim for test names that describe the scenario and expected outcome:
+  `loadTemplates_withNetworkError_showsErrorState`.
+
+---
+
 ## Versioning
 
 This document follows the project's semver scheme. Updates require a PR with
@@ -294,3 +387,4 @@ rationale for the change. The PR review skill checks against the version in `mai
 |---------|------|--------|
 | 1.0.0 | 2026-06-18 | Initial contracts derived from codebase audit |
 | 1.1.0 | 2026-06-20 | Tool interface sealed (#364), test helpers documented |
+| 1.2.0 | 2026-06-21 | Add §10 Test Infrastructure contracts (#392) |
