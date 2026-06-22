@@ -110,6 +110,7 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.coroutines.test)
             implementation(libs.turbine)
+            implementation(libs.ktor.client.mock)
         }
 
         androidMain.get().kotlin.srcDir(generateAndroidAppVersion.map { it.outputs.files.singleFile })
