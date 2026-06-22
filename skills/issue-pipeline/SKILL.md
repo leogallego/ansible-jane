@@ -538,3 +538,108 @@ If no linters were discovered in Phase 0, skip this step.
 4. If still failing after 2 retries → **chain failure**: stop the chain, comment on the issue with the failure output, mark remaining chain issues as skipped, start the next independent chain from `main`.
 
 ---
+
+## Phase 5: Implementation Review
+
+Reviews the actual code changes after implementation. Four independent review angles run in parallel, each by a separate subagent. This is distinct from Phase 3.5 (plan review) — here we review the code, not the plan.
+
+### Diff Capture
+
+Get the diff of all changes since branching:
+```bash
+git diff $(git merge-base HEAD <base-branch>)..HEAD
+```
+Where `<base-branch>` is `main` (for first in chain / standalone) or the previous issue's branch (for subsequent in chain).
+
+### Review Angles
+
+Dispatch 4 subagents in parallel, each using the prompt template at `reviewer-prompt.md` with a different `review_angle`:
+
+| # | Angle | What It Checks |
+|---|-------|----------------|
+| 1 | **architecture** | Layer violations, module boundary crossings, interface contracts, state exposure, DI rules, naming, file placement |
+| 2 | **code-quality** | Bugs, logic errors, edge cases, code duplication, API misuse, missing error handling at system boundaries |
+| 3 | **security** | Hardcoded secrets, insecure storage, missing HTTPS enforcement, credential handling, injection vectors |
+| 4 | **skill-compliance** | Changed files checked against loaded skills — framework patterns, test patterns, state management, KMP rules |
+
+**Token budget optimization**: for Trivial or Small scope issues, reduce to 2 reviewers (architecture + code-quality only). Security and skill-compliance add value mainly for Medium/Large changes.
+
+Each subagent receives:
+- The diff
+- The foundation context
+- The specific angle to review from
+- For skill-compliance: the loaded skill content for the file types that changed
+
+### Finding Format
+
+Each reviewer produces structured findings:
+
+```
+Finding:
+  severity: critical | warning | info
+  file: path/to/File.kt
+  line: 42
+  rule: "<rule name and source>"
+  description: "<what's wrong>"
+  suggestion: "<how to fix it>"
+```
+
+### Aggregation
+
+After all reviewers complete:
+1. Merge all findings into a single list.
+2. Deduplicate — if two reviewers flag the same file + line with similar descriptions, keep the one with higher severity.
+3. Sort by severity: critical first, then warning, then info.
+
+### Decision Point
+
+| Findings | Action |
+|----------|--------|
+| **Critical findings > 0** | Must fix in Phase 6 |
+| **Warnings only** | Fix if straightforward, otherwise note in PR description as acknowledged tech debt |
+| **Info only** | Include in PR description, no action required |
+| **No findings** | Skip Phase 6, proceed directly to Phase 7 |
+
+---
+
+## Phase 6: Fix
+
+Addresses review findings and verifies fixes don't introduce regressions.
+
+### Step 1 — Fix Critical Findings
+
+For each critical finding, in order:
+1. Read the finding's file and line.
+2. Make the change suggested (or an equivalent fix that addresses the same rule violation).
+3. Verify the specific finding is resolved — re-check that code section.
+4. Do NOT fix unrelated code nearby — scope discipline applies to fixes too.
+
+### Step 2 — Fix Straightforward Warnings
+
+For each warning:
+- If the fix is straightforward (< 10 lines, no risk of regression): apply it.
+- If the fix would require significant rework: skip it and add to the "acknowledged debt" list for the PR description.
+
+### Step 3 — Re-run Tests and Linters
+
+Run the full test suite using the commands from Phase 0 discovery. Also re-run linters. This catches regressions introduced by the fixes.
+
+### Step 4 — Targeted Re-review
+
+Run ONLY the review angles that produced critical findings, ONLY on the files that were changed during the fix phase. This is a targeted re-check, not a full re-review.
+
+Use the same `reviewer-prompt.md` template but scope the diff to just the fix commits.
+
+### Step 5 — Convergence Check
+
+| Outcome | Action |
+|---------|--------|
+| No remaining criticals | Proceed to Phase 7 |
+| New criticals introduced by fixes | Retry — this counts as attempt 2 of 2 |
+| Still criticals after 2nd attempt | **Chain failure** — stop the chain, comment on the issue with the unresolvable findings |
+
+### Scope Constraint
+
+Phase 6 must NOT change the scope of the implementation. Fixes address specific review findings — they don't redesign the approach. If a review finding reveals that the approach is fundamentally wrong, that's a **chain failure**, not a redesign opportunity.
+
+---
