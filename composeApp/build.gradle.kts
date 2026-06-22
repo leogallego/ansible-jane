@@ -127,6 +127,14 @@ kotlin {
             implementation(libs.ktor.client.cio)
         }
 
+        val desktopTest by getting {
+            dependencies {
+                implementation(libs.compose.ui.test)
+                implementation(libs.koin.core)
+                implementation(libs.koin.test)
+            }
+        }
+
         // iosMain.dependencies added in Phase 8
         // iosMain.dependencies {
         //     implementation(libs.ktor.client.darwin)
