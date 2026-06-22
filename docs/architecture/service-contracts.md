@@ -285,12 +285,125 @@ for one-shot discovery of external endpoints would be over-engineering.
 
 ---
 
-## Versioning
+## 10. Test Infrastructure
+
+### Hard Rules
+
+- **Test placement by module and source set.** Tests go in the source set matching
+  their dependency scope:
+
+  | Test type | Source set | Framework |
+  |-----------|-----------|-----------|
+  | Shared logic (repos, network, engine, tools) | `shared/src/commonTest/` | `kotlin.test` |
+  | JVM-specific shared logic (MCP, TLS) | `shared/src/jvmTest/` | `kotlin.test` |
+  | ViewModel tests | `composeApp/src/commonTest/` | `kotlin.test` |
+  | Shared-layer integration tests (backup, serialization) | `composeApp/src/commonTest/` | `kotlin.test` |
+  | Compose Desktop screen smoke tests (planned: #372) | `composeApp/src/desktopTest/` | `kotlin.test` + Compose MP test API |
+  | Android-only features (AppFunctions, widgets, WorkManager) | `app/src/test/` | JUnit4 |
+  | Robolectric screen tests (deprecated: #372) | `app/src/test/` | JUnit4 + Robolectric |
+
+- **`kotlin.test` in all KMP-compatible source sets.** `commonTest`, `jvmTest`, and
+  `desktopTest` must use `kotlin.test` annotations (`@Test`, `@BeforeTest`, `@AfterTest`).
+  JUnit4 annotations (`@Before`, `@After`, `@Rule`, `@RunWith`) are prohibited in these
+  source sets — they break desktop compilation.
+
+  ```kotlin
+  // ✅ Correct — commonTest / jvmTest / desktopTest
+  import kotlin.test.Test
+  import kotlin.test.BeforeTest
+  import kotlin.test.assertEquals
+
+  // ❌ Wrong — JUnit4 in KMP source sets
+  import org.junit.Test
+  import org.junit.Before
+  import org.junit.Rule
+  ```
+
+- **JUnit4 is restricted to `app/src/test/`.** Only Android-only tests that require
+  Robolectric, Android Compose test rules (`createComposeRule()`), or Android-specific
+  test infrastructure may use JUnit4.
+
+- **MainDispatcher setup follows the source set.** KMP-compatible tests use the
+  `setupMainDispatcher()` / `tearDownMainDispatcher()` utility functions in `@BeforeTest` /
+  `@AfterTest`. The `MainDispatcherRule` JUnit4 `TestRule` is only for `app/src/test/`.
+
+  ```kotlin
+  // ✅ Correct — commonTest ViewModel test
+  @BeforeTest
+  fun setUp() {
+      setupMainDispatcher()
+  }
+
+  @AfterTest
+  fun tearDown() {
+      tearDownMainDispatcher()
+  }
+
+  // ❌ Wrong — JUnit4 rule in commonTest
+  @get:Rule
+  val mainDispatcherRule = MainDispatcherRule()
+  ```
+
+- **Fakes implement interfaces.** Every fake must implement the corresponding
+  `IXxxRepository` or `IXxxManager` interface. Fakes that bypass the interface
+  contract cannot catch interface-breaking changes.
+
+  ```kotlin
+  // ✅ Correct
+  class FakeJobRepository : IJobRepository { ... }
+
+  // ❌ Wrong — no interface
+  class FakeJobRepository { ... }
+  ```
+
+- **Fakes live alongside their consumers.** Fakes in `app/src/test/fakes/` serve
+  `app/` tests. Fakes in `composeApp/src/commonTest/fakes/` serve `composeApp/` tests.
+  Cross-module fake sharing is not possible due to Gradle module boundaries — duplication
+  is accepted until `testFixtures` consolidation is evaluated.
+
+- **No test classes in production source sets** except `ToolStub`. The
+  `@TestOnly`-annotated `ToolStub` class in `shared/commonMain` is the sole class-level
+  exception — it satisfies the `Tool` sealed interface constraint while keeping test
+  support accessible to all modules. Individual `@TestOnly`-annotated methods on
+  production classes (e.g., `ToolRouter.setToolEnabled()`) are permitted when they
+  expose test-only configuration that cannot be achieved through constructor injection.
+
+### Soft Guidelines
+
+- Prefer a `TestData` object with factory methods (`TestData.createInventory()`,
+  `TestData.createHost()`) over inline data construction. Centralized factories reduce
+  duplication and make test data consistent.
+- Use a `testKoinModule()` factory function (or equivalent) for wiring fakes into
+  Koin in test setup. Default parameters for all fakes keep individual tests concise.
+- When migrating tests from `app/` to `composeApp/commonTest/`, verify they compile
+  on both Android and Desktop targets before merging.
+- Aim for test names that describe the scenario and expected outcome:
+  `loadTemplates_withNetworkError_showsErrorState`.
+
+---
+
+## Versioning and Maintenance
 
 This document follows the project's semver scheme. Updates require a PR with
 rationale for the change. The PR review skill checks against the version in `main`.
+
+### Lifecycle tags
+
+Rules that describe transitional state use parenthetical tags with issue references:
+
+- `(planned: #NNN)` — the rule describes infrastructure that does not exist yet.
+  When the referenced issue is resolved, remove the tag and verify the rule is accurate.
+- `(deprecated: #NNN)` — the rule describes a pattern being phased out.
+  When the referenced issue is resolved, delete the rule entirely.
+
+**Tags must be updated in the same PR that resolves the referenced issue, or in an
+immediate follow-up.** Stale tags are treated as contract violations during PR review.
+When a deprecated rule's migration is complete, delete the row — do not leave
+tombstones or "removed" markers.
 
 | Version | Date | Change |
 |---------|------|--------|
 | 1.0.0 | 2026-06-18 | Initial contracts derived from codebase audit |
 | 1.1.0 | 2026-06-20 | Tool interface sealed (#364), test helpers documented |
+| 1.2.0 | 2026-06-21 | Add §10 Test Infrastructure contracts (#392) |
+| 1.2.1 | 2026-06-22 | Add lifecycle tags for transitional rules (#392) |
