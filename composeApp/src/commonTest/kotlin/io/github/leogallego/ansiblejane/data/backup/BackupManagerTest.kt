@@ -141,8 +141,10 @@ class BackupManagerTest {
 
     @Test
     fun `envelope has valid timestamp`() = runTest {
+        val before = kotlin.time.Clock.System.now().toEpochMilliseconds()
         val exported = manager.exportBackup("pass", testInstances)
         val envelope = manager.importBackup(exported, "pass")
-        assertTrue(envelope.createdAt > 0)
+        val after = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        assertTrue(envelope.createdAt in before..after)
     }
 }
