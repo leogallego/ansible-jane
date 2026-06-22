@@ -204,3 +204,158 @@ For projects with many issues, dispatch Phase 0 Steps 1-8 to a triage subagent u
 The main agent loads foundation context (Step 0) directly, then delegates the rest to the triage subagent.
 
 ---
+
+## Per-Issue Execution Loop
+
+After Phase 0 produces the execution plan, process issues in execution order:
+
+1. **Chains first**, in the order determined by Phase 0 Step 7.
+2. Within each chain, issues execute in topological order (dependencies before dependents).
+3. **Standalone issues** after all chains complete.
+
+For each issue:
+
+1. Create a task for tracking: `TaskCreate` with subject `Pipeline: #NNN — <issue title>`.
+2. Set task to `in_progress`.
+3. Execute Phases 1 through 9.
+4. On completion: set task to `completed`.
+5. On skip: update task description with skip reason, set to `completed`.
+6. On failure: update task description with failure details, set to `completed`.
+
+The task list is the pipeline's state tracker. At any point, the task list shows which issues are done, in progress, or pending.
+
+### Branch Base Selection
+
+- **First issue in a chain** — branch from `main` (or the project's default branch).
+- **Subsequent issues in a chain** — branch from the previous issue's branch (stacked PRs).
+- **Standalone issues** — branch from `main`.
+
+---
+
+## Phase 1: Assess
+
+Runs at the start of each issue. Verifies the issue is still actionable against the current codebase.
+
+### Step 1 — Re-read Issue
+
+Read the full issue body, not just the Phase 0 summary. Identify:
+- Acceptance criteria (explicit or implied)
+- Open questions or ambiguities
+- Referenced files, classes, or APIs
+- Referenced PRs (especially recently merged ones)
+
+### Step 2 — Codebase Verification
+
+For each file, class, or API mentioned in the issue body:
+- Does it still exist? (`find` or `grep` for it)
+- Is the described problem still present?
+- Are the proposed changes still compatible with current code?
+
+If the issue is in a chain and branches from a previous issue's branch, verify against that branch (not `main`).
+
+### Step 3 — Scope Estimation
+
+Classify the issue:
+
+| Scope | Criteria |
+|-------|----------|
+| **Trivial** | Single file, <50 lines changed, no new tests needed |
+| **Small** | 2-5 files, <200 lines, straightforward tests |
+| **Medium** | 5-15 files, new module or significant refactor |
+| **Large** | 15+ files, architectural changes, multiple test types |
+
+### Step 4 — Skill Mapping
+
+Match anticipated changed file paths against the skill index built in Phase 0 (Step 0.9). For each skill in the index, check if its description or when-to-use keywords relate to the files this issue will touch.
+
+Do NOT hardcode file-pattern-to-skill mappings. The skill index is dynamic — use the name and description from each skill's frontmatter to determine relevance.
+
+Record all matched skills for loading in Phase 3.
+
+### Step 5 — On-Demand Context Loading
+
+Three sources of additional context:
+
+**Keyword matching:**
+- Scan issue title and body for keywords that match architecture docs, specs, plans, or memory entries loaded in Phase 0.
+- Load matching files from `docs/superpowers/specs/`, `docs/superpowers/plans/`, or equivalent.
+- Load matching memory files if the memory index suggests relevance.
+
+**File path extraction:**
+- Parse the issue body for explicit file path references: patterns like `src/...`, `app/...`, `*.kt`, `*.py`, backtick-quoted paths.
+- Read each referenced file directly — this is more reliable than keyword heuristics.
+
+**Recently merged context:**
+- If the issue body references merged PRs (`PR #NNN`, `#NNN merged`, `landed in #NNN`), read their diffs via `gh pr diff <N>` to understand what recently changed.
+- This provides the "previous session state" that manual prompts carry but automated pipelines normally miss.
+
+### Step 6 — Risk Assessment
+
+Check each risk factor:
+
+| Factor | Check |
+|--------|-------|
+| Security-sensitive code | Does this touch encryption, auth, credential storage, network config? |
+| Public API surface | Does this change interfaces, exported functions, or API contracts? |
+| CI/CD configuration | Does this modify build scripts, workflows, or deploy config? |
+| Existing tests | Could this break existing tests? Check for tests covering modified files. |
+
+### Step 7 — Scope Exclusion
+
+Identify related issues referenced in the body that are NOT in the pipeline input list. Record them explicitly as **out of scope** to prevent implementation drift.
+
+Examples:
+- "Follow-up issue #108 exists but is separate" → record #108 as excluded.
+- "See also #200 for the UI side" → record #200 as excluded.
+- "This is part of the work tracked in #50" → record #50 as excluded (unless #50 is in the input list).
+
+These exclusions are passed to implementation subagents so they don't accidentally address related-but-separate work.
+
+### Assessment Output
+
+```
+Assessment:
+  codebase_still_matches: true/false
+  scope: trivial | small | medium | large
+  files_to_modify: [list of file paths]
+  skills_needed: [list of skill names]
+  on_demand_context_loaded: [list of additional docs loaded]
+  risks: [list of identified risks]
+  blockers_found: [list of unexpected blockers]
+  out_of_scope: [list of related issue numbers explicitly excluded]
+```
+
+### Decision Point
+
+If `codebase_still_matches = false` and the divergence is significant (the core premise of the issue is invalid):
+1. Mark issue as **skip** with reason "Issue outdated — codebase has diverged."
+2. Post a comment on the issue explaining what changed.
+3. Move to the next issue.
+
+Minor divergences (e.g., a file was renamed but the concept is the same) do not trigger a skip — note the change and adapt.
+
+---
+
+## Phase 2: Update Issue
+
+Leaves a trail on the GitHub issue showing the pipeline assessed it.
+
+### Step 1 — Post Assessment Comment
+
+Post a comment on the GitHub issue using the template at `templates/assessment-comment.md`. Fill in all `{{placeholder}}` fields from the assessment output.
+
+Use `gh issue comment <N> --body "<comment>"` or GitHub MCP `add_issue_comment`.
+
+### Step 2 — Update Issue Body
+
+Only if factual inaccuracies were found during assessment (e.g., a file path changed, a class was renamed). Append a note at the end of the issue body — do NOT rewrite the original content.
+
+If nothing needs correction, skip this step.
+
+### Step 3 — Add Label
+
+Add the `pipeline/in-progress` label to the issue.
+- If the label doesn't exist in the repository, create it first (color: `#0E8A16`, description: "Issue being processed by the pipeline").
+- Use `gh issue edit <N> --add-label "pipeline/in-progress"` or GitHub MCP.
+
+---
