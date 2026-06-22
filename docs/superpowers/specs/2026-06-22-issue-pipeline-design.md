@@ -5,7 +5,7 @@
 
 ## Overview
 
-A reusable Claude Code skill (`/issue-pipeline`) that takes a list of GitHub issue numbers and autonomously processes each one end-to-end: assess → plan → implement → review → fix → PR. The only human checkpoint is merge approval.
+A reusable Claude Code skill (`/issue-pipeline`) that takes a list of GitHub issue numbers and autonomously processes each one end-to-end: assess → plan → plan review → implement → implementation review → fix → PR. The only human checkpoint is merge approval.
 
 **Invocation**: `/issue-pipeline #372 #369 #365 #345 #306 #293 #312 #311 #310 #340 #214`
 
@@ -26,8 +26,8 @@ These were explicitly chosen during the design phase:
 | Execution model | Claude Code skill | Fits existing workflow, invoked per-session |
 | Human checkpoints | Merge only | Maximum autonomy, human approves the final diff |
 | Failure handling | Retry 2×, then detach and continue | Stop the current chain, skip dependent issues, start independent chains from `main` |
-| Review depth | Full multi-angle | Architecture + code + security + skill-based (4 parallel reviewers) |
-| Non-clean issues | Skip | Issues with existing PRs or external blockers are skipped with a comment |
+| Review depth | Full multi-angle, two stages | Plan review (architecture) + implementation review (architecture + code + security + skill-based) |
+| Non-clean issues | Skip (pipeline PRs only) | Issues with `pipeline/`-prefixed PRs or external blockers are skipped; non-pipeline PRs are ignored |
 | Isolation | Worktree per issue | Prevents cross-issue contamination |
 | PR model | Stacked PRs | Within a chain, each issue branches from the previous. Chains are independent |
 | Dependency map | Dynamic at runtime | Parsed from issue bodies, not hardcoded |
@@ -113,7 +113,7 @@ Runs once at pipeline start. Takes the raw list of issue numbers and produces an
 - **Resolved**: Referenced issue is CLOSED → no constraint.
 
 **Step 4 — Cleanness check.** For each issue:
-- Existing open PR? (via `gh pr list --search "closes #N"`)
+- Existing open PR **from a previous pipeline run**? Check via `gh pr list --search "closes #N"` and filter to PRs whose head branch starts with `pipeline/`. Non-pipeline PRs (from manual work) are ignored — they don't block the pipeline.
 - Issue already closed?
 - Externally blocked?
 - Any of these → mark as **skip** with reason.
@@ -128,15 +128,28 @@ Runs once at pipeline start. Takes the raw list of issue numbers and produces an
 3. Feature/UI chains last
 4. Standalone issues fill gaps between chains
 
+**Step 8 — Risk evaluation per chain.** Analyze each chain and produce a risk assessment:
+- **Chain length**: More links = more cascade risk.
+- **File overlap**: Do issues in the chain touch the same files? Higher overlap = higher risk if early issues are wrong.
+- **Aggregate scope**: A chain of 3 trivial issues is safer than a chain of 3 large ones.
+- **Coupling**: Are issues loosely coupled (just ordered by dependency) or tightly coupled (each builds directly on previous code)?
+
+Risk levels:
+- **LOW**: Short chain (1-2 issues), distinct files, trivial/small scope.
+- **MEDIUM**: 3+ issues, some file overlap, or medium scope issues.
+- **HIGH**: 4+ issues, significant file overlap, or large scope issues.
+
+The risk assessment is included in the execution plan output and carried through to the completion report, so the human knows which chains to scrutinize most during merge review.
+
 ### Output
 
 ```
 ExecutionPlan:
   foundation_context: <loaded context object>
   chains: [
-    Chain(id=1, issues=[#365, #345], base="main"),
-    Chain(id=2, issues=[#372, #369], base="main"),
-    Chain(id=3, issues=[#310, #311, #312], base="main"),
+    Chain(id=1, issues=[#365, #345], base="main", risk=LOW),
+    Chain(id=2, issues=[#372, #369], base="main", risk=LOW),
+    Chain(id=3, issues=[#310, #311, #312], base="main", risk=MEDIUM),
   ]
   standalone: [#306, #293, #340, #214]
   skipped: [
@@ -265,6 +278,46 @@ If the plan reveals the issue is significantly more complex than estimated (e.g.
 
 ---
 
+## Phase 3.5: Plan Review
+
+Reviews the implementation plan against service contracts and architecture rules **before any code is written**. Catching architectural mistakes here is far cheaper than catching them after implementation.
+
+**Inputs**: Plan file from Phase 3, foundation context (service contracts already loaded).
+
+### Review
+
+Run `pr-architecture-review` skill against the plan. The reviewer checks:
+- Does the plan place code in the right modules and source sets?
+- Does it create interfaces where service contracts require them?
+- Does it follow the layer architecture (UI → Presentation → Engine → Repository → Network → Platform)?
+- Does it put tests in the correct source sets (`commonTest` for KMP, `test` for Android-only)?
+- Does it respect module boundaries (`shared/` has no deps on `app/` or `composeApp/`)?
+- Does the plan's scope match the issue requirements (no overreach)?
+
+### Finding Format
+
+Same structured finding format as Phase 5, but applied to the plan document rather than code:
+```
+Finding:
+  severity: critical | warning | info
+  plan_section: "File-by-file changes → ToolExecutor.kt"
+  rule: "Module boundaries (service-contracts §3)"
+  description: "Plan places new repository in app/ but it should be in shared/commonMain for KMP access"
+  suggestion: "Move to shared/src/commonMain/kotlin/.../repository/"
+```
+
+### Decision Point
+
+- **Critical findings > 0** → revise the plan (up to 2 attempts). If the plan can't pass architecture review after 2 revisions, that's a **chain failure** — the issue's requirements may be incompatible with the architecture.
+- **Warnings** → note them, carry forward to implementation. Phase 5 will re-check.
+- **No findings** → proceed to Phase 4.
+
+### Output
+
+Reviewed (and possibly revised) plan file, ready for implementation.
+
+---
+
 ## Phase 4: Implement
 
 Executes the plan in an isolated worktree using subagents.
@@ -306,9 +359,9 @@ Working implementation on the worktree branch, all tests passing.
 
 ---
 
-## Phase 5: Self-Review (Full Multi-Angle)
+## Phase 5: Implementation Review (Full Multi-Angle)
 
-Four independent review angles run in parallel, each by a separate subagent.
+Reviews the actual code changes after implementation. Four independent review angles run in parallel, each by a separate subagent. This is distinct from Phase 3.5 (plan review) — here we review the code, not the plan.
 
 **Inputs**: The diff on the worktree branch (all commits since branching), foundation context, loaded skills.
 
@@ -421,7 +474,8 @@ Closes #NNN
 - [ ] <test commands run and results>
 
 ## Review findings addressed
-- <list of critical/warning findings from Phase 5 and how each was resolved>
+- **Plan review (Phase 3.5)**: <findings and how they were addressed in the revised plan>
+- **Implementation review (Phase 5)**: <findings and how each was resolved>
 
 ## Acknowledged debt
 - <warnings not addressed, with rationale>
@@ -532,9 +586,10 @@ When all issues are processed, the skill outputs:
 |-------------|------|--------|
 | Issue not clean | Phase 1 (assess) | Skip, comment on issue, move to next |
 | Codebase diverged | Phase 1 (assess) | Skip, comment on issue, move to next |
+| Plan fails architecture review | Phase 3.5 (plan review) | Revise plan up to 2×. If still failing → chain failure |
 | Tests fail | Phase 4 (implement) | Retry 2×. If still failing → chain failure |
 | Critical review findings unfixable | Phase 6 (fix) | Retry 2×. If still failing → chain failure |
-| Plan reveals excessive complexity | Phase 3 (plan) | Log warning, proceed (reviews will catch overreach) |
+| Plan reveals excessive complexity | Phase 3 (plan) | Log warning, proceed (plan review will catch overreach) |
 
 ### Chain Failures
 
@@ -559,7 +614,7 @@ In stacked PR chains, a problem in issue N affects all downstream PRs (N+1, N+2,
 | Scenario | Handling |
 |----------|----------|
 | Issue is already closed | Skip, log "already closed" |
-| Issue has open PR from outside the pipeline | Skip, log "existing PR #N" |
+| Issue has open PR from outside the pipeline | Proceed — only `pipeline/`-prefixed PRs trigger a skip |
 | Two issues in the list modify the same file | DAG detection should catch this if they reference each other. If not, the second issue's implementation will see the first's changes (stacked branch) and adapt |
 | Input list contains duplicate issue numbers | Deduplicate in Phase 0 |
 | Input list contains issues from different repos | Error — pipeline operates on a single repo |
