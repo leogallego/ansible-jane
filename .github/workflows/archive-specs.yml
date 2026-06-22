@@ -29,22 +29,32 @@ jobs:
       - name: Collect spec files to archive
         id: collect
         run: |
-          SPEC_FILES=""
-          for dir in specs docs/specs docs/superpowers/specs docs/superpowers/plans; do
-            if [ -d "$dir" ]; then
-              while IFS= read -r -d '' file; do
-                SPEC_FILES="${SPEC_FILES}${file}"$'\n'
-              done < <(find "$dir" -type f -print0)
-            fi
-          done
+          SPEC_DIRS="specs/ docs/specs/ docs/superpowers/specs/ docs/superpowers/plans/"
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "Push event: collecting only spec files changed in this commit"
+            SPEC_FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD -- $SPEC_DIRS || true)
+          else
+            echo "Manual run: collecting all spec files"
+            SPEC_FILES=""
+            for dir in specs docs/specs docs/superpowers/specs docs/superpowers/plans; do
+              if [ -d "$dir" ]; then
+                while IFS= read -r -d '' file; do
+                  SPEC_FILES="${SPEC_FILES}${file}"$'\n'
+                done < <(find "$dir" -type f -print0)
+              fi
+            done
+          fi
+
+          SPEC_FILES=$(echo "$SPEC_FILES" | sed '/^$/d' | sort -u)
 
           if [ -z "$SPEC_FILES" ]; then
             echo "No spec files found, nothing to archive."
             echo "has_specs=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_specs=true" >> "$GITHUB_OUTPUT"
-            echo "$SPEC_FILES" | sort > /tmp/spec-files.txt
-            echo "Found $(wc -l < /tmp/spec-files.txt) spec files to archive"
+            echo "$SPEC_FILES" > /tmp/spec-files.txt
+            echo "Found $(wc -l < /tmp/spec-files.txt) spec files to archive:"
             cat /tmp/spec-files.txt
           fi
 
@@ -108,7 +118,10 @@ jobs:
             cp "$STAGING/$file" "$file"
           done < /tmp/spec-files.txt
 
-          git add specs/ docs/specs/ docs/superpowers/specs/ docs/superpowers/plans/ 2>/dev/null || true
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            git add "$file"
+          done < /tmp/spec-files.txt
           if git diff --cached --quiet; then
             echo "No changes to commit on specs branch."
           else
