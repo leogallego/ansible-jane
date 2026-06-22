@@ -461,3 +461,80 @@ When revising the plan:
 5. If the revision introduces new criticals, count this as one of the 2 attempts.
 
 ---
+
+## Phase 4: Implement
+
+Executes the reviewed plan in an isolated working copy.
+
+### Step 1 — Create Isolated Working Copy
+
+Create an isolated workspace for this issue:
+
+- **In Claude Code**: use `EnterWorktree` with name `pipeline-issue-NNN-<slug>`.
+- **In other environments**: use `git worktree add .claude/worktrees/pipeline-issue-NNN-<slug> -b pipeline/issue-NNN-<slug>` or equivalent.
+
+Branch from the appropriate base:
+- **First issue in a chain** → branch from `main` (or project default branch).
+- **Subsequent issues in a chain** → branch from the previous issue's branch.
+- **Standalone issues** → branch from `main`.
+
+Branch naming convention: `pipeline/issue-NNN-<slug>`
+
+### Step 2 — Load Required Skills
+
+Read the full content of every `SKILL.md` identified in Phase 1 Step 4. Pass the skill content to implementation subagents as context.
+
+### Step 3 — Dispatch Implementation
+
+Based on the scope estimated in Phase 1:
+
+**Trivial or Small scope:**
+- Single subagent executes the entire plan.
+- Use the prompt template at `implementer-prompt.md`.
+- Pass: the full plan, loaded skills, foundation context, out-of-scope exclusions.
+
+**Medium or Large scope:**
+- Decompose the plan into independent units (groups of files with no cross-dependencies).
+- Dispatch parallel subagents, one per unit.
+- Each subagent receives its section of the plan plus the full foundation context.
+- Wait for all subagents to complete before proceeding.
+
+Each subagent must follow the plan exactly — no improvisation, no scope creep. If the plan is unclear, the subagent should ask (or flag the ambiguity) rather than guess.
+
+### Step 4 — Run Tests
+
+Execute test commands discovered in Phase 0 (Step 0.7). Do NOT hardcode test commands — use whatever the project provides.
+
+Common patterns to look for in foundation context:
+- A test script (e.g., `scripts/test-all.sh`, `make test`, `npm test`)
+- Build tool test tasks (e.g., `./gradlew test`, `cargo test`, `pytest`)
+- CI workflow test steps (replicate what CI runs)
+
+If the project uses Gradle in a sandbox environment, add `--no-daemon` to all Gradle commands.
+
+Run the tests that cover the modified files. If test infrastructure is minimal, run the full suite.
+
+### Step 5 — Run Linters
+
+Execute lint commands discovered in Phase 0 (Step 0.8). Do NOT hardcode lint commands.
+
+- Run each discovered linter on changed files.
+- Auto-fix formatting issues where the linter supports it (e.g., `--fix` flags).
+- Lint failures that can't be auto-fixed are treated the same as test failures.
+
+If no linters were discovered in Phase 0, skip this step.
+
+### Step 6 — Verification Gate
+
+| Outcome | Action |
+|---------|--------|
+| All tests and linters pass | Proceed to Phase 5 (Implementation Review) |
+| Tests or linters fail | Enter retry loop (max 2 attempts) |
+
+**Retry loop:**
+1. Analyze the failure output — determine if it's a test bug, lint issue, or implementation bug.
+2. Fix the identified issue.
+3. Re-run tests and linters.
+4. If still failing after 2 retries → **chain failure**: stop the chain, comment on the issue with the failure output, mark remaining chain issues as skipped, start the next independent chain from `main`.
+
+---
