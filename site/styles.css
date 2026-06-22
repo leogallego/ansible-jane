@@ -38,6 +38,7 @@ a:hover { text-decoration: underline; }
   position: fixed;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
 }
 
 .stars1, .stars2 {
@@ -372,6 +373,27 @@ a:hover { text-decoration: underline; }
   text-align: center;
 }
 
+/* ---- Desktop Showcase ---- */
+.showcase-desktop {
+  border-top: 1px solid var(--glass-border);
+}
+
+.showcase-track-desktop {
+  padding: 0 max(24px, calc((100vw - 1100px) / 2));
+}
+
+.showcase-item-desktop {
+  flex: 0 0 340px;
+}
+
+.desktop-platforms {
+  margin-top: 24px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
 /* ---- Install ---- */
 .install {
   padding: 80px 24px;
@@ -461,4 +483,5 @@ footer .epigraph {
   .network { padding: 0 16px 48px; }
   .install-options { grid-template-columns: 1fr; }
   .showcase-item { flex: 0 0 160px; }
+  .showcase-item-desktop { flex: 0 0 280px; }
 }
