@@ -298,9 +298,8 @@ for one-shot discovery of external endpoints would be over-engineering.
   | JVM-specific shared logic (MCP, TLS) | `shared/src/jvmTest/` | `kotlin.test` |
   | ViewModel tests | `composeApp/src/commonTest/` | `kotlin.test` |
   | Shared-layer integration tests (backup, serialization) | `composeApp/src/commonTest/` | `kotlin.test` |
-  | Compose Desktop screen smoke tests (planned: #372) | `composeApp/src/desktopTest/` | `kotlin.test` + Compose MP test API |
+  | Compose Desktop screen smoke tests | `composeApp/src/desktopTest/` | `kotlin.test` + Compose MP test API |
   | Android-only features (AppFunctions, widgets, WorkManager) | `app/src/test/` | JUnit4 |
-  | Robolectric screen tests (deprecated: #372) | `app/src/test/` | JUnit4 + Robolectric |
 
 - **`kotlin.test` in all KMP-compatible source sets.** `commonTest`, `jvmTest`, and
   `desktopTest` must use `kotlin.test` annotations (`@Test`, `@BeforeTest`, `@AfterTest`).
