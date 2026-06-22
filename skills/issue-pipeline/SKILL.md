@@ -792,3 +792,95 @@ The report includes:
 Display the report to the user. This is the final output of the pipeline.
 
 ---
+
+## Failure Handling
+
+### Per-Issue Failures
+
+| Failure Type | When | Action |
+|-------------|------|--------|
+| Issue not clean | Phase 1 (assess) | Skip, comment on issue, move to next |
+| Codebase diverged | Phase 1 (assess) | Skip, comment on issue explaining what changed, move to next |
+| Plan fails architecture review | Phase 3.5 (plan review) | Revise plan up to 2 times. If still failing → chain failure |
+| Tests fail | Phase 4 (implement) | Retry fix 2 times. If still failing → chain failure |
+| Linters fail (unfixable) | Phase 4 (implement) | Retry fix 2 times. If still failing → chain failure |
+| Critical review findings unfixable | Phase 6 (fix) | Retry fix 2 times. If still failing → chain failure |
+| Excessive complexity discovered | Phase 3 (plan) | Log warning, proceed. Plan review will catch overreach |
+
+### Chain Failure Procedure
+
+When a chain failure occurs:
+
+1. **Stop processing the current chain.** Do not attempt the next issue in the chain.
+2. **Comment on the failed issue** with:
+   - What went wrong (the specific error or finding)
+   - Which phase failed
+   - Relevant error output or review findings
+3. **Mark remaining issues in the chain** as skipped with reason "Dependent on failed issue #NNN."
+4. **Update labels**: `pipeline/failed` on the failed issue, `pipeline/skipped` on remaining chain issues.
+5. **Start the next independent chain** from `main`. Chain failures do not affect other chains.
+
+### Cascade Risk
+
+In stacked PR chains, a problem in issue N affects all downstream PRs (N+1, N+2, ...). This is accepted by design. Mitigations:
+
+- Tests and linters run at every step — failures surface early.
+- Chain failures stop the chain immediately — no cascading bad code.
+- Independent chains are unaffected.
+- The human can reject any PR and re-invoke the pipeline for remaining issues.
+
+---
+
+## Edge Cases
+
+| Scenario | Handling |
+|----------|----------|
+| Issue is already closed | Skip, log "already closed" |
+| Issue has open PR from outside the pipeline | Proceed — only `pipeline/`-prefixed PRs trigger a skip |
+| Two issues modify the same file | If they reference each other, DAG detection catches it. If not, the second issue sees the first's changes (stacked branch) and adapts |
+| Input list contains duplicate issue numbers | Deduplicate in Phase 0 Step 1 |
+| Input list contains issues from different repos | Error — pipeline operates on a single repo. Report and stop |
+| CI fails on the PR after creation | Not the pipeline's concern — the human checks CI before merging |
+| Cycle detected in dependency DAG | Report the cycle (list issue numbers) and stop. Do not process any issues |
+| All issues in the list are skipped | Report "No actionable issues found" and exit with the completion report listing all skips |
+
+---
+
+## Constraints and Limits
+
+### Session Context
+
+A full pipeline run for many issues may exceed a single session's context window. The skill is **re-invocable** — invoke it again with the same issue list and it picks up where it left off.
+
+### Re-invocability
+
+When invoked, Phase 0 always runs fresh. The cleanness check (Step 4) detects prior state:
+
+1. **Existing `pipeline/` branch** — `gh pr list --search "closes #N"` finds a PR with `pipeline/`-prefixed head branch → skip this issue.
+2. **`pipeline/awaiting-merge` label** — issue was handled in a previous run → skip.
+3. **`pipeline/in-progress` label** — a previous run started but didn't finish this issue. Remove the label and re-process from Phase 1.
+4. **`pipeline/failed` label** — a previous run failed on this issue. Remove the label and re-process (the underlying cause may have been fixed).
+5. **`pipeline/skipped` label** — a previous run skipped this issue. Re-evaluate skip conditions — if the skip condition is resolved, process the issue; otherwise skip again.
+
+This means: the user can safely re-invoke `/issue-pipeline #100 #101 #102 #103 #104` after a partial first run. Issues that already have PRs are skipped. Issues that failed or were interrupted are re-processed.
+
+### Token Budget
+
+Phase 5 (4 parallel review agents) is the most token-intensive step. For Trivial or Small scope issues, reduce to 2 reviewers (architecture + code-quality only) to conserve tokens.
+
+### Sandbox Constraints
+
+If running in a sandboxed environment:
+- Add `--no-daemon` to all Gradle commands.
+- Create temporary files in the project directory, not system temp directories.
+- Be aware that sandbox PID namespaces may cause stale lock files.
+
+### Worktree Disk Usage
+
+Each active worktree consumes disk space. The pipeline creates one per issue and only cleans up skipped/failed ones. For large batches (10+ issues), monitor disk usage.
+
+### Merge Conflicts
+
+If the human merges PRs out of order (e.g., a standalone PR before a chain PR that touches the same file), the chain PR may need rebasing. The pipeline does not handle this — it is the human's responsibility.
+
+---
