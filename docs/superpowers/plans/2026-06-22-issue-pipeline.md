@@ -10,8 +10,8 @@
 
 ## Global Constraints
 
-- The skill file lives at `~/.claude/skills/issue-pipeline/SKILL.md`
-- Companion files live alongside: `~/.claude/skills/issue-pipeline/*.md`
+- The skill file lives at `skills/issue-pipeline/SKILL.md` (project-local, later extracted to own repo)
+- Companion files live alongside: `skills/issue-pipeline/*.md`
 - The skill must be project-agnostic — no hardcoded file paths, project names, or tool names
 - Foundation context discovery must be dynamic (scan project files, not assume their existence)
 - All GitHub operations use `gh` CLI or MCP tools (the skill describes the action, not the specific tool)
@@ -21,7 +21,7 @@
 ## File Structure
 
 ```
-~/.claude/skills/issue-pipeline/
+skills/issue-pipeline/
 ├── SKILL.md                    # Main skill — the pipeline checklist
 ├── triage-prompt.md            # Prompt template for triage subagent (Phase 0)
 ├── plan-reviewer-prompt.md     # Prompt template for plan review subagent (Phase 3.5)
@@ -43,8 +43,8 @@
 ### Task 1: Skill Skeleton and Phase 0 (Dynamic Triage)
 
 **Files:**
-- Create: `~/.claude/skills/issue-pipeline/SKILL.md`
-- Create: `~/.claude/skills/issue-pipeline/triage-prompt.md`
+- Create: `skills/issue-pipeline/SKILL.md`
+- Create: `skills/issue-pipeline/triage-prompt.md`
 
 **Interfaces:**
 - Consumes: GitHub issue numbers from user invocation
@@ -53,7 +53,7 @@
 - [ ] **Step 1: Create skill directory**
 
 ```bash
-mkdir -p ~/.claude/skills/issue-pipeline/templates
+mkdir -p skills/issue-pipeline/templates
 ```
 
 - [ ] **Step 2: Write SKILL.md header and metadata**
@@ -130,7 +130,7 @@ Read the spec's Phase 0 section. Check every step, output field, and decision po
 - [ ] **Step 8: Commit**
 
 ```bash
-git add ~/.claude/skills/issue-pipeline/SKILL.md ~/.claude/skills/issue-pipeline/triage-prompt.md
+git add skills/issue-pipeline/SKILL.md skills/issue-pipeline/triage-prompt.md
 git commit -m "feat: add issue-pipeline skill skeleton and Phase 0 triage
 
 Assisted-by: <model name> <noreply@anthropic.com>"
@@ -141,8 +141,8 @@ Assisted-by: <model name> <noreply@anthropic.com>"
 ### Task 2: Per-Issue Phases 1-2 (Assess and Update)
 
 **Files:**
-- Modify: `~/.claude/skills/issue-pipeline/SKILL.md`
-- Create: `~/.claude/skills/issue-pipeline/templates/assessment-comment.md`
+- Modify: `skills/issue-pipeline/SKILL.md`
+- Create: `skills/issue-pipeline/templates/assessment-comment.md`
 
 **Interfaces:**
 - Consumes: Execution plan from Task 1, individual issue data
@@ -208,7 +208,7 @@ Check every step, output field, and decision point from the spec is covered. Ver
 - [ ] **Step 6: Commit**
 
 ```bash
-git add ~/.claude/skills/issue-pipeline/SKILL.md ~/.claude/skills/issue-pipeline/templates/assessment-comment.md
+git add skills/issue-pipeline/SKILL.md skills/issue-pipeline/templates/assessment-comment.md
 git commit -m "feat(issue-pipeline): add Phases 1-2 assess and update
 
 Assisted-by: <model name> <noreply@anthropic.com>"
@@ -219,8 +219,8 @@ Assisted-by: <model name> <noreply@anthropic.com>"
 ### Task 3: Phases 3-3.5 (Plan and Plan Review)
 
 **Files:**
-- Modify: `~/.claude/skills/issue-pipeline/SKILL.md`
-- Create: `~/.claude/skills/issue-pipeline/plan-reviewer-prompt.md`
+- Modify: `skills/issue-pipeline/SKILL.md`
+- Create: `skills/issue-pipeline/plan-reviewer-prompt.md`
 
 **Interfaces:**
 - Consumes: Assessment report from Task 2
@@ -274,7 +274,7 @@ Check against spec. Verify:
 - [ ] **Step 5: Commit**
 
 ```bash
-git add ~/.claude/skills/issue-pipeline/SKILL.md ~/.claude/skills/issue-pipeline/plan-reviewer-prompt.md
+git add skills/issue-pipeline/SKILL.md skills/issue-pipeline/plan-reviewer-prompt.md
 git commit -m "feat(issue-pipeline): add Phases 3-3.5 plan and plan review
 
 Assisted-by: <model name> <noreply@anthropic.com>"
@@ -285,8 +285,8 @@ Assisted-by: <model name> <noreply@anthropic.com>"
 ### Task 4: Phase 4 (Implement)
 
 **Files:**
-- Modify: `~/.claude/skills/issue-pipeline/SKILL.md`
-- Create: `~/.claude/skills/issue-pipeline/implementer-prompt.md`
+- Modify: `skills/issue-pipeline/SKILL.md`
+- Create: `skills/issue-pipeline/implementer-prompt.md`
 
 **Interfaces:**
 - Consumes: Reviewed plan from Task 3, skills list, base branch
@@ -332,7 +332,7 @@ Check against spec. Verify:
 - [ ] **Step 4: Commit**
 
 ```bash
-git add ~/.claude/skills/issue-pipeline/SKILL.md ~/.claude/skills/issue-pipeline/implementer-prompt.md
+git add skills/issue-pipeline/SKILL.md skills/issue-pipeline/implementer-prompt.md
 git commit -m "feat(issue-pipeline): add Phase 4 implement with subagent dispatch
 
 Assisted-by: <model name> <noreply@anthropic.com>"
@@ -343,8 +343,8 @@ Assisted-by: <model name> <noreply@anthropic.com>"
 ### Task 5: Phases 5-6 (Implementation Review and Fix)
 
 **Files:**
-- Modify: `~/.claude/skills/issue-pipeline/SKILL.md`
-- Create: `~/.claude/skills/issue-pipeline/reviewer-prompt.md`
+- Modify: `skills/issue-pipeline/SKILL.md`
+- Create: `skills/issue-pipeline/reviewer-prompt.md`
 
 **Interfaces:**
 - Consumes: Implementation diff on worktree branch
@@ -399,7 +399,7 @@ Check against spec. Verify:
 - [ ] **Step 5: Commit**
 
 ```bash
-git add ~/.claude/skills/issue-pipeline/SKILL.md ~/.claude/skills/issue-pipeline/reviewer-prompt.md
+git add skills/issue-pipeline/SKILL.md skills/issue-pipeline/reviewer-prompt.md
 git commit -m "feat(issue-pipeline): add Phases 5-6 review and fix
 
 Assisted-by: <model name> <noreply@anthropic.com>"
@@ -410,10 +410,10 @@ Assisted-by: <model name> <noreply@anthropic.com>"
 ### Task 6: Phases 7-9 (PR, Merge Gate, Cleanup) and Completion
 
 **Files:**
-- Modify: `~/.claude/skills/issue-pipeline/SKILL.md`
-- Create: `~/.claude/skills/issue-pipeline/templates/pr-body.md`
-- Create: `~/.claude/skills/issue-pipeline/templates/review-summary.md`
-- Create: `~/.claude/skills/issue-pipeline/templates/completion-report.md`
+- Modify: `skills/issue-pipeline/SKILL.md`
+- Create: `skills/issue-pipeline/templates/pr-body.md`
+- Create: `skills/issue-pipeline/templates/review-summary.md`
+- Create: `skills/issue-pipeline/templates/completion-report.md`
 
 **Interfaces:**
 - Consumes: Clean branch, assessment, plan, review findings
@@ -476,7 +476,7 @@ Check against spec. Verify:
 - [ ] **Step 9: Commit**
 
 ```bash
-git add ~/.claude/skills/issue-pipeline/SKILL.md ~/.claude/skills/issue-pipeline/templates/
+git add skills/issue-pipeline/SKILL.md skills/issue-pipeline/templates/
 git commit -m "feat(issue-pipeline): add Phases 7-9 PR, merge gate, cleanup, and templates
 
 Assisted-by: <model name> <noreply@anthropic.com>"
@@ -487,7 +487,7 @@ Assisted-by: <model name> <noreply@anthropic.com>"
 ### Task 7: Failure Handling, Edge Cases, and Constraints
 
 **Files:**
-- Modify: `~/.claude/skills/issue-pipeline/SKILL.md`
+- Modify: `skills/issue-pipeline/SKILL.md`
 
 **Interfaces:**
 - Consumes: All phases (failure handling is cross-cutting)
@@ -559,7 +559,7 @@ Fix any gaps inline.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add ~/.claude/skills/issue-pipeline/SKILL.md
+git add skills/issue-pipeline/SKILL.md
 git commit -m "feat(issue-pipeline): add failure handling, edge cases, and constraints
 
 Assisted-by: <model name> <noreply@anthropic.com>"
@@ -625,7 +625,7 @@ Simulate invoking the skill a second time with the same issue list after a parti
 If the dry run revealed any issues, fix them and commit:
 
 ```bash
-git add ~/.claude/skills/issue-pipeline/
+git add skills/issue-pipeline/
 git commit -m "fix(issue-pipeline): address issues found in dry run verification
 
 Assisted-by: <model name> <noreply@anthropic.com>"
