@@ -13,6 +13,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: archive-specs
+  cancel-in-progress: false
+
 jobs:
   archive-specs:
     name: Move specs to orphan branch
@@ -141,6 +145,7 @@ jobs:
           set -euo pipefail
 
           git checkout main
+          git pull --rebase origin main
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
