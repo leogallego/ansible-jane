@@ -1,0 +1,161 @@
+name: Archive specs to orphan branch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'specs/**'
+      - 'docs/specs/**'
+      - 'docs/superpowers/specs/**'
+      - 'docs/superpowers/plans/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  archive-specs:
+    name: Move specs to orphan branch
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout main (full history)
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Collect spec files to archive
+        id: collect
+        run: |
+          SPEC_FILES=""
+          for dir in specs docs/specs docs/superpowers/specs docs/superpowers/plans; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r -d '' file; do
+                SPEC_FILES="${SPEC_FILES}${file}"$'\n'
+              done < <(find "$dir" -type f -print0)
+            fi
+          done
+
+          if [ -z "$SPEC_FILES" ]; then
+            echo "No spec files found, nothing to archive."
+            echo "has_specs=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_specs=true" >> "$GITHUB_OUTPUT"
+            echo "$SPEC_FILES" | sort > /tmp/spec-files.txt
+            echo "Found $(wc -l < /tmp/spec-files.txt) spec files to archive"
+            cat /tmp/spec-files.txt
+          fi
+
+      - name: Archive specs to orphan branch
+        if: steps.collect.outputs.has_specs == 'true'
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          STAGING=$(mktemp -d)
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            mkdir -p "$STAGING/$(dirname "$file")"
+            cp "$file" "$STAGING/$file"
+          done < /tmp/spec-files.txt
+
+          SHORT_SHA=$(git rev-parse --short HEAD)
+
+          if git ls-remote --exit-code --heads origin specs >/dev/null 2>&1; then
+            git fetch origin specs
+            git checkout specs
+          else
+            git checkout --orphan specs
+            git rm -rf . 2>/dev/null || true
+            git clean -fd
+
+            cat > README.md << 'EOF'
+          # Spec & Design Documents Archive
+
+          This is an automated archive of specification and design documents from
+          `main`. Maintained by the `archive-specs.yml` GitHub Actions workflow.
+
+          **Do not commit directly to this branch.**
+
+          ## Archived directories
+
+          | Path | Contents |
+          |------|----------|
+          | `specs/` | Speckit feature specs (spec.md, plan.md, tasks.md, etc.) |
+          | `docs/specs/` | Standalone design specifications |
+          | `docs/superpowers/specs/` | Brainstorming design documents |
+          | `docs/superpowers/plans/` | Implementation plans from brainstorming |
+
+          ## How it works
+
+          1. A push to `main` touching any directory above triggers the workflow.
+          2. Spec files are copied here preserving directory structure.
+          3. Spec files are removed from `main` with a `[skip ci]` commit.
+          4. Release tags are cut from `main`, so specs never appear in releases.
+          EOF
+
+            git add README.md
+            git commit -m "chore: initialize specs archive branch"
+          fi
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            mkdir -p "$(dirname "$file")"
+            cp "$STAGING/$file" "$file"
+          done < /tmp/spec-files.txt
+
+          git add specs/ docs/specs/ docs/superpowers/specs/ docs/superpowers/plans/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit on specs branch."
+          else
+            cat > /tmp/archive-commit-msg <<CMSG
+          archive: sync specs from main @ ${SHORT_SHA}
+
+          Triggered by: ${GITHUB_SHA}
+          CMSG
+            git commit -F /tmp/archive-commit-msg
+          fi
+
+          git push origin specs
+
+      - name: Remove specs from main
+        if: steps.collect.outputs.has_specs == 'true'
+        run: |
+          set -euo pipefail
+
+          git checkout main
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          REMOVED=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            if [ -f "$file" ]; then
+              git rm "$file"
+              REMOVED=$((REMOVED + 1))
+            fi
+          done < /tmp/spec-files.txt
+
+          for dir in specs docs/superpowers/plans docs/superpowers/specs docs/specs; do
+            find "$dir" -type d -empty -delete 2>/dev/null || true
+          done
+
+          if [ "$REMOVED" -eq 0 ]; then
+            echo "No spec files to remove from main (already clean)."
+            exit 0
+          fi
+
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          git commit -m "chore: remove archived specs from main [skip ci]
+
+          ${REMOVED} spec file(s) moved to the 'specs' orphan branch.
+          Archive commit corresponds to main @ ${SHORT_SHA}.
+
+          This is an automated commit. Do not revert."
+
+          git push origin main
