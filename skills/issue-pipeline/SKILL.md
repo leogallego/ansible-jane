@@ -551,15 +551,23 @@ git diff $(git merge-base HEAD <base-branch>)..HEAD
 ```
 Where `<base-branch>` is `main` (for first in chain / standalone) or the previous issue's branch (for subsequent in chain).
 
+### Prerequisite — Load Core Review Skills
+
+Before dispatching reviewers, load the project's core review skills. These are skills that apply to **every** review regardless of which files changed.
+
+Check the foundation context for a project-specific architecture review skill (e.g., `pr-architecture-review`). If it documents "always load" or "core" skills, load all of them. These typically cover foundational patterns like concurrency, state management, multiplatform abstractions, and DI — areas where violations are subtle and file-pattern matching alone won't catch them.
+
+Pass these core skills to the architecture and skill-compliance reviewers alongside the dynamically matched skills from Phase 1.
+
 ### Review Angles
 
 Dispatch 4 subagents in parallel, each using the prompt template at `reviewer-prompt.md` with a different `review_angle`:
 
 | # | Angle | What It Checks |
 |---|-------|----------------|
-| 1 | **architecture** | Layer violations, module boundary crossings, interface contracts, state exposure, DI rules, naming, file placement |
-| 2 | **code-quality** | Bugs, logic errors, edge cases, code duplication, API misuse, missing error handling at system boundaries |
-| 3 | **security** | Hardcoded secrets, insecure storage, missing HTTPS enforcement, credential handling, injection vectors |
+| 1 | **architecture** | Layer violations, module boundary crossings, interface contracts, state exposure, DI rules, naming, file placement, error handling contracts |
+| 2 | **code-quality** | Bugs, logic errors, edge cases, code duplication, API misuse, missing error handling at system boundaries, file size and complexity |
+| 3 | **security** | Hardcoded secrets, insecure storage, missing HTTPS enforcement, credential handling, injection vectors, deprecated security APIs |
 | 4 | **skill-compliance** | Changed files checked against loaded skills — framework patterns, test patterns, state management, KMP rules |
 
 **Token budget optimization**: for Trivial or Small scope issues, reduce to 2 reviewers (architecture + code-quality only). Security and skill-compliance add value mainly for Medium/Large changes.
@@ -568,7 +576,8 @@ Each subagent receives:
 - The diff
 - The foundation context
 - The specific angle to review from
-- For skill-compliance: the loaded skill content for the file types that changed
+- Core review skills (always, for architecture and skill-compliance angles)
+- Dynamically matched skills from Phase 1 (for skill-compliance angle)
 
 ### Finding Format
 
@@ -596,8 +605,8 @@ After all reviewers complete:
 | Findings | Action |
 |----------|--------|
 | **Critical findings > 0** | Must fix in Phase 6 |
-| **Warnings only** | Fix if straightforward, otherwise note in PR description as acknowledged tech debt |
-| **Info only** | Include in PR description, no action required |
+| **Warnings only** | Fix each warning, or explicitly justify it as an intentional design decision in the PR description. No silent skips. |
+| **Info only** | Non-actionable — include in PR description for reviewer awareness, no action required |
 | **No findings** | Skip Phase 6, proceed directly to Phase 7 |
 
 ---
@@ -614,11 +623,13 @@ For each critical finding, in order:
 3. Verify the specific finding is resolved — re-check that code section.
 4. Do NOT fix unrelated code nearby — scope discipline applies to fixes too.
 
-### Step 2 — Fix Straightforward Warnings
+### Step 2 — Fix or Justify Warnings
 
-For each warning:
-- If the fix is straightforward (< 10 lines, no risk of regression): apply it.
-- If the fix would require significant rework: skip it and add to the "acknowledged debt" list for the PR description.
+For each warning, choose one:
+- **Fix it** — apply the fix if it's straightforward and low-risk.
+- **Justify it** — if the warning reflects an intentional design decision (not just difficulty of fixing), document the rationale in the PR description under "Acknowledged debt" with a clear explanation of why the current approach was chosen.
+
+Every warning must be resolved one way or the other. "Too hard to fix" is not a justification — if the fix is genuinely too large for this PR, create a follow-up issue and reference it.
 
 ### Step 3 — Re-run Tests and Linters
 
