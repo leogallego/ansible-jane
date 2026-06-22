@@ -23,7 +23,7 @@ These were explicitly chosen during the design phase:
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Execution model | Claude Code skill | Fits existing workflow, invoked per-session |
+| Execution model | Cross-harness skill (SKILL.md) | Portable across Claude Code, Codex, Gemini CLI, Copilot. Uses task lists for state tracking instead of a Claude Code-specific Workflow script |
 | Human checkpoints | Merge only | Maximum autonomy, human approves the final diff |
 | Failure handling | Retry 2×, then detach and continue | Stop the current chain, skip dependent issues, start independent chains from `main` |
 | Review depth | Full multi-angle, two stages | Plan review (architecture) + implementation review (architecture + code + security + skill-based) |
