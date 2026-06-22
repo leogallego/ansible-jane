@@ -6,13 +6,11 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.runComposeUiTest
 import io.github.leogallego.ansiblejane.fakes.FakeTemplateRepository
 import io.github.leogallego.ansiblejane.fakes.FakeTokenManager
 import io.github.leogallego.ansiblejane.fakes.FakeUserPreferencesRepository
-import io.github.leogallego.ansiblejane.model.JobTemplate
-import io.github.leogallego.ansiblejane.model.JobTemplateSummaryFields
-import io.github.leogallego.ansiblejane.model.LabelSummary
 import io.github.leogallego.ansiblejane.model.UserCapabilities
 import io.github.leogallego.ansiblejane.presentation.templates.TemplatesViewModel
 import io.github.leogallego.ansiblejane.setupMainDispatcher
@@ -40,36 +38,19 @@ class TemplateListScreenTest {
         tearDownMainDispatcher()
     }
 
-    private fun launchableTemplate(
-        id: Int = 1,
-        name: String = "Deploy App",
-        description: String = "Deploy the application",
-        askVariablesOnLaunch: Boolean = false
-    ) = JobTemplate(
-        id = id,
-        name = name,
-        description = description,
-        askVariablesOnLaunch = askVariablesOnLaunch,
-        summaryFields = JobTemplateSummaryFields(
-            labels = LabelSummary(),
-            userCapabilities = UserCapabilities(start = true)
-        )
-    )
+    private fun ComposeUiTest.setUpScreen(viewModel: TemplatesViewModel) {
+        setContent {
+            MaterialTheme {
+                TemplateListScreen(onNavigateToJobStatus = {}, viewModel = viewModel)
+            }
+        }
+        waitForIdle()
+    }
 
     @Test
     fun does_not_show_template_data_when_no_instance() = runComposeUiTest {
         fakeRepo.templates = listOf(testJobTemplate())
-        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
-
-        setContent {
-            MaterialTheme {
-                TemplateListScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs))
 
         onNodeWithText("Deploy App").assertDoesNotExist()
     }
@@ -81,17 +62,7 @@ class TemplateListScreenTest {
             testJobTemplate(id = 1, name = "Deploy App"),
             testJobTemplate(id = 2, name = "Configure Server")
         )
-        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
-
-        setContent {
-            MaterialTheme {
-                TemplateListScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs))
 
         onNodeWithText("Deploy App").assertIsDisplayed()
         onNodeWithText("Configure Server").assertIsDisplayed()
@@ -101,17 +72,7 @@ class TemplateListScreenTest {
     fun shows_empty_state_when_no_templates() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(testInstance))
         fakeRepo.templates = emptyList()
-        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
-
-        setContent {
-            MaterialTheme {
-                TemplateListScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs))
 
         onNodeWithText("No templates available").assertIsDisplayed()
     }
@@ -120,17 +81,7 @@ class TemplateListScreenTest {
     fun shows_error_state_with_retry() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(testInstance))
         fakeRepo.shouldFail = true
-        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
-
-        setContent {
-            MaterialTheme {
-                TemplateListScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs))
 
         onNodeWithText("Retry").assertIsDisplayed()
     }
@@ -139,17 +90,7 @@ class TemplateListScreenTest {
     fun search_bar_is_displayed() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(testInstance))
         fakeRepo.templates = emptyList()
-        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
-
-        setContent {
-            MaterialTheme {
-                TemplateListScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs))
 
         onNodeWithText("Search templates...").assertIsDisplayed()
     }
@@ -157,18 +98,8 @@ class TemplateListScreenTest {
     @Test
     fun launch_button_shown_for_launchable_templates() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(testInstance))
-        fakeRepo.templates = listOf(launchableTemplate(id = 5, name = "My Template"))
-        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
-
-        setContent {
-            MaterialTheme {
-                TemplateListScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        fakeRepo.templates = listOf(testJobTemplate(id = 5, name = "My Template", userCapabilities = UserCapabilities(start = true)))
+        setUpScreen(TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs))
 
         onNodeWithContentDescription("Launch My Template").assertIsDisplayed()
     }
@@ -176,18 +107,8 @@ class TemplateListScreenTest {
     @Test
     fun clicking_launch_shows_confirmation_dialog() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(testInstance))
-        fakeRepo.templates = listOf(launchableTemplate(id = 1, name = "Deploy App"))
-        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
-
-        setContent {
-            MaterialTheme {
-                TemplateListScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        fakeRepo.templates = listOf(testJobTemplate(id = 1, name = "Deploy App", userCapabilities = UserCapabilities(start = true)))
+        setUpScreen(TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs))
 
         onNodeWithContentDescription("Launch Deploy App").performClick()
         waitForIdle()
@@ -199,19 +120,9 @@ class TemplateListScreenTest {
     fun extra_vars_dialog_when_template_requires_it() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(testInstance))
         fakeRepo.templates = listOf(
-            launchableTemplate(id = 1, name = "Parameterized Job", askVariablesOnLaunch = true)
+            testJobTemplate(id = 1, name = "Parameterized Job", askVariablesOnLaunch = true, userCapabilities = UserCapabilities(start = true))
         )
-        val viewModel = TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs)
-
-        setContent {
-            MaterialTheme {
-                TemplateListScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(TemplatesViewModel(fakeRepo, fakeTokenManager, fakeUserPrefs))
 
         onNodeWithContentDescription("Launch Parameterized Job").performClick()
         waitForIdle()

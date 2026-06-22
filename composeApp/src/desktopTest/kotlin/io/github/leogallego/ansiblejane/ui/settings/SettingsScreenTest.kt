@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.runComposeUiTest
 import io.github.leogallego.ansiblejane.assistant.engine.ToolRouter
 import io.github.leogallego.ansiblejane.desktopTestKoinModule
@@ -83,20 +84,24 @@ class SettingsScreenTest {
         json = json
     )
 
-    @Test
-    fun displays_instance_list_on_Instances_tab() = runComposeUiTest {
-        fakeTokenManager.setInstances(listOf(instance1, instance2))
+    private fun ComposeUiTest.setUpScreen(viewModel: SettingsViewModel = createViewModel()) {
         setContent {
             MaterialTheme {
                 SettingsScreen(
                     onLogout = {},
                     onNavigateBack = {},
                     onAddInstance = {},
-                    viewModel = createViewModel()
+                    viewModel = viewModel
                 )
             }
         }
         waitForIdle()
+    }
+
+    @Test
+    fun displays_instance_list_on_Instances_tab() = runComposeUiTest {
+        fakeTokenManager.setInstances(listOf(instance1, instance2))
+        setUpScreen()
 
         onNodeWithText("Instances").performClick()
         waitForIdle()
@@ -108,17 +113,7 @@ class SettingsScreenTest {
     @Test
     fun shows_Add_Instance_button_on_Instances_tab() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("Instances").performClick()
         waitForIdle()
@@ -129,17 +124,7 @@ class SettingsScreenTest {
     @Test
     fun shows_Logout_All_button_on_Instances_tab() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("Instances").performClick()
         waitForIdle()
@@ -150,17 +135,7 @@ class SettingsScreenTest {
     @Test
     fun logout_all_shows_confirmation_dialog() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("Instances").performClick()
         waitForIdle()
@@ -175,17 +150,7 @@ class SettingsScreenTest {
     @Test
     fun back_button_present() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithContentDescription("Back").assertIsDisplayed()
     }
@@ -193,17 +158,7 @@ class SettingsScreenTest {
     @Test
     fun about_section_shows_app_name_on_General_tab() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("Ansible Jane").performScrollTo().assertIsDisplayed()
     }
@@ -211,17 +166,7 @@ class SettingsScreenTest {
     @Test
     fun backup_restore_section_visible_on_General_tab() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("Backup & Restore is available on Android").performScrollTo().assertIsDisplayed()
     }
@@ -229,17 +174,7 @@ class SettingsScreenTest {
     @Test
     fun active_instance_shows_Active_pill() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1, instance2))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("Instances").performClick()
         waitForIdle()
@@ -250,17 +185,7 @@ class SettingsScreenTest {
     @Test
     fun tab_selector_shows_all_four_tabs() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("General").assertIsDisplayed()
         onNodeWithText("Instances").assertIsDisplayed()
@@ -271,17 +196,7 @@ class SettingsScreenTest {
     @Test
     fun Agent_tab_shows_LLM_Provider_section() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("Agent").performClick()
         waitForIdle()
@@ -292,17 +207,7 @@ class SettingsScreenTest {
     @Test
     fun Tools_tab_shows_MCP_Servers_section() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("Tools").performClick()
         waitForIdle()
@@ -313,17 +218,7 @@ class SettingsScreenTest {
     @Test
     fun Tools_tab_shows_Local_Tools_section() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
-        setContent {
-            MaterialTheme {
-                SettingsScreen(
-                    onLogout = {},
-                    onNavigateBack = {},
-                    onAddInstance = {},
-                    viewModel = createViewModel()
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithText("Tools").performClick()
         waitForIdle()

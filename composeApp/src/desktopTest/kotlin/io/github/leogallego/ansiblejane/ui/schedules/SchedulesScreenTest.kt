@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.runComposeUiTest
 import io.github.leogallego.ansiblejane.TestData
 import io.github.leogallego.ansiblejane.fakes.FakeScheduleRepository
@@ -32,18 +33,16 @@ class SchedulesScreenTest {
         tearDownMainDispatcher()
     }
 
+    private fun ComposeUiTest.setUpScreen(viewModel: SchedulesViewModel) {
+        setContent { MaterialTheme { SchedulesScreen(viewModel = viewModel) } }
+        waitForIdle()
+    }
+
     @Test
     fun displays_schedule_list_with_names() = runComposeUiTest {
         fakeRepo.schedules = TestData.sampleSchedules
         fakeTokenManager.setInstances(listOf(testInstance))
-        val viewModel = SchedulesViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                SchedulesScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(SchedulesViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("Schedule 1").assertIsDisplayed()
         onNodeWithText("Schedule 2").assertIsDisplayed()
@@ -53,30 +52,17 @@ class SchedulesScreenTest {
     fun displays_template_names_for_schedules() = runComposeUiTest {
         fakeRepo.schedules = TestData.sampleSchedules
         fakeTokenManager.setInstances(listOf(testInstance))
-        val viewModel = SchedulesViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                SchedulesScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(SchedulesViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("Template for Schedule 1").assertIsDisplayed()
+        onNodeWithText("Template for Schedule 2").assertIsDisplayed()
     }
 
     @Test
     fun shows_empty_state_when_no_schedules() = runComposeUiTest {
         fakeRepo.schedules = emptyList()
         fakeTokenManager.setInstances(listOf(testInstance))
-        val viewModel = SchedulesViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                SchedulesScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(SchedulesViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("No schedules configured").assertIsDisplayed()
     }
@@ -86,14 +72,7 @@ class SchedulesScreenTest {
         fakeRepo.shouldFail = true
         fakeRepo.failureException = RuntimeException("Network error")
         fakeTokenManager.setInstances(listOf(testInstance))
-        val viewModel = SchedulesViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                SchedulesScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(SchedulesViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("Retry").assertIsDisplayed()
     }

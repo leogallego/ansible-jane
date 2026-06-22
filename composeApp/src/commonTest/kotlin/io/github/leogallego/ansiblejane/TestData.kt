@@ -12,6 +12,7 @@ import io.github.leogallego.ansiblejane.model.JobTemplateSummaryFields
 import io.github.leogallego.ansiblejane.model.JobTemplateRef
 import io.github.leogallego.ansiblejane.model.Label
 import io.github.leogallego.ansiblejane.model.LabelSummary
+import io.github.leogallego.ansiblejane.model.UserCapabilities
 import io.github.leogallego.ansiblejane.model.WorkflowJob
 import io.github.leogallego.ansiblejane.model.WorkflowJobSummaryFields
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplate
@@ -47,14 +48,16 @@ fun testJobTemplate(
     name: String = "Deploy App",
     description: String = "Deploy the application",
     askVariablesOnLaunch: Boolean = false,
-    labels: List<Label> = emptyList()
+    labels: List<Label> = emptyList(),
+    userCapabilities: UserCapabilities = UserCapabilities()
 ) = JobTemplate(
     id = id,
     name = name,
     description = description,
     askVariablesOnLaunch = askVariablesOnLaunch,
     summaryFields = JobTemplateSummaryFields(
-        labels = LabelSummary(count = labels.size, results = labels)
+        labels = LabelSummary(count = labels.size, results = labels),
+        userCapabilities = userCapabilities
     )
 )
 

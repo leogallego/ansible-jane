@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.runComposeUiTest
 import io.github.leogallego.ansiblejane.desktopTestKoinModule
 import io.github.leogallego.ansiblejane.fakes.FakeAuthRepository
@@ -40,18 +41,29 @@ class AuthScreenTest {
         tearDownMainDispatcher()
     }
 
-    @Test
-    fun renders_login_form_with_empty_fields() = runComposeUiTest {
-        val viewModel = AuthViewModel(fakeAuthRepo)
+    private fun ComposeUiTest.setUpScreen(
+        viewModel: AuthViewModel = AuthViewModel(fakeAuthRepo),
+        onCancel: (() -> Unit)? = null,
+        isAddInstance: Boolean = false,
+        preFilledUrl: String? = null
+    ) {
         setContent {
             MaterialTheme {
                 AuthScreen(
                     onNavigateToDashboard = {},
+                    onCancel = onCancel,
+                    isAddInstance = isAddInstance,
+                    preFilledUrl = preFilledUrl,
                     viewModel = viewModel
                 )
             }
         }
         waitForIdle()
+    }
+
+    @Test
+    fun renders_login_form_with_empty_fields() = runComposeUiTest {
+        setUpScreen()
 
         onNodeWithTag("field_url").assertIsDisplayed()
         onNodeWithTag("field_alias").assertIsDisplayed()
@@ -60,48 +72,21 @@ class AuthScreenTest {
 
     @Test
     fun connect_button_is_displayed() = runComposeUiTest {
-        val viewModel = AuthViewModel(fakeAuthRepo)
-        setContent {
-            MaterialTheme {
-                AuthScreen(
-                    onNavigateToDashboard = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithTag("button_connect").fetchSemanticsNode()
     }
 
     @Test
     fun connect_button_is_disabled_when_fields_are_empty() = runComposeUiTest {
-        val viewModel = AuthViewModel(fakeAuthRepo)
-        setContent {
-            MaterialTheme {
-                AuthScreen(
-                    onNavigateToDashboard = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithTag("button_connect").assertIsNotEnabled()
     }
 
     @Test
     fun connect_button_is_enabled_when_url_and_token_filled() = runComposeUiTest {
-        val viewModel = AuthViewModel(fakeAuthRepo)
-        setContent {
-            MaterialTheme {
-                AuthScreen(
-                    onNavigateToDashboard = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithTag("field_url").performTextInput("https://aap.example.com")
         onNodeWithTag("field_token").performTextInput("my-token")
@@ -114,17 +99,7 @@ class AuthScreenTest {
     fun shows_error_on_auth_failure() = runComposeUiTest {
         fakeAuthRepo.shouldFail = true
         fakeAuthRepo.failureException = RuntimeException("Invalid token")
-        val viewModel = AuthViewModel(fakeAuthRepo)
-
-        setContent {
-            MaterialTheme {
-                AuthScreen(
-                    onNavigateToDashboard = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithTag("field_url").performTextInput("https://aap.example.com")
         onNodeWithTag("field_token").performTextInput("bad-token")
@@ -132,38 +107,21 @@ class AuthScreenTest {
 
         onNodeWithTag("button_connect").performClick()
         waitForIdle()
+
+        onNodeWithText("Error").assertIsDisplayed()
+        onNodeWithText("Invalid token").assertIsDisplayed()
     }
 
     @Test
     fun self_signed_cert_switch_exists() = runComposeUiTest {
-        val viewModel = AuthViewModel(fakeAuthRepo)
-        setContent {
-            MaterialTheme {
-                AuthScreen(
-                    onNavigateToDashboard = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen()
 
         onNodeWithTag("switch_self_signed").fetchSemanticsNode()
     }
 
     @Test
     fun back_button_and_title_visible_in_add_instance_mode() = runComposeUiTest {
-        val viewModel = AuthViewModel(fakeAuthRepo)
-        setContent {
-            MaterialTheme {
-                AuthScreen(
-                    onNavigateToDashboard = {},
-                    onCancel = {},
-                    isAddInstance = true,
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(onCancel = {}, isAddInstance = true)
 
         onNodeWithTag("button_back").assertIsDisplayed()
         onNodeWithText("Add Instance").assertIsDisplayed()
@@ -171,17 +129,7 @@ class AuthScreenTest {
 
     @Test
     fun pre_filled_url_shows_in_field() = runComposeUiTest {
-        val viewModel = AuthViewModel(fakeAuthRepo)
-        setContent {
-            MaterialTheme {
-                AuthScreen(
-                    onNavigateToDashboard = {},
-                    preFilledUrl = "https://prefilled.example.com",
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(preFilledUrl = "https://prefilled.example.com")
 
         onNodeWithText("https://prefilled.example.com").assertIsDisplayed()
     }

@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.runComposeUiTest
 import io.github.leogallego.ansiblejane.TestData
 import io.github.leogallego.ansiblejane.fakes.FakeInventoryRepository
@@ -31,35 +32,27 @@ class InventoriesScreenTest {
         tearDownMainDispatcher()
     }
 
+    private fun ComposeUiTest.setUpScreen(viewModel: InventoriesViewModel) {
+        setContent { MaterialTheme { InventoriesScreen(viewModel = viewModel) } }
+        waitForIdle()
+    }
+
     @Test
     fun displays_inventory_list_with_names() = runComposeUiTest {
         fakeRepo.inventories = TestData.sampleInventories
         fakeTokenManager.setInstances(listOf(TestData.testInstance))
-        val viewModel = InventoriesViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                InventoriesScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(InventoriesViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("Inventory 1").assertIsDisplayed()
         onNodeWithText("Inventory 2").assertIsDisplayed()
+        onNodeWithText("Inventory 3").assertIsDisplayed()
     }
 
     @Test
     fun shows_empty_state_when_no_inventories() = runComposeUiTest {
         fakeRepo.inventories = emptyList()
         fakeTokenManager.setInstances(listOf(TestData.testInstance))
-        val viewModel = InventoriesViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                InventoriesScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(InventoriesViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("No inventories found").assertIsDisplayed()
     }
@@ -69,14 +62,7 @@ class InventoriesScreenTest {
         fakeRepo.shouldFail = true
         fakeRepo.failureException = RuntimeException("Network error")
         fakeTokenManager.setInstances(listOf(TestData.testInstance))
-        val viewModel = InventoriesViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                InventoriesScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(InventoriesViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("Retry").assertIsDisplayed()
     }
@@ -85,15 +71,17 @@ class InventoriesScreenTest {
     fun displays_host_count_chip() = runComposeUiTest {
         fakeRepo.inventories = listOf(TestData.createInventory(1, "Production"))
         fakeTokenManager.setInstances(listOf(TestData.testInstance))
-        val viewModel = InventoriesViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                InventoriesScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(InventoriesViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("10 hosts").assertIsDisplayed()
+    }
+
+    @Test
+    fun displays_kind_chip() = runComposeUiTest {
+        fakeRepo.inventories = listOf(TestData.createInventory(1, "Test Inv"))
+        fakeTokenManager.setInstances(listOf(TestData.testInstance))
+        setUpScreen(InventoriesViewModel(fakeRepo, fakeTokenManager))
+
+        onNodeWithText("Regular").assertIsDisplayed()
     }
 }

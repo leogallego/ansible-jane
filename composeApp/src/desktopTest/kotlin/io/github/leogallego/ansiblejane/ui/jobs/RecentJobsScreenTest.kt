@@ -5,6 +5,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.runComposeUiTest
 import io.github.leogallego.ansiblejane.TestData
 import io.github.leogallego.ansiblejane.fakes.FakeJobRepository
@@ -35,6 +36,15 @@ class RecentJobsScreenTest {
         tearDownMainDispatcher()
     }
 
+    private fun ComposeUiTest.setUpScreen(viewModel: RecentJobsViewModel) {
+        setContent {
+            MaterialTheme {
+                RecentJobsScreen(onNavigateToJobStatus = {}, viewModel = viewModel)
+            }
+        }
+        waitForIdle()
+    }
+
     @Test
     fun displays_job_list_with_names() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(testInstance))
@@ -42,17 +52,7 @@ class RecentJobsScreenTest {
             testJob(id = 1, name = "Job #100 Deploy", templateName = "Deploy Template", status = JobStatus.SUCCESSFUL),
             testJob(id = 2, name = "Job #101 Test", templateName = "Test Template", status = JobStatus.FAILED)
         )
-        val viewModel = RecentJobsViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                RecentJobsScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(RecentJobsViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("Job #100 Deploy").assertIsDisplayed()
         onNodeWithText("Job #101 Test").assertIsDisplayed()
@@ -65,17 +65,7 @@ class RecentJobsScreenTest {
             testJob(id = 1, name = "Job #100 Deploy", templateName = "Deploy Template", status = JobStatus.SUCCESSFUL),
             testJob(id = 2, name = "Job #101 Test", templateName = "Test Template", status = JobStatus.FAILED)
         )
-        val viewModel = RecentJobsViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                RecentJobsScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(RecentJobsViewModel(fakeRepo, fakeTokenManager))
 
         onAllNodesWithText("Successful")[0].assertIsDisplayed()
         onAllNodesWithText("Failed")[0].assertIsDisplayed()
@@ -85,17 +75,7 @@ class RecentJobsScreenTest {
     fun shows_error_with_retry_button() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(testInstance))
         fakeRepo.shouldFail = true
-        val viewModel = RecentJobsViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                RecentJobsScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(RecentJobsViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("Retry").assertIsDisplayed()
     }
@@ -104,17 +84,7 @@ class RecentJobsScreenTest {
     fun shows_empty_state_message() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(testInstance))
         fakeRepo.jobs = emptyList()
-        val viewModel = RecentJobsViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                RecentJobsScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(RecentJobsViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("No recent jobs").assertIsDisplayed()
     }
@@ -125,17 +95,7 @@ class RecentJobsScreenTest {
         fakeRepo.jobs = listOf(
             testJob(id = 1, name = "Deploy App", templateName = "Production Deploy")
         )
-        val viewModel = RecentJobsViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                RecentJobsScreen(
-                    onNavigateToJobStatus = {},
-                    viewModel = viewModel
-                )
-            }
-        }
-        waitForIdle()
+        setUpScreen(RecentJobsViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("Production Deploy").assertIsDisplayed()
     }

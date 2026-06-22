@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.runComposeUiTest
 import io.github.leogallego.ansiblejane.TestData
 import io.github.leogallego.ansiblejane.fakes.FakeEdaAuditRepository
@@ -31,35 +32,27 @@ class EdaAuditScreenTest {
         tearDownMainDispatcher()
     }
 
+    private fun ComposeUiTest.setUpScreen(viewModel: EdaAuditViewModel) {
+        setContent { MaterialTheme { EdaAuditScreen(viewModel = viewModel) } }
+        waitForIdle()
+    }
+
     @Test
     fun displays_audit_rule_list() = runComposeUiTest {
         fakeRepo.auditRules = TestData.sampleEdaRuleAudits
         fakeTokenManager.setInstances(listOf(TestData.testInstance))
-        val viewModel = EdaAuditViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                EdaAuditScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(EdaAuditViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("rule-1").assertIsDisplayed()
         onNodeWithText("rule-2").assertIsDisplayed()
+        onNodeWithText("rule-3").assertIsDisplayed()
     }
 
     @Test
     fun shows_empty_state_when_no_rules() = runComposeUiTest {
         fakeRepo.auditRules = emptyList()
         fakeTokenManager.setInstances(listOf(TestData.testInstance))
-        val viewModel = EdaAuditViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                EdaAuditScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(EdaAuditViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("No EDA audit events").assertIsDisplayed()
     }
@@ -69,14 +62,7 @@ class EdaAuditScreenTest {
         fakeRepo.shouldFail = true
         fakeRepo.failureException = RuntimeException("Network error")
         fakeTokenManager.setInstances(listOf(TestData.testInstance))
-        val viewModel = EdaAuditViewModel(fakeRepo, fakeTokenManager)
-
-        setContent {
-            MaterialTheme {
-                EdaAuditScreen(viewModel = viewModel)
-            }
-        }
-        waitForIdle()
+        setUpScreen(EdaAuditViewModel(fakeRepo, fakeTokenManager))
 
         onNodeWithText("Retry").assertIsDisplayed()
     }
