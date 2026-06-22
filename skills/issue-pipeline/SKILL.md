@@ -359,3 +359,105 @@ Add the `pipeline/in-progress` label to the issue.
 - Use `gh issue edit <N> --add-label "pipeline/in-progress"` or GitHub MCP.
 
 ---
+
+## Phase 3: Plan
+
+Creates a detailed implementation plan before any code is written.
+
+### Step 1 — Load Relevant Skills
+
+Read the full content of every `SKILL.md` identified in Phase 1 Step 4 (skill mapping). These inform the plan's approach — the plan should follow the patterns and conventions documented in the matched skills.
+
+### Step 2 — Generate Plan
+
+If your environment has a `writing-plans` skill, invoke it. Otherwise, generate a plan covering all of the following areas:
+
+**File-by-file changes:**
+- What changes in each existing file, why, and the order of changes.
+- Group related changes so the reviewer can follow the logic.
+
+**New files:**
+- Any new files to create, with their purpose and location.
+- Follow existing module structure and naming conventions from the foundation context.
+
+**Test strategy:**
+- Which tests to add or modify.
+- Where they go (language/framework-specific test directories discovered in Phase 0).
+- What they cover (unit, integration, UI, screenshot).
+- Whether tests are KMP-compatible or platform-specific.
+
+**Build/CI changes:**
+- If the issue touches dependency manifests, build config, or CI workflows.
+- Specific changes needed and compatibility concerns.
+
+**Migration/compatibility:**
+- Any data migration, API changes, or backward compatibility concerns.
+- If none, explicitly state "No migration needed."
+
+### Step 3 — Save Plan
+
+Write the plan to a file:
+- Path pattern: `docs/superpowers/plans/YYYY-MM-DD-issue-NNN-<slug>.md`
+- `<slug>` is derived from the issue title (lowercase, hyphens, no special characters, max 40 chars).
+- Use today's date.
+
+If the `docs/superpowers/plans/` directory doesn't exist, use whatever plans directory exists in the project, or create one at a sensible location.
+
+### Step 4 — Validate Plan Against Scope
+
+Cross-check the plan against the Phase 1 assessment:
+- Does the plan touch files not mentioned in the assessment's `files_to_modify` list?
+  - If yes and the additions are legitimate (the assessment missed them): update the assessment.
+  - If yes and the additions are overreach (the plan goes beyond the issue): trim the plan.
+- Does the plan address the issue's acceptance criteria?
+- Does the plan accidentally address any issue in the `out_of_scope` list? If so, remove that work from the plan.
+
+### Decision Point
+
+If the plan reveals the issue is significantly more complex than estimated (e.g., assessed as Small but plan requires 15+ files), log a warning but proceed. The plan review will catch overreach.
+
+---
+
+## Phase 3.5: Plan Review
+
+Reviews the implementation plan against architecture rules and project conventions **before any code is written**. Catching mistakes here is far cheaper than after implementation.
+
+### Dispatch Plan Reviewer
+
+Dispatch a subagent using the prompt template at `plan-reviewer-prompt.md`. Pass it:
+- The plan file content
+- The foundation context (architecture docs, service contracts, project instructions)
+- The assessment report (so it knows the intended scope)
+
+### Finding Format
+
+The reviewer produces structured findings:
+
+```
+Finding:
+  severity: critical | warning | info
+  plan_section: "<section heading where the issue was found>"
+  rule: "<rule name and source>"
+  description: "<what's wrong>"
+  suggestion: "<how to fix it>"
+```
+
+### Decision Point
+
+| Findings | Action |
+|----------|--------|
+| **Critical findings > 0** | Revise the plan to address each critical finding. Re-submit for review. Max 2 revision attempts. |
+| **Still critical after 2 revisions** | **Chain failure** — the issue's requirements may be incompatible with the architecture. Stop the chain. |
+| **Warnings only** | Note them and carry forward to implementation. Phase 5 will re-check the actual code. |
+| **No findings** | Proceed to Phase 4. |
+
+### Revision Loop
+
+When revising the plan:
+1. Read each critical finding carefully.
+2. Modify the plan to address the finding.
+3. Update the plan file on disk.
+4. Re-dispatch the plan reviewer with the updated plan.
+5. If the revision introduces new criticals, count this as one of the 2 attempts.
+
+---
