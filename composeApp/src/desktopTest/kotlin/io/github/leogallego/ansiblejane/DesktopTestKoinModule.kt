@@ -12,7 +12,7 @@ import io.github.leogallego.ansiblejane.presentation.settings.BackupViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-fun testKoinModule(
+fun desktopTestKoinModule(
     tokenManager: ITokenManager = FakeTokenManager(),
     assistantRepository: IAssistantRepository = FakeAssistantRepository(),
     manifestRepository: IToolManifestRepository = FakeToolManifestRepository()
@@ -21,6 +21,6 @@ fun testKoinModule(
     single<IAssistantRepository> { assistantRepository }
     single<IToolManifestRepository> { manifestRepository }
     single { BackupManager() }
-    single { PlatformUtils(org.robolectric.RuntimeEnvironment.getApplication()) }
+    single { PlatformUtils() }
     viewModel { BackupViewModel(get(), get(), get()) }
 }
