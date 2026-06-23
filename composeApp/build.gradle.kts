@@ -160,7 +160,7 @@ compose.desktop {
         mainClass = "io.github.leogallego.ansiblejane.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi)
             packageName = "ansible-jane"
             packageVersion = providers.gradleProperty("appVersionName").get().substringBefore("-")
 
