@@ -47,7 +47,7 @@ fun ConfirmationCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Warning,
-                    contentDescription = "Confirmation required",
+                    contentDescription = stringResource(Res.string.cd_confirmation_required),
                     tint = MaterialTheme.colorScheme.onTertiaryContainer,
                     modifier = Modifier.size(24.dp)
                 )

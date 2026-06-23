@@ -312,7 +312,7 @@ private fun MessageContextMenu(
     ) {
         if (onCopy != null) {
             DropdownMenuItem(
-                text = { Text("Copy") },
+                text = { Text(stringResource(Res.string.chat_action_copy)) },
                 onClick = { onCopy(); onDismiss() },
                 leadingIcon = {
                     Icon(Icons.Default.ContentCopy, contentDescription = null)
@@ -322,7 +322,7 @@ private fun MessageContextMenu(
         }
         if (onRegenerate != null) {
             DropdownMenuItem(
-                text = { Text("Regenerate") },
+                text = { Text(stringResource(Res.string.chat_action_regenerate)) },
                 onClick = { onRegenerate(); onDismiss() },
                 leadingIcon = {
                     Icon(Icons.Default.Refresh, contentDescription = null)

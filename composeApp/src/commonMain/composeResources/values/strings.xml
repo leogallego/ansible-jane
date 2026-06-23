@@ -181,7 +181,6 @@
     <string name="job_detail_started">Started</string>
     <string name="job_detail_finished">Finished</string>
     <string name="job_detail_elapsed">Elapsed</string>
-    <string name="job_detail_elapsed_value">%.1f seconds</string>
     <string name="job_detail_job_id">Job ID</string>
 
     <!-- RecentJobsScreen.kt -->
@@ -426,10 +425,13 @@
     <!-- ChatBubble.kt -->
     <string name="cd_copy_message">Copy message</string>
     <string name="chat_tool_call">Using %1$s</string>
+    <string name="chat_action_copy">Copy</string>
+    <string name="chat_action_regenerate">Regenerate</string>
 
     <!-- ConfirmationCard.kt -->
     <string name="confirmation_proceed">Proceed</string>
     <string name="confirmation_skip">Skip</string>
+    <string name="cd_confirmation_required">Confirmation required</string>
 
     <!-- EmptyState.kt -->
     <string name="empty_state_default">Nothing to show</string>
