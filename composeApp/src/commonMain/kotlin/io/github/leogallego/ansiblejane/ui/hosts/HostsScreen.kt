@@ -39,6 +39,8 @@ import io.github.leogallego.ansiblejane.ui.components.LoadingList
 import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.pressScale
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,7 +106,7 @@ fun HostsScreen(
                         item {
                             SearchBar(
                                 onSearch = viewModel::search,
-                                placeholder = "Search hosts..."
+                                placeholder = stringResource(Res.string.search_hosts)
                             )
                         }
 
@@ -176,7 +178,7 @@ private fun HostItem(
                 host.summaryFields.inventory?.let { inventory ->
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Inventory: ${inventory.name}",
+                        text = stringResource(Res.string.host_inventory_label, inventory.name),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

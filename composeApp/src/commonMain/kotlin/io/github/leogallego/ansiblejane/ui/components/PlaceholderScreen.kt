@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 
 @Composable
 fun PlaceholderScreen(
@@ -23,7 +25,7 @@ fun PlaceholderScreen(
     description: String? = null,
     modifier: Modifier = Modifier
 ) {
-    val resolvedDescription = description ?: "This feature is planned for a future release."
+    val resolvedDescription = description ?: stringResource(Res.string.placeholder_description)
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,

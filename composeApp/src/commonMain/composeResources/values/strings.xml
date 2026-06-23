@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name -->
+    <string name="app_name">Ansible Jane</string>
+    <string name="app_tagline">Remote control for Ansible Automation Platform</string>
+
+    <!-- Common actions -->
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_retry">Retry</string>
+    <string name="btn_clear">Clear</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_launch">Launch</string>
+    <string name="btn_approve">Approve</string>
+    <string name="btn_deny">Deny</string>
+    <string name="btn_remove">Remove</string>
+    <string name="btn_go_back">Go Back</string>
+    <string name="btn_connect">Connect</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_add">Add</string>
+
+    <!-- Common content descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_clear">Clear</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_notifications">Notifications</string>
+    <string name="cd_refresh">Refresh</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_clear_search">Clear search</string>
+    <string name="cd_expand">Expand</string>
+    <string name="cd_collapse">Collapse</string>
+    <string name="cd_expand_to_full_screen">Expand to full screen</string>
+    <string name="cd_remove">Remove</string>
+    <string name="cd_pending">Pending</string>
+
+    <!-- Common labels -->
+    <string name="label_yes">Yes</string>
+    <string name="label_no">No</string>
+    <string name="label_status">Status</string>
+    <string name="label_details">Details</string>
+    <string name="label_output">Output</string>
+    <string name="label_created">Created</string>
+    <string name="label_modified">Modified</string>
+    <string name="label_enabled">Enabled</string>
+    <string name="label_variables">Variables</string>
+    <string name="label_platform">Platform</string>
+    <string name="label_controller">Controller</string>
+    <string name="label_gateway">Gateway</string>
+    <string name="label_eda">EDA</string>
+    <string name="label_instance">Instance</string>
+    <string name="label_url">URL</string>
+    <string name="label_components">Components</string>
+
+    <!-- TabDefinitions.kt - Tab labels -->
+    <string name="tab_dashboard">Dashboard</string>
+    <string name="tab_templates">Templates</string>
+    <string name="tab_infrastructure">Infrastructure</string>
+    <string name="tab_activity">Activity</string>
+    <string name="tab_jane_ai">Jane AI</string>
+
+    <!-- TabDefinitions.kt - Segment labels -->
+    <string name="segment_overview">Overview</string>
+    <string name="segment_job_templates">Job Templates</string>
+    <string name="segment_workflows">Workflows</string>
+    <string name="segment_inventories">Inventories</string>
+    <string name="segment_hosts">Hosts</string>
+    <string name="segment_jobs">Jobs</string>
+    <string name="segment_schedules">Schedules</string>
+    <string name="segment_eda">EDA</string>
+    <string name="segment_chat">Chat</string>
+
+    <!-- MainScreen.kt -->
+    <string name="clear_chat_title">Clear Chat History</string>
+    <string name="clear_chat_message">This will remove all messages from the assistant chat. This cannot be undone.</string>
+    <string name="cd_ai_model">AI model</string>
+    <string name="cd_clear_chat_history">Clear chat history</string>
+    <string name="provider_tokens">%1$s tokens</string>
+    <string name="provider_tokens_session_cd">%1$d tokens used this session</string>
+    <string name="provider_no_providers">No providers configured</string>
+    <string name="provider_configure">Configure...</string>
+
+    <!-- AuthScreen.kt -->
+    <string name="auth_title_reauth">Re-authenticate</string>
+    <string name="auth_title_add_instance">Add Instance</string>
+    <string name="cd_ansible_jane">Ansible Jane</string>
+    <string name="auth_token_expired">Token expired for %1$s. Please enter a new API token.</string>
+    <string name="auth_token_expired_fallback">this instance</string>
+    <string name="auth_label_url">AAP Base URL</string>
+    <string name="auth_placeholder_url">https://aap.example.com</string>
+    <string name="auth_label_alias">Alias (optional)</string>
+    <string name="auth_placeholder_alias">e.g., Production</string>
+    <string name="auth_label_token">AAP Personal API Token</string>
+    <string name="cd_hide_token">Hide token</string>
+    <string name="cd_show_token">Show token</string>
+    <string name="auth_label_self_signed">Accept self-signed certificate</string>
+
+    <!-- DashboardScreen.kt -->
+    <string name="dashboard_section_jobs">Jobs</string>
+    <string name="dashboard_section_recent_failures">Recent Failures</string>
+    <string name="dashboard_section_eda">Event-Driven Ansible</string>
+    <string name="dashboard_section_resources">Resources</string>
+    <string name="dashboard_section_chart">Job Activity (7 days)</string>
+    <string name="dashboard_section_schedules">Upcoming Schedules</string>
+    <string name="dashboard_section_instance">Instance</string>
+    <string name="dashboard_stat_active">Active</string>
+    <string name="dashboard_stat_failed_24h">Failed 24h</string>
+    <string name="dashboard_stat_passed_24h">Passed 24h</string>
+    <string name="dashboard_stat_running">Running</string>
+    <string name="dashboard_stat_activations">Activations</string>
+    <string name="dashboard_all_clear">No recent failures — all clear!</string>
+    <string name="dashboard_resource_inventories">Inventories</string>
+    <string name="dashboard_resource_hosts">Hosts</string>
+    <string name="dashboard_resource_templates">Templates</string>
+    <string name="dashboard_resource_projects">Projects</string>
+    <string name="dashboard_chart_passed">Passed</string>
+    <string name="dashboard_chart_failed">Failed</string>
+    <string name="dashboard_chart_cd">Job activity chart: %1$d passed, %2$d failed over %3$d days</string>
+    <string name="dashboard_schedule_next">Next: %1$s</string>
+    <string name="dashboard_health_healthy">Healthy</string>
+    <string name="dashboard_health_degraded">Degraded</string>
+    <string name="dashboard_health_critical">Critical</string>
+    <string name="dashboard_health_cd">Health status: %1$s</string>
+    <string name="dashboard_platform_aap">Red Hat AAP</string>
+    <string name="dashboard_platform_aap_version">Red Hat AAP %1$s</string>
+    <string name="dashboard_platform_awx">AWX (upstream)</string>
+    <string name="dashboard_platform_jewel">Jewel (upstream)</string>
+    <string name="dashboard_platform_unknown">Unknown</string>
+
+    <!-- TemplateListScreen.kt -->
+    <string name="templates_chip_favorites">Favorites</string>
+    <string name="templates_empty_favorites">No favorite templates</string>
+    <string name="templates_empty">No templates available</string>
+
+    <!-- TemplateCard.kt -->
+    <string name="cd_remove_from_favorites">Remove from favorites</string>
+    <string name="cd_add_to_favorites">Add to favorites</string>
+    <string name="cd_launch_template">Launch %1$s</string>
+
+    <!-- LaunchConfirmDialog.kt -->
+    <string name="launch_title">Launch Job</string>
+    <string name="launch_message">Launch "%1$s"?</string>
+
+    <!-- ExtraVarsInput.kt -->
+    <string name="extra_vars_title">Launch "%1$s"</string>
+    <string name="extra_vars_prompt">Enter extra variables (JSON):</string>
+    <string name="extra_vars_placeholder">{"key": "value"}</string>
+    <string name="extra_vars_error_size">Extra variables exceed 64 KB limit</string>
+    <string name="extra_vars_error_json">Invalid JSON: %1$s</string>
+
+    <!-- ErrorMessage.kt -->
+    <string name="error_show_details">Show details</string>
+    <string name="error_hide_details">Hide details</string>
+    <string name="error_detail_status">Status: %1$s</string>
+    <string name="error_detail_url">URL: %1$s</string>
+    <string name="error_detail_message">Detail: %1$s</string>
+
+    <!-- SearchBar.kt -->
+    <string name="search_templates">Search templates...</string>
+    <string name="search_jobs">Search jobs...</string>
+    <string name="search_hosts">Search hosts...</string>
+    <string name="search_inventories">Search inventories...</string>
+    <string name="search_audit_rules">Search audit rules...</string>
+    <string name="search_timezones">Search timezones...</string>
+
+    <!-- PlaceholderScreen.kt -->
+    <string name="placeholder_description">This feature is planned for a future release.</string>
+
+    <!-- JobStatusBadge.kt -->
+    <string name="job_status_new">New</string>
+    <string name="job_status_pending">Pending</string>
+    <string name="job_status_waiting">Waiting</string>
+    <string name="job_status_running">Running</string>
+    <string name="job_status_successful">Successful</string>
+    <string name="job_status_failed">Failed</string>
+    <string name="job_status_error">Error</string>
+    <string name="job_status_canceled">Canceled</string>
+
+    <!-- JobStatusScreen.kt -->
+    <string name="job_status_title">Job Status</string>
+    <string name="job_detail_template">Template: %1$s</string>
+    <string name="job_detail_started">Started</string>
+    <string name="job_detail_finished">Finished</string>
+    <string name="job_detail_elapsed">Elapsed</string>
+    <string name="job_detail_elapsed_value">%.1f seconds</string>
+    <string name="job_detail_job_id">Job ID</string>
+
+    <!-- RecentJobsScreen.kt -->
+    <string name="jobs_empty_filtered">No jobs match the selected filters</string>
+    <string name="jobs_empty">No recent jobs</string>
+
+    <!-- NotificationsSheet.kt -->
+    <string name="notifications_title">Notifications</string>
+    <string name="notifications_empty">No pending approvals</string>
+    <string name="notifications_stale">Refresh failed — showing cached data</string>
+    <string name="notifications_pending_count">%1$d pending approval%2$s</string>
+    <string name="notifications_pending_plural">s</string>
+
+    <!-- ApprovalDetailScreen.kt -->
+    <string name="approval_title">Workflow Approval</string>
+    <string name="approval_confirm_approve_title">Approve Workflow?</string>
+    <string name="approval_confirm_deny_title">Deny Workflow?</string>
+    <string name="approval_confirm_approve_message">Are you sure you want to approve "%1$s"?</string>
+    <string name="approval_confirm_deny_message">Are you sure you want to deny "%1$s"? This action cannot be undone.</string>
+    <string name="approval_detail_pending_for">Pending for</string>
+    <string name="approval_detail_launched_by">Launched by</string>
+    <string name="approval_detail_workflow_template">Workflow Template</string>
+    <string name="approval_detail_workflow_job">Workflow Job</string>
+    <string name="approval_detail_job_status">Job Status</string>
+    <string name="approval_detail_approved_by">Approved by</string>
+    <string name="approval_detail_denied_by">Denied by</string>
+    <string name="approval_detail_timed_out">Timed Out</string>
+    <string name="approval_status_approved">Approved</string>
+    <string name="approval_status_denied">Denied</string>
+    <string name="approval_completed_message">This approval has been %1$s.</string>
+    <string name="approval_completed_title">Workflow %1$s</string>
+    <string name="approval_fallback_name">this approval</string>
+
+    <!-- HostsScreen.kt -->
+    <string name="host_inventory_label">Inventory: %1$s</string>
+
+    <!-- HostDetailSheet.kt -->
+    <string name="host_status_active_failures">Has active failures</string>
+    <string name="host_label_inventory">Inventory</string>
+    <string name="host_section_details">Details</string>
+    <string name="host_section_groups">Groups (%1$d)</string>
+    <string name="host_section_facts">Facts</string>
+    <string name="host_section_jobs">Jobs Run</string>
+    <string name="host_facts_empty">No facts available</string>
+    <string name="host_jobs_empty">No job history</string>
+    <string name="host_job_summary_stats">OK: %1$d | Changed: %2$d | Failed: %3$d | Skipped: %4$d</string>
+    <string name="host_job_fallback_name">Job #%1$d</string>
+    <string name="cd_host_job_failed">Failed</string>
+    <string name="cd_host_job_successful">Successful</string>
+
+    <!-- InventoriesScreen.kt -->
+    <string name="inventory_hosts_count">%1$d hosts</string>
+
+    <!-- InventoryDetailSheet.kt -->
+    <string name="inventory_detail_type">Type</string>
+    <string name="inventory_detail_organization">Organization</string>
+    <string name="inventory_detail_total_hosts">Total Hosts</string>
+    <string name="inventory_detail_total_groups">Total Groups</string>
+    <string name="inventory_host_more">+%1$d more</string>
+    <string name="cd_inventory_host_enabled">Enabled</string>
+    <string name="cd_inventory_host_disabled">Disabled</string>
+
+    <!-- SchedulesScreen.kt -->
+    <string name="schedules_empty">No schedules configured</string>
+    <string name="schedule_next">Next: %1$s</string>
+
+    <!-- EdaAuditScreen.kt & EdaAuditDetailSheet.kt -->
+    <string name="eda_detail_fired_at">Fired At</string>
+    <string name="eda_detail_rule_set">Rule Set</string>
+    <string name="eda_detail_activation">Activation</string>
+    <string name="eda_detail_activation_instance">Activation Instance</string>
+
+    <!-- WorkflowJobStatusScreen.kt -->
+    <string name="workflow_job_status_title">Workflow Job Status</string>
+    <string name="workflow_nodes_header">Workflow Nodes</string>
+
+    <!-- WorkflowTemplateListScreen.kt -->
+    <string name="workflow_templates_empty">No workflow templates available</string>
+
+    <!-- WorkflowTemplateDetailScreen.kt -->
+    <string name="workflow_template_title">Workflow Template</string>
+    <string name="cd_launch_workflow">Launch workflow</string>
+    <string name="workflow_no_nodes">No nodes in this workflow</string>
+    <string name="workflow_node_fallback_name">Node %1$d</string>
+
+    <!-- WorkflowNodeCard.kt -->
+    <string name="workflow_node_skipped">Skipped</string>
+    <string name="workflow_node_pending">Pending</string>
+
+    <!-- WorkflowNodeOrder.kt -->
+    <string name="connector_on_success">On success</string>
+    <string name="connector_on_failure">On failure</string>
+    <string name="connector_always">Always</string>
+
+    <!-- SettingsScreen.kt -->
+    <string name="settings_title">Settings</string>
+
+    <!-- GeneralTab.kt -->
+    <string name="settings_section_display">Display</string>
+    <string name="settings_timezone">Timezone</string>
+    <string name="settings_timezone_system">System (%1$s)</string>
+    <string name="settings_time_format">Time format</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_select_timezone">Select Timezone</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_approval_notifications">Approval notifications</string>
+    <string name="settings_approval_notifications_desc">Poll for pending workflow approvals</string>
+    <string name="settings_poll_interval">Poll interval</string>
+    <string name="settings_notification_system_hint">Sound and vibration are configured in system notification settings.</string>
+    <string name="settings_about_version">v%1$s (%2$s)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_license">GPL-3.0 License</string>
+
+    <!-- InstancesTab.kt -->
+    <string name="instances_add">Add Instance</string>
+    <string name="instances_logout_all">Logout All</string>
+    <string name="instances_remove_last_title">Remove Last Instance</string>
+    <string name="instances_remove_title">Remove Instance</string>
+    <string name="instances_remove_last_message">This is your only instance. Removing it will log you out completely.</string>
+    <string name="instances_remove_message">Remove "%1$s"? You will need to re-authenticate to use this instance again.</string>
+    <string name="instances_logout_all_title">Logout All</string>
+    <string name="instances_logout_all_message">Remove all AAP instances and log out? You will need to re-authenticate each instance.</string>
+    <string name="instances_status_active">Active</string>
+    <string name="instances_status_mcp">MCP</string>
+    <string name="cd_ansible_platform">Ansible Platform</string>
+    <string name="cd_logout_instance">Logout %1$s</string>
+    <string name="instances_detail_title">Instance Details</string>
+    <string name="instances_detail_alias">Alias</string>
+    <string name="instances_detail_replace_token">Replace Token</string>
+    <string name="instances_detail_replace_token_hint">The current token will be replaced. Paste your new token below.</string>
+    <string name="instances_detail_new_token">New Token</string>
+    <string name="instances_detail_cancel_token_reset">Cancel token reset</string>
+    <string name="instances_detail_trust_self_signed">Trust self-signed certificate</string>
+    <string name="instances_detail_trust_self_signed_desc">Allow connections to servers with untrusted certificates</string>
+    <string name="instances_detail_saving">Saving...</string>
+    <string name="instances_detail_save_changes">Save Changes</string>
+    <string name="instances_platform_aap">Red Hat Ansible Automation Platform</string>
+    <string name="instances_platform_aap_version">Red Hat Ansible Automation Platform %1$s</string>
+    <string name="instances_platform_awx">AWX (upstream controller)</string>
+    <string name="instances_platform_jewel">Jewel (upstream gateway)</string>
+    <string name="instances_info_not_discovered">Not yet discovered</string>
+    <string name="instances_info_title">Instance Info</string>
+    <string name="instances_discovering">Discovering...</string>
+    <string name="instances_refresh_info">Refresh Instance Info</string>
+    <string name="instances_discover_info">Discover Instance Info</string>
+
+    <!-- AgentTab.kt -->
+    <string name="agent_section_llm_provider">LLM Provider</string>
+    <string name="agent_not_configured">Not configured</string>
+    <string name="agent_section_persona">Persona</string>
+    <string name="agent_persona_description">Persona configuration coming soon. Customize Jane\'s behavior, system prompts, and response style.</string>
+    <string name="agent_clear_chat_history">Clear Chat History</string>
+    <string name="agent_label_api_url">API URL</string>
+    <string name="agent_placeholder_custom_url">https://your-api.com/v1</string>
+    <string name="agent_label_model">Model</string>
+    <string name="agent_label_api_key">API Key</string>
+    <string name="agent_label_api_key_optional">API Key (optional)</string>
+    <string name="cd_hide_api_key">Hide API key</string>
+    <string name="cd_show_api_key">Show API key</string>
+    <string name="cd_fetch_models">Fetch models</string>
+    <string name="agent_models_available">%1$d models available</string>
+    <string name="agent_models_more">%1$d more — type to filter</string>
+    <string name="agent_label_token_usage">Token Usage</string>
+    <string name="agent_ollama_hint">Use 10.0.2.2 instead of localhost for emulator</string>
+
+    <!-- ToolsTab.kt -->
+    <string name="tools_section_mcp_servers">MCP Servers</string>
+    <string name="tools_enable_mcp">Enable AAP MCP</string>
+    <string name="tools_enable_mcp_desc">Auto-detect at {instance}/{toolset}/mcp</string>
+    <string name="tools_add_mcp_server">Add MCP Server</string>
+
+    <!-- McpServerCard.kt -->
+    <string name="mcp_status_connected">Connected</string>
+    <string name="mcp_status_connecting">Connecting...</string>
+    <string name="mcp_status_error">Connection error</string>
+    <string name="mcp_status_disconnected">Not connected</string>
+    <string name="mcp_toolset_label">Toolset: %1$s</string>
+    <string name="mcp_read_only">Read Only</string>
+    <string name="mcp_use_instance_auth">Use instance auth</string>
+    <string name="mcp_custom_headers">%1$d custom header(s)</string>
+    <string name="mcp_retry_hint">Tap Refresh to retry</string>
+    <string name="mcp_no_tools">No tools discovered</string>
+
+    <!-- AddMcpServerSheet.kt -->
+    <string name="add_mcp_title">Add MCP Server</string>
+    <string name="add_mcp_label_name">Server name</string>
+    <string name="add_mcp_placeholder_name">knowledge</string>
+    <string name="add_mcp_label_url">Server URL</string>
+    <string name="add_mcp_placeholder_url">https://mcp-server:3000/mcp</string>
+    <string name="add_mcp_label_toolset">Toolset (optional)</string>
+    <string name="add_mcp_placeholder_toolset">job_management</string>
+    <string name="add_mcp_custom_headers">Custom headers</string>
+    <string name="add_mcp_add_header">Add header</string>
+    <string name="add_mcp_label_header_name">Header name</string>
+    <string name="add_mcp_placeholder_header_name">Authorization</string>
+    <string name="add_mcp_label_header_value">Header value</string>
+    <string name="add_mcp_placeholder_header_value">Bearer xxx</string>
+    <string name="cd_remove_header">Remove header</string>
+    <string name="add_mcp_popular_servers">Popular Servers</string>
+    <string name="add_mcp_validation_url_required">URL is required</string>
+    <string name="add_mcp_validation_url_invalid">Invalid URL format</string>
+    <string name="add_mcp_validation_url_https_only">Only HTTPS and WSS URLs are supported</string>
+
+    <!-- LocalToolsSection.kt -->
+    <string name="local_tools_title">Local Tools</string>
+    <string name="local_tools_summary">%1$d tools across %2$d categories</string>
+    <string name="local_tools_category_jobs">Jobs</string>
+    <string name="local_tools_category_inventory">Inventory</string>
+    <string name="local_tools_category_monitoring">Monitoring</string>
+    <string name="local_tools_category_users">Users</string>
+    <string name="local_tools_category_security">Security</string>
+    <string name="local_tools_category_configuration">Configuration</string>
+    <string name="local_tools_category_eda">EDA</string>
+    <string name="local_tools_category_platform">Platform</string>
+    <string name="cd_collapse_category">Collapse %1$s</string>
+    <string name="cd_expand_category">Expand %1$s</string>
+
+    <!-- ToolItemRow.kt -->
+    <string name="tool_auto_disabled">Auto-disabled (overlaps local tool)</string>
+
+    <!-- BackupRestoreSection.kt -->
+    <string name="backup_section_title">Backup &amp; Restore</string>
+    <string name="backup_export">Export Settings</string>
+    <string name="backup_import">Import Settings</string>
+
+    <!-- DateFormatter.kt -->
+    <string name="time_now">now</string>
+    <string name="time_just_now">just now</string>
+    <string name="time_minutes_ago">%1$dm ago</string>
+    <string name="time_hours_ago">%1$dh ago</string>
+    <string name="time_days_ago">%1$dd ago</string>
+    <string name="time_in_minutes">in %1$dm</string>
+    <string name="time_in_hours">in %1$dh</string>
+    <string name="time_in_days">in %1$dd</string>
+
+    <!-- AssistantScreen.kt -->
+    <string name="assistant_input_placeholder">Ask Jane...</string>
+    <string name="cd_send_message">Send message</string>
+    <string name="cd_stop_generation">Stop generation</string>
+    <string name="assistant_thinking">Thinking...</string>
+
+    <!-- ChatBubble.kt -->
+    <string name="cd_copy_message">Copy message</string>
+    <string name="chat_tool_call">Using %1$s</string>
+
+    <!-- ConfirmationCard.kt -->
+    <string name="confirmation_proceed">Proceed</string>
+    <string name="confirmation_skip">Skip</string>
+
+    <!-- EmptyState.kt -->
+    <string name="empty_state_default">Nothing to show</string>
+
+    <!-- StatusFilterChips.kt -->
+    <string name="filter_all">All</string>
+
+    <!-- DetailRow.kt / DetailScaffold.kt / DetailSheetHeader.kt -->
+    <string name="cd_close_details">Close details</string>
+</resources>

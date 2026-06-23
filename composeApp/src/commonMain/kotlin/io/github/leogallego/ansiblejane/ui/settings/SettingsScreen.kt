@@ -25,6 +25,8 @@ import io.github.leogallego.ansiblejane.presentation.settings.SettingsTab
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsUiState
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
 import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -36,7 +38,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    DetailScaffold(title = "Settings", onNavigateBack = onNavigateBack) {
+    DetailScaffold(title = stringResource(Res.string.settings_title), onNavigateBack = onNavigateBack) {
         when (val state = uiState) {
             is SettingsUiState.Loading -> {
             }

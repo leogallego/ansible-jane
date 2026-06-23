@@ -55,6 +55,8 @@ import com.mikepenz.markdown.model.markdownPadding
 import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.SyntaxLanguage
 import dev.snipme.highlights.model.SyntaxThemes
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -279,7 +281,7 @@ private fun SourceBand(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = "${tokenUsage.formatTotal()} tokens",
+                    text = stringResource(Res.string.provider_tokens, tokenUsage.formatTotal()),
                     style = MaterialTheme.typography.labelSmall,
                     color = color,
                     modifier = Modifier.semantics {

@@ -49,6 +49,8 @@ import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.TemplateCard
 import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -136,7 +138,7 @@ fun TemplateListScreen(
                                 FilterChip(
                                     selected = showFavoritesOnly,
                                     onClick = { viewModel.toggleShowFavoritesOnly() },
-                                    label = { Text("Favorites") },
+                                    label = { Text(stringResource(Res.string.templates_chip_favorites)) },
                                     leadingIcon = {
                                         Icon(
                                             Icons.Filled.Star,
@@ -166,7 +168,7 @@ fun TemplateListScreen(
 
                         if (displayTemplates.isEmpty()) {
                             EmptyState(
-                                message = if (showFavoritesOnly) "No favorite templates" else "No templates available"
+                                message = if (showFavoritesOnly) stringResource(Res.string.templates_empty_favorites) else stringResource(Res.string.templates_empty)
                             )
                         } else {
                             val listState = rememberLazyListState()

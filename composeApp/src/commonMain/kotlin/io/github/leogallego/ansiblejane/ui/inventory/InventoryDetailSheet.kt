@@ -57,6 +57,8 @@ import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.pressScale
 import io.github.leogallego.ansiblejane.ui.hosts.HostDetailSheet
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,21 +109,21 @@ private fun InventoryDetailCompact(
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
 
-        DetailRow(label = "Type", value = inventory.displayKind)
+        DetailRow(label = stringResource(Res.string.inventory_detail_type), value = inventory.displayKind)
 
         inventory.summaryFields.organization?.let {
-            DetailRow(label = "Organization", value = it.name)
+            DetailRow(label = stringResource(Res.string.inventory_detail_organization), value = it.name)
         }
 
-        DetailRow(label = "Total Hosts", value = inventory.totalHosts.toString())
-        DetailRow(label = "Total Groups", value = inventory.totalGroups.toString())
-        DetailRow(label = "Created", value = inventory.created)
-        DetailRow(label = "Modified", value = inventory.modified)
+        DetailRow(label = stringResource(Res.string.inventory_detail_total_hosts), value = inventory.totalHosts.toString())
+        DetailRow(label = stringResource(Res.string.inventory_detail_total_groups), value = inventory.totalGroups.toString())
+        DetailRow(label = stringResource(Res.string.label_created), value = inventory.created)
+        DetailRow(label = stringResource(Res.string.label_modified), value = inventory.modified)
 
         if (inventory.variables.isNotBlank() && inventory.variables != "{}") {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Variables",
+                text = stringResource(Res.string.label_variables),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -160,14 +162,14 @@ private fun InventoryHostsFullScreen(
             },
             navigationIcon = {
                 IconButton(onClick = onClose) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.cd_close))
                 }
             }
         )
 
         SearchBar(
             onSearch = { viewModel.search(it) },
-            placeholder = "Search hosts..."
+            placeholder = stringResource(Res.string.search_hosts)
         )
 
         when (val state = uiState) {
@@ -256,7 +258,7 @@ private fun HostItem(
         ) {
             Icon(
                 imageVector = if (host.enabled) Icons.Default.CheckCircle else Icons.Default.RemoveCircle,
-                contentDescription = if (host.enabled) "Enabled" else "Disabled",
+                contentDescription = if (host.enabled) stringResource(Res.string.cd_inventory_host_enabled) else stringResource(Res.string.cd_inventory_host_disabled),
                 tint = if (host.enabled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
@@ -285,7 +287,7 @@ private fun HostItem(
                         )
                         if (groups.size > 1) {
                             Text(
-                                text = "+${groups.size - 1} more",
+                                text = stringResource(Res.string.inventory_host_more, groups.size - 1),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

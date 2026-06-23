@@ -43,6 +43,8 @@ import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.StatusFilterChips
 import io.github.leogallego.ansiblejane.ui.components.pressScale
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,7 +90,7 @@ fun RecentJobsScreen(
                     Column(modifier = Modifier.fillMaxSize()) {
                         SearchBar(
                             onSearch = { viewModel.search(it) },
-                            placeholder = "Search jobs...",
+                            placeholder = stringResource(Res.string.search_jobs),
                             initialQuery = searchQuery,
                         )
 
@@ -100,9 +102,9 @@ fun RecentJobsScreen(
                         if (state.jobs.isEmpty()) {
                             EmptyState(
                                 message = if (state.activeFilters.isNotEmpty()) {
-                                    "No jobs match the selected filters"
+                                    stringResource(Res.string.jobs_empty_filtered)
                                 } else {
-                                    "No recent jobs"
+                                    stringResource(Res.string.jobs_empty)
                                 },
                                 modifier = Modifier.weight(1f)
                             )
