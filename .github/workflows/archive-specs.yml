@@ -32,6 +32,8 @@ jobs:
 
       - name: Collect spec files to archive
         id: collect
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           SPEC_DIRS="specs/ docs/specs/ docs/superpowers/specs/ docs/superpowers/plans/"
 
@@ -39,7 +41,7 @@ jobs:
             echo "Push event: collecting only spec files changed in this commit"
             SPEC_FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD -- $SPEC_DIRS || true)
           else
-            echo "Manual run: collecting all spec files"
+            echo "Manual run: collecting spec files not touched by open PRs"
             SPEC_FILES=""
             for dir in specs docs/specs docs/superpowers/specs docs/superpowers/plans; do
               if [ -d "$dir" ]; then
@@ -48,12 +50,22 @@ jobs:
                 done < <(find "$dir" -type f -print0)
               fi
             done
+
+            OPEN_PR_SPEC_FILES=$(gh pr list --state open --json number --jq '.[].number' | while read -r pr; do
+              gh pr diff "$pr" --name-only 2>/dev/null | grep -E '^(specs/|docs/specs/|docs/superpowers/specs/|docs/superpowers/plans/)' || true
+            done | sort -u)
+
+            if [ -n "$OPEN_PR_SPEC_FILES" ]; then
+              echo "Excluding spec files touched by open PRs:"
+              echo "$OPEN_PR_SPEC_FILES"
+              SPEC_FILES=$(echo "$SPEC_FILES" | grep -vxF "$OPEN_PR_SPEC_FILES" || true)
+            fi
           fi
 
           SPEC_FILES=$(echo "$SPEC_FILES" | sed '/^$/d' | sort -u)
 
           if [ -z "$SPEC_FILES" ]; then
-            echo "No spec files found, nothing to archive."
+            echo "No spec files to archive (all still in active PRs or none found)."
             echo "has_specs=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_specs=true" >> "$GITHUB_OUTPUT"
