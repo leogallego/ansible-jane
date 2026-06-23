@@ -1,0 +1,63 @@
+name: Update lockfiles on Dependabot PRs
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "gradle/libs.versions.toml"
+      - "gradle/wrapper/gradle-wrapper.properties"
+
+permissions:
+  contents: write
+
+jobs:
+  update-lockfiles:
+    name: Regenerate Gradle lockfiles
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: jetbrains
+          java-version: "25"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Set execution flag for gradlew
+        run: chmod +x gradlew
+
+      - name: Regenerate lockfiles
+        run: ./gradlew dependencies --write-locks
+
+      - name: Commit and push updated lockfiles
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add '**/gradle.lockfile'
+          if git diff --cached --quiet; then
+            echo "No lockfile changes detected"
+          else
+            git commit -m "chore: regenerate Gradle lockfiles"
+            git push
+          fi
