@@ -7,10 +7,14 @@ import io.github.leogallego.ansiblejane.assistant.tools.Tool
 import io.github.leogallego.ansiblejane.assistant.tools.ToolResult
 import io.github.leogallego.ansiblejane.assistant.tools.ToolStub
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.test.Test
@@ -106,5 +110,79 @@ class ToolExecutorTest {
         assertEquals("test", capturedArgs!!["name"]!!.jsonPrimitive.content)
         assertEquals(42, capturedArgs!!["count"]!!.jsonPrimitive.int)
         assertEquals(true, capturedArgs!!["enabled"]!!.jsonPrimitive.boolean)
+    }
+
+    // --- capResultArray tests ---
+
+    @Test
+    fun `capResultArray caps array with count key over 10 items`() {
+        val items = buildJsonArray {
+            repeat(15) { add(buildJsonObject { put("id", it) }) }
+        }
+        val input = buildJsonObject {
+            put("count", 15)
+            put("results", items)
+        }.toString()
+
+        val output = ToolExecutor.capResultArray(input)
+        val parsed = Json.parseToJsonElement(output).jsonObject
+
+        assertEquals(10, parsed["results"]!!.jsonArray.size)
+        assertEquals(10, parsed["_showing"]!!.jsonPrimitive.int)
+        assertEquals(15, parsed["_total"]!!.jsonPrimitive.int)
+        assertTrue(parsed["_note"]!!.jsonPrimitive.content.contains("first 10 of 15"))
+    }
+
+    @Test
+    fun `capResultArray returns unchanged without count key`() {
+        val items = buildJsonArray {
+            repeat(15) { add(buildJsonObject { put("id", it) }) }
+        }
+        val input = buildJsonObject {
+            put("results", items)
+        }.toString()
+
+        assertEquals(input, ToolExecutor.capResultArray(input))
+    }
+
+    @Test
+    fun `capResultArray returns unchanged when array has 10 or fewer items`() {
+        val items = buildJsonArray {
+            repeat(5) { add(buildJsonObject { put("id", it) }) }
+        }
+        val input = buildJsonObject {
+            put("count", 5)
+            put("results", items)
+        }.toString()
+
+        assertEquals(input, ToolExecutor.capResultArray(input))
+    }
+
+    @Test
+    fun `capResultArray returns unchanged for non-JSON input`() {
+        assertEquals("plain text", ToolExecutor.capResultArray("plain text"))
+        assertEquals("{malformed", ToolExecutor.capResultArray("{malformed"))
+    }
+
+    @Test
+    fun `capResultArray caps first array found when multiple arrays exist`() {
+        val firstArray = buildJsonArray {
+            repeat(15) { add(buildJsonObject { put("id", it) }) }
+        }
+        val secondArray = buildJsonArray {
+            repeat(20) { add(buildJsonObject { put("name", "item$it") }) }
+        }
+        val input = buildJsonObject {
+            put("count", 15)
+            put("results", firstArray)
+            put("extras", secondArray)
+        }.toString()
+
+        val output = ToolExecutor.capResultArray(input)
+        val parsed = Json.parseToJsonElement(output).jsonObject
+
+        assertEquals(10, parsed["results"]!!.jsonArray.size)
+        assertEquals(20, parsed["extras"]!!.jsonArray.size)
+        assertEquals(10, parsed["_showing"]!!.jsonPrimitive.int)
     }
 }
