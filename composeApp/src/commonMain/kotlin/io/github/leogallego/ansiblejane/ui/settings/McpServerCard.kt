@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
 import io.github.leogallego.ansiblejane.presentation.settings.McpToolUiState
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 @Composable
@@ -65,10 +67,10 @@ fun McpServerCard(
     }
 
     val statusText = when (connectionState) {
-        is McpConnectionState.Connected -> "Connected"
-        is McpConnectionState.Connecting -> "Connecting…"
-        is McpConnectionState.Error -> "Connection error"
-        else -> "Not connected"
+        is McpConnectionState.Connected -> stringResource(Res.string.mcp_status_connected)
+        is McpConnectionState.Connecting -> stringResource(Res.string.mcp_status_connecting)
+        is McpConnectionState.Error -> stringResource(Res.string.mcp_status_error)
+        else -> stringResource(Res.string.mcp_status_disconnected)
     }
 
     Card(
@@ -117,7 +119,7 @@ fun McpServerCard(
                 Icon(
                     imageVector = if (expanded) Icons.Default.KeyboardArrowUp
                     else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    contentDescription = if (expanded) stringResource(Res.string.cd_collapse) else stringResource(Res.string.cd_expand),
                     modifier = Modifier.clickable { onToggleExpand() },
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -142,7 +144,7 @@ fun McpServerCard(
 
                     if (server.toolset != null) {
                         Text(
-                            text = "Toolset: ${server.toolset}",
+                            text = stringResource(Res.string.mcp_toolset_label, server.toolset!!),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.tertiary
                         )
@@ -154,7 +156,7 @@ fun McpServerCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Read Only",
+                            text = stringResource(Res.string.mcp_read_only),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Switch(
@@ -171,7 +173,7 @@ fun McpServerCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Use instance auth",
+                                text = stringResource(Res.string.mcp_use_instance_auth),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Switch(
@@ -184,7 +186,7 @@ fun McpServerCard(
 
                     if (server.headers.isNotEmpty()) {
                         Text(
-                            text = "${server.headers.size} custom header(s)",
+                            text = stringResource(Res.string.mcp_custom_headers, server.headers.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.tertiary
                         )
@@ -200,7 +202,7 @@ fun McpServerCard(
                         ) {
                             Icon(
                                 Icons.Default.Refresh,
-                                contentDescription = "Refresh"
+                                contentDescription = stringResource(Res.string.cd_refresh)
                             )
                         }
                         if (!server.isAutoDetected) {
@@ -210,7 +212,7 @@ fun McpServerCard(
                             ) {
                                 Icon(
                                     Icons.Default.Delete,
-                                    contentDescription = "Remove",
+                                    contentDescription = stringResource(Res.string.cd_remove),
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }
@@ -219,7 +221,7 @@ fun McpServerCard(
 
                     if (connectionState is McpConnectionState.Error) {
                         Text(
-                            text = "Tap Refresh to retry",
+                            text = stringResource(Res.string.mcp_retry_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -229,7 +231,7 @@ fun McpServerCard(
                         HorizontalDivider()
                         if (tools.isEmpty()) {
                             Text(
-                                text = "No tools discovered",
+                                text = stringResource(Res.string.mcp_no_tools),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

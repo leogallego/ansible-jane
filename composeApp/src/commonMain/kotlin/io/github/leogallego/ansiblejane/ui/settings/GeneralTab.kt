@@ -49,6 +49,8 @@ import io.github.leogallego.ansiblejane.AppVersion
 import io.github.leogallego.ansiblejane.model.PollInterval
 import io.github.leogallego.ansiblejane.ui.components.ThemeMode
 import io.github.leogallego.ansiblejane.ui.components.TimeFormat
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import kotlinx.datetime.TimeZone
 
 @Composable
@@ -109,10 +111,10 @@ private fun DisplaySection(
     onThemeModeSelected: (ThemeMode) -> Unit
 ) {
     var showTimezonePicker by remember { mutableStateOf(false) }
-    val timezoneDisplay = currentTimezone ?: "System (${TimeZone.currentSystemDefault().id})"
+    val timezoneDisplay = currentTimezone ?: stringResource(Res.string.settings_timezone_system, TimeZone.currentSystemDefault().id)
 
     Text(
-        text = "Display",
+        text = stringResource(Res.string.settings_section_display),
         style = MaterialTheme.typography.titleMedium
     )
     Spacer(modifier = Modifier.height(8.dp))
@@ -128,7 +130,7 @@ private fun DisplaySection(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text("Timezone", style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(Res.string.settings_timezone), style = MaterialTheme.typography.bodyLarge)
                 Text(
                     text = timezoneDisplay,
                     style = MaterialTheme.typography.bodySmall,
@@ -146,7 +148,7 @@ private fun DisplaySection(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text("Time format", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(Res.string.settings_time_format), style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(8.dp))
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 TimeFormat.entries.forEachIndexed { index, format ->
@@ -173,7 +175,7 @@ private fun DisplaySection(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text("Theme", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(Res.string.settings_theme), style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(8.dp))
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 ThemeMode.entries.forEachIndexed { index, mode ->
@@ -214,8 +216,9 @@ private fun TimezonePickerSheet(
     val sheetState = rememberModalBottomSheetState()
     val systemZone = TimeZone.currentSystemDefault().id
 
-    val timezones = remember {
-        listOf(null to "System ($systemZone)") + TimeZone.availableZoneIds
+    val systemLabel = stringResource(Res.string.settings_timezone_system, systemZone)
+    val timezones = remember(systemLabel) {
+        listOf(null to systemLabel) + TimeZone.availableZoneIds
             .filter { it.contains("/") && !it.startsWith("SystemV") }
             .sorted()
             .map { it to it }
@@ -239,7 +242,7 @@ private fun TimezonePickerSheet(
                 .padding(bottom = 16.dp)
         ) {
             Text(
-                text = "Select Timezone",
+                text = stringResource(Res.string.settings_select_timezone),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
@@ -249,12 +252,12 @@ private fun TimezonePickerSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search timezones...") },
+                placeholder = { Text(stringResource(Res.string.search_timezones)) },
                 singleLine = true,
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear")
+                            Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.cd_clear))
                         }
                     }
                 }
@@ -298,7 +301,7 @@ private fun NotificationSection(
     onApprovalPollingToggled: (Boolean) -> Unit
 ) {
     Text(
-        text = "Notifications",
+        text = stringResource(Res.string.settings_section_notifications),
         style = MaterialTheme.typography.titleMedium
     )
     Spacer(modifier = Modifier.height(8.dp))
@@ -314,9 +317,9 @@ private fun NotificationSection(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Approval notifications", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(Res.string.settings_approval_notifications), style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        text = "Poll for pending workflow approvals",
+                        text = stringResource(Res.string.settings_approval_notifications_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -335,7 +338,7 @@ private fun NotificationSection(
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Poll interval", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(Res.string.settings_poll_interval), style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(8.dp))
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                         PollInterval.entries.forEachIndexed { index, interval ->
@@ -358,7 +361,7 @@ private fun NotificationSection(
     }
     Spacer(modifier = Modifier.height(8.dp))
     Text(
-        text = "Sound and vibration are configured in system notification settings.",
+        text = stringResource(Res.string.settings_notification_system_hint),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 4.dp)
@@ -382,23 +385,23 @@ private fun AboutSection() {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Ansible Jane",
+                text = stringResource(Res.string.app_name),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "v${AppVersion.name} (${AppVersion.code})",
+                text = stringResource(Res.string.settings_about_version, AppVersion.name, AppVersion.code),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Remote control for Ansible Automation Platform",
+                text = stringResource(Res.string.app_tagline),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "GitHub",
+                text = stringResource(Res.string.settings_about_github),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable {
@@ -406,7 +409,7 @@ private fun AboutSection() {
                 }
             )
             Text(
-                text = "GPL-3.0 License",
+                text = stringResource(Res.string.settings_about_license),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

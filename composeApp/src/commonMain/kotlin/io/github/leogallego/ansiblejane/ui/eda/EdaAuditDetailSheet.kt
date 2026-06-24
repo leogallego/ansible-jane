@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.model.EdaRuleAudit
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
 import io.github.leogallego.ansiblejane.ui.components.DetailRow
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,22 +46,22 @@ fun EdaAuditDetailSheet(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
 
-            DetailRow(label = "Status", value = auditRule.status)
-            DetailRow(label = "Fired At", value = DateFormatter.formatDateTime(auditRule.firedAt))
+            DetailRow(label = stringResource(Res.string.label_status), value = auditRule.status)
+            DetailRow(label = stringResource(Res.string.eda_detail_fired_at), value = DateFormatter.formatDateTime(auditRule.firedAt))
 
             if (auditRule.displayRuleSetName.isNotEmpty()) {
-                DetailRow(label = "Rule Set", value = auditRule.displayRuleSetName)
+                DetailRow(label = stringResource(Res.string.eda_detail_rule_set), value = auditRule.displayRuleSetName)
             }
 
             auditRule.activationName?.let {
-                DetailRow(label = "Activation", value = it)
+                DetailRow(label = stringResource(Res.string.eda_detail_activation), value = it)
             }
 
             auditRule.activationInstanceId?.let {
-                DetailRow(label = "Activation Instance", value = it.toString())
+                DetailRow(label = stringResource(Res.string.eda_detail_activation_instance), value = it.toString())
             }
 
-            DetailRow(label = "Created", value = DateFormatter.formatDateTime(auditRule.createdAt))
+            DetailRow(label = stringResource(Res.string.label_created), value = DateFormatter.formatDateTime(auditRule.createdAt))
         }
     }
 }

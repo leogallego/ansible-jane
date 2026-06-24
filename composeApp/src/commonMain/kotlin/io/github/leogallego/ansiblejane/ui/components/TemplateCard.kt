@@ -38,6 +38,8 @@ import io.github.leogallego.ansiblejane.model.Label
 import io.github.leogallego.ansiblejane.model.LabelSummary
 import io.github.leogallego.ansiblejane.model.LaunchableTemplate
 import io.github.leogallego.ansiblejane.model.UserCapabilities
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -118,7 +120,7 @@ fun TemplateCard(
                     ) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                            contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                            contentDescription = if (isFavorite) stringResource(Res.string.cd_remove_from_favorites) else stringResource(Res.string.cd_add_to_favorites),
                             tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -139,7 +141,7 @@ fun TemplateCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Launch ${template.name}",
+                            contentDescription = stringResource(Res.string.cd_launch_template, template.name),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }

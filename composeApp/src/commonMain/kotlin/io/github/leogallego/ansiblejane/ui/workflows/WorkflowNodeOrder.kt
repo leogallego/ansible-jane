@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.model.WorkflowJobTemplateNode
 import io.github.leogallego.ansiblejane.model.WorkflowNode
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 enum class ConnectorType { SUCCESS, FAILURE, ALWAYS }
@@ -35,7 +37,11 @@ fun ConnectorSegment(type: ConnectorType) {
         ConnectorType.FAILURE -> MaterialTheme.colorScheme.error
         ConnectorType.ALWAYS -> MaterialTheme.colorScheme.outline
     }
-    val label = type.label()
+    val label = when (type) {
+        ConnectorType.SUCCESS -> stringResource(Res.string.connector_on_success)
+        ConnectorType.FAILURE -> stringResource(Res.string.connector_on_failure)
+        ConnectorType.ALWAYS -> stringResource(Res.string.connector_always)
+    }
 
     Row(
         modifier = Modifier

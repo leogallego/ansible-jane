@@ -32,6 +32,8 @@ import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
 import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -48,7 +50,7 @@ fun WorkflowJobStatusScreen(
         onDispose { viewModel.stopPolling() }
     }
 
-    DetailScaffold(title = "Workflow Job Status", onNavigateBack = onNavigateBack) {
+    DetailScaffold(title = stringResource(Res.string.workflow_job_status_title), onNavigateBack = onNavigateBack) {
             when (val state = uiState) {
                 is WorkflowJobStatusUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -109,7 +111,7 @@ private fun WorkflowJobDetailContent(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Template: ${workflowJob.workflowJobTemplateName}",
+                        text = stringResource(Res.string.job_detail_template, workflowJob.workflowJobTemplateName),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -135,19 +137,19 @@ private fun WorkflowJobDetailContent(
             Spacer(modifier = Modifier.height(16.dp))
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Details", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(Res.string.label_details), style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     workflowJob.started?.let { started ->
-                        DetailRowHorizontal("Started", started)
+                        DetailRowHorizontal(stringResource(Res.string.job_detail_started), started)
                     }
                     workflowJob.finished?.let { finished ->
-                        DetailRowHorizontal("Finished", finished)
+                        DetailRowHorizontal(stringResource(Res.string.job_detail_finished), finished)
                     }
                     workflowJob.elapsed?.let { elapsed ->
-                        DetailRowHorizontal("Elapsed", String.format("%.1f seconds", elapsed))
+                        DetailRowHorizontal(stringResource(Res.string.job_detail_elapsed), String.format("%.1f seconds", elapsed))
                     }
-                    DetailRowHorizontal("Job ID", "#${workflowJob.id}")
+                    DetailRowHorizontal(stringResource(Res.string.job_detail_job_id), "#${workflowJob.id}")
                 }
             }
         }
@@ -156,7 +158,7 @@ private fun WorkflowJobDetailContent(
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Workflow Nodes",
+                    text = stringResource(Res.string.workflow_nodes_header),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                 )

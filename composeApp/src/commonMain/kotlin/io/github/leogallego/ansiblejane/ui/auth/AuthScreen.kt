@@ -37,6 +37,8 @@ import io.github.leogallego.ansiblejane.presentation.settings.BackupUiState
 import io.github.leogallego.ansiblejane.presentation.settings.ImportMode
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.settings.ImportFromBackupButton
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -66,8 +68,8 @@ fun AuthScreen(
     }
 
     val topBarTitle = when {
-        isReAuth -> "Re-authenticate"
-        isAddInstance -> "Add Instance"
+        isReAuth -> stringResource(Res.string.auth_title_reauth)
+        isAddInstance -> stringResource(Res.string.auth_title_add_instance)
         else -> null
     }
 
@@ -84,7 +86,7 @@ fun AuthScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
+                                contentDescription = stringResource(Res.string.cd_back)
                             )
                         }
                     }
@@ -112,7 +114,7 @@ fun AuthScreen(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Devices,
-                    contentDescription = "Ansible Jane",
+                    contentDescription = stringResource(Res.string.cd_ansible_jane),
                     modifier = Modifier.size(72.dp),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -121,7 +123,7 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = if (isReAuth) "Re-authenticate" else "Ansible Jane",
+                text = if (isReAuth) stringResource(Res.string.auth_title_reauth) else stringResource(Res.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -129,7 +131,7 @@ fun AuthScreen(
             if (isReAuth) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Token expired for ${preFilledAlias ?: preFilledUrl ?: "this instance"}. Please enter a new API token.",
+                    text = stringResource(Res.string.auth_token_expired, preFilledAlias ?: preFilledUrl ?: stringResource(Res.string.auth_token_expired_fallback)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -149,15 +151,15 @@ fun AuthScreen(
             OutlinedTextField(
                 value = baseUrl,
                 onValueChange = { baseUrl = it },
-                label = { Text("AAP Base URL") },
-                placeholder = { Text("https://aap.example.com") },
+                label = { Text(stringResource(Res.string.auth_label_url)) },
+                placeholder = { Text(stringResource(Res.string.auth_placeholder_url)) },
                 singleLine = true,
                 enabled = !isReAuth,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 trailingIcon = {
                     if (baseUrl.isNotEmpty() && !isReAuth) {
                         IconButton(onClick = { baseUrl = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.cd_clear))
                         }
                     }
                 },
@@ -173,14 +175,14 @@ fun AuthScreen(
             OutlinedTextField(
                 value = alias,
                 onValueChange = { alias = it },
-                label = { Text("Alias (optional)") },
-                placeholder = { Text("e.g., Production") },
+                label = { Text(stringResource(Res.string.auth_label_alias)) },
+                placeholder = { Text(stringResource(Res.string.auth_placeholder_alias)) },
                 singleLine = true,
                 enabled = !isReAuth,
                 trailingIcon = {
                     if (alias.isNotEmpty() && !isReAuth) {
                         IconButton(onClick = { alias = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.cd_clear))
                         }
                     }
                 },
@@ -193,7 +195,7 @@ fun AuthScreen(
             OutlinedTextField(
                 value = token,
                 onValueChange = { token = it },
-                label = { Text("AAP Personal API Token") },
+                label = { Text(stringResource(Res.string.auth_label_token)) },
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None
                     else PasswordVisualTransformation(),
@@ -202,14 +204,14 @@ fun AuthScreen(
                     Row {
                         if (token.isNotEmpty()) {
                             IconButton(onClick = { token = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear")
+                                Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.cd_clear))
                             }
                         }
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Default.Visibility
                                     else Icons.Default.VisibilityOff,
-                                contentDescription = if (passwordVisible) "Hide token" else "Show token"
+                                contentDescription = if (passwordVisible) stringResource(Res.string.cd_hide_token) else stringResource(Res.string.cd_show_token)
                             )
                         }
                     }
@@ -229,7 +231,7 @@ fun AuthScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Accept self-signed certificate",
+                    text = stringResource(Res.string.auth_label_self_signed),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Switch(
@@ -266,7 +268,7 @@ fun AuthScreen(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = baseUrl.isNotBlank() && token.isNotBlank()
                     ) {
-                        Text(if (isReAuth) "Re-authenticate" else "Retry")
+                        Text(if (isReAuth) stringResource(Res.string.auth_title_reauth) else stringResource(Res.string.btn_retry))
                     }
                 }
                 else -> {
@@ -275,7 +277,7 @@ fun AuthScreen(
                         modifier = Modifier.fillMaxWidth().testTag("button_connect"),
                         enabled = baseUrl.isNotBlank() && token.isNotBlank()
                     ) {
-                        Text(if (isReAuth) "Re-authenticate" else "Connect")
+                        Text(if (isReAuth) stringResource(Res.string.auth_title_reauth) else stringResource(Res.string.btn_connect))
                     }
                 }
             }

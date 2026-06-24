@@ -47,6 +47,8 @@ import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
 import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -59,7 +61,7 @@ fun ApprovalDetailScreen(
 
     var showConfirmDialog by remember { mutableStateOf<String?>(null) }
 
-    DetailScaffold(title = "Workflow Approval", onNavigateBack = onNavigateBack) {
+    DetailScaffold(title = stringResource(Res.string.approval_title), onNavigateBack = onNavigateBack) {
             when (val state = uiState) {
                 is ApprovalDetailUiState.Loading -> {
                     Column(
@@ -111,22 +113,22 @@ fun ApprovalDetailScreen(
     showConfirmDialog?.let { action ->
         val approvalName = when (val state = uiState) {
             is ApprovalDetailUiState.Ready -> state.approval.name
-            else -> "this approval"
+            else -> stringResource(Res.string.approval_fallback_name)
         }
 
         AlertDialog(
             onDismissRequest = { showConfirmDialog = null },
             title = {
                 Text(
-                    text = if (action == "approve") "Approve Workflow?" else "Deny Workflow?"
+                    text = if (action == "approve") stringResource(Res.string.approval_confirm_approve_title) else stringResource(Res.string.approval_confirm_deny_title)
                 )
             },
             text = {
                 Text(
                     text = if (action == "approve") {
-                        "Are you sure you want to approve \"$approvalName\"?"
+                        stringResource(Res.string.approval_confirm_approve_message, approvalName)
                     } else {
-                        "Are you sure you want to deny \"$approvalName\"? This action cannot be undone."
+                        stringResource(Res.string.approval_confirm_deny_message, approvalName)
                     }
                 )
             },
@@ -138,12 +140,12 @@ fun ApprovalDetailScreen(
                         if (action == "approve") viewModel.approve() else viewModel.deny()
                     }
                 ) {
-                    Text(if (action == "approve") "Approve" else "Deny")
+                    Text(if (action == "approve") stringResource(Res.string.btn_approve) else stringResource(Res.string.btn_deny))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmDialog = null }) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.btn_cancel))
                 }
             }
         )
@@ -174,39 +176,39 @@ private fun ApprovalDetailContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                DetailRowHorizontal("Status", approval.status.replaceFirstChar { it.uppercase() })
+                DetailRowHorizontal(stringResource(Res.string.label_status), approval.status.replaceFirstChar { it.uppercase() })
 
                 if (approval.created.isNotBlank()) {
-                    DetailRowHorizontal("Created", DateFormatter.formatDateTime(approval.created))
+                    DetailRowHorizontal(stringResource(Res.string.label_created), DateFormatter.formatDateTime(approval.created))
                     if (approval.status == "pending") {
-                        DetailRowHorizontal("Pending for", DateFormatter.formatDuration(approval.created))
+                        DetailRowHorizontal(stringResource(Res.string.approval_detail_pending_for), DateFormatter.formatDuration(approval.created))
                     }
                 }
 
                 approval.summaryFields.workflowJob?.let { job ->
                     job.launchedBy?.let { user ->
-                        DetailRowHorizontal("Launched by", user.username)
+                        DetailRowHorizontal(stringResource(Res.string.approval_detail_launched_by), user.username)
                     }
                 }
 
                 approval.summaryFields.workflowJobTemplate?.let { template ->
-                    DetailRowHorizontal("Workflow Template", template.name)
+                    DetailRowHorizontal(stringResource(Res.string.approval_detail_workflow_template), template.name)
                 }
 
                 approval.summaryFields.workflowJob?.let { job ->
-                    DetailRowHorizontal("Workflow Job", job.name)
-                    DetailRowHorizontal("Job Status", job.status)
+                    DetailRowHorizontal(stringResource(Res.string.approval_detail_workflow_job), job.name)
+                    DetailRowHorizontal(stringResource(Res.string.approval_detail_job_status), job.status)
                 }
 
                 approval.summaryFields.approvedOrDeniedBy?.let { user ->
                     DetailRowHorizontal(
-                        if (approval.status == "approved") "Approved by" else "Denied by",
+                        if (approval.status == "approved") stringResource(Res.string.approval_detail_approved_by) else stringResource(Res.string.approval_detail_denied_by),
                         user.username
                     )
                 }
 
                 if (approval.timedOut) {
-                    DetailRowHorizontal("Timed Out", "Yes")
+                    DetailRowHorizontal(stringResource(Res.string.approval_detail_timed_out), stringResource(Res.string.label_yes))
                 }
             }
         }
@@ -220,13 +222,13 @@ private fun ApprovalDetailContent(
                     MaterialTheme.colorScheme.primaryContainer,
                     MaterialTheme.colorScheme.onPrimaryContainer,
                     Icons.Default.CheckCircle,
-                    "Approved"
+                    stringResource(Res.string.approval_status_approved)
                 )
                 "denied" -> StatusCardStyle(
                     MaterialTheme.colorScheme.errorContainer,
                     MaterialTheme.colorScheme.onErrorContainer,
                     Icons.Default.Cancel,
-                    "Denied"
+                    stringResource(Res.string.approval_status_denied)
                 )
                 else -> StatusCardStyle(
                     MaterialTheme.colorScheme.surfaceVariant,
@@ -250,7 +252,7 @@ private fun ApprovalDetailContent(
                         tint = contentColor
                     )
                     Text(
-                        text = "This approval has been $displayStatus.",
+                        text = stringResource(Res.string.approval_completed_message, displayStatus),
                         style = MaterialTheme.typography.bodyMedium,
                         color = contentColor
                     )
@@ -282,7 +284,7 @@ private fun ApprovalDetailContent(
                         contentDescription = null,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-                    Text("Approve")
+                    Text(stringResource(Res.string.btn_approve))
                 }
 
                 OutlinedButton(
@@ -299,7 +301,7 @@ private fun ApprovalDetailContent(
                         contentDescription = null,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-                    Text("Deny")
+                    Text(stringResource(Res.string.btn_deny))
                 }
             }
         }
@@ -334,7 +336,7 @@ private fun ApprovalCompletedContent(
         )
 
         Text(
-            text = "Workflow ${action.replaceFirstChar { it.uppercase() }}",
+            text = stringResource(Res.string.approval_completed_title, action.replaceFirstChar { it.uppercase() }),
             style = MaterialTheme.typography.headlineSmall,
             color = color
         )
@@ -350,7 +352,7 @@ private fun ApprovalCompletedContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(onClick = onNavigateBack) {
-            Text("Go Back")
+            Text(stringResource(Res.string.btn_go_back))
         }
     }
 }

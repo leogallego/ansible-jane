@@ -29,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
@@ -69,7 +71,7 @@ fun ToolsTab(
     ) {
         // MCP Section
         Text(
-            text = "MCP Servers",
+            text = stringResource(Res.string.tools_section_mcp_servers),
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -79,9 +81,9 @@ fun ToolsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Enable AAP MCP", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.tools_enable_mcp), style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    "Auto-detect at {instance}/{toolset}/mcp",
+                    stringResource(Res.string.tools_enable_mcp_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -126,7 +128,7 @@ fun ToolsTab(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        "Add MCP Server",
+                        stringResource(Res.string.tools_add_mcp_server),
                         modifier = Modifier.padding(start = 4.dp)
                     )
                 }
@@ -143,7 +145,7 @@ fun ToolsTab(
                     } else {
                         Icon(
                             Icons.Default.Refresh,
-                            contentDescription = "Refresh",
+                            contentDescription = stringResource(Res.string.cd_refresh),
                             modifier = Modifier.size(18.dp)
                         )
                     }
