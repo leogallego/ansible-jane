@@ -350,6 +350,7 @@
     <string name="tools_section_mcp_servers">MCP Servers</string>
     <string name="tools_enable_mcp">Enable AAP MCP</string>
     <string name="tools_enable_mcp_desc">Auto-detect at {instance}/{toolset}/mcp</string>
+    <string name="tools_servers_header">Servers</string>
     <string name="tools_add_mcp_server">Add MCP Server</string>
 
     <!-- McpServerCard.kt -->

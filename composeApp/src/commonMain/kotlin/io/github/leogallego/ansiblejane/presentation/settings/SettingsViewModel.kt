@@ -402,10 +402,6 @@ class SettingsViewModel(
                     url = "$base/platform_configuration/mcp", label = "Configuration",
                     isAutoDetected = true, readOnly = true, toolset = "platform_configuration"
                 ),
-                McpServerConfig(
-                    url = "$base/event_management/mcp", label = "EDA",
-                    isAutoDetected = true, readOnly = true, toolset = "event_management"
-                ),
             )
             val manualUrls = manualServers.map { it.url }.toSet()
             tokenManager.updateMcpConfig(
