@@ -171,7 +171,7 @@ private fun SettingsContent(
                 onLogout = onLogout,
                 modifier = Modifier.weight(1f)
             )
-            SettingsTab.Agent -> AgentTab(
+            SettingsTab.AiProvider -> AgentTab(
                 activeProviderKey = state.activeProviderKey,
                 activeConfig = state.activeConfig,
                 savedConfigs = state.savedConfigs,
@@ -184,14 +184,12 @@ private fun SettingsContent(
                 onClearHistory = onClearHistory,
                 modifier = Modifier.weight(1f)
             )
-            SettingsTab.Tools -> ToolsTab(
+            SettingsTab.McpServers -> ToolsTab(
                 mcpEnabled = state.mcpEnabled,
                 mcpServers = state.mcpServers,
                 connections = state.connections,
                 mcpServerTools = state.mcpServerTools,
-                localTools = state.localTools,
                 expandedMcpServers = state.expandedMcpServers,
-                expandedCategories = state.expandedCategories,
                 onToggleMcp = onToggleMcp,
                 onAddMcpServer = onAddMcpServer,
                 onRemoveMcpServer = onRemoveMcpServer,
@@ -200,10 +198,18 @@ private fun SettingsContent(
                 onToggleServerEnabled = onToggleServerEnabled,
                 onToggleToolEnabled = onToggleToolEnabled,
                 onToggleExpandMcpServer = onToggleExpandMcpServer,
-                onToggleExpandCategory = onToggleExpandCategory,
                 onRefreshMcpServer = onRefreshMcpServer,
                 isRefreshingTools = state.isRefreshingTools,
                 onRefreshAllTools = onRefreshAllTools,
+                modifier = Modifier.weight(1f)
+            )
+            SettingsTab.LocalTools -> LocalToolsTab(
+                tools = state.localTools,
+                expandedCategories = state.expandedCategories,
+                onToggleCategory = onToggleExpandCategory,
+                onToggleTool = { name, enabled ->
+                    onToggleToolEnabled(name, ToolSource.LOCAL, null, enabled)
+                },
                 modifier = Modifier.weight(1f)
             )
         }
