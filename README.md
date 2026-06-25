@@ -1,6 +1,6 @@
 # Ansible Jane
 
-A multiplatform app (Android and Desktop) for managing [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Authenticate with your AAP instance, browse job templates, launch playbooks, monitor job status, and interact with Jane, an AI assistant that works with local models (as small as qwen3:8b via Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter) through tool-use and MCP.
+A multiplatform companion app (Android and Desktop) for [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Browse templates, monitor jobs, and chat with Jane — an AI assistant that talks to your AAP instance through tool-use and MCP, powered by local models (as small as qwen3:8b via Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter). Entirely AI-developed and spec-driven.
 
 > **Disclaimer:** This project is not affiliated with or endorsed by Red Hat or the Ansible project.
 >
