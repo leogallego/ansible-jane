@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,9 +35,18 @@ fun SettingsScreen(
     onLogout: () -> Unit,
     onNavigateBack: () -> Unit,
     onAddInstance: () -> Unit,
+    initialTab: String? = null,
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(initialTab) {
+        initialTab?.let { tabName ->
+            SettingsTab.entries.find { it.name == tabName }?.let { tab ->
+                viewModel.selectTab(tab)
+            }
+        }
+    }
 
     DetailScaffold(title = stringResource(Res.string.settings_title), onNavigateBack = onNavigateBack) {
         when (val state = uiState) {
