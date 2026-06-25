@@ -49,7 +49,7 @@ Check open/closed state: `gh issue view <N> --json state`
 
 For each issue, check for skip conditions:
 
-1. **Existing pipeline PR**: `gh pr list --search "closes #N"` — skip ONLY if a matching PR has a head branch starting with `pipeline/`. Non-pipeline PRs do not cause a skip.
+1. **Existing pipeline PR**: `gh pr list --search "closes #N"` — skip ONLY if a matching PR has a head branch containing `-pipeline-issue-`. Non-pipeline PRs do not cause a skip.
 2. **Already closed**: issue state is `closed` — skip.
 3. **Externally blocked**: classified as externally blocked in step 3 — skip.
 4. **Previously handled**: issue has `pipeline/awaiting-merge` label — skip.
