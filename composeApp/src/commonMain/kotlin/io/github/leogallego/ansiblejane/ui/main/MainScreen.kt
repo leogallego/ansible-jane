@@ -205,7 +205,7 @@ fun MainScreen(
                                 },
                                 onNavigateToSettings = {
                                     showProviderMenu = false
-                                    onNavigateToSettings(SettingsTab.Agent.name)
+                                    onNavigateToSettings(SettingsTab.AiProvider.name)
                                 }
                             )
                         }
