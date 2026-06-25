@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
             App(
                 modifier = Modifier.semantics { testTagsAsResourceId = true },
                 assistantContent = { AssistantScreen() },
-                settingsContent = { onLogout, onNavigateBack, onAddInstance ->
+                settingsContent = { onLogout, onNavigateBack, onAddInstance, initialTab ->
                     val authViewModel: AuthViewModel = koinViewModel()
                     SettingsScreen(
                         onLogout = {
@@ -65,7 +65,8 @@ class MainActivity : ComponentActivity() {
                             onLogout()
                         },
                         onNavigateBack = onNavigateBack,
-                        onAddInstance = onAddInstance
+                        onAddInstance = onAddInstance,
+                        initialTab = initialTab
                     )
                 },
                 onHandleDeepLink = { navController ->

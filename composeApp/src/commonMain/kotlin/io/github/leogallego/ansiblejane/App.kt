@@ -15,7 +15,7 @@ import org.koin.compose.koinInject
 fun App(
     modifier: Modifier = Modifier,
     assistantContent: @Composable () -> Unit = {},
-    settingsContent: @Composable (onLogout: () -> Unit, onNavigateBack: () -> Unit, onAddInstance: () -> Unit) -> Unit = { _, _, _ -> },
+    settingsContent: @Composable (onLogout: () -> Unit, onNavigateBack: () -> Unit, onAddInstance: () -> Unit, initialTab: String?) -> Unit = { _, _, _, _ -> },
     onHandleDeepLink: ((NavHostController) -> Unit)? = null
 ) {
     val userPreferences: IUserPreferencesRepository = koinInject()

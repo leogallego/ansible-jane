@@ -33,4 +33,4 @@ data class WorkflowTemplateDetailRoute(
 data class ApprovalDetailRoute(val approvalId: Int)
 
 @Serializable
-data object SettingsRoute
+data class SettingsRoute(val initialTab: String? = null)
