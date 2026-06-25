@@ -33,7 +33,7 @@ fun AppNavigation(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     assistantContent: @Composable () -> Unit = {},
-    settingsContent: @Composable (onLogout: () -> Unit, onNavigateBack: () -> Unit, onAddInstance: () -> Unit) -> Unit = { _, _, _ -> },
+    settingsContent: @Composable (onLogout: () -> Unit, onNavigateBack: () -> Unit, onAddInstance: () -> Unit, initialTab: String?) -> Unit = { _, _, _, _ -> },
     onHandleDeepLink: ((NavHostController) -> Unit)? = null
 ) {
     val tokenManager: ITokenManager = koinInject()
@@ -144,8 +144,8 @@ fun AppNavigation(
             exitTransition = { fadeOut() }
         ) {
             MainScreen(
-                onNavigateToSettings = {
-                    navController.navigate(SettingsRoute)
+                onNavigateToSettings = { initialTab ->
+                    navController.navigate(SettingsRoute(initialTab = initialTab))
                 },
                 onNavigateToApproval = { approvalId ->
                     navController.navigate(ApprovalDetailRoute(approvalId))
@@ -220,7 +220,8 @@ fun AppNavigation(
             exitTransition = { slideOutHorizontally { -it } },
             popEnterTransition = { slideInHorizontally { -it } },
             popExitTransition = { slideOutHorizontally { it } }
-        ) {
+        ) { backStackEntry ->
+            val route = backStackEntry.toRoute<SettingsRoute>()
             settingsContent(
                 {
                     navController.navigate(AuthRoute()) {
@@ -228,7 +229,8 @@ fun AppNavigation(
                     }
                 },
                 { navController.popBackStack() },
-                { navController.navigate(AuthRoute(mode = "add")) }
+                { navController.navigate(AuthRoute(mode = "add")) },
+                route.initialTab
             )
         }
     }

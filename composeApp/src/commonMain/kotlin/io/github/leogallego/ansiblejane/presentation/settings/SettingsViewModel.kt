@@ -326,6 +326,10 @@ class SettingsViewModel(
             val current = assistantRepository.loadAllLlmConfigs().toMutableMap()
             current[providerKey] = config
             assistantRepository.saveAllLlmConfigs(current)
+            val activeKey = assistantRepository.activeProviderKeyFlow.first()
+            if (activeKey == null) {
+                assistantRepository.switchActiveProvider(providerKey)
+            }
         }
     }
 
