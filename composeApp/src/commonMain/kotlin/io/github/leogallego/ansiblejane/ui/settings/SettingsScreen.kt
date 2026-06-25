@@ -40,7 +40,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(initialTab) {
         initialTab?.let { tabName ->
             SettingsTab.entries.find { it.name == tabName }?.let { tab ->
                 viewModel.selectTab(tab)
