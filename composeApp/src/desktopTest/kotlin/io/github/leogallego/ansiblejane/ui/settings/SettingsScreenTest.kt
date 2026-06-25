@@ -183,46 +183,47 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun tab_selector_shows_all_four_tabs() = runComposeUiTest {
+    fun tab_selector_shows_all_five_tabs() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
 
         onNodeWithText("General").assertIsDisplayed()
         onNodeWithText("Instances").assertIsDisplayed()
-        onNodeWithText("Agent").assertIsDisplayed()
-        onNodeWithText("Tools").assertIsDisplayed()
+        onNodeWithText("AI Provider").assertIsDisplayed()
+        onNodeWithText("MCP Servers").assertIsDisplayed()
+        onNodeWithText("Local Tools").assertIsDisplayed()
     }
 
     @Test
-    fun Agent_tab_shows_LLM_Provider_section() = runComposeUiTest {
+    fun AI_Provider_tab_shows_LLM_Provider_section() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
 
-        onNodeWithText("Agent").performClick()
+        onNodeWithText("AI Provider").performClick()
         waitForIdle()
 
         onNodeWithText("LLM Provider").assertIsDisplayed()
     }
 
     @Test
-    fun Tools_tab_shows_MCP_Servers_section() = runComposeUiTest {
+    fun MCP_Servers_tab_shows_MCP_section() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
 
-        onNodeWithText("Tools").performClick()
+        onNodeWithText("MCP Servers").performClick()
         waitForIdle()
 
-        onNodeWithText("MCP Servers").assertIsDisplayed()
+        onNodeWithText("Enable AAP MCP").assertIsDisplayed()
     }
 
     @Test
-    fun Tools_tab_shows_Local_Tools_section() = runComposeUiTest {
+    fun Local_Tools_tab_shows_tools_section() = runComposeUiTest {
         fakeTokenManager.setInstances(listOf(instance1))
         setUpScreen()
 
-        onNodeWithText("Tools").performClick()
+        onNodeWithText("Local Tools").performClick()
         waitForIdle()
 
-        onNodeWithText("Local Tools").performScrollTo().assertIsDisplayed()
+        onNodeWithText("tools across", substring = true).assertIsDisplayed()
     }
 }
