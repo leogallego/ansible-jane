@@ -7,9 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,7 +20,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -44,7 +41,6 @@ import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.assistant.tools.ToolSource
 import io.github.leogallego.ansiblejane.model.McpServerConfig
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
-import io.github.leogallego.ansiblejane.presentation.settings.LocalToolUiState
 import io.github.leogallego.ansiblejane.presentation.settings.McpToolUiState
 
 @Composable
@@ -53,9 +49,7 @@ fun ToolsTab(
     mcpServers: List<McpServerConfig>,
     connections: Map<String, McpConnectionState>,
     mcpServerTools: Map<String, List<McpToolUiState>>,
-    localTools: List<LocalToolUiState>,
     expandedMcpServers: Set<String>,
-    expandedCategories: Set<String>,
     onToggleMcp: (Boolean) -> Unit,
     onAddMcpServer: (url: String, label: String, toolset: String?, headers: Map<String, String>, useInstanceAuth: Boolean) -> Unit,
     onRemoveMcpServer: (url: String) -> Unit,
@@ -64,7 +58,6 @@ fun ToolsTab(
     onToggleServerEnabled: (url: String, enabled: Boolean) -> Unit,
     onToggleToolEnabled: (name: String, source: ToolSource, serverLabel: String?, enabled: Boolean) -> Unit,
     onToggleExpandMcpServer: (label: String) -> Unit,
-    onToggleExpandCategory: (category: String) -> Unit,
     onRefreshMcpServer: (label: String) -> Unit,
     isRefreshingTools: Boolean = false,
     onRefreshAllTools: () -> Unit = {},
@@ -208,17 +201,6 @@ fun ToolsTab(
             }
         }
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-        // Local tools section
-        LocalToolsSection(
-            tools = localTools,
-            expandedCategories = expandedCategories,
-            onToggleCategory = onToggleExpandCategory,
-            onToggleTool = { name, enabled ->
-                onToggleToolEnabled(name, ToolSource.LOCAL, null, enabled)
-            }
-        )
     }
 
     if (showAddServerSheet) {
