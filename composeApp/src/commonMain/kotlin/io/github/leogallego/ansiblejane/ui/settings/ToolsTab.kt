@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import aapremotecontrol.composeapp.generated.resources.*
@@ -70,7 +71,7 @@ fun ToolsTab(
     modifier: Modifier = Modifier
 ) {
     var showAddServerSheet by remember { mutableStateOf(false) }
-    var serversExpanded by remember { mutableStateOf(false) }
+    var serversExpanded by remember { mutableStateOf(true) }
 
     Column(
         modifier = modifier
@@ -109,7 +110,7 @@ fun ToolsTab(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { serversExpanded = !serversExpanded }
+                    .clickable(role = Role.Button) { serversExpanded = !serversExpanded }
                     .padding(vertical = 4.dp)
                     .testTag("section_mcp_servers"),
                 verticalAlignment = Alignment.CenterVertically
