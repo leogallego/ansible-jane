@@ -42,20 +42,11 @@ jobs:
       - name: Set execution flag for gradlew
         run: chmod +x gradlew
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Build (Android + Desktop)
+        run: ./gradlew assembleDebug :composeApp:desktopJar --stacktrace
 
-      - name: Build Desktop JAR
-        run: ./gradlew :composeApp:desktopJar --stacktrace
-
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace
-
-      - name: Run shared JVM tests
-        run: ./gradlew :shared:jvmTest --stacktrace
-
-      - name: Run Desktop UI tests
-        run: ./gradlew :composeApp:desktopTest --stacktrace
+      - name: Test (all targets)
+        run: ./gradlew testDebugUnitTest :shared:jvmTest :composeApp:desktopTest --stacktrace --continue
 
       - name: Check for lifecycle artifact version drift
         run: |
