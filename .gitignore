@@ -23,7 +23,8 @@
 aap-docs/
 
 # Temporary files
-.tmp/
+.tmp/*
+!.tmp/.gitkeep
 
 # Robolectric offline SDK jars (sandbox)
 robolectric-deps/

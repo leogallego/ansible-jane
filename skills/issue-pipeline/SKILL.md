@@ -38,15 +38,16 @@ Every issue passes through all phases in order. No skipping phases. No "this one
 1. **Assess** — verify issue against current codebase, estimate scope, map skills, load on-demand context
 2. **Update Issue** — post assessment comment on GitHub issue, add `pipeline/in-progress` label
 3. **Plan** — generate implementation plan, save to disk
-3.5. **Plan Review** — review plan against architecture rules, revise if needed
-4. **Implement** — create worktree, dispatch subagents, run tests and linters
-5. **Implementation Review** — 4-angle parallel review (architecture, code quality, security, skill compliance)
-6. **Fix** — address review findings, re-test, re-review
-7. **Create PR** — commit, push, create PR with full documentation
-8. **Merge Gate** — human reviews and merges (pipeline does NOT wait)
+4. **Plan Review** — review plan against architecture rules, revise if needed
+5. **Implement** — create worktree, dispatch subagents, run tests and linters
+6. **Implementation Review** — 4-angle parallel review (architecture, code quality, security, skill compliance)
+7. **Fix** — address review findings, re-test, re-review
+8. **Create PR** — commit, push, create PR with full documentation
 9. **Cleanup** — update labels, log results, move to next issue
+10. **Merge Gate** — human reviews and approves PRs
+11. **Sequential Merge** — orchestrate sequential auto-merge with branch updates, clean up worktrees
 
-Phase 0 runs once. Phases 1-9 run per issue.
+Phase 0 runs once. Phases 1-9 run per issue. Phases 10-11 run once after all PRs are created.
 
 ---
 
@@ -129,7 +130,7 @@ To check if a referenced issue is open/closed: `gh issue view <N> --json state` 
 
 For each issue, check:
 
-1. **Existing pipeline PR** — `gh pr list --search "closes #N"` (or equivalent). Filter results to PRs whose head branch starts with `pipeline/`. Only `pipeline/`-prefixed PRs trigger a skip. Non-pipeline PRs (from manual work) are ignored.
+1. **Existing pipeline PR** — `gh pr list --search "closes #N"` (or equivalent). Filter results to PRs whose head branch contains `-pipeline-issue-`. Only pipeline-created PRs trigger a skip. Non-pipeline PRs (from manual work) are ignored.
 2. **Already closed** — if issue state is `closed`, skip.
 3. **Externally blocked** — if classified as externally blocked in Step 3, skip.
 4. **Already labeled** — if issue has `pipeline/awaiting-merge` label, skip (handled in a previous run).
@@ -217,7 +218,7 @@ For each issue:
 
 1. Create a task for tracking: `TaskCreate` with subject `Pipeline: #NNN — <issue title>`.
 2. Set task to `in_progress`.
-3. Execute Phases 1 through 9.
+3. Execute Phases 1 through 9 (per-issue phases).
 4. On completion: set task to `completed`.
 5. On skip: update task description with skip reason, set to `completed`.
 6. On failure: update task description with failure details, set to `completed`.
@@ -270,7 +271,7 @@ Match anticipated changed file paths against the skill index built in Phase 0 (S
 
 Do NOT hardcode file-pattern-to-skill mappings. The skill index is dynamic — use the name and description from each skill's frontmatter to determine relevance.
 
-Record all matched skills for loading in Phase 3.
+Record all matched skills for loading in Phase 3 (planning) and Phase 5 (implementation).
 
 ### Step 5 — On-Demand Context Loading
 
@@ -412,13 +413,43 @@ Cross-check the plan against the Phase 1 assessment:
 - Does the plan address the issue's acceptance criteria?
 - Does the plan accidentally address any issue in the `out_of_scope` list? If so, remove that work from the plan.
 
-### Decision Point
+### Step 5 — Scope Decomposition (Large Issues Only)
 
-If the plan reveals the issue is significantly more complex than estimated (e.g., assessed as Small but plan requires 15+ files), log a warning but proceed. The plan review will catch overreach.
+If the plan reveals the issue is Large scope (15+ files, multiple concerns, or architectural changes), decompose it into multiple sequential sub-PRs instead of one giant PR.
+
+**When to decompose:**
+- The plan touches 15+ files across distinct concerns (e.g., data layer + UI + tests)
+- The plan has natural seams — groups of changes that are independently reviewable and mergeable
+- A single PR would be too large for meaningful code review
+
+**How to decompose:**
+
+If `writing-plans` was used in Step 2, its scope check may have already split the plan into sub-plans (one per subsystem). Each sub-plan becomes a sub-PR.
+
+If the plan was not already split, decompose it manually:
+- Identify natural seams — groups of changes that are independently buildable and testable
+- Each group should touch a distinct set of files where possible
+- Order by dependency — foundational changes (data layer, interfaces) first, then consumers (UI, integration)
+- Each group gets its own plan section with file list and acceptance criteria
+
+**Effect on pipeline execution:**
+
+The decomposed tasks form an **internal chain** for this issue — the same chain semantics from Phase 0 apply:
+- Each task gets its own worktree and branch: `pipeline-issue-NNN-task-T-<slug>`
+- Each task branches from the previous task's branch (stacked PRs)
+- Each task goes through Phases 5-8 independently (implement, review, fix, create PR)
+- All PRs reference the parent issue with `Part of #NNN` in the PR body
+- The last PR in the chain carries `Closes #NNN`
+
+Update the plan file to reflect the decomposition — mark each task's boundary clearly with the files it touches and its acceptance criteria.
+
+### Decision Point (Non-Large Issues)
+
+If the scope is Trivial, Small, or Medium: proceed as a single PR. The plan review will catch any overreach.
 
 ---
 
-## Phase 3.5: Plan Review
+## Phase 4: Plan Review
 
 Reviews the implementation plan against architecture rules and project conventions **before any code is written**. Catching mistakes here is far cheaper than after implementation.
 
@@ -448,8 +479,8 @@ Finding:
 |----------|--------|
 | **Critical findings > 0** | Revise the plan to address each critical finding. Re-submit for review. Max 2 revision attempts. |
 | **Still critical after 2 revisions** | **Chain failure** — the issue's requirements may be incompatible with the architecture. Stop the chain. |
-| **Warnings only** | Note them and carry forward to implementation. Phase 5 will re-check the actual code. |
-| **No findings** | Proceed to Phase 4. |
+| **Warnings only** | Note them and carry forward to implementation. Phase 6 will re-check the actual code. |
+| **No findings** | Proceed to Phase 5. |
 
 ### Revision Loop
 
@@ -462,7 +493,7 @@ When revising the plan:
 
 ---
 
-## Phase 4: Implement
+## Phase 5: Implement
 
 Executes the reviewed plan in an isolated working copy.
 
@@ -470,15 +501,15 @@ Executes the reviewed plan in an isolated working copy.
 
 Create an isolated workspace for this issue:
 
-- **In Claude Code**: use `EnterWorktree` with name `pipeline-issue-NNN-<slug>`.
-- **In other environments**: use `git worktree add .claude/worktrees/pipeline-issue-NNN-<slug> -b pipeline/issue-NNN-<slug>` or equivalent.
+- **In Claude Code**: use `EnterWorktree` with name `pipeline-issue-NNN-<slug>`. This creates a branch named `worktree-pipeline-issue-NNN-<slug>` automatically. Do not attempt to rename the branch — push it as-is.
+- **In other environments**: use `git worktree add .claude/worktrees/pipeline-issue-NNN-<slug> -b worktree-pipeline-issue-NNN-<slug>` or equivalent.
 
 Branch from the appropriate base:
 - **First issue in a chain** → branch from `main` (or project default branch).
 - **Subsequent issues in a chain** → branch from the previous issue's branch.
 - **Standalone issues** → branch from `main`.
 
-Branch naming convention: `pipeline/issue-NNN-<slug>`
+Branch naming convention: `worktree-pipeline-issue-NNN-<slug>` (the `worktree-` prefix is added automatically by `EnterWorktree`)
 
 ### Step 2 — Load Required Skills
 
@@ -528,7 +559,7 @@ If no linters were discovered in Phase 0, skip this step.
 
 | Outcome | Action |
 |---------|--------|
-| All tests and linters pass | Proceed to Phase 5 (Implementation Review) |
+| All tests and linters pass | Proceed to Phase 6 (Implementation Review) |
 | Tests or linters fail | Enter retry loop (max 2 attempts) |
 
 **Retry loop:**
@@ -539,9 +570,9 @@ If no linters were discovered in Phase 0, skip this step.
 
 ---
 
-## Phase 5: Implementation Review
+## Phase 6: Implementation Review
 
-Reviews the actual code changes after implementation. Four independent review angles run in parallel, each by a separate subagent. This is distinct from Phase 3.5 (plan review) — here we review the code, not the plan.
+Reviews the actual code changes after implementation. Four independent review angles run in parallel, each by a separate subagent. This is distinct from Phase 4 (plan review) — here we review the code, not the plan.
 
 ### Diff Capture
 
@@ -604,14 +635,14 @@ After all reviewers complete:
 
 | Findings | Action |
 |----------|--------|
-| **Critical findings > 0** | Must fix in Phase 6 |
+| **Critical findings > 0** | Must fix in Phase 7 |
 | **Warnings only** | Fix each warning, or explicitly justify it as an intentional design decision in the PR description. No silent skips. |
 | **Info only** | Non-actionable — include in PR description for reviewer awareness, no action required |
-| **No findings** | Skip Phase 6, proceed directly to Phase 7 |
+| **No findings** | Skip Phase 7, proceed directly to Phase 8 |
 
 ---
 
-## Phase 6: Fix
+## Phase 7: Fix
 
 Addresses review findings and verifies fixes don't introduce regressions.
 
@@ -645,17 +676,17 @@ Use the same `reviewer-prompt.md` template but scope the diff to just the fix co
 
 | Outcome | Action |
 |---------|--------|
-| No remaining criticals | Proceed to Phase 7 |
+| No remaining criticals | Proceed to Phase 8 |
 | New criticals introduced by fixes | Retry — this counts as attempt 2 of 2 |
 | Still criticals after 2nd attempt | **Chain failure** — stop the chain, comment on the issue with the unresolvable findings |
 
 ### Scope Constraint
 
-Phase 6 must NOT change the scope of the implementation. Fixes address specific review findings — they don't redesign the approach. If a review finding reveals that the approach is fundamentally wrong, that's a **chain failure**, not a redesign opportunity.
+Phase 7 must NOT change the scope of the implementation. Fixes address specific review findings — they don't redesign the approach. If a review finding reveals that the approach is fundamentally wrong, that's a **chain failure**, not a redesign opportunity.
 
 ---
 
-## Phase 7: Create PR
+## Phase 8: Create PR
 
 Packages the work into a reviewable PR with full documentation.
 
@@ -678,7 +709,7 @@ Use the project's attribution trailer format (check project instructions). If no
 ### Step 2 — Push Branch
 
 ```bash
-git push -u origin pipeline/issue-NNN-<slug>
+git push -u origin HEAD
 ```
 
 ### Step 3 — Create PR
@@ -697,9 +728,9 @@ Use `gh pr create` or GitHub MCP `create_pull_request`.
 Use the template at `templates/pr-body.md`. Fill in all `{{placeholder}}` fields from:
 - The assessment report (Phase 1)
 - The plan (Phase 3)
-- The review findings (Phases 3.5 and 5)
-- The fix actions (Phase 6)
-- The test results (Phases 4 and 6)
+- The review findings (Phases 4 and 6)
+- The fix actions (Phase 7)
+- The test results (Phases 5 and 7)
 
 ### Step 5 — Post Review Summary Comment
 
@@ -717,42 +748,13 @@ Use `gh pr comment <N> --body "<comment>"` or GitHub MCP `add_issue_comment` (wi
 
 ---
 
-## Phase 8: Merge Gate
-
-The only human checkpoint. The pipeline does NOT wait for the merge — after creating the PR, it immediately moves to the next issue.
-
-### Merge Order
-
-PRs within a chain must be merged in order (first to last). The PR body's "Stack position" section makes the merge order explicit. When the base PR merges, GitHub auto-retargets the next PR in the stack.
-
-Standalone PRs can be merged in any order.
-
-### What the Human Checks
-
-- The diff
-- The review summary comment on the PR
-- CI status (must be green)
-- Whether the changes match the issue requirements
-
-### If the Human Requests Changes
-
-The pipeline has moved on. The human either:
-1. Makes the changes themselves on the branch.
-2. Re-invokes the pipeline with just that issue number to apply fixes.
-
-### If the Human Rejects a PR Mid-Chain
-
-Downstream PRs in the same chain become invalid. The human closes them and can re-invoke the pipeline with the remaining issues as a fresh batch.
-
----
-
 ## Phase 9: Cleanup
 
 Runs after each issue completes (or is skipped/failed), regardless of outcome.
 
 ### Step 1 — Worktree Handling
 
-- **PR created** → keep the worktree alive (the branch needs it).
+- **PR created** → keep the worktree alive (the branch needs it until merge).
 - **Skipped** (no PR created) → clean up the worktree.
 - **Failed** (no PR created) → clean up the worktree.
 
@@ -764,7 +766,7 @@ In other environments: `git worktree remove <path>` for skips/failures.
 
 | Outcome | Label |
 |---------|-------|
-| PR created | `pipeline/awaiting-merge` (already set in Phase 7) |
+| PR created | `pipeline/awaiting-merge` (already set in Phase 8) |
 | Skipped | `pipeline/skipped` (color: `#E4E669`, description: "Skipped by pipeline") |
 | Failed | `pipeline/failed` (color: `#D93F0B`, description: "Pipeline processing failed") |
 
@@ -785,7 +787,106 @@ Issue #NNN: FAILED — <phase>, <error summary>
 Check the execution plan:
 - **Next issue in current chain** → branch from current issue's branch (stacked PR).
 - **Current chain complete** → start next chain from `main`.
-- **All chains and standalones complete** → produce the completion report.
+- **All chains and standalones complete** → produce the completion report and proceed to Phase 10.
+
+---
+
+## Phase 10: Merge Gate
+
+The human checkpoint. After all per-issue phases complete and all PRs are created, the pipeline presents the full list of PRs for human review before any merging begins.
+
+### What the Pipeline Presents
+
+```
+Pipeline complete. PRs ready for review:
+  Standalone: #410 (test: add ToolExecutor tests), #411 (chore: migrate strings), #412 (chore: Gradle lockfiles)
+  Merge order: #410 → #411 → #412
+
+Review each PR, then approve sequential merge? (y/n)
+```
+
+### What the Human Checks
+
+For each PR:
+- The diff
+- The review summary comment on the PR
+- CI status (must be green)
+- Whether the changes match the issue requirements
+
+### If the Human Requests Changes
+
+The human either:
+1. Makes the changes themselves on the branch.
+2. Re-invokes the pipeline with just that issue number to apply fixes.
+3. Removes the PR from the merge list and proceeds with the rest.
+
+### If the Human Rejects a PR Mid-Chain
+
+Downstream PRs in the same chain become invalid. The human closes them and can re-invoke the pipeline with the remaining issues as a fresh batch.
+
+### If the Human Approves
+
+Proceed to Phase 11 (Sequential Merge) with the approved list of PRs.
+
+---
+
+## Phase 11: Sequential Merge
+
+Orchestrates the sequential auto-merge workflow to avoid wasted CI cycles caused by branch protection rules.
+
+### Why Sequential Merging
+
+Branch protection rules ("Require branches to be up to date before merging") mean that when a PR merges into `main`, `main`'s HEAD moves and all other open PRs are now "behind" — even if they touch completely different files. GitHub requires the PR branch to include the latest `main` commit before merging, so CI can validate the combined state.
+
+Updating multiple PRs at once is wasteful: PR A merges → `main` moves → PR B (just updated) is behind again → needs another update + CI cycle. **Sequential is the only way to avoid throwaway CI runs.**
+
+### Merge Sequence
+
+Use MCP GitHub tools for all merge operations — `gh` CLI may be unavailable in sandbox mode.
+
+For the list of approved PRs, in merge order:
+
+1. **First PR:**
+   a. Merge via MCP `merge_pull_request` with `merge_method: "squash"`.
+   b. After merge completes, sync local state:
+      ```bash
+      git checkout main && git pull
+      ```
+
+2. **For each subsequent PR:**
+   a. Verify the previous PR merged (MCP `pull_request_read` with `method: "get"`, check state is `MERGED`).
+   b. Update the next PR's branch via MCP `update_pull_request_branch`. This rebases the PR onto the new `main` HEAD.
+   c. Wait for CI to pass on the updated branch (poll with MCP `pull_request_read` with `method: "get_check_runs"` every ~60 seconds until all checks succeed).
+   d. Merge via MCP `merge_pull_request` with `merge_method: "squash"`.
+   e. Sync local state: `git checkout main && git pull`
+   f. Repeat for the next PR.
+
+### Merge Order
+
+- **Standalone PRs** — merge in the order they were created (issue number order).
+- **Chain PRs** — merge in topological order (dependencies first). When the base PR merges, GitHub auto-retargets the next PR in the stack to `main`.
+
+### Timeout
+
+If a PR's CI doesn't pass within 30 minutes of the branch update, log a warning and skip to the next PR. The stuck PR retains `pipeline/awaiting-merge` for human attention.
+
+### Interruption
+
+The human can intervene at any point during the merge sequence:
+- Request changes on a PR — the pipeline detects the state change (via MCP `pull_request_read`) and skips it
+- Close a PR — the pipeline skips it and moves to the next
+- If a chain PR is skipped, downstream chain PRs are also skipped
+
+### Post-Merge Worktree Cleanup
+
+After all approved PRs are merged, clean up worktrees that were kept alive during Phase 9:
+
+For each merged PR:
+- Remove the worktree: `ExitWorktree` with `action: "remove"`, or `git worktree remove <path>`.
+- The branch has been squash-merged into `main` — the worktree is no longer needed.
+
+For PRs that were skipped during merge (CI timeout, human intervention):
+- Keep the worktree alive — the branch may still need work.
 
 ---
 
@@ -812,11 +913,11 @@ Display the report to the user. This is the final output of the pipeline.
 |-------------|------|--------|
 | Issue not clean | Phase 1 (assess) | Skip, comment on issue, move to next |
 | Codebase diverged | Phase 1 (assess) | Skip, comment on issue explaining what changed, move to next |
-| Plan fails architecture review | Phase 3.5 (plan review) | Revise plan up to 2 times. If still failing → chain failure |
-| Tests fail | Phase 4 (implement) | Retry fix 2 times. If still failing → chain failure |
-| Linters fail (unfixable) | Phase 4 (implement) | Retry fix 2 times. If still failing → chain failure |
-| Critical review findings unfixable | Phase 6 (fix) | Retry fix 2 times. If still failing → chain failure |
-| Excessive complexity discovered | Phase 3 (plan) | Log warning, proceed. Plan review will catch overreach |
+| Plan fails architecture review | Phase 4 (plan review) | Revise plan up to 2 times. If still failing → chain failure |
+| Tests fail | Phase 5 (implement) | Retry fix 2 times. If still failing → chain failure |
+| Linters fail (unfixable) | Phase 5 (implement) | Retry fix 2 times. If still failing → chain failure |
+| Critical review findings unfixable | Phase 7 (fix) | Retry fix 2 times. If still failing → chain failure |
+| Large scope discovered | Phase 3 (plan) | Decompose into sub-PRs via Step 5. Each task follows Phases 5-8 independently |
 
 ### Chain Failure Procedure
 
@@ -847,11 +948,11 @@ In stacked PR chains, a problem in issue N affects all downstream PRs (N+1, N+2,
 | Scenario | Handling |
 |----------|----------|
 | Issue is already closed | Skip, log "already closed" |
-| Issue has open PR from outside the pipeline | Proceed — only `pipeline/`-prefixed PRs trigger a skip |
+| Issue has open PR from outside the pipeline | Proceed — only PRs with `-pipeline-issue-` in the branch name trigger a skip |
 | Two issues modify the same file | If they reference each other, DAG detection catches it. If not, the second issue sees the first's changes (stacked branch) and adapts |
 | Input list contains duplicate issue numbers | Deduplicate in Phase 0 Step 1 |
 | Input list contains issues from different repos | Error — pipeline operates on a single repo. Report and stop |
-| CI fails on the PR after creation | Not the pipeline's concern — the human checks CI before merging |
+| CI fails on the PR after creation | Human checks CI during Phase 10 review. Phase 11 waits for CI to pass after branch updates before merging |
 | Cycle detected in dependency DAG | Report the cycle (list issue numbers) and stop. Do not process any issues |
 | All issues in the list are skipped | Report "No actionable issues found" and exit with the completion report listing all skips |
 
@@ -867,7 +968,7 @@ A full pipeline run for many issues may exceed a single session's context window
 
 When invoked, Phase 0 always runs fresh. The cleanness check (Step 4) detects prior state:
 
-1. **Existing `pipeline/` branch** — `gh pr list --search "closes #N"` finds a PR with `pipeline/`-prefixed head branch → skip this issue.
+1. **Existing pipeline branch** — `gh pr list --search "closes #N"` finds a PR with `-pipeline-issue-` in the head branch → skip this issue.
 2. **`pipeline/awaiting-merge` label** — issue was handled in a previous run → skip.
 3. **`pipeline/in-progress` label** — a previous run started but didn't finish this issue. Remove the label and re-process from Phase 1.
 4. **`pipeline/failed` label** — a previous run failed on this issue. Remove the label and re-process (the underlying cause may have been fixed).
@@ -877,7 +978,7 @@ This means: the user can safely re-invoke `/issue-pipeline #100 #101 #102 #103 #
 
 ### Token Budget
 
-Phase 5 (4 parallel review agents) is the most token-intensive step. For Trivial or Small scope issues, reduce to 2 reviewers (architecture + code-quality only) to conserve tokens.
+Phase 6 (4 parallel review agents) is the most token-intensive step. For Trivial or Small scope issues, reduce to 2 reviewers (architecture + code-quality only) to conserve tokens.
 
 ### Sandbox Constraints
 
@@ -892,6 +993,6 @@ Each active worktree consumes disk space. The pipeline creates one per issue and
 
 ### Merge Conflicts
 
-If the human merges PRs out of order (e.g., a standalone PR before a chain PR that touches the same file), the chain PR may need rebasing. The pipeline does not handle this — it is the human's responsibility.
+Phase 11 handles sequential merging with branch updates (`update_pull_request_branch`) to avoid merge conflicts. If the human bypasses Phase 11 and merges PRs out of order, remaining PRs may need manual rebasing.
 
 ---
