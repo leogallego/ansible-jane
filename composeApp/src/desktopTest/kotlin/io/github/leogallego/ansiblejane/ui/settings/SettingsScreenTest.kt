@@ -224,6 +224,6 @@ class SettingsScreenTest {
         onNodeWithText("Local Tools").performClick()
         waitForIdle()
 
-        onNodeWithText("Local Tools", substring = true).assertIsDisplayed()
+        onNodeWithText("tools across", substring = true).assertIsDisplayed()
     }
 }
