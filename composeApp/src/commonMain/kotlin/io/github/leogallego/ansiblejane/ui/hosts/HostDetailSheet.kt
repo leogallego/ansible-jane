@@ -53,6 +53,8 @@ import io.github.leogallego.ansiblejane.model.JobHostSummary
 import io.github.leogallego.ansiblejane.ui.components.DetailRow
 import io.github.leogallego.ansiblejane.ui.components.DetailSheetHeader
 import kotlinx.serialization.json.JsonElement
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,21 +106,21 @@ private fun HostDetailCompact(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (host.hasActiveFailures) {
-            DetailRow(label = "Status", value = "Has active failures")
+            DetailRow(label = stringResource(Res.string.label_status), value = stringResource(Res.string.host_status_active_failures))
         }
 
         host.summaryFields.inventory?.let {
-            DetailRow(label = "Inventory", value = it.name)
+            DetailRow(label = stringResource(Res.string.host_label_inventory), value = it.name)
         }
 
-        DetailRow(label = "Enabled", value = if (host.enabled) "Yes" else "No")
-        DetailRow(label = "Created", value = host.created)
-        DetailRow(label = "Modified", value = host.modified)
+        DetailRow(label = stringResource(Res.string.label_enabled), value = if (host.enabled) stringResource(Res.string.label_yes) else stringResource(Res.string.label_no))
+        DetailRow(label = stringResource(Res.string.label_created), value = host.created)
+        DetailRow(label = stringResource(Res.string.label_modified), value = host.modified)
 
         if (host.variables.isNotBlank() && host.variables != "{}") {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Variables",
+                text = stringResource(Res.string.label_variables),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -169,7 +171,7 @@ private fun HostDetailFullScreen(
             },
             navigationIcon = {
                 IconButton(onClick = onClose) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.cd_close))
                 }
             }
         )
@@ -182,20 +184,20 @@ private fun HostDetailFullScreen(
             // Details section
             item {
                 Text(
-                    text = "Details",
+                    text = stringResource(Res.string.host_section_details),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
             item {
                 host.summaryFields.inventory?.let {
-                    DetailRow(label = "Inventory", value = it.name)
+                    DetailRow(label = stringResource(Res.string.host_label_inventory), value = it.name)
                 }
-                DetailRow(label = "Enabled", value = if (host.enabled) "Yes" else "No")
-                DetailRow(label = "Created", value = host.created)
-                DetailRow(label = "Modified", value = host.modified)
+                DetailRow(label = stringResource(Res.string.label_enabled), value = if (host.enabled) stringResource(Res.string.label_yes) else stringResource(Res.string.label_no))
+                DetailRow(label = stringResource(Res.string.label_created), value = host.created)
+                DetailRow(label = stringResource(Res.string.label_modified), value = host.modified)
                 if (host.hasActiveFailures) {
-                    DetailRow(label = "Status", value = "Has active failures")
+                    DetailRow(label = stringResource(Res.string.label_status), value = stringResource(Res.string.host_status_active_failures))
                 }
             }
 
@@ -207,7 +209,7 @@ private fun HostDetailFullScreen(
                     HorizontalDivider()
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Groups (${groups.size})",
+                        text = stringResource(Res.string.host_section_groups, groups.size),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
@@ -231,7 +233,7 @@ private fun HostDetailFullScreen(
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Facts",
+                    text = stringResource(Res.string.host_section_facts),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
@@ -253,7 +255,7 @@ private fun HostDetailFullScreen(
                 if (factEntries.isEmpty()) {
                     item {
                         Text(
-                            text = "No facts available",
+                            text = stringResource(Res.string.host_facts_empty),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -271,7 +273,7 @@ private fun HostDetailFullScreen(
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Jobs Run",
+                    text = stringResource(Res.string.host_section_jobs),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
@@ -291,7 +293,7 @@ private fun HostDetailFullScreen(
             } else if (jobSummaries.isEmpty()) {
                 item {
                     Text(
-                        text = "No job history",
+                        text = stringResource(Res.string.host_jobs_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -328,20 +330,20 @@ private fun JobHostSummaryItem(
         ) {
             Icon(
                 imageVector = if (summary.failed) Icons.Default.Error else Icons.Default.CheckCircle,
-                contentDescription = if (summary.failed) "Failed" else "Successful",
+                contentDescription = if (summary.failed) stringResource(Res.string.cd_host_job_failed) else stringResource(Res.string.cd_host_job_successful),
                 tint = if (summary.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = summary.summaryFields.job?.name ?: "Job #${summary.job}",
+                    text = summary.summaryFields.job?.name ?: stringResource(Res.string.host_job_fallback_name, summary.job),
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "OK: ${summary.ok} | Changed: ${summary.changed} | Failed: ${summary.failures} | Skipped: ${summary.skipped}",
+                    text = stringResource(Res.string.host_job_summary_stats, summary.ok, summary.changed, summary.failures, summary.skipped),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

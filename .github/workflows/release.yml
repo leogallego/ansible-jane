@@ -10,6 +10,11 @@ on:
         description: 'Tag to release (e.g. v0.8.4-alpha.7)'
         required: true
         type: string
+      build_all:
+        description: 'Build all platforms (macOS, Windows, Flatpak) even for pre-release tags'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -93,14 +98,62 @@ jobs:
       - name: Build Desktop uber JAR
         run: ./gradlew :composeApp:packageUberJarForCurrentOS --stacktrace
 
+      - name: Build application distribution
+        run: ./gradlew :composeApp:createDistributable --stacktrace
+
+      - name: Copy java binary into runtime
+        run: |
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          mkdir -p "$DIST_DIR/lib/runtime/bin"
+          cp "$JAVA_HOME/bin/java" "$DIST_DIR/lib/runtime/bin/java"
+          chmod +x "$DIST_DIR/lib/runtime/bin/java"
+
+      - name: Replace native launcher with shell script
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          cp composeApp/packaging/launcher.sh "$DIST_DIR/bin/ansible-jane"
+          sed -i "s/@VERSION@/$VERSION/" "$DIST_DIR/bin/ansible-jane"
+          chmod +x "$DIST_DIR/bin/ansible-jane"
+
+      - name: Install fpm
+        run: sudo apt-get update && sudo apt-get install -y ruby-dev desktop-file-utils && sudo gem install fpm
+
+      - name: Validate desktop file
+        run: desktop-file-validate composeApp/packaging/ansible-jane.desktop
+
       - name: Build DEB package
-        run: ./gradlew :composeApp:packageDeb --stacktrace
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          PKG_ROOT=$(mktemp -d)
+
+          mkdir -p "$PKG_ROOT/opt/ansible-jane"
+          cp -r "$DIST_DIR/." "$PKG_ROOT/opt/ansible-jane/"
+
+          mkdir -p "$PKG_ROOT/usr/share/applications"
+          cp composeApp/packaging/ansible-jane.desktop "$PKG_ROOT/usr/share/applications/"
+
+          mkdir -p "$PKG_ROOT/usr/share/icons/hicolor/512x512/apps"
+          cp composeApp/icon.png "$PKG_ROOT/usr/share/icons/hicolor/512x512/apps/ansible-jane.png"
+
+          mkdir -p "$PKG_ROOT/usr/bin"
+          ln -s /opt/ansible-jane/bin/ansible-jane "$PKG_ROOT/usr/bin/ansible-jane"
+
+          fpm -s dir -t deb \
+            -n ansible-jane \
+            -v "$VERSION" \
+            --description "Manage Ansible Automation Platform with an AI assistant" \
+            --url "https://github.com/leogallego/ansible-jane" \
+            --license "Apache-2.0" \
+            -C "$PKG_ROOT" \
+            .
 
       - name: Rename artifacts
         run: |
           VERSION="${RELEASE_TAG#v}"
           mv composeApp/build/compose/jars/*.jar "ansible-jane-desktop-linux-${VERSION}.jar"
-          mv composeApp/build/compose/binaries/main/deb/*.deb "ansible-jane-desktop-linux-${VERSION}.deb"
+          mv ansible-jane_*.deb "ansible-jane-desktop-linux-${VERSION}.deb"
 
       - name: Upload DEB + JAR artifacts
         uses: actions/upload-artifact@v7
@@ -122,22 +175,68 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
-          distribution: temurin
-          java-version: "21"
+          distribution: jetbrains
+          java-version: "25"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set execution flag for gradlew
         run: chmod +x gradlew
 
-      - name: Install RPM build tools
-        run: sudo apt-get update && sudo apt-get install -y rpm
+      - name: Build application distribution
+        run: ./gradlew :composeApp:createDistributable --stacktrace
+
+      - name: Copy java binary into runtime
+        run: |
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          mkdir -p "$DIST_DIR/lib/runtime/bin"
+          cp "$JAVA_HOME/bin/java" "$DIST_DIR/lib/runtime/bin/java"
+          chmod +x "$DIST_DIR/lib/runtime/bin/java"
+
+      - name: Replace native launcher with shell script
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          cp composeApp/packaging/launcher.sh "$DIST_DIR/bin/ansible-jane"
+          sed -i "s/@VERSION@/$VERSION/" "$DIST_DIR/bin/ansible-jane"
+          chmod +x "$DIST_DIR/bin/ansible-jane"
+
+      - name: Install fpm
+        run: sudo apt-get update && sudo apt-get install -y ruby-dev rpm desktop-file-utils && sudo gem install fpm
+
+      - name: Validate desktop file
+        run: desktop-file-validate composeApp/packaging/ansible-jane.desktop
 
       - name: Build RPM package
-        run: ./gradlew :composeApp:packageRpm --stacktrace
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          PKG_ROOT=$(mktemp -d)
+
+          mkdir -p "$PKG_ROOT/opt/ansible-jane"
+          cp -r "$DIST_DIR/." "$PKG_ROOT/opt/ansible-jane/"
+
+          mkdir -p "$PKG_ROOT/usr/share/applications"
+          cp composeApp/packaging/ansible-jane.desktop "$PKG_ROOT/usr/share/applications/"
+
+          mkdir -p "$PKG_ROOT/usr/share/icons/hicolor/512x512/apps"
+          cp composeApp/icon.png "$PKG_ROOT/usr/share/icons/hicolor/512x512/apps/ansible-jane.png"
+
+          mkdir -p "$PKG_ROOT/usr/bin"
+          ln -s /opt/ansible-jane/bin/ansible-jane "$PKG_ROOT/usr/bin/ansible-jane"
+
+          fpm -s dir -t rpm \
+            -n ansible-jane \
+            -v "$VERSION" \
+            --description "Manage Ansible Automation Platform with an AI assistant" \
+            --url "https://github.com/leogallego/ansible-jane" \
+            --license "Apache-2.0" \
+            -C "$PKG_ROOT" \
+            .
 
       - name: Rename artifact
         run: |
           VERSION="${RELEASE_TAG#v}"
-          mv composeApp/build/compose/binaries/main/rpm/*.rpm "ansible-jane-desktop-linux-${VERSION}.rpm"
+          mv ansible-jane-*.rpm "ansible-jane-desktop-linux-${VERSION}.rpm"
 
       - name: Upload RPM artifact
         uses: actions/upload-artifact@v7
@@ -157,14 +256,30 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
-          distribution: temurin
-          java-version: "21"
+          distribution: jetbrains
+          java-version: "25"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set execution flag for gradlew
         run: chmod +x gradlew
 
       - name: Build application distribution
         run: ./gradlew :composeApp:createDistributable --stacktrace
+
+      - name: Copy java binary into runtime
+        run: |
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          mkdir -p "$DIST_DIR/lib/runtime/bin"
+          cp "$JAVA_HOME/bin/java" "$DIST_DIR/lib/runtime/bin/java"
+          chmod +x "$DIST_DIR/lib/runtime/bin/java"
+
+      - name: Replace native launcher with shell script
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          cp composeApp/packaging/launcher.sh "$DIST_DIR/bin/ansible-jane"
+          sed -i "s/@VERSION@/$VERSION/" "$DIST_DIR/bin/ansible-jane"
+          chmod +x "$DIST_DIR/bin/ansible-jane"
 
       - name: Create tarball
         run: |
@@ -190,8 +305,9 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
-          distribution: temurin
-          java-version: "21"
+          distribution: jetbrains
+          java-version: "25"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set execution flag for gradlew
         run: chmod +x gradlew
@@ -206,15 +322,30 @@ jobs:
       - name: Build application distribution
         run: ./gradlew :composeApp:createDistributable --stacktrace
 
+      - name: Copy java binary into runtime
+        run: |
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          mkdir -p "$DIST_DIR/lib/runtime/bin"
+          cp "$JAVA_HOME/bin/java" "$DIST_DIR/lib/runtime/bin/java"
+          chmod +x "$DIST_DIR/lib/runtime/bin/java"
+
+      - name: Replace native launcher with shell script
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          DIST_DIR="composeApp/build/compose/binaries/main/app/ansible-jane"
+          cp composeApp/packaging/launcher.sh "$DIST_DIR/bin/ansible-jane"
+          sed -i "s/@VERSION@/$VERSION/" "$DIST_DIR/bin/ansible-jane"
+          chmod +x "$DIST_DIR/bin/ansible-jane"
+
       - name: Create AppDir structure
         run: |
           APP_NAME="ansible-jane"
           mkdir -p AppDir/usr/lib
           mkdir -p AppDir/usr/share/applications
-          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
 
           cp -r "composeApp/build/compose/binaries/main/app/${APP_NAME}/." AppDir/usr/lib/
-          cp composeApp/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/ansible-jane.png
+          cp composeApp/icon.png AppDir/usr/share/icons/hicolor/512x512/apps/ansible-jane.png
           cp composeApp/icon.png AppDir/ansible-jane.png
 
           cat > AppDir/ansible-jane.desktop << 'DESKTOP'
@@ -235,8 +366,6 @@ jobs:
           #!/bin/bash
           SELF=$(readlink -f "$0")
           HERE=${SELF%/*}
-          export PATH="${HERE}/usr/lib/bin:${PATH}"
-          export LD_LIBRARY_PATH="${HERE}/usr/lib/lib/runtime/lib:${LD_LIBRARY_PATH}"
           exec "${HERE}/usr/lib/bin/ansible-jane" "$@"
           APPRUN
           chmod +x AppDir/AppRun
@@ -254,7 +383,7 @@ jobs:
 
   desktop-linux-flatpak:
     name: Build Flatpak
-    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+    if: ${{ inputs.build_all || !contains(inputs.tag || github.ref_name, '-') }}
     needs: [desktop-linux-tar]
     runs-on: ubuntu-latest
     steps:
@@ -298,7 +427,7 @@ jobs:
 
   desktop-macos:
     name: Build Desktop macOS package
-    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+    if: ${{ inputs.build_all || !contains(inputs.tag || github.ref_name, '-') }}
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -340,7 +469,7 @@ jobs:
 
   desktop-windows:
     name: Build Desktop Windows package
-    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+    if: ${{ inputs.build_all || !contains(inputs.tag || github.ref_name, '-') }}
     runs-on: windows-latest
     steps:
       - name: Checkout

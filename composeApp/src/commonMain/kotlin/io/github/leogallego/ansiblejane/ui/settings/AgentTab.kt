@@ -64,6 +64,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.assistant.data.TokenSavingMode
@@ -94,7 +96,7 @@ fun AgentTab(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "LLM Provider",
+            text = stringResource(Res.string.agent_section_llm_provider),
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -154,14 +156,13 @@ fun AgentTab(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Persona",
+                    text = stringResource(Res.string.agent_section_persona),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Persona configuration coming soon. Customize Jane's behavior, " +
-                        "system prompts, and response style.",
+                    text = stringResource(Res.string.agent_persona_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -176,7 +177,7 @@ fun AgentTab(
                 .fillMaxWidth()
                 .testTag("button_clear_history")
         ) {
-            Text("Clear Chat History")
+            Text(stringResource(Res.string.agent_clear_chat_history))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -185,9 +186,9 @@ fun AgentTab(
     if (showClearHistoryConfirm) {
         AlertDialog(
             onDismissRequest = { showClearHistoryConfirm = false },
-            title = { Text("Clear Chat History") },
+            title = { Text(stringResource(Res.string.clear_chat_title)) },
             text = {
-                Text("This will remove all messages from the assistant chat. This cannot be undone.")
+                Text(stringResource(Res.string.clear_chat_message))
             },
             confirmButton = {
                 TextButton(
@@ -195,10 +196,10 @@ fun AgentTab(
                         showClearHistoryConfirm = false
                         onClearHistory()
                     }
-                ) { Text("Clear") }
+                ) { Text(stringResource(Res.string.btn_clear)) }
             },
             dismissButton = {
-                TextButton(onClick = { showClearHistoryConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showClearHistoryConfirm = false }) { Text(stringResource(Res.string.btn_cancel)) }
             }
         )
     }
@@ -278,7 +279,7 @@ private fun ProviderCard(
                         }
                     }
                     Text(
-                        text = if (isConfigured) config?.model ?: "" else "Not configured",
+                        text = if (isConfigured) config?.model ?: "" else stringResource(Res.string.agent_not_configured),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -288,7 +289,7 @@ private fun ProviderCard(
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp
                     else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    contentDescription = if (isExpanded) stringResource(Res.string.cd_collapse) else stringResource(Res.string.cd_expand),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -348,12 +349,12 @@ private fun ProviderConfigFields(
             OutlinedTextField(
                 value = url,
                 onValueChange = { url = it },
-                label = { Text("API URL") },
-                placeholder = { Text(provider.baseUrl.ifEmpty { "https://your-api.com/v1" }) },
+                label = { Text(stringResource(Res.string.agent_label_api_url)) },
+                placeholder = { Text(provider.baseUrl.ifEmpty { stringResource(Res.string.agent_placeholder_custom_url) }) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 supportingText = if (provider == KnownProvider.OLLAMA) {
-                    { Text("Use 10.0.2.2 instead of localhost for emulator") }
+                    { Text(stringResource(Res.string.agent_ollama_hint)) }
                 } else null
             )
         }
@@ -383,7 +384,7 @@ private fun ProviderConfigFields(
                             model = it
                             modelExpanded = true
                         },
-                        label = { Text("Model") },
+                        label = { Text(stringResource(Res.string.agent_label_model)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(modelExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -411,7 +412,7 @@ private fun ProviderConfigFields(
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            "${filteredModels.size - 20} more — type to filter",
+                                            stringResource(Res.string.agent_models_more, filteredModels.size - 20),
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             style = MaterialTheme.typography.bodySmall
                                         )
@@ -433,13 +434,13 @@ private fun ProviderConfigFields(
                     if (modelFetchState is ModelFetchState.Loading) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp))
                     } else {
-                        Icon(Icons.Default.Refresh, contentDescription = "Fetch models")
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(Res.string.cd_fetch_models))
                     }
                 }
             }
             when (val state = modelFetchState) {
                 is ModelFetchState.Success -> Text(
-                    "${state.count} models available",
+                    stringResource(Res.string.agent_models_available, state.count),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -465,7 +466,7 @@ private fun ProviderConfigFields(
             OutlinedTextField(
                 value = apiKey,
                 onValueChange = { apiKey = it },
-                label = { Text("API Key${if (provider == KnownProvider.CUSTOM) " (optional)" else ""}") },
+                label = { Text(if (provider == KnownProvider.CUSTOM) stringResource(Res.string.agent_label_api_key_optional) else stringResource(Res.string.agent_label_api_key)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("field_api_key_${provider.name}"),
@@ -477,7 +478,7 @@ private fun ProviderConfigFields(
                         Icon(
                             if (apiKeyVisible) Icons.Default.VisibilityOff
                             else Icons.Default.Visibility,
-                            contentDescription = if (apiKeyVisible) "Hide API key" else "Show API key"
+                            contentDescription = if (apiKeyVisible) stringResource(Res.string.cd_hide_api_key) else stringResource(Res.string.cd_show_api_key)
                         )
                     }
                 }
@@ -486,7 +487,7 @@ private fun ProviderConfigFields(
 
         // Token saving mode — segmented buttons
         Text(
-            text = "Token Usage",
+            text = stringResource(Res.string.agent_label_token_usage),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -527,7 +528,7 @@ private fun ProviderConfigFields(
                     .testTag("button_save_${provider.name}"),
                 enabled = (url.isNotBlank() || !provider.urlEditable) && model.isNotBlank()
             ) {
-                Text("Save")
+                Text(stringResource(Res.string.btn_save))
             }
             if (isConfigured) {
                 Switch(

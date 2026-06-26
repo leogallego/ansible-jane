@@ -9,3 +9,9 @@ plugins {
     alias(libs.plugins.screenshot) apply false
     alias(libs.plugins.kotlin.atomicfu) apply false
 }
+
+subprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+}

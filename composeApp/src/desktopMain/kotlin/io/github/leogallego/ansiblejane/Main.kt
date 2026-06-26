@@ -44,7 +44,7 @@ fun main() = application {
         KoinContext {
             App(
                 assistantContent = { AssistantScreen() },
-                settingsContent = { onLogout, onNavigateBack, onAddInstance ->
+                settingsContent = { onLogout, onNavigateBack, onAddInstance, initialTab ->
                     val authViewModel: AuthViewModel = koinViewModel()
                     SettingsScreen(
                         onLogout = {
@@ -52,7 +52,8 @@ fun main() = application {
                             onLogout()
                         },
                         onNavigateBack = onNavigateBack,
-                        onAddInstance = onAddInstance
+                        onAddInstance = onAddInstance,
+                        initialTab = initialTab
                     )
                 }
             )

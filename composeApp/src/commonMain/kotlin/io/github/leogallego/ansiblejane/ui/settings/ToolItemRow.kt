@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -48,7 +50,7 @@ fun ToolItemRow(
             )
             if (isAutoDisabled) {
                 Text(
-                    text = "Auto-disabled (overlaps local tool)",
+                    text = stringResource(Res.string.tool_auto_disabled),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.tertiary
                 )

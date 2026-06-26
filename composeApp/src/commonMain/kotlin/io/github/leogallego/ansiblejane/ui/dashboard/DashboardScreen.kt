@@ -62,6 +62,8 @@ import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 import io.github.leogallego.ansiblejane.ui.components.SkeletonCard
 import io.github.leogallego.ansiblejane.ui.components.pressScale
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,7 +128,7 @@ internal fun DashboardContent(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item(key = "jobs_header") {
-                            SectionHeader("Jobs")
+                            SectionHeader(stringResource(Res.string.dashboard_section_jobs))
                         }
 
                         item(key = "stats") {
@@ -139,7 +141,7 @@ internal fun DashboardContent(
                         }
 
                         item(key = "failures_header") {
-                            SectionHeader("Recent Failures")
+                            SectionHeader(stringResource(Res.string.dashboard_section_recent_failures))
                         }
 
                         if (state.recentFailures.isEmpty()) {
@@ -160,7 +162,7 @@ internal fun DashboardContent(
 
                         if (state.edaActivationsCount != null) {
                             item(key = "eda_header") {
-                                SectionHeader("Event-Driven Ansible")
+                                SectionHeader(stringResource(Res.string.dashboard_section_eda))
                             }
 
                             item(key = "eda_stats") {
@@ -170,13 +172,13 @@ internal fun DashboardContent(
                                 ) {
                                     StatCard(
                                         count = state.edaActiveRulebooksCount ?: 0,
-                                        label = "Running",
+                                        label = stringResource(Res.string.dashboard_stat_running),
                                         color = AnsibleJaneTheme.statusColors.successfulDim,
                                         modifier = Modifier.weight(1f),
                                     )
                                     StatCard(
                                         count = state.edaActivationsCount,
-                                        label = "Activations",
+                                        label = stringResource(Res.string.dashboard_stat_activations),
                                         color = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.weight(1f),
                                     )
@@ -185,7 +187,7 @@ internal fun DashboardContent(
                         }
 
                         item(key = "resources_header") {
-                            SectionHeader("Resources")
+                            SectionHeader(stringResource(Res.string.dashboard_section_resources))
                         }
 
                         item(key = "resources") {
@@ -199,7 +201,7 @@ internal fun DashboardContent(
 
                         if (state.jobHistory7d.isNotEmpty()) {
                             item(key = "chart_header") {
-                                SectionHeader("Job Activity (7 days)")
+                                SectionHeader(stringResource(Res.string.dashboard_section_chart))
                             }
 
                             item(key = "chart") {
@@ -209,7 +211,7 @@ internal fun DashboardContent(
 
                         if (state.upcomingSchedules.isNotEmpty()) {
                             item(key = "schedules_header") {
-                                SectionHeader("Upcoming Schedules")
+                                SectionHeader(stringResource(Res.string.dashboard_section_schedules))
                             }
 
                             items(
@@ -221,7 +223,7 @@ internal fun DashboardContent(
                         }
 
                         item(key = "instance_header") {
-                            SectionHeader("Instance")
+                            SectionHeader(stringResource(Res.string.dashboard_section_instance))
                         }
 
                         item(key = "instance_info") {
@@ -263,13 +265,13 @@ private fun StatsRow(
     ) {
         StatCard(
             count = activeCount,
-            label = "Active",
+            label = stringResource(Res.string.dashboard_stat_active),
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.weight(1f),
         )
         StatCard(
             count = failedCount,
-            label = "Failed 24h",
+            label = stringResource(Res.string.dashboard_stat_failed_24h),
             color = when (healthStatus) {
                 HealthStatus.GREEN -> MaterialTheme.colorScheme.outline
                 HealthStatus.YELLOW -> AnsibleJaneTheme.statusColors.healthDegraded
@@ -279,7 +281,7 @@ private fun StatsRow(
         )
         StatCard(
             count = successfulCount,
-            label = "Passed 24h",
+            label = stringResource(Res.string.dashboard_stat_passed_24h),
             color = AnsibleJaneTheme.statusColors.successfulDim,
             modifier = Modifier.weight(1f),
         )
@@ -345,7 +347,7 @@ private fun AllClearCard(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.width(12.dp))
             Text(
-                text = "No recent failures — all clear!",
+                text = stringResource(Res.string.dashboard_all_clear),
                 style = MaterialTheme.typography.bodyLarge,
                 color = AnsibleJaneTheme.statusColors.successfulDim,
             )
@@ -412,15 +414,15 @@ private fun ResourcesGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            ResourceCard(count = inventoryCount, label = "Inventories", modifier = Modifier.weight(1f))
-            ResourceCard(count = hostCount, label = "Hosts", modifier = Modifier.weight(1f))
+            ResourceCard(count = inventoryCount, label = stringResource(Res.string.dashboard_resource_inventories), modifier = Modifier.weight(1f))
+            ResourceCard(count = hostCount, label = stringResource(Res.string.dashboard_resource_hosts), modifier = Modifier.weight(1f))
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            ResourceCard(count = templateCount, label = "Templates", modifier = Modifier.weight(1f))
-            ResourceCard(count = projectCount, label = "Projects", modifier = Modifier.weight(1f))
+            ResourceCard(count = templateCount, label = stringResource(Res.string.dashboard_resource_templates), modifier = Modifier.weight(1f))
+            ResourceCard(count = projectCount, label = stringResource(Res.string.dashboard_resource_projects), modifier = Modifier.weight(1f))
         }
     }
 }
@@ -462,11 +464,9 @@ private fun JobHistoryChart(
     val failColor = MaterialTheme.colorScheme.error
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
 
-    val chartDescription = remember(days) {
-        val totalPassed = days.sumOf { it.successful }
-        val totalFailed = days.sumOf { it.failed }
-        "Job activity chart: $totalPassed passed, $totalFailed failed over ${days.size} days"
-    }
+    val totalPassed = remember(days) { days.sumOf { it.successful } }
+    val totalFailed = remember(days) { days.sumOf { it.failed } }
+    val chartDescription = stringResource(Res.string.dashboard_chart_cd, totalPassed, totalFailed, days.size)
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -477,11 +477,11 @@ private fun JobHistoryChart(
             ) {
                 ChartLegendDot(color = successColor)
                 Spacer(Modifier.width(4.dp))
-                Text("Passed", style = MaterialTheme.typography.labelSmall, color = labelColor)
+                Text(stringResource(Res.string.dashboard_chart_passed), style = MaterialTheme.typography.labelSmall, color = labelColor)
                 Spacer(Modifier.width(12.dp))
                 ChartLegendDot(color = failColor)
                 Spacer(Modifier.width(4.dp))
-                Text("Failed", style = MaterialTheme.typography.labelSmall, color = labelColor)
+                Text(stringResource(Res.string.dashboard_chart_failed), style = MaterialTheme.typography.labelSmall, color = labelColor)
             }
 
             Spacer(Modifier.height(8.dp))
@@ -574,7 +574,7 @@ private fun ScheduleItem(
                 )
                 schedule.nextRun?.let {
                     Text(
-                        text = "Next: ${DateFormatter.formatRelative(it)}",
+                        text = stringResource(Res.string.dashboard_schedule_next, DateFormatter.formatRelative(it)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -599,10 +599,11 @@ private fun InstanceInfoCard(
         HealthStatus.RED -> MaterialTheme.colorScheme.error
     }
     val healthLabel = when (healthStatus) {
-        HealthStatus.GREEN -> "Healthy"
-        HealthStatus.YELLOW -> "Degraded"
-        HealthStatus.RED -> "Critical"
+        HealthStatus.GREEN -> stringResource(Res.string.dashboard_health_healthy)
+        HealthStatus.YELLOW -> stringResource(Res.string.dashboard_health_degraded)
+        HealthStatus.RED -> stringResource(Res.string.dashboard_health_critical)
     }
+    val healthCd = stringResource(Res.string.dashboard_health_cd, healthLabel)
 
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -612,7 +613,7 @@ private fun InstanceInfoCard(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (instanceAlias != null) {
-                InfoRow(label = "Instance", value = instanceAlias)
+                InfoRow(label = stringResource(Res.string.label_instance), value = instanceAlias)
             }
             if (instanceUrl != null) {
                 Text(
@@ -625,28 +626,30 @@ private fun InstanceInfoCard(
             }
             if (instanceInfo != null) {
                 val platformLabel = when (instanceInfo.platformType) {
-                    "AAP" -> "Red Hat AAP" + (instanceInfo.aapVersion?.let { " $it" } ?: "")
-                    "AWX" -> "AWX (upstream)"
-                    "JEWEL" -> "Jewel (upstream)"
-                    else -> "Unknown"
+                    "AAP" -> instanceInfo.aapVersion?.let {
+                        stringResource(Res.string.dashboard_platform_aap_version, it)
+                    } ?: stringResource(Res.string.dashboard_platform_aap)
+                    "AWX" -> stringResource(Res.string.dashboard_platform_awx)
+                    "JEWEL" -> stringResource(Res.string.dashboard_platform_jewel)
+                    else -> stringResource(Res.string.dashboard_platform_unknown)
                 }
-                InfoRow(label = "Platform", value = platformLabel)
+                InfoRow(label = stringResource(Res.string.label_platform), value = platformLabel)
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 if (instanceInfo.controllerVersion.isNotBlank()) {
-                    InfoRow(label = "Controller", value = instanceInfo.controllerVersion)
+                    InfoRow(label = stringResource(Res.string.label_controller), value = instanceInfo.controllerVersion)
                 }
                 if (instanceInfo.gatewayVersion.isNotBlank()) {
-                    InfoRow(label = "Gateway", value = instanceInfo.gatewayVersion)
+                    InfoRow(label = stringResource(Res.string.label_gateway), value = instanceInfo.gatewayVersion)
                 }
                 if (instanceInfo.edaVersion.isNotBlank()) {
-                    InfoRow(label = "EDA", value = instanceInfo.edaVersion)
+                    InfoRow(label = stringResource(Res.string.label_eda), value = instanceInfo.edaVersion)
                 }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.semantics(mergeDescendants = true) {
-                    contentDescription = "Health status: $healthLabel"
+                    contentDescription = healthCd
                 },
             ) {
                 Canvas(modifier = Modifier.size(10.dp)) {

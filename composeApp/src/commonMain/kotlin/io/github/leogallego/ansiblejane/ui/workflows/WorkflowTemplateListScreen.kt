@@ -34,6 +34,8 @@ import io.github.leogallego.ansiblejane.ui.components.LoadingList
 import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
 import io.github.leogallego.ansiblejane.ui.components.SearchBar
 import io.github.leogallego.ansiblejane.ui.components.TemplateCard
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,7 +128,7 @@ fun WorkflowTemplateListScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         if (state.templates.isEmpty()) {
-                            EmptyState(message = "No workflow templates available")
+                            EmptyState(message = stringResource(Res.string.workflow_templates_empty))
                         } else {
                             val listState = rememberLazyListState()
 

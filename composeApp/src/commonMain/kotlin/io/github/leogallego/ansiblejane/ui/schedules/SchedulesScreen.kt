@@ -42,6 +42,8 @@ import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.LoadMoreIndicator
 import io.github.leogallego.ansiblejane.ui.components.LoadingList
 import io.github.leogallego.ansiblejane.ui.components.PaginationEffect
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,7 +89,7 @@ fun SchedulesScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     if (state.schedules.isEmpty()) {
-                        EmptyState(message = "No schedules configured")
+                        EmptyState(message = stringResource(Res.string.schedules_empty))
                     } else {
                         val listState = rememberLazyListState()
 
@@ -163,7 +165,7 @@ private fun ScheduleItem(
                 schedule.nextRun?.let {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Next: ${DateFormatter.formatDateTime(it)}",
+                        text = stringResource(Res.string.schedule_next, DateFormatter.formatDateTime(it)),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

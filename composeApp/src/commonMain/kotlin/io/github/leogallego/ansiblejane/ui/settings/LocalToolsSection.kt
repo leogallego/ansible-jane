@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.presentation.settings.LocalToolUiState
 
 private val CATEGORY_ORDER = listOf(
@@ -34,14 +36,14 @@ private val CATEGORY_ORDER = listOf(
 
 @Composable
 private fun categoryDisplayName(category: String): String = when (category) {
-    "JOBS" -> "Jobs"
-    "INVENTORY" -> "Inventory"
-    "MONITORING" -> "Monitoring"
-    "USERS" -> "Users"
-    "SECURITY" -> "Security"
-    "CONFIGURATION" -> "Configuration"
-    "EDA" -> "EDA"
-    "PLATFORM" -> "Platform"
+    "JOBS" -> stringResource(Res.string.local_tools_category_jobs)
+    "INVENTORY" -> stringResource(Res.string.local_tools_category_inventory)
+    "MONITORING" -> stringResource(Res.string.local_tools_category_monitoring)
+    "USERS" -> stringResource(Res.string.local_tools_category_users)
+    "SECURITY" -> stringResource(Res.string.local_tools_category_security)
+    "CONFIGURATION" -> stringResource(Res.string.local_tools_category_configuration)
+    "EDA" -> stringResource(Res.string.local_tools_category_eda)
+    "PLATFORM" -> stringResource(Res.string.local_tools_category_platform)
     else -> category
 }
 
@@ -60,12 +62,12 @@ fun LocalToolsSection(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            text = "Local Tools",
+            text = stringResource(Res.string.local_tools_title),
             style = MaterialTheme.typography.titleMedium
         )
 
         Text(
-            text = "${tools.size} tools across ${grouped.size} categories",
+            text = stringResource(Res.string.local_tools_summary, tools.size, grouped.size),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -104,7 +106,7 @@ fun LocalToolsSection(
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp
                         else Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (isExpanded) "Collapse $displayName" else "Expand $displayName",
+                        contentDescription = if (isExpanded) stringResource(Res.string.cd_collapse_category, displayName) else stringResource(Res.string.cd_expand_category, displayName),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

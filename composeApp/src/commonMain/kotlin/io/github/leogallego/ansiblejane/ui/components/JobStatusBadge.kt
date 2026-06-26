@@ -26,6 +26,8 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.model.JobStatus
 import io.github.leogallego.ansiblejane.ui.icons.AapIcons
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 @Composable
@@ -83,14 +85,14 @@ private fun statusConfig(status: JobStatus): StatusConfig {
     val statusColors = AnsibleJaneTheme.statusColors
     val scheme = MaterialTheme.colorScheme
     return when (status) {
-        JobStatus.NEW -> StatusConfig(scheme.outline, AapIcons.Status.New, "New")
-        JobStatus.PENDING -> StatusConfig(scheme.outline, AapIcons.Status.Pending, "Pending")
-        JobStatus.WAITING -> StatusConfig(scheme.outline, AapIcons.Status.Waiting, "Waiting")
-        JobStatus.RUNNING -> StatusConfig(statusColors.running, AapIcons.Status.Running, "Running")
-        JobStatus.SUCCESSFUL -> StatusConfig(statusColors.successful, AapIcons.Status.Successful, "Successful")
-        JobStatus.FAILED -> StatusConfig(scheme.error, AapIcons.Status.Failed, "Failed")
-        JobStatus.ERROR -> StatusConfig(scheme.error, AapIcons.Status.Error, "Error")
-        JobStatus.CANCELED -> StatusConfig(scheme.secondary, AapIcons.Status.Canceled, "Canceled")
+        JobStatus.NEW -> StatusConfig(scheme.outline, AapIcons.Status.New, stringResource(Res.string.job_status_new))
+        JobStatus.PENDING -> StatusConfig(scheme.outline, AapIcons.Status.Pending, stringResource(Res.string.job_status_pending))
+        JobStatus.WAITING -> StatusConfig(scheme.outline, AapIcons.Status.Waiting, stringResource(Res.string.job_status_waiting))
+        JobStatus.RUNNING -> StatusConfig(statusColors.running, AapIcons.Status.Running, stringResource(Res.string.job_status_running))
+        JobStatus.SUCCESSFUL -> StatusConfig(statusColors.successful, AapIcons.Status.Successful, stringResource(Res.string.job_status_successful))
+        JobStatus.FAILED -> StatusConfig(scheme.error, AapIcons.Status.Failed, stringResource(Res.string.job_status_failed))
+        JobStatus.ERROR -> StatusConfig(scheme.error, AapIcons.Status.Error, stringResource(Res.string.job_status_error))
+        JobStatus.CANCELED -> StatusConfig(scheme.secondary, AapIcons.Status.Canceled, stringResource(Res.string.job_status_canceled))
     }
 }
 

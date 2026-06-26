@@ -12,8 +12,9 @@ import io.github.leogallego.ansiblejane.ui.components.TimeFormat
 enum class SettingsTab(val label: String) {
     General("General"),
     Instances("Instances"),
-    Agent("Agent"),
-    Tools("Tools")
+    AiProvider("AI Provider"),
+    McpServers("MCP Servers"),
+    LocalTools("Local Tools")
 }
 
 sealed interface SettingsUiState {
@@ -34,17 +35,17 @@ sealed interface SettingsUiState {
         val themeMode: ThemeMode = ThemeMode.SYSTEM,
         val pollInterval: PollInterval = PollInterval.MINUTES_15,
         val approvalPollingEnabled: Boolean = true,
-        // Agent (LLM config)
+        // AI Provider (LLM config)
         val savedConfigs: Map<String, LlmProviderConfig> = emptyMap(),
         val activeConfig: LlmProviderConfig? = null,
         val activeProviderKey: String? = null,
         val fetchedModels: List<String> = emptyList(),
         val modelFetchState: ModelFetchState = ModelFetchState.Idle,
-        // Tools (MCP)
+        // MCP Servers
         val mcpEnabled: Boolean = false,
         val mcpServers: List<McpServerConfig> = emptyList(),
         val connections: Map<String, McpConnectionState> = emptyMap(),
-        // Tools (Local + expanded state)
+        // Local Tools + expanded state
         val localTools: List<LocalToolUiState> = emptyList(),
         val mcpServerTools: Map<String, List<McpToolUiState>> = emptyMap(),
         val expandedMcpServers: Set<String> = emptySet(),

@@ -39,6 +39,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.network.mcp.popularMcpServers
 import io.ktor.http.parseUrl
 
@@ -69,15 +71,15 @@ fun AddMcpServerSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Add MCP Server",
+                text = stringResource(Res.string.add_mcp_title),
                 style = MaterialTheme.typography.titleMedium
             )
 
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Server name") },
-                placeholder = { Text("knowledge") },
+                label = { Text(stringResource(Res.string.add_mcp_label_name)) },
+                placeholder = { Text(stringResource(Res.string.add_mcp_placeholder_name)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("field_add_mcp_name"),
@@ -87,8 +89,8 @@ fun AddMcpServerSheet(
             OutlinedTextField(
                 value = url,
                 onValueChange = { url = it; urlError = null },
-                label = { Text("Server URL") },
-                placeholder = { Text("https://mcp-server:3000/mcp") },
+                label = { Text(stringResource(Res.string.add_mcp_label_url)) },
+                placeholder = { Text(stringResource(Res.string.add_mcp_placeholder_url)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("field_add_mcp_url"),
@@ -100,8 +102,8 @@ fun AddMcpServerSheet(
             OutlinedTextField(
                 value = toolset,
                 onValueChange = { toolset = it },
-                label = { Text("Toolset (optional)") },
-                placeholder = { Text("job_management") },
+                label = { Text(stringResource(Res.string.add_mcp_label_toolset)) },
+                placeholder = { Text(stringResource(Res.string.add_mcp_placeholder_toolset)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("field_add_mcp_toolset"),
@@ -114,7 +116,7 @@ fun AddMcpServerSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Use instance auth",
+                    text = stringResource(Res.string.mcp_use_instance_auth),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Switch(
@@ -130,7 +132,7 @@ fun AddMcpServerSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Custom headers",
+                    text = stringResource(Res.string.add_mcp_custom_headers),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 TextButton(
@@ -139,7 +141,7 @@ fun AddMcpServerSheet(
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                     Text(
-                        "Add header",
+                        stringResource(Res.string.add_mcp_add_header),
                         modifier = Modifier.padding(start = 4.dp)
                     )
                 }
@@ -154,8 +156,8 @@ fun AddMcpServerSheet(
                     OutlinedTextField(
                         value = entry.key,
                         onValueChange = { headers[index] = entry.copy(key = it) },
-                        label = { Text("Header name") },
-                        placeholder = { Text("Authorization") },
+                        label = { Text(stringResource(Res.string.add_mcp_label_header_name)) },
+                        placeholder = { Text(stringResource(Res.string.add_mcp_placeholder_header_name)) },
                         modifier = Modifier
                             .weight(1f)
                             .testTag("field_header_key_$index"),
@@ -164,8 +166,8 @@ fun AddMcpServerSheet(
                     OutlinedTextField(
                         value = entry.value,
                         onValueChange = { headers[index] = entry.copy(value = it) },
-                        label = { Text("Header value") },
-                        placeholder = { Text("Bearer xxx") },
+                        label = { Text(stringResource(Res.string.add_mcp_label_header_value)) },
+                        placeholder = { Text(stringResource(Res.string.add_mcp_placeholder_header_value)) },
                         modifier = Modifier
                             .weight(1f)
                             .testTag("field_header_value_$index"),
@@ -177,7 +179,7 @@ fun AddMcpServerSheet(
                     ) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "Remove header",
+                            contentDescription = stringResource(Res.string.cd_remove_header),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -191,7 +193,7 @@ fun AddMcpServerSheet(
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
-                ) { Text("Cancel") }
+                ) { Text(stringResource(Res.string.btn_cancel)) }
                 Button(
                     onClick = {
                         val error = validateMcpUrl(url)
@@ -209,13 +211,13 @@ fun AddMcpServerSheet(
                         .weight(1f)
                         .testTag("button_add_mcp_server"),
                     enabled = name.isNotBlank() && url.isNotBlank()
-                ) { Text("Add MCP Server") }
+                ) { Text(stringResource(Res.string.tools_add_mcp_server)) }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
             Text(
-                text = "Popular Servers",
+                text = stringResource(Res.string.add_mcp_popular_servers),
                 style = MaterialTheme.typography.titleSmall
             )
 

@@ -17,13 +17,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import kotlinx.coroutines.delay
 
 @Composable
 fun SearchBar(
     onSearch: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search templates...",
+    placeholder: String = stringResource(Res.string.search_templates),
     initialQuery: String = ""
 ) {
     var query by remember(initialQuery) { mutableStateOf(initialQuery) }
@@ -39,11 +41,11 @@ fun SearchBar(
         value = query,
         onValueChange = { hasUserTyped = true; query = it },
         placeholder = { Text(placeholder) },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.cd_search)) },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { query = "" }) {
-                    Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.cd_clear_search))
                 }
             }
         },

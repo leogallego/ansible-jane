@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 
 @Composable
 fun DetailSheetHeader(
@@ -33,7 +35,7 @@ fun DetailSheetHeader(
             overflow = TextOverflow.Ellipsis
         )
         IconButton(onClick = onExpand) {
-            Icon(Icons.Default.OpenInFull, contentDescription = "Expand to full screen")
+            Icon(Icons.Default.OpenInFull, contentDescription = stringResource(Res.string.cd_expand_to_full_screen))
         }
     }
 }

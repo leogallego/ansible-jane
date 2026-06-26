@@ -34,6 +34,8 @@ import io.github.leogallego.ansiblejane.ui.components.DetailRowHorizontal
 import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -48,7 +50,7 @@ fun JobStatusScreen(
         onDispose { viewModel.stopPolling() }
     }
 
-    DetailScaffold(title = "Job Status", onNavigateBack = onNavigateBack) {
+    DetailScaffold(title = stringResource(Res.string.job_status_title), onNavigateBack = onNavigateBack) {
             when (val state = uiState) {
                 is JobStatusUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -89,7 +91,7 @@ private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Template: ${job.jobTemplateName}",
+                    text = stringResource(Res.string.job_detail_template, job.jobTemplateName),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -114,19 +116,19 @@ private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null
 
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Details", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(Res.string.label_details), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 job.started?.let { started ->
-                    DetailRowHorizontal("Started", DateFormatter.formatDateTime(started))
+                    DetailRowHorizontal(stringResource(Res.string.job_detail_started), DateFormatter.formatDateTime(started))
                 }
                 job.finished?.let { finished ->
-                    DetailRowHorizontal("Finished", DateFormatter.formatDateTime(finished))
+                    DetailRowHorizontal(stringResource(Res.string.job_detail_finished), DateFormatter.formatDateTime(finished))
                 }
                 job.elapsed?.let { elapsed ->
-                    DetailRowHorizontal("Elapsed", String.format("%.1f seconds", elapsed))
+                    DetailRowHorizontal(stringResource(Res.string.job_detail_elapsed), String.format("%.1f seconds", elapsed))
                 }
-                DetailRowHorizontal("Job ID", "#${job.id}")
+                DetailRowHorizontal(stringResource(Res.string.job_detail_job_id), "#${job.id}")
             }
         }
 
@@ -135,7 +137,7 @@ private fun JobDetailContent(job: Job, isActive: Boolean, stdout: String? = null
 
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Output", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(Res.string.label_output), style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
