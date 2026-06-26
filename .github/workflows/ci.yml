@@ -42,6 +42,10 @@ jobs:
       - name: Set execution flag for gradlew
         run: chmod +x gradlew
 
+      - name: Regenerate lockfiles for Dependabot PRs
+        if: github.actor == 'dependabot[bot]'
+        run: ./gradlew dependencies --write-locks
+
       - name: Build (Android + Desktop)
         run: ./gradlew assembleDebug :composeApp:desktopJar --stacktrace
 
