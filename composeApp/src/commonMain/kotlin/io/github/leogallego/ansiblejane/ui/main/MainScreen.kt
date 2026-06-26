@@ -71,6 +71,7 @@ import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.presentation.notifications.NotificationsViewModel
+import io.github.leogallego.ansiblejane.presentation.settings.SettingsTab
 import io.github.leogallego.ansiblejane.ui.notifications.NotificationsSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -81,7 +82,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onNavigateToSettings: () -> Unit = {},
+    onNavigateToSettings: (initialTab: String?) -> Unit = {},
     onNavigateToApproval: (Int) -> Unit = {},
     content: @Composable (TopLevelTab, Segment) -> Unit
 ) {
@@ -204,7 +205,7 @@ fun MainScreen(
                                 },
                                 onNavigateToSettings = {
                                     showProviderMenu = false
-                                    onNavigateToSettings()
+                                    onNavigateToSettings(SettingsTab.AiProvider.name)
                                 }
                             )
                         }
@@ -240,7 +241,7 @@ fun MainScreen(
                         }
                     }
                     IconButton(
-                        onClick = onNavigateToSettings,
+                        onClick = { onNavigateToSettings(null) },
                         modifier = Modifier.testTag("button_settings")
                     ) {
                         Icon(
