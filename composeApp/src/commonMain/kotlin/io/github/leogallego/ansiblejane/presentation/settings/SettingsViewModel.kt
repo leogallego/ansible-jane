@@ -326,6 +326,10 @@ class SettingsViewModel(
             val current = assistantRepository.loadAllLlmConfigs().toMutableMap()
             current[providerKey] = config
             assistantRepository.saveAllLlmConfigs(current)
+            val activeKey = assistantRepository.activeProviderKeyFlow.first()
+            if (activeKey == null) {
+                assistantRepository.switchActiveProvider(providerKey)
+            }
         }
     }
 
@@ -401,10 +405,6 @@ class SettingsViewModel(
                 McpServerConfig(
                     url = "$base/platform_configuration/mcp", label = "Configuration",
                     isAutoDetected = true, readOnly = true, toolset = "platform_configuration"
-                ),
-                McpServerConfig(
-                    url = "$base/event_management/mcp", label = "EDA",
-                    isAutoDetected = true, readOnly = true, toolset = "event_management"
                 ),
             )
             val manualUrls = manualServers.map { it.url }.toSet()

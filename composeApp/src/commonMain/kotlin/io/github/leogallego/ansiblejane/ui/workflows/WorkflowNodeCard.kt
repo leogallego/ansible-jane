@@ -29,6 +29,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.presentation.workflows.NodeStdoutState
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.ui.components.JobStatusBadge
 
 @Composable
@@ -68,14 +70,14 @@ fun WorkflowNodeCard(
                         if (job != null && onToggleExpand != null) {
                             Icon(
                                 imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                                contentDescription = if (isExpanded) stringResource(Res.string.cd_collapse) else stringResource(Res.string.cd_expand),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                         }
                         Text(
-                            text = job?.name ?: if (node.doNotRun) "Skipped" else "Pending",
+                            text = job?.name ?: if (node.doNotRun) stringResource(Res.string.workflow_node_skipped) else stringResource(Res.string.workflow_node_pending),
                             style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -86,7 +88,7 @@ fun WorkflowNodeCard(
                         JobStatusBadge(status = job.status)
                     } else if (node.doNotRun) {
                         Text(
-                            text = "Skipped",
+                            text = stringResource(Res.string.workflow_node_skipped),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

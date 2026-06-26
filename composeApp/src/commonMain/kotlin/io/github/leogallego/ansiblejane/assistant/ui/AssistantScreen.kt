@@ -73,6 +73,8 @@ import io.github.leogallego.ansiblejane.assistant.presentation.AssistantViewMode
 import io.github.leogallego.ansiblejane.network.mcp.McpConnectionState
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -290,7 +292,7 @@ private fun ActiveChatContent(
 
             if (state.isGenerating) {
                 item(key = "streaming", contentType = "streaming") {
-                    StreamingIndicator(statusText = state.streamingText ?: "Thinking...")
+                    StreamingIndicator(statusText = state.streamingText ?: stringResource(Res.string.assistant_thinking))
                 }
             }
         }
@@ -312,7 +314,7 @@ private fun ActiveChatContent(
                         true
                     } else false
                 },
-            placeholder = { Text("Ask a question...") },
+            placeholder = { Text(stringResource(Res.string.assistant_input_placeholder)) },
             maxLines = 3,
             shape = RoundedCornerShape(28.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -335,7 +337,7 @@ private fun ActiveChatContent(
                     ) {
                         Icon(
                             Icons.Default.Stop,
-                            contentDescription = "Stop generation",
+                            contentDescription = stringResource(Res.string.cd_stop_generation),
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -347,7 +349,7 @@ private fun ActiveChatContent(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Send",
+                            contentDescription = stringResource(Res.string.cd_send_message),
                         )
                     }
                 }

@@ -51,6 +51,8 @@ import androidx.compose.material.icons.filled.Dns
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.model.AapInstance
 
 @Composable
@@ -108,7 +110,7 @@ fun InstancesTab(
                 contentDescription = null,
                 modifier = Modifier.padding(end = 8.dp)
             )
-            Text("Add Instance")
+            Text(stringResource(Res.string.instances_add))
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -124,7 +126,7 @@ fun InstancesTab(
                 contentDescription = null,
                 modifier = Modifier.padding(end = 8.dp)
             )
-            Text("Logout All")
+            Text(stringResource(Res.string.instances_logout_all))
         }
     }
 
@@ -147,13 +149,13 @@ fun InstancesTab(
         val isLastInstance = instances.size == 1
         AlertDialog(
             onDismissRequest = { instanceToRemove = null },
-            title = { Text(if (isLastInstance) "Remove Last Instance" else "Remove Instance") },
+            title = { Text(if (isLastInstance) stringResource(Res.string.instances_remove_last_title) else stringResource(Res.string.instances_remove_title)) },
             text = {
                 Text(
                     if (isLastInstance)
-                        "This is your only instance. Removing it will log you out completely."
+                        stringResource(Res.string.instances_remove_last_message)
                     else
-                        "Remove \"${instance.displayLabel}\"? You will need to re-authenticate to use this instance again."
+                        stringResource(Res.string.instances_remove_message, instance.displayLabel)
                 )
             },
             confirmButton = {
@@ -162,10 +164,10 @@ fun InstancesTab(
                         onRemoveInstance(instance.id)
                         instanceToRemove = null
                     }
-                ) { Text("Remove") }
+                ) { Text(stringResource(Res.string.btn_remove)) }
             },
             dismissButton = {
-                TextButton(onClick = { instanceToRemove = null }) { Text("Cancel") }
+                TextButton(onClick = { instanceToRemove = null }) { Text(stringResource(Res.string.btn_cancel)) }
             }
         )
     }
@@ -173,9 +175,9 @@ fun InstancesTab(
     if (showLogoutConfirm) {
         AlertDialog(
             onDismissRequest = { showLogoutConfirm = false },
-            title = { Text("Logout All") },
+            title = { Text(stringResource(Res.string.instances_logout_all_title)) },
             text = {
-                Text("Remove all AAP instances and log out? You will need to re-authenticate each instance.")
+                Text(stringResource(Res.string.instances_logout_all_message))
             },
             confirmButton = {
                 TextButton(
@@ -183,10 +185,10 @@ fun InstancesTab(
                         showLogoutConfirm = false
                         onLogout()
                     }
-                ) { Text("Logout All") }
+                ) { Text(stringResource(Res.string.instances_logout_all)) }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showLogoutConfirm = false }) { Text(stringResource(Res.string.btn_cancel)) }
             }
         )
     }
@@ -223,7 +225,7 @@ private fun InstanceCard(
         ) {
             Icon(
                 imageVector = Icons.Filled.Dns,
-                contentDescription = "Ansible Platform",
+                contentDescription = stringResource(Res.string.cd_ansible_platform),
                 modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -242,11 +244,11 @@ private fun InstanceCard(
                     )
                     if (isActive) {
                         Spacer(modifier = Modifier.width(6.dp))
-                        StatusPill("Active", MaterialTheme.colorScheme.primary)
+                        StatusPill(stringResource(Res.string.instances_status_active), MaterialTheme.colorScheme.primary)
                     }
                     if (instance.mcpEnabled) {
                         Spacer(modifier = Modifier.width(4.dp))
-                        StatusPill("MCP", MaterialTheme.colorScheme.primary)
+                        StatusPill(stringResource(Res.string.instances_status_mcp), MaterialTheme.colorScheme.primary)
                     }
                 }
                 if (instance.alias != null) {
@@ -266,7 +268,7 @@ private fun InstanceCard(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "Logout ${instance.displayLabel}",
+                    contentDescription = stringResource(Res.string.cd_logout_instance, instance.displayLabel),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -311,20 +313,20 @@ private fun InstanceDetailsBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Instance Details",
+                text = stringResource(Res.string.instances_detail_title),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             ListItem(
-                headlineContent = { Text("URL") },
+                headlineContent = { Text(stringResource(Res.string.label_url)) },
                 supportingContent = { Text(instance.baseUrl) }
             )
 
             OutlinedTextField(
                 value = alias,
                 onValueChange = { alias = it },
-                label = { Text("Alias") },
+                label = { Text(stringResource(Res.string.instances_detail_alias)) },
                 placeholder = { Text(instance.hostname) },
                 singleLine = true,
                 modifier = Modifier
@@ -346,11 +348,11 @@ private fun InstanceDetailsBottomSheet(
                         contentDescription = null,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-                    Text("Replace Token")
+                    Text(stringResource(Res.string.instances_detail_replace_token))
                 }
             } else {
                 Text(
-                    text = "The current token will be replaced. Paste your new token below.",
+                    text = stringResource(Res.string.instances_detail_replace_token_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
@@ -358,7 +360,7 @@ private fun InstanceDetailsBottomSheet(
                 OutlinedTextField(
                     value = newToken,
                     onValueChange = { newToken = it },
-                    label = { Text("New Token") },
+                    label = { Text(stringResource(Res.string.instances_detail_new_token)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -374,7 +376,7 @@ private fun InstanceDetailsBottomSheet(
                         .padding(horizontal = 16.dp)
                         .testTag("button_cancel_token_reset")
                 ) {
-                    Text("Cancel token reset")
+                    Text(stringResource(Res.string.instances_detail_cancel_token_reset))
                 }
             }
 
@@ -386,11 +388,11 @@ private fun InstanceDetailsBottomSheet(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Trust self-signed certificate",
+                        text = stringResource(Res.string.instances_detail_trust_self_signed),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = "Allow connections to servers with untrusted certificates",
+                        text = stringResource(Res.string.instances_detail_trust_self_signed_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -422,9 +424,9 @@ private fun InstanceDetailsBottomSheet(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Saving...")
+                    Text(stringResource(Res.string.instances_detail_saving))
                 } else {
-                    Text("Save Changes")
+                    Text(stringResource(Res.string.instances_detail_save_changes))
                 }
             }
 
@@ -442,39 +444,38 @@ private fun InstanceDetailsBottomSheet(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 ListItem(
-                    headlineContent = { Text("Platform") },
+                    headlineContent = { Text(stringResource(Res.string.label_platform)) },
                     supportingContent = {
                         Text(
                             when (info.platformType) {
-                                "AAP" -> "Red Hat Ansible Automation Platform" +
-                                    (info.aapVersion?.let { " $it" } ?: "")
-                                "AWX" -> "AWX (upstream controller)"
-                                "JEWEL" -> "Jewel (upstream gateway)"
-                                else -> "Unknown"
+                                "AAP" -> if (info.aapVersion != null) stringResource(Res.string.instances_platform_aap_version, info.aapVersion!!) else stringResource(Res.string.instances_platform_aap)
+                                "AWX" -> stringResource(Res.string.instances_platform_awx)
+                                "JEWEL" -> stringResource(Res.string.instances_platform_jewel)
+                                else -> stringResource(Res.string.dashboard_platform_unknown)
                             }
                         )
                     }
                 )
                 if (info.controllerVersion.isNotBlank()) {
                     ListItem(
-                        headlineContent = { Text("Controller") },
+                        headlineContent = { Text(stringResource(Res.string.label_controller)) },
                         supportingContent = { Text(info.controllerVersion) }
                     )
                 }
                 if (info.gatewayVersion.isNotBlank()) {
                     ListItem(
-                        headlineContent = { Text("Gateway") },
+                        headlineContent = { Text(stringResource(Res.string.label_gateway)) },
                         supportingContent = { Text(info.gatewayVersion) }
                     )
                 }
                 if (info.edaVersion.isNotBlank()) {
                     ListItem(
-                        headlineContent = { Text("EDA") },
+                        headlineContent = { Text(stringResource(Res.string.label_eda)) },
                         supportingContent = { Text(info.edaVersion) }
                     )
                 }
                 ListItem(
-                    headlineContent = { Text("Components") },
+                    headlineContent = { Text(stringResource(Res.string.label_components)) },
                     supportingContent = {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -493,8 +494,8 @@ private fun InstanceDetailsBottomSheet(
             } else {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 ListItem(
-                    headlineContent = { Text("Instance Info") },
-                    supportingContent = { Text("Not yet discovered") }
+                    headlineContent = { Text(stringResource(Res.string.instances_info_title)) },
+                    supportingContent = { Text(stringResource(Res.string.instances_info_not_discovered)) }
                 )
             }
 
@@ -512,9 +513,9 @@ private fun InstanceDetailsBottomSheet(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Discovering...")
+                    Text(stringResource(Res.string.instances_discovering))
                 } else {
-                    Text(if (info != null) "Refresh Instance Info" else "Discover Instance Info")
+                    Text(if (info != null) stringResource(Res.string.instances_refresh_info) else stringResource(Res.string.instances_discover_info))
                 }
             }
 

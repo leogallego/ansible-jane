@@ -35,6 +35,8 @@ import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplateD
 import io.github.leogallego.ansiblejane.presentation.workflows.WorkflowTemplateDetailViewModel
 import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
 import io.github.leogallego.ansiblejane.ui.components.ErrorMessage
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -62,11 +64,11 @@ fun WorkflowTemplateDetailScreen(
     }
 
     DetailScaffold(
-        title = "Workflow Template",
+        title = stringResource(Res.string.workflow_template_title),
         onNavigateBack = onNavigateBack,
         titleContent = {
             Text(
-                text = viewModel.templateName.ifBlank { "Workflow Template" },
+                text = viewModel.templateName.ifBlank { stringResource(Res.string.workflow_template_title) },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -84,7 +86,7 @@ fun WorkflowTemplateDetailScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     } else {
-                        Icon(Icons.Default.PlayArrow, contentDescription = "Launch workflow")
+                        Icon(Icons.Default.PlayArrow, contentDescription = stringResource(Res.string.cd_launch_workflow))
                     }
                 }
             }
@@ -109,7 +111,7 @@ fun WorkflowTemplateDetailScreen(
 
                     if (orderedNodes.isEmpty()) {
                         Text(
-                            text = "No nodes in this workflow",
+                            text = stringResource(Res.string.workflow_no_nodes),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.align(Alignment.Center)
@@ -141,7 +143,7 @@ private fun TemplateNodeCard(orderedNode: OrderedTemplateNode) {
     val node = orderedNode.node
     val incomingEdge = orderedNode.incomingEdge
     val name = node.summaryFields.unifiedJobTemplate?.name?.ifBlank { null }
-        ?: node.identifier.ifBlank { "Node ${node.id}" }
+        ?: node.identifier.ifBlank { stringResource(Res.string.workflow_node_fallback_name, node.id) }
     val jobType = node.summaryFields.unifiedJobTemplate?.unifiedJobType ?: ""
 
     Column(modifier = Modifier.fillMaxWidth()) {

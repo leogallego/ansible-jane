@@ -22,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 
 @Composable
 fun ConfirmationCard(
@@ -45,7 +47,7 @@ fun ConfirmationCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Warning,
-                    contentDescription = "Confirmation required",
+                    contentDescription = stringResource(Res.string.cd_confirmation_required),
                     tint = MaterialTheme.colorScheme.onTertiaryContainer,
                     modifier = Modifier.size(24.dp)
                 )
@@ -70,14 +72,14 @@ fun ConfirmationCard(
                     onClick = onDeny,
                     modifier = Modifier.testTag("button_confirm_deny")
                 ) {
-                    Text("Deny")
+                    Text(stringResource(Res.string.confirmation_skip))
                 }
                 Spacer(Modifier.width(8.dp))
                 Button(
                     onClick = onApprove,
                     modifier = Modifier.testTag("button_confirm_approve")
                 ) {
-                    Text("Approve")
+                    Text(stringResource(Res.string.confirmation_proceed))
                 }
             }
         }

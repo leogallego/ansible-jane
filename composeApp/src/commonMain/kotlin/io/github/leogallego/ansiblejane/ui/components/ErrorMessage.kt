@@ -34,6 +34,8 @@ import io.github.leogallego.ansiblejane.model.AppError
 import io.github.leogallego.ansiblejane.model.icon
 import io.github.leogallego.ansiblejane.model.ErrorDetail
 import io.github.leogallego.ansiblejane.ui.icons.AapIcons
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
 
 @Composable
@@ -91,13 +93,13 @@ fun ErrorMessage(
                         else AapIcons.Action.ExpandMore
                     Icon(
                         imageVector = toggleIcon,
-                        contentDescription = if (showDetails) "Hide details" else "Show details",
+                        contentDescription = if (showDetails) stringResource(Res.string.error_hide_details) else stringResource(Res.string.error_show_details),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (showDetails) "Hide details" else "Show details",
+                        text = if (showDetails) stringResource(Res.string.error_hide_details) else stringResource(Res.string.error_show_details),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -115,19 +117,19 @@ fun ErrorMessage(
                             val d = error.detail
                             d?.statusCode?.let {
                                 Text(
-                                    text = "Status: $it",
+                                    text = stringResource(Res.string.error_detail_status, it.toString()),
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
                             d?.url?.let {
                                 Text(
-                                    text = "URL: $it",
+                                    text = stringResource(Res.string.error_detail_url, it),
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
                             d?.rawMessage?.let {
                                 Text(
-                                    text = "Detail: $it",
+                                    text = stringResource(Res.string.error_detail_message, it),
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
@@ -139,7 +141,7 @@ fun ErrorMessage(
             if (onRetry != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = onRetry) {
-                    Text("Retry")
+                    Text(stringResource(Res.string.btn_retry))
                 }
             }
         }

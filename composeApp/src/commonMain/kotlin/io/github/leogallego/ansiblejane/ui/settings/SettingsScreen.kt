@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +26,8 @@ import io.github.leogallego.ansiblejane.presentation.settings.SettingsTab
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsUiState
 import io.github.leogallego.ansiblejane.presentation.settings.SettingsViewModel
 import io.github.leogallego.ansiblejane.ui.components.DetailScaffold
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -32,11 +35,20 @@ fun SettingsScreen(
     onLogout: () -> Unit,
     onNavigateBack: () -> Unit,
     onAddInstance: () -> Unit,
+    initialTab: String? = null,
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    DetailScaffold(title = "Settings", onNavigateBack = onNavigateBack) {
+    LaunchedEffect(initialTab) {
+        initialTab?.let { tabName ->
+            SettingsTab.entries.find { it.name == tabName }?.let { tab ->
+                viewModel.selectTab(tab)
+            }
+        }
+    }
+
+    DetailScaffold(title = stringResource(Res.string.settings_title), onNavigateBack = onNavigateBack) {
         when (val state = uiState) {
             is SettingsUiState.Loading -> {
             }
@@ -159,7 +171,7 @@ private fun SettingsContent(
                 onLogout = onLogout,
                 modifier = Modifier.weight(1f)
             )
-            SettingsTab.Agent -> AgentTab(
+            SettingsTab.AiProvider -> AgentTab(
                 activeProviderKey = state.activeProviderKey,
                 activeConfig = state.activeConfig,
                 savedConfigs = state.savedConfigs,
@@ -172,14 +184,12 @@ private fun SettingsContent(
                 onClearHistory = onClearHistory,
                 modifier = Modifier.weight(1f)
             )
-            SettingsTab.Tools -> ToolsTab(
+            SettingsTab.McpServers -> ToolsTab(
                 mcpEnabled = state.mcpEnabled,
                 mcpServers = state.mcpServers,
                 connections = state.connections,
                 mcpServerTools = state.mcpServerTools,
-                localTools = state.localTools,
                 expandedMcpServers = state.expandedMcpServers,
-                expandedCategories = state.expandedCategories,
                 onToggleMcp = onToggleMcp,
                 onAddMcpServer = onAddMcpServer,
                 onRemoveMcpServer = onRemoveMcpServer,
@@ -188,10 +198,18 @@ private fun SettingsContent(
                 onToggleServerEnabled = onToggleServerEnabled,
                 onToggleToolEnabled = onToggleToolEnabled,
                 onToggleExpandMcpServer = onToggleExpandMcpServer,
-                onToggleExpandCategory = onToggleExpandCategory,
                 onRefreshMcpServer = onRefreshMcpServer,
                 isRefreshingTools = state.isRefreshingTools,
                 onRefreshAllTools = onRefreshAllTools,
+                modifier = Modifier.weight(1f)
+            )
+            SettingsTab.LocalTools -> LocalToolsTab(
+                tools = state.localTools,
+                expandedCategories = state.expandedCategories,
+                onToggleCategory = onToggleExpandCategory,
+                onToggleTool = { name, enabled ->
+                    onToggleToolEnabled(name, ToolSource.LOCAL, null, enabled)
+                },
                 modifier = Modifier.weight(1f)
             )
         }

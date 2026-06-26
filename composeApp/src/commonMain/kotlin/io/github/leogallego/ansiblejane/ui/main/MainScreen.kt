@@ -71,15 +71,18 @@ import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.presentation.notifications.NotificationsViewModel
+import io.github.leogallego.ansiblejane.presentation.settings.SettingsTab
 import io.github.leogallego.ansiblejane.ui.notifications.NotificationsSheet
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onNavigateToSettings: () -> Unit = {},
+    onNavigateToSettings: (initialTab: String?) -> Unit = {},
     onNavigateToApproval: (Int) -> Unit = {},
     content: @Composable (TopLevelTab, Segment) -> Unit
 ) {
@@ -115,16 +118,16 @@ fun MainScreen(
     if (showClearChatConfirm) {
         AlertDialog(
             onDismissRequest = { showClearChatConfirm = false },
-            title = { Text("Clear Chat History") },
-            text = { Text("This will remove all messages from the assistant chat. This cannot be undone.") },
+            title = { Text(stringResource(Res.string.clear_chat_title)) },
+            text = { Text(stringResource(Res.string.clear_chat_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showClearChatConfirm = false
                     assistantRepository.clearHistory()
-                }) { Text("Clear") }
+                }) { Text(stringResource(Res.string.btn_clear)) }
             },
             dismissButton = {
-                TextButton(onClick = { showClearChatConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showClearChatConfirm = false }) { Text(stringResource(Res.string.btn_cancel)) }
             }
         )
     }
@@ -179,7 +182,7 @@ fun MainScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.AutoAwesome,
-                                    contentDescription = "AI model",
+                                    contentDescription = stringResource(Res.string.cd_ai_model),
                                     tint = if (activeConfig is LlmProviderConfig.OpenAiCompatible &&
                                         (activeConfig as LlmProviderConfig.OpenAiCompatible).model.isNotBlank()
                                     )
@@ -202,7 +205,7 @@ fun MainScreen(
                                 },
                                 onNavigateToSettings = {
                                     showProviderMenu = false
-                                    onNavigateToSettings()
+                                    onNavigateToSettings(SettingsTab.AiProvider.name)
                                 }
                             )
                         }
@@ -212,7 +215,7 @@ fun MainScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.DeleteSweep,
-                                contentDescription = "Clear chat history"
+                                contentDescription = stringResource(Res.string.cd_clear_chat_history)
                             )
                         }
                     }
@@ -233,17 +236,17 @@ fun MainScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
-                                contentDescription = "Notifications"
+                                contentDescription = stringResource(Res.string.cd_notifications)
                             )
                         }
                     }
                     IconButton(
-                        onClick = onNavigateToSettings,
+                        onClick = { onNavigateToSettings(null) },
                         modifier = Modifier.testTag("button_settings")
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = stringResource(Res.string.cd_settings)
                         )
                     }
                 }
@@ -350,15 +353,16 @@ private fun ProviderDropdownMenu(
     ) {
         if (sessionTokens > 0) {
             val formatted = TokenUsage.formatTokenCount(sessionTokens)
+            val tokensCd = stringResource(Res.string.provider_tokens_session_cd, sessionTokens)
             Text(
-                text = "$formatted tokens",
+                text = stringResource(Res.string.provider_tokens, formatted),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .testTag("text_session_tokens")
                     .semantics {
-                        contentDescription = "$sessionTokens tokens used this session"
+                        contentDescription = tokensCd
                     }
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
@@ -366,7 +370,7 @@ private fun ProviderDropdownMenu(
 
         if (configuredProviders.isEmpty()) {
             Text(
-                text = "No providers configured",
+                text = stringResource(Res.string.provider_no_providers),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
@@ -442,7 +446,7 @@ private fun ProviderDropdownMenu(
         DropdownMenuItem(
             text = {
                 Text(
-                    text = "Configure…",
+                    text = stringResource(Res.string.provider_configure),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )

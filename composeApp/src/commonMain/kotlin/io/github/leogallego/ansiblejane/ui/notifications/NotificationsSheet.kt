@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import io.github.leogallego.ansiblejane.model.WorkflowApproval
 import io.github.leogallego.ansiblejane.presentation.notifications.NotificationsUiState
 import io.github.leogallego.ansiblejane.ui.components.DateFormatter
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,14 +65,14 @@ fun NotificationsSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Notifications",
+                    text = stringResource(Res.string.notifications_title),
                     style = MaterialTheme.typography.titleLarge
                 )
                 IconButton(
                     onClick = onRefresh,
                     modifier = Modifier.testTag("button_refresh_notifications")
                 ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(Res.string.cd_refresh))
                 }
             }
 
@@ -111,7 +113,7 @@ fun NotificationsSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No pending approvals",
+                            text = stringResource(Res.string.notifications_empty),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -121,14 +123,14 @@ fun NotificationsSheet(
                 else -> {
                     if (uiState.error != null) {
                         Text(
-                            text = "Refresh failed — showing cached data",
+                            text = stringResource(Res.string.notifications_stale),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                     }
                     Text(
-                        text = "${uiState.pendingCount} pending approval${if (uiState.pendingCount != 1) "s" else ""}",
+                        text = stringResource(Res.string.notifications_pending_count, uiState.pendingCount, if (uiState.pendingCount != 1) stringResource(Res.string.notifications_pending_plural) else ""),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -170,7 +172,7 @@ private fun ApprovalNotificationItem(
         ) {
             Icon(
                 imageVector = Icons.Default.HourglassTop,
-                contentDescription = "Pending",
+                contentDescription = stringResource(Res.string.cd_pending),
                 tint = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.size(24.dp)
             )

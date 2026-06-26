@@ -22,6 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 import kotlinx.serialization.json.Json
 
 private const val MAX_EXTRA_VARS_SIZE = 64 * 1024
@@ -73,11 +75,11 @@ fun ExtraVarsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Launch \"$templateName\"") },
+        title = { Text(stringResource(Res.string.extra_vars_title, templateName)) },
         text = {
             Column {
                 Text(
-                    text = "Enter extra variables (JSON):",
+                    text = stringResource(Res.string.extra_vars_prompt),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -87,7 +89,7 @@ fun ExtraVarsDialog(
                         extraVars = it
                         if (validationError != null) validate()
                     },
-                    placeholder = { Text("{\"key\": \"value\"}") },
+                    placeholder = { Text(stringResource(Res.string.extra_vars_placeholder)) },
                     isError = validationError != null,
                     supportingText = validationError?.let { error ->
                         { Text(error, color = MaterialTheme.colorScheme.error) }
@@ -106,12 +108,12 @@ fun ExtraVarsDialog(
                     }
                 }
             ) {
-                Text("Launch")
+                Text(stringResource(Res.string.btn_launch))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.btn_cancel))
             }
         },
         modifier = Modifier.graphicsLayer {

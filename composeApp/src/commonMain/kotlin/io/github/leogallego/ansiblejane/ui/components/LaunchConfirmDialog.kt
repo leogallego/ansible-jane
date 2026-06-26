@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import org.jetbrains.compose.resources.stringResource
+import aapremotecontrol.composeapp.generated.resources.*
 
 @Composable
 fun LaunchConfirmDialog(
@@ -44,19 +46,19 @@ fun LaunchConfirmDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Launch Job") },
-        text = { Text("Launch \"$templateName\"?") },
+        title = { Text(stringResource(Res.string.launch_title)) },
+        text = { Text(stringResource(Res.string.launch_message, templateName)) },
         confirmButton = {
             TextButton(onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onConfirm()
             }) {
-                Text("Launch")
+                Text(stringResource(Res.string.btn_launch))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.btn_cancel))
             }
         },
         modifier = Modifier.graphicsLayer {
