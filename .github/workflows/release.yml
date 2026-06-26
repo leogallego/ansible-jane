@@ -10,6 +10,11 @@ on:
         description: 'Tag to release (e.g. v0.8.4-alpha.7)'
         required: true
         type: string
+      build_all:
+        description: 'Build all platforms (macOS, Windows, Flatpak) even for pre-release tags'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -378,7 +383,7 @@ jobs:
 
   desktop-linux-flatpak:
     name: Build Flatpak
-    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+    if: ${{ inputs.build_all || !contains(inputs.tag || github.ref_name, '-') }}
     needs: [desktop-linux-tar]
     runs-on: ubuntu-latest
     steps:
@@ -422,7 +427,7 @@ jobs:
 
   desktop-macos:
     name: Build Desktop macOS package
-    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+    if: ${{ inputs.build_all || !contains(inputs.tag || github.ref_name, '-') }}
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -464,7 +469,7 @@ jobs:
 
   desktop-windows:
     name: Build Desktop Windows package
-    if: ${{ !contains(inputs.tag || github.ref_name, '-') }}
+    if: ${{ inputs.build_all || !contains(inputs.tag || github.ref_name, '-') }}
     runs-on: windows-latest
     steps:
       - name: Checkout
