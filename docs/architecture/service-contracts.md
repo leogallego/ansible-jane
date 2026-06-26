@@ -381,6 +381,21 @@ for one-shot discovery of external endpoints would be over-engineering.
 
 ---
 
+## 11. String Resources
+
+### Hard Rules
+
+- **No hardcoded user-facing strings in Composables.** All UI text must use
+  `stringResource()` from Compose Multiplatform resources
+  (`composeApp/src/commonMain/composeResources/values/strings.xml`).
+  Hardcoded strings in `Text()`, `placeholder`, `label`, `contentDescription`,
+  and similar parameters are prohibited.
+
+- **Exceptions:** log messages, debug output, and test assertions may use
+  hardcoded strings.
+
+---
+
 ## Versioning and Maintenance
 
 This document follows the project's semver scheme. Updates require a PR with
@@ -406,3 +421,4 @@ tombstones or "removed" markers.
 | 1.1.0 | 2026-06-20 | Tool interface sealed (#364), test helpers documented |
 | 1.2.0 | 2026-06-21 | Add §10 Test Infrastructure contracts (#392) |
 | 1.2.1 | 2026-06-22 | Add lifecycle tags for transitional rules (#392) |
+| 1.3.0 | 2026-06-26 | Add §11 String Resources contract (#293) |
