@@ -1,6 +1,6 @@
 # Ansible Jane
 
-A multiplatform app (Android and Desktop) for managing [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Authenticate with your AAP instance, browse job templates, launch playbooks, monitor job status, and interact with Jane, an AI assistant that works with local models (as small as qwen3:8b via Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter) through tool-use and MCP.
+A multiplatform companion app (Android and Desktop) for [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Browse templates, monitor jobs, and chat with Jane — an AI assistant that talks to your AAP instance through tool-use and MCP, powered by local models (as small as qwen3:8b via Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter). Entirely AI-developed and spec-driven.
 
 > **Disclaimer:** This project is not affiliated with or endorsed by Red Hat or the Ansible project.
 >
@@ -52,10 +52,12 @@ A multiplatform app (Android and Desktop) for managing [Ansible Automation Platf
 
 ### Settings
 
-- **Tabbed settings** - General, Instances, Agent, and Tools tabs
+- **Tabbed settings** - General, Instances, AI Provider, Local Tools, and MCP Servers tabs
 - **Theme** - system, light, or dark mode
 - **Timezone and time format** - configurable display preferences
-- **MCP server management** - enable/disable, add custom servers, per-server read-only toggle
+- **AI provider management** - configure and switch between LLM providers with deep-link navigation
+- **Local tools** - browse and enable/disable the 61 built-in AAP tools
+- **MCP server management** - collapsible server list with connected/total badge, per-server read-only toggle
 
 ## Screenshots
 
@@ -192,7 +194,7 @@ Access Jane via the chat icon. Ask questions in natural language about your AAP 
 - "Launch the deploy-webserver template"
 - "What hosts are in the production inventory?"
 
-Jane selects the right tools automatically based on your query. Configure your LLM provider in Settings > Agent.
+Jane selects the right tools automatically based on your query. Configure your LLM provider in Settings > AI Provider.
 
 ### Settings
 
@@ -200,8 +202,9 @@ Access settings via the gear icon in the top bar:
 
 - **General** - theme mode, timezone, time format
 - **Instances** - add, switch, remove instances; view details and discover instance info
-- **Agent** - configure LLM providers, switch active provider, fetch available models, clear chat history
-- **Tools** - enable/disable MCP, manage MCP server connections, toggle read-only mode per server
+- **AI Provider** - configure LLM providers, switch active provider, fetch available models, clear chat history
+- **Local Tools** - browse built-in AAP tools, enable/disable individual tools
+- **MCP Servers** - collapsible server list, add custom servers, per-server read-only toggle
 
 ## Security
 
