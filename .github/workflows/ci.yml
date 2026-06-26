@@ -43,7 +43,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Regenerate lockfiles for Dependabot PRs
-        if: github.actor == 'dependabot[bot]'
+        if: github.event.pull_request.user.login == 'dependabot[bot]'
         run: ./gradlew dependencies --write-locks
 
       - name: Build (Android + Desktop)
