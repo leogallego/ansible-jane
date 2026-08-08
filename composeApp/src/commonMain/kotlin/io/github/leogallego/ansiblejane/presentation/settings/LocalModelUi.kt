@@ -16,6 +16,8 @@ data class LocalModelUi(
     val displayName: String,
     val sizeBytes: Long,
     val isRecommended: Boolean,
+    val defaultContextTokens: Int,
+    val maxContextTokens: Int,
 )
 
 enum class DevicePerformanceUi {
@@ -46,6 +48,8 @@ fun LocalModel.toUi(): LocalModelUi = LocalModelUi(
     displayName = displayName,
     sizeBytes = sizeBytes,
     isRecommended = isRecommended,
+    defaultContextTokens = defaultContextTokens,
+    maxContextTokens = maxContextTokens,
 )
 
 fun DevicePerformance.toUi(): DevicePerformanceUi = when (this) {
