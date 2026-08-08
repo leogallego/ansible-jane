@@ -27,9 +27,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +46,8 @@ import aapremotecontrol.composeapp.generated.resources.agent_local_activate
 import aapremotecontrol.composeapp.generated.resources.agent_local_active
 import aapremotecontrol.composeapp.generated.resources.agent_local_avx_unsupported
 import aapremotecontrol.composeapp.generated.resources.agent_local_cancel
+import aapremotecontrol.composeapp.generated.resources.agent_local_context_guidance
+import aapremotecontrol.composeapp.generated.resources.agent_local_context_size
 import aapremotecontrol.composeapp.generated.resources.agent_local_delete
 import aapremotecontrol.composeapp.generated.resources.agent_local_download
 import aapremotecontrol.composeapp.generated.resources.agent_local_download_progress
@@ -61,7 +68,10 @@ import io.github.leogallego.ansiblejane.presentation.settings.DevicePerformanceU
 import io.github.leogallego.ansiblejane.presentation.settings.LocalModelDownloadUiState
 import io.github.leogallego.ansiblejane.presentation.settings.LocalModelUi
 import io.github.leogallego.ansiblejane.ui.theme.AnsibleJaneTheme
+import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
+
+private const val CONTEXT_TOKEN_STEP = 1_024
 
 @Composable
 internal fun LocalProviderCard(
@@ -72,13 +82,15 @@ internal fun LocalProviderCard(
     catalog: List<LocalModelUi>,
     downloadState: LocalModelDownloadUiState,
     readyIds: Set<String>,
+    modelContextTokens: Map<String, Int>,
     hasAvx2Support: Boolean,
-    onPerformance: (String) -> DevicePerformanceUi,
+    onPerformance: (String, Int) -> DevicePerformanceUi,
     onToggleExpand: () -> Unit,
     onDownload: (String) -> Unit,
     onCancelDownload: () -> Unit,
     onDelete: (String) -> Unit,
     onSelect: (String) -> Unit,
+    onContextTokensChange: (String, Int) -> Unit,
 ) {
     val border = if (isActive) {
         BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
@@ -166,17 +178,22 @@ internal fun LocalProviderCard(
                     }
 
                     catalog.forEach { model ->
+                        val storedTokens = modelContextTokens[model.id] ?: model.defaultContextTokens
                         LocalModelRow(
                             model = model,
                             isReady = model.id in readyIds,
                             isSelected = isActive && config?.modelId == model.id,
                             downloadState = downloadState,
-                            performance = onPerformance(model.id),
+                            storedContextTokens = storedTokens,
+                            onPerformance = { tokens -> onPerformance(model.id, tokens) },
                             actionsEnabled = hasAvx2Support,
                             onDownload = { onDownload(model.id) },
                             onCancelDownload = onCancelDownload,
                             onDelete = { onDelete(model.id) },
                             onSelect = { onSelect(model.id) },
+                            onContextTokensChange = { tokens ->
+                                onContextTokensChange(model.id, tokens)
+                            },
                         )
                     }
                 }
@@ -191,17 +208,31 @@ internal fun LocalModelRow(
     isReady: Boolean,
     isSelected: Boolean,
     downloadState: LocalModelDownloadUiState,
-    performance: DevicePerformanceUi,
+    storedContextTokens: Int,
+    onPerformance: (Int) -> DevicePerformanceUi,
     actionsEnabled: Boolean,
     onDownload: () -> Unit,
     onCancelDownload: () -> Unit,
     onDelete: () -> Unit,
     onSelect: () -> Unit,
+    onContextTokensChange: (Int) -> Unit,
 ) {
     val downloading = downloadState as? LocalModelDownloadUiState.Downloading
     val isDownloadingThis = downloading?.modelId == model.id
     val error = downloadState as? LocalModelDownloadUiState.Error
     val errorForThis = error?.takeIf { it.modelId == model.id }
+
+    val steps = ((model.maxContextTokens - model.defaultContextTokens) / CONTEXT_TOKEN_STEP)
+        .coerceAtLeast(0)
+    var contextSliderValue by remember(storedContextTokens, model.id) {
+        mutableStateOf(
+            ((storedContextTokens - model.defaultContextTokens).coerceAtLeast(0) / CONTEXT_TOKEN_STEP)
+                .toFloat()
+                .coerceIn(0f, steps.toFloat()),
+        )
+    }
+    val contextTokens = model.defaultContextTokens + (contextSliderValue.roundToInt() * CONTEXT_TOKEN_STEP)
+    val performance = onPerformance(contextTokens)
 
     Column(
         modifier = Modifier
@@ -272,6 +303,33 @@ internal fun LocalModelRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+
+        if (steps > 0) {
+            Text(
+                text = stringResource(
+                    Res.string.agent_local_context_size,
+                    "${contextTokens / 1024}K",
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Slider(
+                value = contextSliderValue,
+                onValueChange = { contextSliderValue = it },
+                onValueChangeFinished = { onContextTokensChange(contextTokens) },
+                valueRange = 0f..steps.toFloat(),
+                steps = (steps - 1).coerceAtLeast(0),
+                enabled = actionsEnabled,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("slider_local_context_${model.id}"),
+            )
+            Text(
+                text = stringResource(Res.string.agent_local_context_guidance),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         if (isDownloadingThis && downloading != null) {

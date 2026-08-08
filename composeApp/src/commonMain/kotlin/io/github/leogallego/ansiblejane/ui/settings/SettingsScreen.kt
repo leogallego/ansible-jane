@@ -77,11 +77,16 @@ fun SettingsScreen(
                     onSwitchActiveProvider = { viewModel.switchActiveProvider(it) },
                     onFetchModels = { url, key -> viewModel.fetchAvailableModels(url, key) },
                     onClearFetchedModels = { viewModel.clearFetchedModels() },
-                    onLocalModelPerformance = { viewModel.localModelPerformance(it) },
+                    onLocalModelPerformance = { modelId, tokens ->
+                        viewModel.localModelPerformance(modelId, tokens)
+                    },
                     onDownloadLocalModel = { viewModel.downloadLocalModel(it) },
                     onCancelLocalModelDownload = { viewModel.cancelLocalModelDownload() },
                     onDeleteLocalModel = { viewModel.deleteLocalModel(it) },
                     onSelectLocalModel = { viewModel.selectLocalModel(it) },
+                    onLocalModelContextTokensChange = { modelId, tokens ->
+                        viewModel.setLocalModelContextTokens(modelId, tokens)
+                    },
                     onToggleMcp = { viewModel.toggleMcpEnabled(it) },
                     onAddMcpServer = { url, label, toolset, headers, useInstanceAuth ->
                         viewModel.addMcpServer(url, label, toolset, headers, useInstanceAuth)
@@ -126,11 +131,12 @@ private fun SettingsContent(
     onSwitchActiveProvider: (String) -> Unit,
     onFetchModels: (String, String?) -> Unit,
     onClearFetchedModels: () -> Unit,
-    onLocalModelPerformance: (String) -> DevicePerformanceUi,
+    onLocalModelPerformance: (String, Int) -> DevicePerformanceUi,
     onDownloadLocalModel: (String) -> Unit,
     onCancelLocalModelDownload: () -> Unit,
     onDeleteLocalModel: (String) -> Unit,
     onSelectLocalModel: (String) -> Unit,
+    onLocalModelContextTokensChange: (String, Int) -> Unit,
     onToggleMcp: (Boolean) -> Unit,
     onAddMcpServer: (String, String, String?, Map<String, String>, Boolean) -> Unit,
     onRemoveMcpServer: (String) -> Unit,
@@ -195,12 +201,14 @@ private fun SettingsContent(
                 localModelCatalog = state.localModelCatalog,
                 localDownloadState = state.localDownloadState,
                 localReadyIds = state.localReadyIds,
+                localModelContextTokens = state.localModelContextTokens,
                 hasAvx2Support = state.hasAvx2Support,
                 onLocalModelPerformance = onLocalModelPerformance,
                 onDownloadLocalModel = onDownloadLocalModel,
                 onCancelLocalModelDownload = onCancelLocalModelDownload,
                 onDeleteLocalModel = onDeleteLocalModel,
                 onSelectLocalModel = onSelectLocalModel,
+                onLocalModelContextTokensChange = onLocalModelContextTokensChange,
                 onClearHistory = onClearHistory,
                 modifier = Modifier.weight(1f)
             )

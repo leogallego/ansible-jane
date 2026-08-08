@@ -55,12 +55,14 @@ fun AgentTab(
     localModelCatalog: List<LocalModelUi> = emptyList(),
     localDownloadState: LocalModelDownloadUiState = LocalModelDownloadUiState.Idle,
     localReadyIds: Set<String> = emptySet(),
+    localModelContextTokens: Map<String, Int> = emptyMap(),
     hasAvx2Support: Boolean = true,
-    onLocalModelPerformance: (String) -> DevicePerformanceUi = { DevicePerformanceUi.POOR },
+    onLocalModelPerformance: (String, Int) -> DevicePerformanceUi = { _, _ -> DevicePerformanceUi.POOR },
     onDownloadLocalModel: (String) -> Unit = {},
     onCancelLocalModelDownload: () -> Unit = {},
     onDeleteLocalModel: (String) -> Unit = {},
     onSelectLocalModel: (String) -> Unit = {},
+    onLocalModelContextTokensChange: (String, Int) -> Unit = { _, _ -> },
     onClearHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -108,6 +110,7 @@ fun AgentTab(
                     catalog = localModelCatalog,
                     downloadState = localDownloadState,
                     readyIds = localReadyIds,
+                    modelContextTokens = localModelContextTokens,
                     hasAvx2Support = hasAvx2Support,
                     onPerformance = onLocalModelPerformance,
                     onToggleExpand = {
@@ -119,7 +122,8 @@ fun AgentTab(
                     onSelect = { modelId ->
                         expandedProvider = null
                         onSelectLocalModel(modelId)
-                    }
+                    },
+                    onContextTokensChange = onLocalModelContextTokensChange,
                 )
             } else {
                 val providerConfig = savedConfigs[provider.name] as? LlmProviderConfig.OpenAiCompatible

@@ -7,6 +7,7 @@ import io.github.leogallego.ansiblejane.assistant.data.KnownProvider
 import io.github.leogallego.ansiblejane.assistant.data.LlmProviderConfig
 import io.github.leogallego.ansiblejane.assistant.data.ModelFetcher
 import io.github.leogallego.ansiblejane.assistant.local.ILocalModelRepository
+import io.github.leogallego.ansiblejane.assistant.local.resolveOnDeviceContextTokens
 import io.github.leogallego.ansiblejane.assistant.presentation.ModelFetchState
 import io.github.leogallego.ansiblejane.data.ITokenManager
 import io.github.leogallego.ansiblejane.data.IToolManifestRepository
@@ -61,6 +62,9 @@ class SettingsViewModel(
             val configs = assistantRepository.loadAllLlmConfigs()
             val activeConfig = assistantRepository.loadLlmConfig()
             val initialActiveKey = assistantRepository.activeProviderKeyFlow.first()
+            // Snapshot before combine: a separate collector can emit while still Loading, and
+            // distinctUntilChanged would not replay — Ready would then miss persisted tokens.
+            val initialLocalContextTokens = assistantRepository.modelContextTokensFlow.first()
 
             // Unfiltered on purpose: Settings enable/disable UI lists every registered
             // tool. Chat routing applies auditor filtering via getRoutableTools / getToolsForQuery.
@@ -107,6 +111,9 @@ class SettingsViewModel(
                     ?: computeLocalReadyIds()
                 val preservedLocalCatalog = (current as? SettingsUiState.Ready)?.localModelCatalog
                     ?: localModelCatalog
+                val preservedLocalContextTokens =
+                    (current as? SettingsUiState.Ready)?.localModelContextTokens
+                        ?: initialLocalContextTokens
                 val preservedAvx2 = (current as? SettingsUiState.Ready)?.hasAvx2Support
                     ?: hasAvx2Support
 
@@ -144,6 +151,7 @@ class SettingsViewModel(
                     localModelCatalog = preservedLocalCatalog,
                     localDownloadState = preservedLocalDownload,
                     localReadyIds = preservedLocalReadyIds,
+                    localModelContextTokens = preservedLocalContextTokens,
                     hasAvx2Support = preservedAvx2,
                     mcpEnabled = active?.mcpEnabled ?: false,
                     mcpServers = active?.mcpServerUrls ?: emptyList(),
@@ -195,6 +203,12 @@ class SettingsViewModel(
                 .collect { downloadUi ->
                     updateReady { copy(localDownloadState = downloadUi) }
                 }
+        }
+
+        viewModelScope.launch {
+            assistantRepository.modelContextTokensFlow.collect { tokens ->
+                updateReady { copy(localModelContextTokens = tokens) }
+            }
         }
     }
 
@@ -381,7 +395,12 @@ class SettingsViewModel(
 
     fun selectLocalModel(modelId: String) {
         viewModelScope.launch {
-            val config = LlmProviderConfig.OnDevice(modelId = modelId)
+            val stored = assistantRepository.getModelContextTokens(modelId)
+            val contextTokens = resolveOnDeviceContextTokens(modelId, stored ?: 0)
+            val config = LlmProviderConfig.OnDevice(
+                modelId = modelId,
+                contextTokens = contextTokens,
+            )
             val current = assistantRepository.loadAllLlmConfigs().toMutableMap()
             current[KnownProvider.LOCAL.name] = config
             assistantRepository.saveAllLlmConfigs(current)
@@ -389,10 +408,25 @@ class SettingsViewModel(
         }
     }
 
-    fun localModelPerformance(modelId: String): DevicePerformanceUi {
-        val model = localModelRepository.catalog().find { it.id == modelId }
-        val contextTokens = model?.defaultContextTokens ?: 4_096
-        return localModelRepository.devicePerformance(modelId, contextTokens).toUi()
+    fun setLocalModelContextTokens(modelId: String, contextTokens: Int) {
+        viewModelScope.launch {
+            val clamped = resolveOnDeviceContextTokens(modelId, contextTokens)
+            assistantRepository.setModelContextTokens(modelId, clamped)
+            val current = assistantRepository.loadAllLlmConfigs().toMutableMap()
+            val existing = current[KnownProvider.LOCAL.name] as? LlmProviderConfig.OnDevice
+            if (existing != null && existing.modelId == modelId) {
+                current[KnownProvider.LOCAL.name] = existing.copy(contextTokens = clamped)
+                assistantRepository.saveAllLlmConfigs(current)
+            }
+        }
+    }
+
+    fun localModelPerformance(modelId: String, contextTokens: Int? = null): DevicePerformanceUi {
+        val resolved = contextTokens
+            ?: (uiState.value as? SettingsUiState.Ready)?.localModelContextTokens?.get(modelId)
+            ?: 0
+        val tokens = resolveOnDeviceContextTokens(modelId, resolved)
+        return localModelRepository.devicePerformance(modelId, tokens).toUi()
     }
 
     private fun computeLocalReadyIds(): Set<String> =
