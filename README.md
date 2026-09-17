@@ -2,8 +2,7 @@
 
 A multiplatform companion app (Android and Desktop) for [Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). Browse templates, monitor jobs, and chat with Jane — an AI assistant that talks to your AAP instance through tool-use and MCP, powered by local models (as small as qwen3:8b via Ollama) or frontier providers (OpenAI-compatible, Gemini, OpenRouter). Entirely AI-developed and spec-driven.
 
-> **Disclaimer:** This project is not affiliated with or endorsed by Red Hat or the Ansible project.
->
+> **Disclaimer:**
 > This is a vibe-coded, spec-driven, AI-assisted developed application. It comes with **no warranties of any kind** - use at your own risk. This project exists purely for research and investigation purposes.
 
 ## Install
