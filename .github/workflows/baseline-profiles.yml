@@ -78,10 +78,46 @@ jobs:
 
       - name: Generate release baseline + startup profiles
         run: |
+          # Stream the managed device's logcat in the background once it shows
+          # up in adb, so instrumentation failures have a post-mortem.
+          adb=$ANDROID_HOME/platform-tools/adb
+          (for i in $(seq 1 90); do
+            if [ "$($adb devices | grep -cE 'emulator-.*device')" -ge 1 ]; then
+              exec $adb logcat -v time
+            fi
+            sleep 5
+          done) > device-logcat.log 2>&1 &
+          echo $! > logcat.pid
           ./gradlew --no-daemon :app:generateReleaseBaselineProfile \
             -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile \
             -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
             -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
+          code=$?
+          kill "$(cat logcat.pid)" 2>/dev/null || true
+          pkill -f "adb logcat" 2>/dev/null || true
+          exit $code
+
+      - name: Capture diagnostics on failure
+        if: failure()
+        continue-on-error: true
+        run: |
+          mkdir -p diagnostics
+          cp -f device-logcat.log diagnostics/ 2>/dev/null || true
+          cp -rf baselineprofile/build/reports/androidTests diagnostics/android-tests-reports 2>/dev/null || true
+          adb=$ANDROID_HOME/platform-tools/adb
+          if [ "$($adb devices | grep -cE 'emulator-')" -ge 1 ]; then
+            $adb shell uiautomator dump /sdcard/ui.xml 2>/dev/null || true
+            $adb pull /sdcard/ui.xml diagnostics/ui-dump.xml 2>/dev/null || true
+            $adb shell screencap -p > diagnostics/screen.png 2>/dev/null || true
+          fi
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: baseline-profiles-diagnostics
+          path: diagnostics/
+          if-no-files-found: ignore
 
       - name: Upload generated profiles
         uses: actions/upload-artifact@v7
