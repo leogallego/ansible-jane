@@ -22,7 +22,9 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
-          distribution: jetbrains
+          # temurin over jetbrains: the JBR catalog intermittently has no
+          # match for "25" (No matching version found for SemVer '25').
+          distribution: temurin
           java-version: "25"
           token: ${{ secrets.GITHUB_TOKEN }}
 

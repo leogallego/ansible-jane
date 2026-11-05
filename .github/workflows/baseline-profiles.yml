@@ -18,8 +18,20 @@ concurrency:
 jobs:
   generate:
     name: Generate baseline profiles
-    runs-on: ubuntu-latest
+    # Pinned to ubuntu-24.04: the emulator+managed-device stack broke on the
+    # 26.04 image (runner-images#14748 migration). Revisit before GitHub
+    # retires 24.04 (22.04 precedent: unsupported April 2027).
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
+
+    env:
+      # Pin the AVD/emulator home to ~/.android so avdmanager and the emulator
+      # agree on one location. Without this, avdmanager writes device config to
+      # ~/.config/.android while the emulator looks in ~/.android, and device
+      # profiles fail to load (devices.xml) — see actions/runner-images#11482.
+      ANDROID_USER_HOME: /home/runner/.android
+      ANDROID_AVD_HOME: /home/runner/.android/avd
+      ANDROID_EMULATOR_HOME: /home/runner/.android
 
     steps:
       - name: Checkout
@@ -35,7 +47,9 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
-          distribution: jetbrains
+          # temurin over jetbrains: the JBR catalog intermittently has no
+          # match for "25" (No matching version found for SemVer '25').
+          distribution: temurin
           java-version: "25"
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -64,10 +78,46 @@ jobs:
 
       - name: Generate release baseline + startup profiles
         run: |
+          # Stream the managed device's logcat in the background once it shows
+          # up in adb, so instrumentation failures have a post-mortem.
+          adb=$ANDROID_HOME/platform-tools/adb
+          (for i in $(seq 1 90); do
+            if [ "$($adb devices | grep -cE 'emulator-.*device')" -ge 1 ]; then
+              exec $adb logcat -v time
+            fi
+            sleep 5
+          done) > device-logcat.log 2>&1 &
+          echo $! > logcat.pid
           ./gradlew --no-daemon :app:generateReleaseBaselineProfile \
             -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile \
             -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
             -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
+          code=$?
+          kill "$(cat logcat.pid)" 2>/dev/null || true
+          pkill -f "adb logcat" 2>/dev/null || true
+          exit $code
+
+      - name: Capture diagnostics on failure
+        if: failure()
+        continue-on-error: true
+        run: |
+          mkdir -p diagnostics
+          cp -f device-logcat.log diagnostics/ 2>/dev/null || true
+          cp -rf baselineprofile/build/reports/androidTests diagnostics/android-tests-reports 2>/dev/null || true
+          adb=$ANDROID_HOME/platform-tools/adb
+          if [ "$($adb devices | grep -cE 'emulator-')" -ge 1 ]; then
+            $adb shell uiautomator dump /sdcard/ui.xml 2>/dev/null || true
+            $adb pull /sdcard/ui.xml diagnostics/ui-dump.xml 2>/dev/null || true
+            $adb shell screencap -p > diagnostics/screen.png 2>/dev/null || true
+          fi
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: baseline-profiles-diagnostics
+          path: diagnostics/
+          if-no-files-found: ignore
 
       - name: Upload generated profiles
         uses: actions/upload-artifact@v7
