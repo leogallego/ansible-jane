@@ -18,8 +18,20 @@ concurrency:
 jobs:
   generate:
     name: Generate baseline profiles
-    runs-on: ubuntu-latest
+    # Pinned to ubuntu-24.04: the emulator+managed-device stack broke on the
+    # 26.04 image (runner-images#14748 migration). Revisit before GitHub
+    # retires 24.04 (22.04 precedent: unsupported April 2027).
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
+
+    env:
+      # Pin the AVD/emulator home to ~/.android so avdmanager and the emulator
+      # agree on one location. Without this, avdmanager writes device config to
+      # ~/.config/.android while the emulator looks in ~/.android, and device
+      # profiles fail to load (devices.xml) — see actions/runner-images#11482.
+      ANDROID_USER_HOME: /home/runner/.android
+      ANDROID_AVD_HOME: /home/runner/.android/avd
+      ANDROID_EMULATOR_HOME: /home/runner/.android
 
     steps:
       - name: Checkout
@@ -35,7 +47,9 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
-          distribution: jetbrains
+          # temurin over jetbrains: the JBR catalog intermittently has no
+          # match for "25" (No matching version found for SemVer '25').
+          distribution: temurin
           java-version: "25"
           token: ${{ secrets.GITHUB_TOKEN }}
 
